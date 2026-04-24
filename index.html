@@ -9,6 +9,42 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d0e10;--bg-elev:#15171a;--bg-inset:#0a0b0d;--surface:#1c1e22;--surface-2:#23262b;--border:#2a2d33;--border-2:#3a3e46;--text:#e8e6e1;--text-muted:#8a8c92;--text-faint:#5a5c62;--accent:#d4a147;--accent-2:#e8b857;--accent-dim:rgba(212,161,71,.12);--wl:#e8b857;--leader:#c98b3d;--success:#7a9960;--danger:#b8614a;--pco:#4a90c2;--ff-display:'Fraunces',Georgia,serif;--ff-body:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;--ff-mono:'JetBrains Mono',ui-monospace,monospace}
+[data-theme="light"]{--bg:#fafaf8;--bg-elev:#ffffff;--bg-inset:#f0eee9;--surface:#ffffff;--surface-2:#f5f3ee;--border:#e2dfd8;--border-2:#c5c2bb;--text:#1a1a1a;--text-muted:#5a5a5a;--text-faint:#9a9a9a}
+[data-theme="light"] body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.06) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(74,144,194,.04) 0%,transparent 50%),#fafaf8}
+[data-theme="light"] .topbar{background:linear-gradient(180deg,rgba(0,0,0,.02),transparent),#fafaf8}
+[data-theme="light"] .stage-box{background:linear-gradient(180deg,#fbf8f1,#f1ede2);border-color:#d8d4c8}
+[data-theme="light"] .stage-box::before{background:linear-gradient(90deg,transparent,rgba(0,0,0,.15),transparent)}
+[data-theme="light"] .stage-tags{color:#8a8680}
+[data-theme="light"] .sp{background:#1a1a1a;color:#ffffff;border-color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+[data-theme="light"] .sp .sp-name{color:#ffffff}
+[data-theme="light"] .sp .sp-mic{color:#c0c0c0}
+[data-theme="light"] .sp .sp-role{color:#a0a0a0}
+[data-theme="light"] .sp.is-wl{background:#1a1a1a;border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+[data-theme="light"] .sp.is-wl .sp-role{color:var(--accent)}
+[data-theme="light"] .sp.leader{background:#2a2a2a;border-color:var(--accent-2)}
+[data-theme="light"] .sp.empty{background:transparent;border-color:#aaa;color:#888;box-shadow:none}
+[data-theme="light"] .sp.empty .sp-name{color:#888}
+[data-theme="light"] .stage-svg path{fill:#ebe7dc!important;stroke:#c8c4b8!important}
+[data-theme="light"] .stage-svg text{fill:#888!important}
+[data-theme="light"] .service-meta input[type=date]{color-scheme:light}
+[data-theme="light"] .service-meta select option{background:#ffffff;color:#1a1a1a}
+[data-theme="light"] .pco-bar{background:linear-gradient(90deg,rgba(74,144,194,.06),transparent)}
+[data-theme="light"] .toast{background:#ffffff;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+[data-theme="light"] .dv-stage-box{background:linear-gradient(180deg,#fbf8f1,#f1ede2);border-color:#d8d4c8}
+[data-theme="light"] .dv-stage-tags{color:#8a8680}
+[data-theme="light"] .dv-stage-svg path{fill:#ebe7dc!important;stroke:#c8c4b8!important}
+[data-theme="light"] .dv-stage-svg text{fill:#888!important}
+[data-theme="light"] .dv-sp{background:#1a1a1a;border-color:#1a1a1a;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+[data-theme="light"] .dv-sp.is-wl{background:#1a1a1a;border-color:var(--accent);box-shadow:0 5px 16px rgba(0,0,0,.22)}
+[data-theme="light"] .dv-sp.leader{background:#2a2a2a;border-color:var(--accent-2)}
+[data-theme="light"] .dv-sp-name{color:#ffffff}
+[data-theme="light"] .dv-sp-mic{color:#c0c0c0}
+[data-theme="light"] .dv-sp-role{color:#a0a0a0}
+[data-theme="light"] .dv-sp.is-wl .dv-sp-role{color:var(--accent)}
+[data-theme="light"] .dv-sp.empty{background:transparent;border-color:#aaa}
+[data-theme="light"] .dv-sp.empty .dv-sp-name{color:#888}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:#d8d5cc}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:#b8b5ac}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(74,144,194,.04) 0%,transparent 50%),var(--bg);background-attachment:fixed;color:var(--text);font-family:var(--ff-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
@@ -24,14 +60,14 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .actions{display:flex;gap:6px}
 .btn{font-family:var(--ff-body);font-size:12px;font-weight:500;padding:6px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{border-color:var(--border-2);background:var(--surface)}
-.btn.primary{background:var(--accent);color:#1a1408;border-color:var(--accent);font-weight:600}
-.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn.primary{background:var(--accent);color:var(--btn-primary-text,#1a1408);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:var(--btn-primary-text,#1a1408)}
 .btn.pco{border-color:rgba(74,144,194,.5);color:var(--pco)}
 .btn.pco:hover{background:rgba(74,144,194,.1)}
 .btn.pco.connected{background:rgba(74,144,194,.15);border-color:var(--pco)}
 .btn.ghost{background:transparent}
 .btn .kbd{font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);padding:1px 4px;background:var(--bg-inset);border-radius:3px}
-.btn.primary .kbd{background:rgba(0,0,0,.15);color:#3a2d10}
+.btn.primary .kbd{background:rgba(0,0,0,.15);color:var(--btn-primary-text,#3a2d10);opacity:.75}
 .btn .dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint)}
 .btn.connected .dot{background:var(--success)}
 .pco-bar{background:linear-gradient(90deg,rgba(74,144,194,.08),transparent);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:12px;font-family:var(--ff-mono);font-size:11.5px;color:var(--text-muted);flex-wrap:wrap}
@@ -52,30 +88,37 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .hero-header .meta .count{color:var(--accent)}
 .hero-header .add-link{color:var(--text-muted);cursor:pointer;transition:color .15s}
 .hero-header .add-link:hover{color:var(--accent)}
-.voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;overflow-y:auto;padding-right:6px;padding-bottom:6px;min-height:0;align-content:start}
-.voc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s,transform .15s;position:relative;animation:fadeIn .25s ease;min-height:130px}
+.voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;overflow-y:auto;padding-right:6px;padding-bottom:6px;min-height:0;align-content:start}
+.voc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;display:flex;flex-direction:column;transition:border-color .15s,transform .15s;position:relative;animation:fadeIn .25s ease;min-height:130px;overflow:hidden}
+.voc-card:hover{border-color:var(--border-2);transform:translateY(-1px)}
+.voc-pos-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg-inset);border-bottom:1px solid var(--border)}
+.voc-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1;cursor:grab;transition:background .15s}
+.voc-body:active{cursor:grabbing}
+.voc-body input,.voc-body select,.voc-body button{cursor:auto}
+.voc-body input:focus{cursor:text}
 .voc-card:hover{border-color:var(--border-2);transform:translateY(-1px)}
 .voc-card.is-wl{border-color:rgba(232,184,87,.5);background:linear-gradient(180deg,rgba(232,184,87,.07),transparent),var(--surface)}
-.voc-card.is-wl::before{content:'';position:absolute;left:-1px;top:-1px;bottom:-1px;width:3px;background:linear-gradient(180deg,var(--wl),var(--leader));border-radius:12px 0 0 12px}
-.voc-row{display:flex;align-items:center;gap:8px}
-.voc-pos{font-family:var(--ff-mono);font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-weight:500;background:var(--accent-dim);padding:2px 7px;border-radius:4px}
-.voc-name{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:19px;font-weight:500;letter-spacing:-.01em;flex:1;border-bottom:1px dashed transparent;padding:1px 0}
+.voc-card.is-wl::before{content:'';position:absolute;left:-1px;top:-1px;bottom:-1px;width:3px;background:linear-gradient(180deg,var(--wl),var(--leader));border-radius:14px 0 0 14px}
+.voc-row{display:flex;align-items:center;gap:10px}
+.voc-pos{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-weight:600;background:var(--accent-dim);padding:3px 9px;border-radius:5px;flex-shrink:0;user-select:none}
+.voc-card.dragging{opacity:.35;transform:scale(.97)}
+.voc-card.drop-target{border-color:var(--accent);background:var(--accent-dim);transform:translateY(-2px);box-shadow:0 8px 24px var(--accent-dim)}
+.voc-name{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:22px;font-weight:500;letter-spacing:-.01em;width:100%;border-bottom:1px dashed transparent;padding:1px 0}
 .voc-name:hover,.voc-name:focus{border-bottom-color:var(--border-2)}
 .voc-name::placeholder{color:var(--text-faint);font-style:italic;font-weight:400}
 .x-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;padding:2px 5px;font-size:14px;line-height:1;transition:color .15s;border-radius:4px}
 .x-btn:hover{color:var(--danger);background:rgba(184,97,74,.1)}
 .toggles{display:flex;gap:4px;flex-wrap:wrap}
-.pill{font-family:var(--ff-mono);font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:5px;background:var(--bg-inset);border:1px solid var(--border);color:var(--text-faint);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
-.pill:hover{color:var(--text-muted);border-color:var(--border-2)}
-.pill.active{background:var(--accent-dim);border-color:rgba(212,161,71,.4);color:var(--accent)}
-.pill.wl.active{background:rgba(232,184,87,.15);border-color:rgba(232,184,87,.5);color:var(--wl)}
-.pill.ag.active{background:rgba(122,149,104,.15);border-color:rgba(122,149,104,.5);color:var(--success)}
-.mic-pick{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;border-top:1px dashed var(--border)}
-.mic-pick label{font-family:var(--ff-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint)}
-.mic-select{background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:11px;padding:4px 8px;border-radius:5px;outline:none;cursor:pointer;flex:1}
+.wl-star{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;width:24px;height:24px;border-radius:50%;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0}
+.wl-star:hover{color:var(--wl);border-color:var(--wl)}
+.wl-star.active{background:rgba(232,184,87,.18);border-color:var(--wl);color:var(--wl);box-shadow:0 0 8px rgba(232,184,87,.3)}
+.ag-badge{font-family:var(--ff-mono);font-size:9.5px;color:var(--success);background:rgba(122,149,104,.15);border:1px solid rgba(122,149,104,.5);padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.1em;font-weight:500}
+.mic-pick{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:10px;border-top:1px dashed var(--border);flex-wrap:wrap}
+.mic-pick label{font-family:var(--ff-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-faint);font-weight:600}
+.mic-select{background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-display);font-size:17px;padding:7px 11px;border-radius:6px;outline:none;cursor:pointer;flex:1;min-width:120px;font-weight:600;letter-spacing:-.005em}
 .mic-select:hover{border-color:var(--border-2)}
 .mic-select:focus{border-color:var(--accent)}
-.pref-tag{font-family:var(--ff-mono);font-size:8.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-left:auto}
+.pref-tag{font-family:var(--ff-mono);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
 .add-card{border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);border-radius:12px;cursor:pointer;font-family:var(--ff-body);font-size:13px;transition:all .15s;min-height:130px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
 .add-card:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .add-card:disabled{opacity:.3;cursor:not-allowed}
@@ -112,7 +155,7 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .band-input{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 10px;display:flex;flex-direction:column;gap:1px;transition:border-color .15s;position:relative}
 .band-input:hover{border-color:var(--border-2)}
 .band-input .lbl{font-family:var(--ff-mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint);display:flex;justify-content:space-between;align-items:center}
-.band-input .md-star{color:var(--wl);font-size:9px}
+.band-input .md-tag{font-family:var(--ff-mono);font-size:8.5px;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(212,161,71,.35);padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:4px;vertical-align:middle}
 .band-input .pack-mini{font-size:7.5px;color:var(--text-faint);opacity:.7}
 .band-input input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:13px;font-weight:500;width:100%}
 .band-input input::placeholder{color:var(--text-faint);font-style:italic;font-size:12px;font-weight:400}
@@ -152,6 +195,13 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pref-row{grid-template-columns:1fr 1fr 30px}
 .inv-edit-row input,.pref-row input,.pref-row select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-family:var(--ff-mono);font-size:11.5px;outline:none}
 .inv-edit-row input:focus,.pref-row input:focus{border-color:var(--accent)}
+.current-row{cursor:grab;transition:background .15s,border-color .15s;border:1px solid transparent;border-radius:6px;padding:6px 4px}
+.current-row:hover{background:var(--bg-inset)}
+.current-row:active{cursor:grabbing}
+.current-row.dragging{opacity:.35}
+.current-row.drop-target{border-color:var(--accent);background:var(--accent-dim)}
+.drag-grip{font-family:var(--ff-mono);color:var(--text-faint);font-size:14px;text-align:center;user-select:none;cursor:grab}
+.drag-grip:hover{color:var(--accent)}
 .add-row-btn{width:100%;padding:8px;border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);border-radius:7px;cursor:pointer;font-family:var(--ff-body);font-size:12px;transition:all .15s;margin-top:8px}
 .add-row-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .pco-status-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
@@ -205,6 +255,62 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
+/* ========== DISPLAY VIEW ========== */
+.display-view{position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:90;display:none;flex-direction:column;overflow:hidden;padding:18px 28px;font-family:var(--ff-display)}
+body.display-mode .display-view{display:flex}
+body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
+body.display-mode{overflow:hidden}
+.display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10;font-family:var(--ff-mono)}
+.display-cog:hover{background:var(--surface);border-color:var(--accent);color:var(--accent);transform:rotate(45deg)}
+.dv-header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative}
+.dv-title{font-family:var(--ff-display);font-weight:500;font-style:italic;font-size:30px;letter-spacing:-.015em;line-height:1;margin-bottom:4px;color:var(--text)}
+.dv-date{font-family:var(--ff-display);font-size:14px;color:var(--text-muted);letter-spacing:.04em;font-weight:400}
+.dv-section-label{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--accent);margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:10px}
+.dv-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.dv-vocalists-block{margin-bottom:14px}
+.dv-voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.dv-voc-card{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.dv-voc-card.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 14px var(--accent-dim)}
+.dv-voc-card.is-wl::after{content:'★';position:absolute;top:8px;right:10px;color:var(--accent);font-size:14px}
+.dv-voc-pos{font-family:var(--ff-mono);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px}
+.dv-voc-name{font-family:var(--ff-display);font-weight:600;font-size:20px;letter-spacing:-.01em;line-height:1.05;color:var(--text);margin-bottom:8px;padding-right:18px}
+.dv-voc-meta{display:flex;flex-direction:column;gap:3px;padding-top:8px;border-top:1px solid var(--border)}
+.dv-voc-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--ff-mono);font-size:12px}
+.dv-voc-line .lbl{color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-size:9.5px;font-weight:500}
+.dv-voc-line .val{color:var(--text);font-weight:600;font-family:var(--ff-display);font-size:15px;letter-spacing:0}
+.dv-voc-line .val.empty{color:var(--text-faint);font-style:italic}
+.dv-voc-ag{display:inline-block;font-family:var(--ff-mono);font-size:9px;color:var(--success);background:rgba(122,153,96,0.14);border:1px solid rgba(122,153,96,0.4);padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:5px;vertical-align:middle}
+.dv-content{display:grid;grid-template-columns:1.6fr 1fr;gap:24px;flex:1;min-height:0;overflow:hidden}
+.dv-stage-block{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.dv-stage-box{background:linear-gradient(180deg,var(--bg-elev),var(--bg-inset));border:1px solid var(--border);border-radius:10px;padding:12px 16px 8px;position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 16px rgba(0,0,0,0.08);flex:1;display:flex;flex-direction:column;min-height:0}
+.dv-stage-tags{display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.18em;padding:0 4px;font-weight:500}
+.dv-stage-svg-wrap{position:relative;flex:1;min-height:0;margin:6px 0}
+.dv-stage-svg{width:100%;height:100%;display:block}
+.dv-sp{position:absolute;transform:translate(-50%,-50%);background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;max-width:120px;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
+.dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
+.dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
+.dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
+.dv-sp-role{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
+.dv-sp.is-wl .dv-sp-role{color:var(--accent)}
+.dv-sp-name{font-family:var(--ff-display);font-size:13px;font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-sp.empty .dv-sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
+.dv-sp-mic{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);margin-top:2px;font-weight:500}
+.dv-side{display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.dv-side-block{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.dv-list{list-style:none;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.dv-list-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:baseline;font-family:var(--ff-display);font-size:14px}
+.dv-list-item .pos{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;font-weight:500;text-transform:uppercase;min-width:54px}
+.dv-list-item .name{color:var(--text);font-weight:500}
+.dv-list-item .name.is-md::after{content:' · MD';color:var(--accent);font-family:var(--ff-mono);font-size:.7em;font-weight:600;letter-spacing:.1em}
+.dv-list-item .detail{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);letter-spacing:.05em}
+.dv-list-item.empty .name{color:var(--text-faint);font-style:italic;font-weight:400}
+.dv-list-item.empty .detail{color:var(--text-faint);font-style:italic}
+@media (max-width:900px){
+.display-view{overflow:auto;padding:14px}
+.dv-content{grid-template-columns:1fr}
+.dv-title{font-size:24px}
+}
+
 @media print{
 @page{size:letter;margin:.4in}
 body{background:white!important;overflow:visible}
@@ -231,26 +337,15 @@ body>*:not(.summary-overlay){display:none!important}
   <div class="service-meta">
     <input type="date" id="serviceDate" />
     <div class="sep"></div>
-    <select id="serviceTime">
-      <option value="8:00 AM">8:00 AM</option>
-      <option value="9:45 AM" selected>9:45 AM</option>
-      <option value="11:30 AM">11:30 AM</option>
-      <option value="Evening">Evening</option>
-      <option value="Special">Special</option>
-    </select>
-    <div class="sep"></div>
-    <select id="serviceName">
-      <option>Sunday Morning</option>
-      <option>Sunday Evening</option>
-      <option>Wednesday</option>
-      <option>Special Event</option>
-    </select>
+    <input type="text" id="serviceName" placeholder="Event title (e.g. Sunday Morning, Lovely Weekend)" style="min-width:240px;" />
   </div>
   <div class="actions">
     <button class="btn pco" id="pcoBtn"><span class="dot"></span> Planning Center</button>
+    <button class="btn ghost" id="themeBtn" title="Toggle light/dark mode">☾</button>
     <button class="btn ghost" id="settingsBtn">⚙︎</button>
     <button class="btn ghost" id="resetBtn">Reset</button>
     <button class="btn" id="summaryBtn">Summary</button>
+    <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
     <button class="btn primary" id="assignBtn">Auto-Assign <span class="kbd">⌘↵</span></button>
   </div>
 </div>
@@ -282,10 +377,9 @@ body>*:not(.summary-overlay){display:none!important}
     <div class="corner left">
       <div class="corner-head">
         <div class="title">Stage</div>
-        <div class="sub">48′ × 22′ — Audience POV</div>
       </div>
       <div class="stage-box">
-        <div class="stage-tags"><span>← SR</span><span>↑ Back</span><span>SL →</span></div>
+        <div class="stage-tags"><span>← SR</span><span>↑ Audience</span><span>SL →</span></div>
         <div class="stage-svg-wrap" id="stageWrap">
           <svg class="stage-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet">
             <defs>
@@ -294,19 +388,18 @@ body>*:not(.summary-overlay){display:none!important}
                 <stop offset="100%" stop-color="#141518"/>
               </linearGradient>
             </defs>
-            <path d="M 20 20 L 780 20 L 780 234 Q 400 358 20 234 Z" fill="url(#stageFloor)" stroke="rgba(212,161,71,0.3)" stroke-width="1.5"/>
-            <text x="400" y="14" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
-            <path d="M 780 234 Q 400 358 20 234" fill="none" stroke="rgba(212,161,71,0.5)" stroke-width="1.5"/>
+            <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="url(#stageFloor)" stroke="rgba(212,161,71,0.3)" stroke-width="1.5"/>
+            <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
+            <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="rgba(212,161,71,0.5)" stroke-width="1.5"/>
           </svg>
           <div id="stagePeople"></div>
         </div>
-        <div class="stage-tags" style="padding-top:2px;"><span></span><span>Audience ↓</span><span></span></div>
+        <div class="stage-tags" style="padding-top:2px;"><span></span><span>Back ↓</span><span></span></div>
       </div>
     </div>
     <div class="corner right">
       <div class="corner-head">
         <div class="title">Band &amp; Hosts</div>
-        <div class="sub">IEM Packs Auto-Assigned</div>
       </div>
       <div class="right-content">
         <div>
@@ -322,6 +415,12 @@ body>*:not(.summary-overlay){display:none!important}
               <option value="eg2">Electric 2</option>
               <option value="keys">Keys</option>
               <option value="ag">Acoustic</option>
+            </select>
+          </div>
+          <div class="md-row" style="margin-top:6px;">
+            <span>AG →</span>
+            <select id="agSelect">
+              <option value="">— None —</option>
             </select>
           </div>
         </div>
@@ -345,7 +444,8 @@ body>*:not(.summary-overlay){display:none!important}
     <h2>Settings</h2>
     <div class="tabs">
       <button class="tab active" data-tab="inventory">Mic Inventory</button>
-      <button class="tab" data-tab="prefs">Preferences</button>
+      <button class="tab" data-tab="prefs">Mic Assignments</button>
+      <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="pco">Planning Center</button>
     </div>
     <div class="tab-panel active" id="tab-inventory">
@@ -354,9 +454,10 @@ body>*:not(.summary-overlay){display:none!important}
       <button class="add-row-btn" id="addMicBtn">+ Add mic type</button>
     </div>
     <div class="tab-panel" id="tab-prefs">
-      <p class="subtitle" style="margin-bottom:12px;">Per-person mic preferences. Auto-assign honors these first, then fills in best-available.</p>
       <div id="prefEdit"></div>
-      <button class="add-row-btn" id="addPrefBtn">+ Add preference</button>
+    </div>
+    <div class="tab-panel" id="tab-brand">
+      <div id="brandEdit"></div>
     </div>
     <div class="tab-panel" id="tab-pco">
       <div id="pcoSettingsContent"></div>
@@ -392,6 +493,49 @@ body>*:not(.summary-overlay){display:none!important}
   </div>
 </div>
 
+<!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
+<div class="display-view" id="displayView">
+  <button class="display-cog" id="displayBackBtn" title="Back to setup">⚙︎</button>
+  <div class="dv-header">
+    <h1 class="dv-title" id="dv_title">—</h1>
+    <div class="dv-date" id="dv_date"></div>
+  </div>
+
+  <div class="dv-vocalists-block">
+    <div class="dv-section-label">Vocalists</div>
+    <div class="dv-voc-grid" id="dvVocGrid"></div>
+  </div>
+
+  <div class="dv-content">
+    <div class="dv-stage-block">
+      <div class="dv-section-label">Stage</div>
+      <div class="dv-stage-box">
+        <div class="dv-stage-tags"><span>← SR</span><span>↑ Audience</span><span>SL →</span></div>
+        <div class="dv-stage-svg-wrap" id="dvStageWrap">
+          <svg class="dv-stage-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" style="color:var(--accent);">
+            <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="var(--bg-elev)" stroke="currentColor" stroke-width="2" opacity="0.9"/>
+            <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="currentColor" letter-spacing="3" opacity="0.6">BACK</text>
+            <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+          </svg>
+          <div id="dvStagePeople"></div>
+        </div>
+        <div class="dv-stage-tags" style="padding-top:6px;"><span></span><span>Back ↓</span><span></span></div>
+      </div>
+    </div>
+
+    <div class="dv-side">
+      <div class="dv-side-block">
+        <div class="dv-section-label">Band</div>
+        <ul class="dv-list" id="dvBandList"></ul>
+      </div>
+      <div class="dv-side-block">
+        <div class="dv-section-label">Handhelds</div>
+        <ul class="dv-list" id="dvHostsList"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -423,7 +567,10 @@ const DEFAULT_STATE = {
   notes: '',
   inventory: structuredClone(DEFAULT_INVENTORY),
   preferences: structuredClone(DEFAULT_PREFERENCES),
-  pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'' }
+  pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'' },
+  brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Fraunces' },
+  viewMode: 'setup',
+  theme: 'dark'
 };
 
 let state = loadState();
@@ -441,6 +588,7 @@ function loadState() {
         band: { ...DEFAULT_STATE.band, ...(p.band||{}) },
         hosts: { ...DEFAULT_STATE.hosts, ...(p.hosts||{}) },
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
+        brand: { ...DEFAULT_STATE.brand, ...(p.brand||{}) },
         inventory: p.inventory || structuredClone(DEFAULT_INVENTORY),
         preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES)
       };
@@ -454,6 +602,7 @@ function savePCOTokens(t) { if (t) localStorage.setItem(PCO_TOKEN_KEY, JSON.stri
 function uid() { return 'v_' + Math.random().toString(36).slice(2,9); }
 function esc(s) { if (s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function normName(n) { return (n||'').trim().toLowerCase().split(/\s+/)[0]; }
+function firstName(n) { return (n||'').trim().split(/\s+/)[0] || ''; }
 function getPref(name) {
   const k = normName(name);
   if (!k) return null;
@@ -528,9 +677,20 @@ function autoAssign() {
 /* ===================== VOCALIST CRUD ===================== */
 function addVocalist() {
   if (state.vocalists.length >= MAX_VOCALISTS) return;
-  state.vocalists.push({ id:uid(), name:'', leadsSongs:false, isWL:state.vocalists.length===0, hasAcoustic:false, micAssigned:'' });
+  const newV = { id:uid(), name:'', leadsSongs:false, isWL:state.vocalists.length===0, hasAcoustic:false, micAssigned:'' };
+  state.vocalists.push(newV);
+  // Give them a position immediately
+  state.assignments = computePositions(state.vocalists);
+  // Give them best-available mic without disturbing existing assignments
+  const inUse = state.vocalists.filter(v => v.id !== newV.id && v.micAssigned).map(v => v.micAssigned);
+  const pool = getMicPool();
+  for (const used of inUse) {
+    const idx = pool.findIndex(m => m.name === used);
+    if (idx !== -1) pool.splice(idx, 1);
+  }
+  if (pool.length > 0) newV.micAssigned = pool[0].name;
   saveState();
-  renderVocalists();
+  renderAll();
   setTimeout(() => {
     const inputs = document.querySelectorAll('.voc-name');
     if (inputs.length) inputs[inputs.length-1].focus();
@@ -538,7 +698,7 @@ function addVocalist() {
 }
 function removeVocalist(id) {
   state.vocalists = state.vocalists.filter(v => v.id !== id);
-  state.assignments = state.assignments.map(a => a === id ? null : a);
+  state.assignments = computePositions(state.vocalists);
   saveState(); renderAll();
 }
 function toggleVocField(id, field) {
@@ -558,7 +718,9 @@ function updateVocName(id, name) {
 }
 function setVocMic(id, mic) {
   const v = state.vocalists.find(x => x.id === id); if (!v) return;
-  v.micAssigned = mic; saveState(); renderStage();
+  v.micAssigned = mic; saveState(); renderAll();
+  // If settings panel is showing, refresh the mic assignments view too
+  if (document.getElementById('settingsOverlay').classList.contains('show')) renderPrefEditor();
 }
 
 /* ===================== RENDER VOCALISTS ===================== */
@@ -566,35 +728,91 @@ function renderVocalists() {
   document.getElementById('vocCount').textContent = `${state.vocalists.length}/${MAX_VOCALISTS}`;
   const grid = document.getElementById('vocGrid');
   grid.innerHTML = '';
-  const micOptions = state.inventory.map(m => `<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
-  state.vocalists.forEach(v => {
-    const voxIdx = state.assignments.findIndex(a => a === v.id);
-    const positionLabel = voxIdx >= 0 ? `VOX ${voxIdx+1}` : '—';
+  // Tally how many of each mic are currently assigned to vocalists
+  const micUsage = {};
+  state.vocalists.forEach(v => { if (v.micAssigned) micUsage[v.micAssigned] = (micUsage[v.micAssigned]||0) + 1; });
+  // Iterate by position (state.assignments) so VOCAL 1 is always leftmost, etc.
+  // When swaps happen, the people move, but the slot labels stay in order.
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const vid = state.assignments[i];
+    if (!vid) continue;
+    const v = state.vocalists.find(x => x.id === vid);
+    if (!v) continue;
+    const positionLabel = `VOCAL ${i+1}`;
     const pref = getPref(v.name);
+    // Per-vocalist mic options: disable any mic at capacity unless it's already this vocalist's mic
+    const micOptions = state.inventory.map(m => {
+      const used = micUsage[m.name] || 0;
+      const effectiveUsed = (m.name === v.micAssigned) ? used - 1 : used;
+      const atCap = effectiveUsed >= m.total;
+      const remaining = m.total - effectiveUsed;
+      const isSelected = m.name === v.micAssigned;
+      const label = atCap ? `${m.name} — out` : `${m.name} (${remaining})`;
+      return `<option value="${esc(m.name)}"${isSelected?' selected':''}${atCap?' disabled':''}>${esc(label)}</option>`;
+    }).join('');
     const card = document.createElement('div');
-    card.className = 'voc-card' + (v.isWL ? ' is-wl' : '');
+    card.className = 'voc-card';
+    card.dataset.vid = v.id;
     card.innerHTML = `
-      <div class="voc-row">
+      <div class="voc-pos-bar">
         <span class="voc-pos">${esc(positionLabel)}</span>
-        <input class="voc-name" type="text" value="${esc(v.name)}" placeholder="Name" data-id="${v.id}" />
         <button class="x-btn" data-id="${v.id}" data-action="remove" title="Remove">✕</button>
       </div>
-      <div class="toggles">
-        <span class="pill wl ${v.isWL?'active':''}" data-id="${v.id}" data-field="isWL" title="Worship Leader">★ WL</span>
-        <span class="pill ${v.leadsSongs?'active':''}" data-id="${v.id}" data-field="leadsSongs" title="Leads songs">Leads</span>
-        <span class="pill ag ${v.hasAcoustic?'active':''}" data-id="${v.id}" data-field="hasAcoustic" title="Plays acoustic">🎸 AG</span>
-      </div>
-      <div class="mic-pick">
-        <label>Mic</label>
-        <select class="mic-select" data-id="${v.id}">
-          <option value="">— pick —</option>
-          ${micOptions.replace(`value="${esc(v.micAssigned)}"`, `value="${esc(v.micAssigned)}" selected`)}
-        </select>
-        ${pref ? `<span class="pref-tag" title="Preference: ${esc(pref)}">★</span>` : ''}
+      <div class="voc-body" draggable="true" title="Drag to swap with another vocal">
+        <input class="voc-name" type="text" value="${esc(v.name)}" placeholder="Name" data-id="${v.id}" />
+        <div class="mic-pick">
+          <label>Mic</label>
+          <select class="mic-select" data-id="${v.id}">
+            <option value="">— pick —</option>
+            ${micOptions}
+          </select>
+          ${v.hasAcoustic ? `<span class="ag-badge" title="Plays acoustic guitar">🎸 AG</span>` : ''}
+          ${pref ? `<span class="pref-tag" title="Preference: ${esc(pref)}">★</span>` : ''}
+        </div>
       </div>
     `;
+    // Drag source: only the body (name + mic), not the position pill
+    const body = card.querySelector('.voc-body');
+    body.addEventListener('dragstart', e => {
+      if (e.target.matches('input, select, option, button, textarea')) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData('text/plain', v.id);
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setDragImage(body, 30, 30); } catch(_){}
+      card.classList.add('dragging');
+    });
+    body.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.voc-card').forEach(c => c.classList.remove('drop-target'));
+    });
+    // Drop target: whole card (so dropping on the pill area works too)
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!card.classList.contains('dragging')) card.classList.add('drop-target');
+    });
+    card.addEventListener('dragleave', e => {
+      if (!card.contains(e.relatedTarget)) card.classList.remove('drop-target');
+    });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drop-target');
+      const fromVid = e.dataTransfer.getData('text/plain');
+      const toVid = v.id;
+      if (!fromVid || fromVid === toVid) return;
+      const fromIdx = state.assignments.findIndex(a => a === fromVid);
+      const toIdx = state.assignments.findIndex(a => a === toVid);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const tmp = state.assignments[fromIdx];
+      state.assignments[fromIdx] = state.assignments[toIdx];
+      state.assignments[toIdx] = tmp;
+      saveState();
+      renderAll();
+    });
     grid.appendChild(card);
-  });
+  }
   if (state.vocalists.length < MAX_VOCALISTS) {
     const add = document.createElement('button');
     add.className = 'add-card';
@@ -603,7 +821,6 @@ function renderVocalists() {
     grid.appendChild(add);
   }
   grid.querySelectorAll('.voc-name').forEach(input => input.addEventListener('input', e => updateVocName(e.target.dataset.id, e.target.value)));
-  grid.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => toggleVocField(p.dataset.id, p.dataset.field)));
   grid.querySelectorAll('[data-action="remove"]').forEach(b => b.addEventListener('click', () => removeVocalist(b.dataset.id)));
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
 }
@@ -612,7 +829,7 @@ function renderVocalists() {
 const BAND_POSITIONS = [
   { key:'drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer' },
   { key:'bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass' },
-  { key:'eg1',   label:'Electric 1', pack:'Electric Pack', placeholder:'EG1' },
+  { key:'eg1',   label:'Electric 1', pack:'EG Pack', placeholder:'EG1' },
   { key:'eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2 (opt)' },
   { key:'keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys' },
   { key:'ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG (opt)' }
@@ -626,7 +843,7 @@ function renderBand() {
     slot.className = 'band-input' + (isMD ? ' is-md' : '');
     slot.innerHTML = `
       <span class="lbl">
-        <span>${p.label}${isMD ? ' <span class="md-star">★</span>' : ''}</span>
+        <span>${p.label}${isMD ? ' <span class="md-tag">MD</span>' : ''}</span>
         <span class="pack-mini">${p.pack.replace(' Pack','')}</span>
       </span>
       <input type="text" value="${esc(state.band[p.key]||'')}" placeholder="${esc(p.placeholder)}" data-band-key="${p.key}"/>
@@ -639,10 +856,28 @@ function renderBand() {
       saveState(); renderStage();
     });
   });
+  // MD selector
   document.getElementById('mdSelect').value = state.musicDirector || '';
   document.getElementById('mdSelect').onchange = (e) => {
     state.musicDirector = e.target.value || null;
-    saveState(); renderBand(); renderStage();
+    saveState(); renderBand(); renderStage(); if (state.viewMode==='display') renderDisplayView();
+  };
+  // AG selector — populate with current vocalists
+  const agSel = document.getElementById('agSelect');
+  const currentAG = state.vocalists.find(v => v.hasAcoustic);
+  let agHtml = '<option value="">— None —</option>';
+  state.vocalists.forEach(v => {
+    const label = v.name.trim() || '(unnamed)';
+    agHtml += `<option value="${v.id}"${currentAG && currentAG.id === v.id ? ' selected' : ''}>${esc(label)}</option>`;
+  });
+  agSel.innerHTML = agHtml;
+  agSel.onchange = (e) => {
+    state.vocalists.forEach(v => v.hasAcoustic = false);
+    if (e.target.value) {
+      const v = state.vocalists.find(x => x.id === e.target.value);
+      if (v) v.hasAcoustic = true;
+    }
+    saveState(); renderVocalists(); renderStage(); if (state.viewMode==='display') renderDisplayView();
   };
 }
 
@@ -657,21 +892,20 @@ function renderHosts() {
 }
 function renderService() {
   document.getElementById('serviceDate').value = state.service.date || '';
-  document.getElementById('serviceTime').value = state.service.time || '9:45 AM';
   document.getElementById('serviceName').value = state.service.name || 'Sunday Morning';
 }
 
 /* ===================== STAGE ===================== */
 const BAND_STAGE_POS = {
-  keys:  { x:130, y:65 },
-  eg1:   { x:250, y:80 },
-  ag:    { x:340, y:100 },
-  eg2:   { x:460, y:100 },
-  bass:  { x:550, y:80 },
-  drums: { x:670, y:65 }
+  keys:  { x:130, y:315 },
+  eg1:   { x:250, y:300 },
+  ag:    { x:340, y:280 },
+  eg2:   { x:460, y:280 },
+  bass:  { x:550, y:300 },
+  drums: { x:670, y:315 }
 };
 function getVoxPositions(count) {
-  const P0 = { x:780, y:234 }, P1 = { x:400, y:358 }, P2 = { x:20, y:234 };
+  const P0 = { x:780, y:146 }, P1 = { x:400, y:22 }, P2 = { x:20, y:146 };
   function bez(t) { const mt = 1-t; return { x:mt*mt*P0.x + 2*mt*t*P1.x + t*t*P2.x, y:mt*mt*P0.y + 2*mt*t*P1.y + t*t*P2.y }; }
   const MARGIN = 38;
   const inset = Math.max(0.08, 0.5/count);
@@ -679,7 +913,8 @@ function getVoxPositions(count) {
   for (let i=0; i<count; i++) {
     const t = count === 1 ? 0.5 : (1-inset) - (i/(count-1)) * (1-2*inset);
     const pt = bez(t);
-    positions.push({ x:pt.x, y:pt.y - MARGIN });
+    // Audience is at top now — push vocalists INWARD (down, toward the back of stage)
+    positions.push({ x:pt.x, y:pt.y + MARGIN });
   }
   return positions;
 }
@@ -697,7 +932,7 @@ function renderStage() {
     el.className = 'sp ' + (name ? 'occupied' : 'empty');
     const css = toPct(pos);
     el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="sp-role">${esc(p.label)}${isMD?' ★':''}</div><div class="sp-name">${name?esc(name):p.placeholder}</div>`;
+    el.innerHTML = `<div class="sp-role">${esc(p.label)}${isMD?' · MD':''}</div><div class="sp-name">${name?esc(firstName(name)):p.placeholder}</div>`;
     wrap.appendChild(el);
   });
   const filledIds = state.assignments.filter(a => a !== null);
@@ -712,12 +947,12 @@ function renderStage() {
       if (!v) continue;
       const pos = voxPositions[posIdx++];
       const el = document.createElement('div');
-      el.className = 'sp occupied' + (v.isWL ? ' is-wl' : (v.leadsSongs ? ' leader' : ''));
+      el.className = 'sp occupied';
       const css = toPct(pos);
       el.style.left = css.left; el.style.top = css.top;
       el.draggable = true;
       el.dataset.voxIdx = String(i);
-      el.innerHTML = `<div class="sp-role">VOX ${i+1}</div><div class="sp-name">${esc(v.name||'Unnamed')}</div><div class="sp-mic">${esc(v.micAssigned||'—')}</div>`;
+      el.innerHTML = `<div class="sp-role">VOCAL ${i+1}</div><div class="sp-name">${esc(firstName(v.name) || '—')}</div>`;
       el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.voxIdx); e.dataTransfer.effectAllowed='move'; el.classList.add('dragging'); });
       el.addEventListener('dragend', () => { el.classList.remove('dragging'); document.querySelectorAll('.sp').forEach(p => p.classList.remove('drop-target')); });
       el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-target'); });
@@ -743,10 +978,121 @@ function openSettings(tab='inventory') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
   renderInvEditor();
   renderPrefEditor();
+  renderBrandEditor();
   renderPCOSettings();
   document.getElementById('settingsOverlay').classList.add('show');
 }
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); renderAll(); }
+
+function renderBrandEditor() {
+  const el = document.getElementById('brandEdit');
+  const b = state.brand;
+  const FONT_OPTIONS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:16px;">Customize the app's look. Pick from common church-friendly palettes below or fine-tune your own.</p>
+    <div class="setup-steps" style="margin-bottom:18px;">
+      <strong style="display:block;margin-bottom:8px;">Quick presets</strong>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" data-preset="daybreak">Daybreak (B&amp;W)</button>
+        <button class="btn" data-preset="warm-amber">Warm Amber</button>
+        <button class="btn" data-preset="forest">Forest</button>
+        <button class="btn" data-preset="navy">Navy &amp; Gold</button>
+        <button class="btn" data-preset="sage">Sage</button>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Primary Accent Color</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="brandAccent" value="${esc(b.accent)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
+        <input type="text" id="brandAccentHex" class="field-input" value="${esc(b.accent)}" style="flex:1;" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Highlight Color (hover, lighter accent)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="brandAccent2" value="${esc(b.accent2)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
+        <input type="text" id="brandAccent2Hex" class="field-input" value="${esc(b.accent2)}" style="flex:1;" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Worship Leader Color</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="brandWl" value="${esc(b.wl)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
+        <input type="text" id="brandWlHex" class="field-input" value="${esc(b.wl)}" style="flex:1;" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Display Font</label>
+      <select id="brandFont" class="field-input" style="cursor:pointer;">
+        ${FONT_OPTIONS.map(f => `<option value="${esc(f)}"${f===b.font?' selected':''}>${esc(f)}</option>`).join('')}
+      </select>
+      <div class="field-help">All these are loaded from Google Fonts when you save. Picks similar to typical church website typography.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn primary" id="brandSaveBtn">Apply Brand</button>
+      <button class="btn ghost" id="brandResetBtn">Reset to Defaults</button>
+    </div>
+  `;
+
+  const PRESETS = {
+    'daybreak':    { accent:'#2d2d2d', accent2:'#4a4a4a', wl:'#2d2d2d', font:'Inter' },
+    'warm-amber':  { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Fraunces' },
+    'forest':      { accent:'#5b7553', accent2:'#7a9968', wl:'#9bb377', font:'Lora' },
+    'navy':        { accent:'#c9a661', accent2:'#e0bc7c', wl:'#f0d490', font:'Playfair Display' },
+    'sage':        { accent:'#8aa888', accent2:'#a5c0a3', wl:'#b8d2b6', font:'Crimson Pro' }
+  };
+
+  el.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = PRESETS[btn.dataset.preset];
+      Object.assign(state.brand, p);
+      saveState();
+      renderBrandEditor();
+      applyBrand();
+      ensureFontLoaded(p.font);
+      toast('Brand applied','success');
+    });
+  });
+
+  function syncColor(colorEl, hexEl, key) {
+    colorEl.addEventListener('input', e => { hexEl.value = e.target.value; state.brand[key] = e.target.value; saveState(); applyBrand(); });
+    hexEl.addEventListener('change', e => {
+      const v = e.target.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { colorEl.value = v; state.brand[key] = v; saveState(); applyBrand(); }
+    });
+  }
+  syncColor(document.getElementById('brandAccent'),  document.getElementById('brandAccentHex'),  'accent');
+  syncColor(document.getElementById('brandAccent2'), document.getElementById('brandAccent2Hex'), 'accent2');
+  syncColor(document.getElementById('brandWl'),      document.getElementById('brandWlHex'),      'wl');
+  document.getElementById('brandFont').addEventListener('change', e => {
+    state.brand.font = e.target.value;
+    saveState(); applyBrand();
+    ensureFontLoaded(state.brand.font);
+  });
+  document.getElementById('brandSaveBtn').addEventListener('click', () => {
+    applyBrand();
+    ensureFontLoaded(state.brand.font);
+    toast('Brand saved','success');
+  });
+  document.getElementById('brandResetBtn').addEventListener('click', () => {
+    state.brand = structuredClone(DEFAULT_STATE.brand);
+    saveState();
+    renderBrandEditor();
+    applyBrand();
+    toast('Reset to defaults');
+  });
+}
+
+function ensureFontLoaded(fontName) {
+  if (!fontName) return;
+  const id = 'brand-font-' + fontName.replace(/\s+/g,'-');
+  if (document.getElementById(id)) return;
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap`;
+  document.head.appendChild(link);
+}
 function renderInvEditor() {
   const el = document.getElementById('invEdit');
   el.innerHTML = '';
@@ -782,9 +1128,102 @@ function renderInvEditor() {
 function renderPrefEditor() {
   const el = document.getElementById('prefEdit');
   el.innerHTML = '';
+
+  // Tally usage for capacity awareness
+  const micUsage = {};
+  state.vocalists.forEach(v => { if (v.micAssigned) micUsage[v.micAssigned] = (micUsage[v.micAssigned]||0)+1; });
+
+  // ---- SECTION 1: Current vocalists (this service) ----
+  const cur = document.createElement('div');
+  cur.style.marginBottom = '28px';
+  cur.innerHTML = `
+    <div class="section-label" style="margin-bottom:8px;">Current Service Vocalists</div>
+    <p class="subtitle" style="margin-bottom:12px;font-size:12px;">Override mic assignments for this service. Changes apply immediately.</p>
+  `;
+  if (state.vocalists.length === 0) {
+    cur.innerHTML += `<div style="font-family:var(--ff-mono);font-size:11.5px;color:var(--text-faint);padding:6px 0;font-style:italic;">No vocalists added yet. Pull a plan from PCO or add manually from the main view.</div>`;
+  } else {
+    for (let idx = 0; idx < MAX_VOCALISTS; idx++) {
+      const vid = state.assignments[idx];
+      if (!vid) continue;
+      const v = state.vocalists.find(x => x.id === vid);
+      if (!v) continue;
+      const positionLabel = `VOCAL ${idx+1}`;
+      const options = state.inventory.map(m => {
+        const used = micUsage[m.name] || 0;
+        const effectiveUsed = (m.name === v.micAssigned) ? used - 1 : used;
+        const atCap = effectiveUsed >= m.total;
+        const remaining = m.total - effectiveUsed;
+        const isSel = m.name === v.micAssigned;
+        const label = atCap ? `${m.name} — out` : `${m.name} (${remaining})`;
+        return `<option value="${esc(m.name)}"${isSel?' selected':''}${atCap?' disabled':''}>${esc(label)}</option>`;
+      }).join('');
+      const row = document.createElement('div');
+      row.className = 'pref-row current-row';
+      row.draggable = true;
+      row.dataset.vid = v.id;
+      row.style.gridTemplateColumns = '24px 70px 1fr 1.3fr';
+      row.innerHTML = `
+        <span class="drag-grip" title="Drag to swap position">⋮⋮</span>
+        <span style="font-family:var(--ff-mono);font-size:9.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-weight:600;display:flex;align-items:center;">${esc(positionLabel)}</span>
+        <span style="font-family:var(--ff-display);font-size:14.5px;font-weight:500;display:flex;align-items:center;">${esc(v.name || '(unnamed)')}</span>
+        <select data-vid="${v.id}" data-action="set-current-mic">
+          <option value="">— pick —</option>
+          ${options}
+        </select>
+      `;
+      // Drag source
+      row.addEventListener('dragstart', e => {
+        // Don't start drag from form control
+        if (e.target.matches('select, option, input')) { e.preventDefault(); return; }
+        e.dataTransfer.setData('text/plain', v.id);
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('dragging');
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('dragging');
+        document.querySelectorAll('.current-row').forEach(r => r.classList.remove('drop-target'));
+      });
+      // Drop target
+      row.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (!row.classList.contains('dragging')) row.classList.add('drop-target');
+      });
+      row.addEventListener('dragleave', e => {
+        if (!row.contains(e.relatedTarget)) row.classList.remove('drop-target');
+      });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        row.classList.remove('drop-target');
+        const fromVid = e.dataTransfer.getData('text/plain');
+        const toVid = v.id;
+        if (!fromVid || fromVid === toVid) return;
+        const fromIdx = state.assignments.findIndex(a => a === fromVid);
+        const toIdx = state.assignments.findIndex(a => a === toVid);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const tmp = state.assignments[fromIdx];
+        state.assignments[fromIdx] = state.assignments[toIdx];
+        state.assignments[toIdx] = tmp;
+        saveState();
+        renderAll();
+        renderPrefEditor();
+      });
+      cur.appendChild(row);
+    }
+  }
+  el.appendChild(cur);
+
+  // ---- SECTION 2: Saved name preferences (recurring) ----
+  const saved = document.createElement('div');
+  saved.innerHTML = `
+    <div class="section-label" style="margin-bottom:8px;">Saved Preferences (by name)</div>
+    <p class="subtitle" style="margin-bottom:12px;font-size:12px;">Auto-assign honors these whenever someone with this name is in the lineup.</p>
+  `;
+  el.appendChild(saved);
   const entries = Object.entries(state.preferences);
   if (entries.length === 0) {
-    el.innerHTML = `<div style="font-family:var(--ff-mono);font-size:11.5px;color:var(--text-faint);padding:6px 0;font-style:italic;">No preferences saved yet.</div>`;
+    saved.innerHTML += `<div style="font-family:var(--ff-mono);font-size:11.5px;color:var(--text-faint);padding:6px 0;font-style:italic;">No preferences saved yet.</div>`;
   }
   entries.forEach(([name, mic]) => {
     const row = document.createElement('div');
@@ -793,9 +1232,39 @@ function renderPrefEditor() {
     row.innerHTML = `
       <input type="text" value="${esc(name)}" data-name="${esc(name)}" data-field="name" />
       <select data-name="${esc(name)}" data-field="mic">${options}</select>
-      <button class="x-btn" data-name="${esc(name)}" data-action="remove">✕</button>
+      <button class="x-btn" data-name="${esc(name)}" data-action="remove-pref">✕</button>
     `;
-    el.appendChild(row);
+    saved.appendChild(row);
+  });
+
+  // Add Preference button at bottom of Saved section
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-row-btn';
+  addBtn.id = 'addPrefBtnInline';
+  addBtn.textContent = '+ Add saved preference';
+  addBtn.addEventListener('click', () => {
+    const name = prompt("Person's first name?");
+    if (!name || !name.trim()) return;
+    const micList = state.inventory.map(m => m.name).join(', ');
+    const mic = prompt(`Preferred mic for ${name.trim()}?\nAvailable: ${micList}`);
+    if (!mic || !mic.trim()) return;
+    const found = state.inventory.find(m => m.name.toLowerCase() === mic.trim().toLowerCase());
+    if (!found) { toast('Mic not in inventory','error'); return; }
+    state.preferences[name.trim()] = found.name;
+    saveState(); renderPrefEditor();
+  });
+  saved.appendChild(addBtn);
+
+  // Wire handlers
+  el.querySelectorAll('[data-action="set-current-mic"]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const v = state.vocalists.find(x => x.id === e.target.dataset.vid);
+      if (!v) return;
+      v.micAssigned = e.target.value;
+      saveState();
+      renderAll();
+      renderPrefEditor();
+    });
   });
   el.querySelectorAll('input[data-field="name"]').forEach(input => {
     input.addEventListener('change', e => {
@@ -808,8 +1277,8 @@ function renderPrefEditor() {
       saveState(); renderPrefEditor();
     });
   });
-  el.querySelectorAll('select').forEach(sel => sel.addEventListener('change', e => { state.preferences[e.target.dataset.name] = e.target.value; saveState(); }));
-  el.querySelectorAll('[data-action="remove"]').forEach(btn => btn.addEventListener('click', e => { delete state.preferences[btn.dataset.name]; saveState(); renderPrefEditor(); }));
+  el.querySelectorAll('select[data-field="mic"]').forEach(sel => sel.addEventListener('change', e => { state.preferences[e.target.dataset.name] = e.target.value; saveState(); }));
+  el.querySelectorAll('[data-action="remove-pref"]').forEach(btn => btn.addEventListener('click', e => { delete state.preferences[btn.dataset.name]; saveState(); renderPrefEditor(); }));
 }
 
 /* ===================== PCO OAUTH PKCE ===================== */
@@ -1046,7 +1515,7 @@ function populatePlanSelect() {
   // Sort by sort_date descending so the next/most-recent plan is at the top
   const sorted = [...pcoPlans].sort((a, b) => {
     const da = a.sortDate || ''; const db = b.sortDate || '';
-    return db.localeCompare(da);
+    return da.localeCompare(db);
   });
   sel.innerHTML = '<option value="">— Plan —</option>' + sorted.map(p => {
     // Format date nicely if present
@@ -1116,12 +1585,28 @@ function applyPCOPlanData(planData, tmRes) {
   if (planData && planData.attributes && planData.attributes.sort_date) {
     state.service.date = planData.attributes.sort_date.slice(0,10);
   }
+  // Pull event title from PCO: prefer "series_title" (often the sermon series), fallback to plan title
+  if (planData && planData.attributes) {
+    const a = planData.attributes;
+    const title = a.series_title || a.title || a.plan_title || '';
+    if (title) state.service.name = title;
+  }
   state.vocalists = [];
   state.assignments = [null,null,null,null,null,null];
   state.band = { drums:'', bass:'', eg1:'', eg2:'', keys:'', ag:'' };
   state.hosts = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
   let mdNameCandidate = null;
   const egNames = [];
+  // First pass: figure out which people have an Acoustic Guitar position assigned in this plan
+  const acousticPlayers = new Set();
+  teamMembers.forEach(tm => {
+    const a = tm.attributes;
+    if ((a.status||'') === 'D') return;
+    const cls = classifyPosition(a.team_position_name || '');
+    if (cls.kind === 'band' && cls.position === 'ag' && a.name) {
+      acousticPlayers.add(normName(a.name));
+    }
+  });
   teamMembers.forEach(tm => {
     const a = tm.attributes;
     const name = a.name || '';
@@ -1132,7 +1617,15 @@ function applyPCOPlanData(planData, tmRes) {
     const cls = classifyPosition(positionName);
     if (cls.kind === 'vocalist') {
       if (state.vocalists.length >= MAX_VOCALISTS) return;
-      state.vocalists.push({ id:uid(), name, leadsSongs:cls.leadsSongs, isWL:cls.isWL && !state.vocalists.some(v=>v.isWL), hasAcoustic:false, micAssigned:'' });
+      // Don't double-add the same person if they have multiple vocal positions
+      if (state.vocalists.some(v => normName(v.name) === normName(name))) return;
+      state.vocalists.push({
+        id: uid(), name,
+        leadsSongs: cls.leadsSongs,
+        isWL: cls.isWL && !state.vocalists.some(v => v.isWL),
+        hasAcoustic: acousticPlayers.has(normName(name)),
+        micAssigned: ''
+      });
     } else if (cls.kind === 'band') {
       if (cls.position === 'eg') egNames.push(name);
       else if (!state.band[cls.position]) state.band[cls.position] = name;
@@ -1259,7 +1752,7 @@ function fillSummary() {
   const s = state.service;
   document.getElementById('s_title').textContent = s.name || 'Service';
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString(undefined, {weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
-  document.getElementById('s_date').textContent = [dateStr, s.time].filter(Boolean).join(' · ');
+  document.getElementById('s_date').textContent = dateStr;
   document.getElementById('s_footerMeta').textContent = new Date().toLocaleDateString(undefined, {month:'short',day:'numeric'});
   const vocList = document.getElementById('s_vocList');
   vocList.innerHTML = '';
@@ -1268,7 +1761,7 @@ function fillSummary() {
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const li = document.createElement('li');
     li.className = 's-item';
-    li.innerHTML = `<span class="pos">VOX ${i+1}</span><span class="name ${v.isWL?'is-wl':''}">${esc(v.name||'—')}${v.hasAcoustic?' <span style="color:#7a9960;font-size:.8em;">+ AG</span>':''}</span><span class="detail">${esc(v.micAssigned||'—')}</span>`;
+    li.innerHTML = `<span class="pos">VOCAL ${i+1}</span><span class="name">${esc(v.name||'—')}${v.hasAcoustic?' <span style="color:#7a9960;font-size:.8em;">+ AG</span>':''}</span><span class="detail">${esc(v.micAssigned||'—')}</span>`;
     vocList.appendChild(li);
   }
   const bandList = document.getElementById('s_bandList');
@@ -1279,7 +1772,7 @@ function fillSummary() {
     const isMD = state.musicDirector === p.key;
     const li = document.createElement('li');
     li.className = 's-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(p.label)}${isMD?' ★':''}</span><span class="name">${esc(name||'—')}</span><span class="detail">${esc(p.pack)}</span>`;
+    li.innerHTML = `<span class="pos">${esc(p.label)}${isMD?' · MD':''}</span><span class="name">${esc(name||'—')}</span><span class="detail">${esc(p.pack)}</span>`;
     bandList.appendChild(li);
   });
   const hhList = document.getElementById('s_hhList');
@@ -1307,18 +1800,18 @@ function fillSummary() {
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const li = document.createElement('li');
     li.className = 's-item';
-    li.innerHTML = `<span class="pos">Vox ${i+1} Pack</span><span class="name ${v.isWL?'is-wl':''}">${esc(v.name||'—')}</span><span class="detail"></span>`;
+    li.innerHTML = `<span class="pos">Vocal ${i+1} Pack</span><span class="name">${esc(v.name||'—')}</span><span class="detail"></span>`;
     iemList.appendChild(li);
   }
 }
 function copySummaryText() {
   const s = state.service;
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString() : '';
-  const lines = [`${s.name||'Service'} — ${dateStr} ${s.time}`, '━'.repeat(40), '', 'VOCALISTS'];
+  const lines = [`${s.name||'Service'} — ${dateStr}`, '━'.repeat(40), '', 'VOCALISTS'];
   for (let i=0; i<6; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
-    lines.push(`  VOX ${i+1}  ${v.name}${v.isWL?' ★':''}${v.hasAcoustic?' +AG':''}  —  ${v.micAssigned||'—'}`);
+    lines.push(`  VOCAL ${i+1}  ${v.name}${v.isWL?' ★':''}${v.hasAcoustic?' +AG':''}  —  ${v.micAssigned||'—'}`);
   }
   lines.push('', 'BAND');
   BAND_POSITIONS.forEach(p => {
@@ -1345,37 +1838,184 @@ function toast(msg, kind='') {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+/* ===================== DISPLAY VIEW ===================== */
+function enterDisplayMode() {
+  document.body.classList.add('display-mode');
+  state.viewMode = 'display';
+  saveState();
+  renderDisplayView();
+}
+function exitDisplayMode() {
+  document.body.classList.remove('display-mode');
+  state.viewMode = 'setup';
+  saveState();
+}
+function renderDisplayView() {
+  const s = state.service;
+  document.getElementById('dv_title').textContent = s.name || 'Service';
+  const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString(undefined, {weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+  document.getElementById('dv_date').textContent = dateStr;
+
+  // Stage diagram
+  const wrap = document.getElementById('dvStagePeople');
+  wrap.innerHTML = '';
+  const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
+  BAND_POSITIONS.forEach(p => {
+    const name = (state.band[p.key]||'').trim();
+    if ((p.key==='eg2' || p.key==='ag') && !name) return;
+    const pos = BAND_STAGE_POS[p.key]; if (!pos) return;
+    const isMD = state.musicDirector === p.key;
+    const el = document.createElement('div');
+    el.className = 'dv-sp ' + (name ? 'occupied' : 'empty');
+    const css = toPct(pos);
+    el.style.left = css.left; el.style.top = css.top;
+    el.innerHTML = `<div class="dv-sp-role">${esc(p.label)}${isMD?' · MD':''}</div><div class="dv-sp-name">${name?esc(firstName(name)):p.placeholder}</div>`;
+    wrap.appendChild(el);
+  });
+  const filledIds = state.assignments.filter(a => a !== null);
+  const count = filledIds.length;
+  if (count > 0) {
+    const voxPositions = getVoxPositions(count);
+    let posIdx = 0;
+    for (let i=0; i<6; i++) {
+      const id = state.assignments[i]; if (!id) continue;
+      const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+      const pos = voxPositions[posIdx++];
+      const el = document.createElement('div');
+      el.className = 'dv-sp';
+      const css = toPct(pos);
+      el.style.left = css.left; el.style.top = css.top;
+      el.innerHTML = `<div class="dv-sp-role">VOCAL ${i+1}</div><div class="dv-sp-name">${esc(firstName(v.name) || '—')}</div>`;
+      wrap.appendChild(el);
+    }
+  }
+
+  // Vocalist cards
+  const vocGrid = document.getElementById('dvVocGrid');
+  vocGrid.innerHTML = '';
+  for (let i=0; i<6; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    const card = document.createElement('div');
+    card.className = 'dv-voc-card';
+    card.innerHTML = `
+      <div class="dv-voc-pos">VOCAL ${i+1}</div>
+      <div class="dv-voc-name">${esc(v.name||'—')}${v.hasAcoustic?'<span class="dv-voc-ag">🎸 AG</span>':''}</div>
+      <div class="dv-voc-meta">
+        <div class="dv-voc-line"><span class="lbl">Mic</span><span class="val ${v.micAssigned?'':'empty'}">${esc(v.micAssigned||'—')}</span></div>
+        <div class="dv-voc-line"><span class="lbl">IEM Pack</span><span class="val">Vocal ${i+1}</span></div>
+      </div>
+    `;
+    vocGrid.appendChild(card);
+  }
+  if (vocGrid.innerHTML === '') {
+    vocGrid.innerHTML = '<div style="font-family:var(--ff-display);font-style:italic;color:#b0a07a;font-size:18px;padding:30px;text-align:center;grid-column:1/-1;">No vocalists set yet.</div>';
+  }
+
+  // Band list
+  const bandList = document.getElementById('dvBandList');
+  bandList.innerHTML = '';
+  BAND_POSITIONS.forEach(p => {
+    const name = state.band[p.key];
+    if ((p.key==='eg2'||p.key==='ag') && !name) return;
+    const isMD = state.musicDirector === p.key;
+    const li = document.createElement('li');
+    li.className = 'dv-list-item' + (name ? '' : ' empty');
+    li.innerHTML = `<span class="pos">${esc(p.label)}</span><span class="name ${isMD?'is-md':''}">${esc(name||'—')}</span><span class="detail">${esc(p.pack)}</span>`;
+    bandList.appendChild(li);
+  });
+
+  // Hosts list
+  const hostsList = document.getElementById('dvHostsList');
+  hostsList.innerHTML = '';
+  const hosts = [
+    { pos:'Pastor', name:state.hosts.speaker },
+    { pos:'HH 1',   name:state.hosts.welcomeHost1 },
+    { pos:'HH 2',   name:state.hosts.welcomeHost2 },
+    { pos:'HH 3',   name:state.hosts.hh3 }
+  ];
+  let anyHost = false;
+  hosts.forEach(h => {
+    if (!h.name) return;
+    anyHost = true;
+    const li = document.createElement('li');
+    li.className = 'dv-list-item';
+    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail"></span>`;
+    hostsList.appendChild(li);
+  });
+  if (!anyHost) {
+    hostsList.innerHTML = '<li class="dv-list-item empty"><span class="pos">—</span><span class="name">No hosts assigned</span><span class="detail"></span></li>';
+  }
+}
+
+function setTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+  state.theme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = theme === 'light' ? '☀' : '☾';
+  saveState();
+}
+function toggleTheme() {
+  setTheme(state.theme === 'light' ? 'dark' : 'light');
+}
+
+function applyBrand() {
+  const b = state.brand || {};
+  const root = document.documentElement;
+  if (b.accent)  root.style.setProperty('--accent',  b.accent);
+  if (b.accent2) root.style.setProperty('--accent-2', b.accent2);
+  if (b.wl)      root.style.setProperty('--wl', b.wl);
+  if (b.font)    root.style.setProperty('--ff-display', `'${b.font}', Georgia, serif`);
+  // Re-derive accent-dim and pick readable button text color based on luminance
+  if (b.accent) {
+    const r = parseInt(b.accent.slice(1,3),16);
+    const g = parseInt(b.accent.slice(3,5),16);
+    const bl= parseInt(b.accent.slice(5,7),16);
+    root.style.setProperty('--accent-dim', `rgba(${r},${g},${bl},0.12)`);
+    root.style.setProperty('--accent-glow', `rgba(${r},${g},${bl},0.35)`);
+    // Relative luminance — pick white text on dark accents, dark text on light accents
+    const luma = (0.299*r + 0.587*g + 0.114*bl);
+    root.style.setProperty('--btn-primary-text', luma < 130 ? '#ffffff' : '#1a1408');
+  }
+}
+
 /* ===================== RESET / RENDER ALL ===================== */
 function resetAll() {
   if (!confirm('Clear this week\'s vocalists, band, hosts, and notes? Mic inventory, preferences, and Planning Center connection will be kept.')) return;
-  const preserved = { inventory: state.inventory, preferences: state.preferences, pcoConfig: state.pcoConfig };
+  const preserved = { inventory: state.inventory, preferences: state.preferences, pcoConfig: state.pcoConfig, brand: state.brand };
   state = structuredClone(DEFAULT_STATE);
   state.service.date = new Date().toISOString().slice(0,10);
   state.inventory = preserved.inventory;
   state.preferences = preserved.preferences;
   state.pcoConfig = preserved.pcoConfig;
+  state.brand = preserved.brand;
   saveState();
   renderAll();
   toast('Reset for a new service');
 }
 function renderAll() {
+  applyBrand();
   renderService();
   renderVocalists();
   renderBand();
   renderHosts();
   renderStage();
+  if (state.viewMode === 'display') renderDisplayView();
 }
 
 /* ===================== INIT ===================== */
 function init() {
   document.getElementById('serviceDate').addEventListener('change', e => { state.service.date = e.target.value; saveState(); });
-  document.getElementById('serviceTime').addEventListener('change', e => { state.service.time = e.target.value; saveState(); });
-  document.getElementById('serviceName').addEventListener('change', e => { state.service.name = e.target.value; saveState(); });
+  document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
   document.getElementById('assignBtn').addEventListener('click', autoAssign);
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);
+  document.getElementById('displayBtn').addEventListener('click', enterDisplayMode);
+  document.getElementById('displayBackBtn').addEventListener('click', exitDisplayMode);
+  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
   document.getElementById('printFromSummaryBtn').addEventListener('click', () => window.print());
   document.getElementById('copySummaryBtn').addEventListener('click', copySummaryText);
   document.getElementById('settingsBtn').addEventListener('click', () => openSettings('inventory'));
@@ -1385,17 +2025,6 @@ function init() {
     const maxRank = state.inventory.reduce((m,x) => Math.max(m,x.rank), 0);
     state.inventory.push({ name:'New Mic', total:1, rank:maxRank+1 });
     saveState(); renderInvEditor();
-  });
-  document.getElementById('addPrefBtn').addEventListener('click', () => {
-    const name = prompt('Person\'s first name?');
-    if (!name || !name.trim()) return;
-    const micList = state.inventory.map(m => m.name).join(', ');
-    const mic = prompt(`Preferred mic for ${name.trim()}?\nAvailable: ${micList}`);
-    if (!mic || !mic.trim()) return;
-    const found = state.inventory.find(m => m.name.toLowerCase() === mic.trim().toLowerCase());
-    if (!found) { toast('Mic not in inventory','error'); return; }
-    state.preferences[name.trim()] = found.name;
-    saveState(); renderPrefEditor();
   });
   document.getElementById('pcoBtn').addEventListener('click', () => {
     if (pcoTokens) {
@@ -1434,8 +2063,16 @@ function init() {
     state.hosts.welcomeHost1 = 'Ben Graves';
     saveState();
   }
+  setTheme(state.theme || 'dark');
   renderAll();
   if (state.assignments.every(a => a === null) && state.vocalists.length > 0) autoAssign();
+  // Restore display mode if it was active
+  if (state.viewMode === 'display') {
+    document.body.classList.add('display-mode');
+    renderDisplayView();
+  }
+  // Load any custom font
+  if (state.brand && state.brand.font && state.brand.font !== 'Fraunces') ensureFontLoaded(state.brand.font);
   if (window.location.search.includes('code=')) pcoHandleRedirect();
   else if (pcoTokens) { showPCOBar(); pcoLoadServiceTypes(); }
 }
