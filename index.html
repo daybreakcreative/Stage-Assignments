@@ -104,9 +104,10 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .rs-meta .rs-key{background:var(--accent-dim);color:var(--accent);padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.08em}
 .rs-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);font-weight:500;white-space:nowrap;align-self:baseline}
 /* Display view — service order */
-.dv-run-sheet{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px}
+.dv-run-sheet{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px;flex:1;min-height:0}
 .dv-rs-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:baseline;font-family:var(--ff-body)}
-.dv-rs-item.header{background:transparent;border-color:transparent;padding:6px 2px 2px;grid-template-columns:1fr}
+.dv-rs-item.header{background:transparent;border-color:transparent;padding:8px 2px 2px;margin-top:6px;grid-template-columns:1fr}
+.dv-rs-item.header:first-child{margin-top:0}
 .dv-rs-item.header .dv-rs-title{font-family:var(--ff-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:var(--accent)}
 .dv-rs-item.song{border-left:3px solid var(--accent);padding-left:9px}
 .dv-rs-seq{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-faint);font-weight:500}
@@ -329,12 +330,18 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .spinning{animation:spin .8s linear infinite;display:inline-block}
 /* ========== DISPLAY VIEW ========== */
-.display-view{position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:90;display:none;flex-direction:column;overflow:hidden;padding:18px 28px;font-family:var(--ff-display)}
+.display-view{position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:90;display:none;flex-direction:column;overflow:hidden;font-family:var(--ff-display)}
 body.display-mode .display-view{display:flex}
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
 .display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10;font-family:var(--ff-mono)}
 .display-cog:hover{background:var(--surface);border-color:var(--accent);color:var(--accent);transform:rotate(45deg)}
+.dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
+.dv-layout.has-rail{grid-template-columns:1fr minmax(320px, 33%)}
+.dv-main{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;padding:18px 28px}
+.dv-rail{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;padding:18px 22px;border-left:1px solid var(--border);background:var(--bg-elev)}
+.dv-rail-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-top:6px;flex-shrink:0;gap:10px}
+.dv-rail-meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;white-space:nowrap}
 .dv-header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative}
 .dv-title{font-family:var(--ff-display);font-weight:500;font-style:italic;font-size:30px;letter-spacing:-.015em;line-height:1;margin-bottom:4px;color:var(--text)}
 .dv-date{font-family:var(--ff-display);font-size:14px;color:var(--text-muted);letter-spacing:.04em;font-weight:400}
@@ -580,47 +587,56 @@ body>*:not(.summary-overlay){display:none!important}
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <button class="display-cog" id="displayBackBtn" title="Back to setup">⚙︎</button>
-  <div class="dv-header">
-    <h1 class="dv-title" id="dv_title">—</h1>
-    <div class="dv-date" id="dv_date"></div>
-  </div>
 
-  <div class="dv-vocalists-block" id="dvVocalistsBlock">
-    <div class="dv-section-label">Vocalists</div>
-    <div class="dv-voc-grid" id="dvVocGrid"></div>
-  </div>
+  <div class="dv-layout" id="dvLayout">
+    <div class="dv-main" id="dvMain">
+      <div class="dv-header">
+        <h1 class="dv-title" id="dv_title">—</h1>
+        <div class="dv-date" id="dv_date"></div>
+      </div>
 
-  <div class="dv-content" id="dvContent">
-    <div class="dv-stage-block" id="dvStageBlock">
-      <div class="dv-section-label">Stage</div>
-      <div class="dv-stage-box">
-        <div class="dv-stage-tags"><span>← SL</span><span>↑ Audience</span><span>SR →</span></div>
-        <div class="dv-stage-svg-wrap" id="dvStageWrap">
-          <svg class="dv-stage-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" style="color:var(--accent);">
-            <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="var(--bg-elev)" stroke="currentColor" stroke-width="2" opacity="0.9"/>
-            <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="currentColor" letter-spacing="3" opacity="0.6">BACK</text>
-            <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
-          </svg>
-          <div id="dvStagePeople"></div>
+      <div class="dv-vocalists-block" id="dvVocalistsBlock">
+        <div class="dv-section-label">Vocalists</div>
+        <div class="dv-voc-grid" id="dvVocGrid"></div>
+      </div>
+
+      <div class="dv-content" id="dvContent">
+        <div class="dv-stage-block" id="dvStageBlock">
+          <div class="dv-section-label">Stage</div>
+          <div class="dv-stage-box">
+            <div class="dv-stage-tags"><span>← SL</span><span>↑ Audience</span><span>SR →</span></div>
+            <div class="dv-stage-svg-wrap" id="dvStageWrap">
+              <svg class="dv-stage-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" style="color:var(--accent);">
+                <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="var(--bg-elev)" stroke="currentColor" stroke-width="2" opacity="0.9"/>
+                <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="currentColor" letter-spacing="3" opacity="0.6">BACK</text>
+                <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+              </svg>
+              <div id="dvStagePeople"></div>
+            </div>
+            <div class="dv-stage-tags" style="padding-top:6px;"><span></span><span>Back ↓</span><span></span></div>
+          </div>
         </div>
-        <div class="dv-stage-tags" style="padding-top:6px;"><span></span><span>Back ↓</span><span></span></div>
+
+        <div class="dv-side" id="dvSide">
+          <div class="dv-side-block" id="dvBandBlock">
+            <div class="dv-section-label">Band</div>
+            <ul class="dv-list" id="dvBandList"></ul>
+          </div>
+          <div class="dv-side-block" id="dvHostsBlock">
+            <div class="dv-section-label">Handhelds</div>
+            <ul class="dv-list" id="dvHostsList"></ul>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="dv-side" id="dvSide">
-      <div class="dv-side-block" id="dvBandBlock">
-        <div class="dv-section-label">Band</div>
-        <ul class="dv-list" id="dvBandList"></ul>
+    <aside class="dv-rail" id="dvRunSheetBlock" style="display:none;">
+      <div class="dv-rail-header">
+        <div class="dv-section-label" style="margin:0;">Service Order</div>
+        <div class="dv-rail-meta" id="dvRunSheetMeta"></div>
       </div>
-      <div class="dv-side-block" id="dvHostsBlock">
-        <div class="dv-section-label">Handhelds</div>
-        <ul class="dv-list" id="dvHostsList"></ul>
-      </div>
-      <div class="dv-side-block" id="dvRunSheetBlock" style="display:none;">
-        <div class="dv-section-label">Service Order</div>
-        <div class="dv-run-sheet" id="dvRunSheetList"></div>
-      </div>
-    </div>
+      <div class="dv-run-sheet" id="dvRunSheetList"></div>
+    </aside>
   </div>
 </div>
 
@@ -2539,15 +2555,27 @@ function renderDisplayView() {
   toggleBlock('dvHostsBlock',     d.showHosts);
   const showRS = d.showServiceOrder && state.serviceOrder && state.serviceOrder.length > 0;
   toggleBlock('dvRunSheetBlock', showRS);
-  // Hide the whole sidebar if all three sidebar blocks are off
-  const sideHasContent = d.showBand || d.showHosts || showRS;
+  // Toggle the whole right rail
+  const dvLayout = document.getElementById('dvLayout');
+  if (dvLayout) dvLayout.classList.toggle('has-rail', showRS);
+  // Hide the inner sidebar (band/hosts) if both are off
+  const sideHasContent = d.showBand || d.showHosts;
   toggleBlock('dvSide', sideHasContent);
-  // If stage is off but sidebar is on, widen the sidebar to fill
+  // If stage is off but sidebar is on (or vice versa), adjust the inner content grid
   const dvContent = document.getElementById('dvContent');
   if (dvContent) {
     if (!d.showStage && sideHasContent)       dvContent.style.gridTemplateColumns = '0 1fr';
     else if (d.showStage && !sideHasContent)  dvContent.style.gridTemplateColumns = '1fr 0';
     else                                       dvContent.style.gridTemplateColumns = '';
+  }
+
+  // Run sheet meta (item count + duration)
+  if (showRS) {
+    const items = state.serviceOrder;
+    const totalSec = items.reduce((acc, it) => acc + (it.kind === 'header' ? 0 : (it.length || 0)), 0);
+    const totalM = Math.floor(totalSec / 60);
+    const meta = document.getElementById('dvRunSheetMeta');
+    if (meta) meta.textContent = `${items.filter(i => i.kind !== 'header').length} items${totalM ? ' · ' + totalM + ' min' : ''}`;
   }
 
   // Stage diagram
