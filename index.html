@@ -80,6 +80,39 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pco-bar .pco-status.ok{color:var(--success)}
 .pco-bar .pco-status.err{color:var(--danger)}
 .workspace{height:calc(100vh - 54px);display:grid;grid-template-rows:minmax(0,1.4fr) minmax(0,1fr);overflow:hidden}
+.workspace.has-order{grid-template-rows:minmax(0,1.2fr) minmax(0,0.9fr) minmax(0,0.9fr)}
+.run-sheet-section{padding:8px 24px 20px;display:flex;flex-direction:column;min-height:0;overflow:hidden;border-top:1px solid var(--border)}
+.run-sheet-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-top:10px}
+.run-sheet-header .title{font-family:var(--ff-display);font-size:22px;font-weight:500;font-style:italic;letter-spacing:-.01em}
+.run-sheet-header .meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em}
+.run-sheet-grid{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:6px;padding-bottom:8px;min-height:0}
+.rs-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:baseline;transition:border-color .15s;font-family:var(--ff-body)}
+.rs-item:hover{border-color:var(--border-2)}
+.rs-item.header{background:transparent;border-color:transparent;padding:8px 4px 4px;margin-top:4px;grid-template-columns:1fr}
+.rs-item.header .rs-title{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--accent)}
+.rs-item.song{border-left:3px solid var(--accent);padding-left:11px}
+.rs-seq{font-family:var(--ff-mono);font-size:11px;color:var(--text-faint);font-weight:500;letter-spacing:.06em}
+.rs-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rs-title{font-family:var(--ff-display);font-size:16px;font-weight:500;color:var(--text);letter-spacing:-.005em;line-height:1.2}
+.rs-item.song .rs-title{font-style:italic}
+.rs-meta{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);letter-spacing:.04em;display:flex;gap:10px;flex-wrap:wrap}
+.rs-meta .rs-leader{color:var(--accent);font-weight:600}
+.rs-meta .rs-key{background:var(--accent-dim);color:var(--accent);padding:1px 7px;border-radius:4px;font-weight:600;letter-spacing:.08em}
+.rs-dur{font-family:var(--ff-mono);font-size:11.5px;color:var(--text-muted);font-weight:500;white-space:nowrap;align-self:baseline}
+/* Display view — service order */
+.dv-run-sheet{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px}
+.dv-rs-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:baseline;font-family:var(--ff-body)}
+.dv-rs-item.header{background:transparent;border-color:transparent;padding:6px 2px 2px;grid-template-columns:1fr}
+.dv-rs-item.header .dv-rs-title{font-family:var(--ff-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:var(--accent)}
+.dv-rs-item.song{border-left:3px solid var(--accent);padding-left:9px}
+.dv-rs-seq{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-faint);font-weight:500}
+.dv-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dv-rs-title{font-family:var(--ff-display);font-size:14.5px;font-weight:500;color:var(--text);line-height:1.15}
+.dv-rs-item.song .dv-rs-title{font-style:italic}
+.dv-rs-meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap}
+.dv-rs-meta .lead{color:var(--accent);font-weight:600}
+.dv-rs-meta .key-tag{background:var(--accent-dim);color:var(--accent);padding:1px 6px;border-radius:3px;font-weight:600}
+.dv-rs-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap}
 .workspace.with-pco{height:calc(100vh - 54px - 38px)}
 .hero{padding:16px 24px 8px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .hero-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
@@ -160,6 +193,10 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .band-input input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:13px;font-weight:500;width:100%}
 .band-input input::placeholder{color:var(--text-faint);font-style:italic;font-size:12px;font-weight:400}
 .band-input.is-md{border-color:rgba(232,184,87,.35);background:linear-gradient(180deg,rgba(232,184,87,.04),transparent),var(--surface)}
+.band-vocalist-tag{display:flex;align-items:center;gap:6px;padding:1px 0;font-family:var(--ff-display);font-size:13px;font-weight:500;color:var(--text)}
+.band-vocalist-tag .bv-icon{color:var(--accent);font-size:11px}
+.band-vocalist-tag .bv-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.band-vocalist-tag .bv-sub{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.12em;font-weight:600}
 .md-row{display:flex;align-items:center;gap:8px;padding:0 2px;font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
 .md-row select{flex:1;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:10.5px;padding:4px 6px;border-radius:5px;outline:none}
 .hosts{display:flex;flex-direction:column;gap:5px}
@@ -190,6 +227,38 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
+.shape-pick{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px 10px;cursor:pointer;color:var(--text);font-family:var(--ff-body);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;text-align:center}
+.shape-pick:hover{border-color:var(--border-2);transform:translateY(-1px)}
+.shape-pick.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent-dim)}
+.shape-pick span{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:600}
+.shape-pick.active span{color:var(--accent)}
+.band-order-chip{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:grab;transition:all .15s;user-select:none;text-align:center;min-width:0}
+.band-order-chip:active{cursor:grabbing}
+.band-order-chip:hover{border-color:var(--border-2)}
+.band-order-chip.dragging{opacity:.4}
+.band-order-chip.drop-target{border-color:var(--accent);background:var(--accent-dim)}
+.band-order-chip .chip-idx{font-family:var(--ff-mono);font-size:9px;color:var(--accent);font-weight:600;letter-spacing:.1em}
+.band-order-chip .chip-label{font-family:var(--ff-display);font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cfg-toggle{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:border-color .15s;font-size:13px;font-family:var(--ff-body)}
+.cfg-toggle:hover{border-color:var(--border-2)}
+.cfg-toggle input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer;margin:0}
+.iem-row{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center}
+.iem-row .iem-lbl{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.iem-row input{font-family:var(--ff-mono);font-size:11.5px;padding:6px 9px}
+.inst-editor{display:flex;flex-direction:column;gap:4px}
+.inst-row{display:grid;grid-template-columns:18px 22px 2.4fr 1.2fr 28px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;transition:border-color .15s}
+.inst-row:hover{border-color:var(--border-2)}
+.inst-row.dragging{opacity:.4}
+.inst-row.drop-target{border-color:var(--accent);background:var(--accent-dim)}
+.inst-grip{font-family:var(--ff-mono);color:var(--text-faint);font-size:13px;cursor:grab;user-select:none;text-align:center}
+.inst-grip:hover{color:var(--accent)}
+.inst-num{font-family:var(--ff-mono);font-size:10px;color:var(--accent);font-weight:600;text-align:center}
+.inst-fields{display:grid;grid-template-columns:1.5fr 1fr 1.5fr;gap:6px}
+.inst-fields input,.inst-fields select{font-size:11.5px;padding:5px 8px}
+.inst-fields .inst-label{font-family:var(--ff-display);font-size:13px;font-weight:500}
+.inst-vocalist select{font-size:11px;padding:5px 8px}
+.iem-preset-row{display:grid;grid-template-columns:1fr 28px;gap:6px;align-items:center}
+.iem-preset-row input{font-size:11.5px;padding:6px 9px}
 .inv-edit-row,.pref-row{display:grid;gap:8px;align-items:center;padding:5px 0}
 .inv-edit-row{grid-template-columns:1fr 80px 30px}
 .pref-row{grid-template-columns:1fr 1fr 30px}
@@ -409,15 +478,9 @@ body>*:not(.summary-overlay){display:none!important}
             <span>MD →</span>
             <select id="mdSelect">
               <option value="">— None —</option>
-              <option value="drums">Drums</option>
-              <option value="bass">Bass</option>
-              <option value="eg1">Electric 1</option>
-              <option value="eg2">Electric 2</option>
-              <option value="keys">Keys</option>
-              <option value="ag">Acoustic</option>
             </select>
           </div>
-          <div class="md-row" style="margin-top:6px;">
+          <div class="md-row" id="agRow" style="margin-top:6px;display:none;">
             <span>AG →</span>
             <select id="agSelect">
               <option value="">— None —</option>
@@ -436,6 +499,16 @@ body>*:not(.summary-overlay){display:none!important}
       </div>
     </div>
   </section>
+
+  <section class="run-sheet-section" id="runSheetSection" style="display:none;">
+    <div class="run-sheet-header">
+      <div class="title">Service Order</div>
+      <div class="meta">
+        <span class="sub" id="runSheetItemCount"></span>
+      </div>
+    </div>
+    <div class="run-sheet-grid" id="runSheetGrid"></div>
+  </section>
 </div>
 
 <div class="overlay" id="settingsOverlay">
@@ -445,6 +518,7 @@ body>*:not(.summary-overlay){display:none!important}
     <div class="tabs">
       <button class="tab active" data-tab="inventory">Mic Inventory</button>
       <button class="tab" data-tab="prefs">Mic Assignments</button>
+      <button class="tab" data-tab="layout">Layout</button>
       <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="pco">Planning Center</button>
     </div>
@@ -455,6 +529,9 @@ body>*:not(.summary-overlay){display:none!important}
     </div>
     <div class="tab-panel" id="tab-prefs">
       <div id="prefEdit"></div>
+    </div>
+    <div class="tab-panel" id="tab-layout">
+      <div id="layoutEdit"></div>
     </div>
     <div class="tab-panel" id="tab-brand">
       <div id="brandEdit"></div>
@@ -486,6 +563,9 @@ body>*:not(.summary-overlay){display:none!important}
       <div class="s-block"><h3>Handhelds</h3><ul class="s-list" id="s_hhList"></ul></div>
       <div class="s-block"><h3>IEM Packs</h3><ul class="s-list" id="s_iemList"></ul></div>
     </div>
+    <div id="s_orderWrap" style="display:none;margin-bottom:20px;">
+      <div class="s-block" style="width:100%;"><h3>Service Order</h3><ul class="s-list" id="s_orderList"></ul></div>
+    </div>
     <div class="s-footer">
       <span>Stage·Assign</span>
       <span id="s_footerMeta"></span>
@@ -501,13 +581,13 @@ body>*:not(.summary-overlay){display:none!important}
     <div class="dv-date" id="dv_date"></div>
   </div>
 
-  <div class="dv-vocalists-block">
+  <div class="dv-vocalists-block" id="dvVocalistsBlock">
     <div class="dv-section-label">Vocalists</div>
     <div class="dv-voc-grid" id="dvVocGrid"></div>
   </div>
 
-  <div class="dv-content">
-    <div class="dv-stage-block">
+  <div class="dv-content" id="dvContent">
+    <div class="dv-stage-block" id="dvStageBlock">
       <div class="dv-section-label">Stage</div>
       <div class="dv-stage-box">
         <div class="dv-stage-tags"><span>← SL</span><span>↑ Audience</span><span>SR →</span></div>
@@ -523,14 +603,18 @@ body>*:not(.summary-overlay){display:none!important}
       </div>
     </div>
 
-    <div class="dv-side">
-      <div class="dv-side-block">
+    <div class="dv-side" id="dvSide">
+      <div class="dv-side-block" id="dvBandBlock">
         <div class="dv-section-label">Band</div>
         <ul class="dv-list" id="dvBandList"></ul>
       </div>
-      <div class="dv-side-block">
+      <div class="dv-side-block" id="dvHostsBlock">
         <div class="dv-section-label">Handhelds</div>
         <ul class="dv-list" id="dvHostsList"></ul>
+      </div>
+      <div class="dv-side-block" id="dvRunSheetBlock" style="display:none;">
+        <div class="dv-section-label">Service Order</div>
+        <div class="dv-run-sheet" id="dvRunSheetList"></div>
       </div>
     </div>
   </div>
@@ -543,7 +627,8 @@ body>*:not(.summary-overlay){display:none!important}
 const STORAGE_KEY = 'stageAssign.v3';
 const PCO_TOKEN_KEY = 'stageAssign.v3.pcoTokens';
 const PCO_PKCE_KEY = 'stageAssign.v3.pcoPKCE';
-const MAX_VOCALISTS = 6;
+const MAX_VOCALISTS = 8;     // bumped from 6 → 8 since vocals are now flexible
+const MAX_INSTRUMENTS = 12;  // cap for total band slots (incl. customs)
 
 const DEFAULT_INVENTORY = [
   { name: 'D:Facto', total: 2, rank: 1 },
@@ -557,18 +642,45 @@ const DEFAULT_INVENTORY = [
   { name: 'NX8',     total: 1, rank: 9 }
 ];
 const DEFAULT_PREFERENCES = { 'grayson': 'KMS105', 'marcus': 'D:Facto' };
+const DEFAULT_VOCAL_DIRECTION = 'rtl';
+
+// IEM pack presets the user can pick from for any instrument
+const DEFAULT_IEM_PACK_PRESETS = ['Drum Pack','Bass Pack','EG Pack','Keys Pack','Acoustic Pack','Misc 1 Pack','Misc 2 Pack','Misc 3 Pack'];
+
+// Instruments are now objects in an array. Each has:
+//   id (stable), label (display), pack (IEM pack name), assignedTo (free-text name),
+//   vocalistPlayer (vocalist id or null — when set, this instrument is "covered by a vocalist"),
+//   tag (short label shown after vocal slot when covered, e.g. "AG" or "Keys")
+const DEFAULT_INSTRUMENTS = [
+  { id:'inst_drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer', tag:'Drums', assignedTo:'', vocalistPlayer:null },
+  { id:'inst_bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass',    tag:'Bass',  assignedTo:'', vocalistPlayer:null },
+  { id:'inst_eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2',     tag:'EG',    assignedTo:'', vocalistPlayer:null },
+  { id:'inst_ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG',      tag:'AG',    assignedTo:'', vocalistPlayer:null },
+  { id:'inst_eg1',   label:'Electric 1', pack:'EG Pack',       placeholder:'EG1',     tag:'EG',    assignedTo:'', vocalistPlayer:null },
+  { id:'inst_keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null }
+];
+
 const DEFAULT_STATE = {
   service: { date: new Date().toISOString().slice(0, 10), time: '9:45 AM', name: 'Sunday Morning' },
   vocalists: [],
-  assignments: [null, null, null, null, null, null],
-  band: { drums:'', bass:'', eg1:'', eg2:'', keys:'', ag:'' },
-  musicDirector: 'keys',
+  assignments: new Array(MAX_VOCALISTS).fill(null),
+  instruments: structuredClone(DEFAULT_INSTRUMENTS),
+  musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
   hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' },
   notes: '',
+  serviceOrder: [],
   inventory: structuredClone(DEFAULT_INVENTORY),
   preferences: structuredClone(DEFAULT_PREFERENCES),
   pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'' },
   brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Fraunces' },
+  config: {
+    showMicCapsules: true,
+    vocalDirection: DEFAULT_VOCAL_DIRECTION,
+    stageShape: 'curved', // 'curved' | 'light-curve' | 'flat'
+    voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
+    iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
+    display: { showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true }
+  },
   viewMode: 'setup',
   theme: 'dark'
 };
@@ -583,12 +695,71 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
+      const loadedConfig = p.config || {};
+
+      // Migrate legacy state.band → state.instruments if needed
+      let instruments = p.instruments;
+      if (!Array.isArray(instruments)) {
+        instruments = structuredClone(DEFAULT_INSTRUMENTS);
+        if (p.band) {
+          const map = { drums:'inst_drums', bass:'inst_bass', eg2:'inst_eg2', ag:'inst_ag', eg1:'inst_eg1', keys:'inst_keys' };
+          Object.entries(p.band).forEach(([k, v]) => {
+            const id = map[k]; if (!id) return;
+            const inst = instruments.find(x => x.id === id); if (inst) inst.assignedTo = v || '';
+          });
+        }
+      }
+      // Migrate legacy musicDirector ('keys') → musicDirectorId ('inst_keys')
+      let mdId = p.musicDirectorId;
+      if (!mdId && p.musicDirector) {
+        mdId = 'inst_' + p.musicDirector;
+      }
+      if (mdId && !instruments.find(x => x.id === mdId)) mdId = null;
+
+      // Migrate legacy hasAcoustic flag into instrument.vocalistPlayer
+      if (Array.isArray(p.vocalists)) {
+        const ag = instruments.find(x => x.id === 'inst_ag');
+        if (ag && !ag.vocalistPlayer) {
+          const acousticVoc = p.vocalists.find(v => v.hasAcoustic);
+          if (acousticVoc) ag.vocalistPlayer = acousticVoc.id;
+        }
+      }
+
+      // Pad/truncate assignments to MAX_VOCALISTS
+      let assignments = p.assignments || [];
+      if (assignments.length < MAX_VOCALISTS) {
+        assignments = [...assignments, ...new Array(MAX_VOCALISTS - assignments.length).fill(null)];
+      } else if (assignments.length > MAX_VOCALISTS) {
+        assignments = assignments.slice(0, MAX_VOCALISTS);
+      }
+
+      // Vocal IEM packs — handle older state where vox packs were in the old iemPacks dict
+      let voxPacks = (loadedConfig.voxIemPacks && Array.isArray(loadedConfig.voxIemPacks)) ? loadedConfig.voxIemPacks : null;
+      if (!voxPacks) {
+        voxPacks = [];
+        const old = loadedConfig.iemPacks || {};
+        for (let i=1; i<=MAX_VOCALISTS; i++) {
+          voxPacks.push(old['vox'+i] || `Vocal ${i} Pack`);
+        }
+      }
+      while (voxPacks.length < MAX_VOCALISTS) voxPacks.push(`Vocal ${voxPacks.length+1} Pack`);
+
       return { ...DEFAULT_STATE, ...p,
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
-        band: { ...DEFAULT_STATE.band, ...(p.band||{}) },
         hosts: { ...DEFAULT_STATE.hosts, ...(p.hosts||{}) },
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
         brand: { ...DEFAULT_STATE.brand, ...(p.brand||{}) },
+        config: {
+          ...DEFAULT_STATE.config,
+          ...loadedConfig,
+          voxIemPacks: voxPacks,
+          iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
+          display: { ...DEFAULT_STATE.config.display, ...(loadedConfig.display||{}) }
+        },
+        instruments,
+        musicDirectorId: mdId,
+        assignments,
+        serviceOrder: p.serviceOrder || [],
         inventory: p.inventory || structuredClone(DEFAULT_INVENTORY),
         preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES)
       };
@@ -677,7 +848,7 @@ function autoAssign() {
 /* ===================== VOCALIST CRUD ===================== */
 function addVocalist() {
   if (state.vocalists.length >= MAX_VOCALISTS) return;
-  const newV = { id:uid(), name:'', leadsSongs:false, isWL:state.vocalists.length===0, hasAcoustic:false, micAssigned:'' };
+  const newV = { id:uid(), name:'', leadsSongs:false, isWL:state.vocalists.length===0, micAssigned:'' };
   state.vocalists.push(newV);
   // Give them a position immediately
   state.assignments = computePositions(state.vocalists);
@@ -760,15 +931,19 @@ function renderVocalists() {
       </div>
       <div class="voc-body" draggable="true" title="Drag to swap with another vocal">
         <input class="voc-name" type="text" value="${esc(v.name)}" placeholder="Name" data-id="${v.id}" />
+        ${state.config.showMicCapsules ? `
         <div class="mic-pick">
           <label>Mic</label>
           <select class="mic-select" data-id="${v.id}">
             <option value="">— pick —</option>
             ${micOptions}
           </select>
-          ${v.hasAcoustic ? `<span class="ag-badge" title="Plays acoustic guitar">🎸 AG</span>` : ''}
+          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
           ${pref ? `<span class="pref-tag" title="Preference: ${esc(pref)}">★</span>` : ''}
-        </div>
+        </div>` : `
+        <div class="mic-pick" style="border-top:none;padding-top:6px;">
+          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
+        </div>`}
       </div>
     `;
     // Drag source: only the body (name + mic), not the position pill
@@ -825,60 +1000,68 @@ function renderVocalists() {
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
 }
 
-/* ===================== BAND ===================== */
-const BAND_POSITIONS = [
-  { key:'drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer' },
-  { key:'bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass' },
-  { key:'eg1',   label:'Electric 1', pack:'EG Pack', placeholder:'EG1' },
-  { key:'eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2 (opt)' },
-  { key:'keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys' },
-  { key:'ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG (opt)' }
-];
+/* ===================== INSTRUMENTS / BAND ===================== */
+function instById(id) { return state.instruments.find(x => x.id === id); }
+function instUid() { return 'inst_' + Math.random().toString(36).slice(2,8); }
+function iemPackFor(instOrId) {
+  // Accepts an instrument object OR an instrument id (or legacy short key like "drums")
+  let inst = null;
+  if (typeof instOrId === 'string') {
+    inst = instById(instOrId) || instById('inst_' + instOrId);
+  } else if (instOrId && typeof instOrId === 'object') {
+    inst = instOrId;
+  }
+  return inst ? (inst.pack || (inst.label + ' Pack')) : '';
+}
+function getMD() { return state.musicDirectorId ? instById(state.musicDirectorId) : null; }
+
 function renderBand() {
   const grid = document.getElementById('bandGrid');
   grid.innerHTML = '';
-  BAND_POSITIONS.forEach(p => {
-    const isMD = state.musicDirector === p.key;
+  state.instruments.forEach(inst => {
+    const isMD = state.musicDirectorId === inst.id;
     const slot = document.createElement('div');
     slot.className = 'band-input' + (isMD ? ' is-md' : '');
+    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const playedByVocalist = !!player;
     slot.innerHTML = `
       <span class="lbl">
-        <span>${p.label}${isMD ? ' <span class="md-tag">MD</span>' : ''}</span>
-        <span class="pack-mini">${p.pack.replace(' Pack','')}</span>
+        <span>${esc(inst.label)}${isMD ? ' <span class="md-tag">MD</span>' : ''}</span>
+        <span class="pack-mini">${esc((inst.pack||'').replace(' Pack',''))}</span>
       </span>
-      <input type="text" value="${esc(state.band[p.key]||'')}" placeholder="${esc(p.placeholder)}" data-band-key="${p.key}"/>
+      ${playedByVocalist
+        ? `<div class="band-vocalist-tag" title="Played by vocalist — manage in Settings → Layout">
+             <span class="bv-icon">★</span>
+             <span class="bv-name">${esc(player.name || '(unnamed vocalist)')}</span>
+             <span class="bv-sub">also a vocalist</span>
+           </div>`
+        : `<input type="text" value="${esc(inst.assignedTo||'')}" placeholder="${esc(inst.placeholder || inst.label)}" data-inst-id="${esc(inst.id)}"/>`
+      }
     `;
     grid.appendChild(slot);
   });
-  grid.querySelectorAll('input[data-band-key]').forEach(input => {
+  grid.querySelectorAll('input[data-inst-id]').forEach(input => {
     input.addEventListener('input', e => {
-      state.band[e.target.dataset.bandKey] = e.target.value;
-      saveState(); renderStage();
+      const inst = instById(e.target.dataset.instId);
+      if (inst) { inst.assignedTo = e.target.value; saveState(); renderStage(); if (state.viewMode==='display') renderDisplayView(); }
     });
   });
-  // MD selector
-  document.getElementById('mdSelect').value = state.musicDirector || '';
-  document.getElementById('mdSelect').onchange = (e) => {
-    state.musicDirector = e.target.value || null;
-    saveState(); renderBand(); renderStage(); if (state.viewMode==='display') renderDisplayView();
-  };
-  // AG selector — populate with current vocalists
-  const agSel = document.getElementById('agSelect');
-  const currentAG = state.vocalists.find(v => v.hasAcoustic);
-  let agHtml = '<option value="">— None —</option>';
-  state.vocalists.forEach(v => {
-    const label = v.name.trim() || '(unnamed)';
-    agHtml += `<option value="${v.id}"${currentAG && currentAG.id === v.id ? ' selected' : ''}>${esc(label)}</option>`;
-  });
-  agSel.innerHTML = agHtml;
-  agSel.onchange = (e) => {
-    state.vocalists.forEach(v => v.hasAcoustic = false);
-    if (e.target.value) {
-      const v = state.vocalists.find(x => x.id === e.target.value);
-      if (v) v.hasAcoustic = true;
-    }
-    saveState(); renderVocalists(); renderStage(); if (state.viewMode==='display') renderDisplayView();
-  };
+  // MD selector — list current instruments
+  const mdSel = document.getElementById('mdSelect');
+  if (mdSel) {
+    let mdHtml = '<option value="">— None —</option>';
+    state.instruments.forEach(i => {
+      mdHtml += `<option value="${esc(i.id)}"${state.musicDirectorId === i.id ? ' selected' : ''}>${esc(i.label)}</option>`;
+    });
+    mdSel.innerHTML = mdHtml;
+    mdSel.onchange = (e) => {
+      state.musicDirectorId = e.target.value || null;
+      saveState(); renderBand(); renderStage(); if (state.viewMode==='display') renderDisplayView();
+    };
+  }
+  // AG selector is now removed from main view — handled in Settings → Layout (per Q3 answer)
+  const agRow = document.getElementById('agRow');
+  if (agRow) agRow.style.display = 'none';
 }
 
 /* ===================== HOSTS / SERVICE ===================== */
@@ -896,47 +1079,111 @@ function renderService() {
 }
 
 /* ===================== STAGE ===================== */
-const BAND_STAGE_POS = {
-  drums: { x:130, y:315 },
-  bass:  { x:250, y:300 },
-  eg2:   { x:340, y:300 },
-  ag:    { x:460, y:280 },
-  eg1:   { x:550, y:300 },
-  keys:  { x:670, y:315 }
-};
+// Y-positions for the band: outer slots go back, middle slots go more forward.
+// Returns an instrument-id-keyed map {x,y}, evenly spread across the stage width by current order.
+function getBandStagePositions() {
+  const insts = state.instruments;
+  const n = insts.length;
+  if (n === 0) return {};
+  const positions = {};
+  const PAD = 90; // px from each edge
+  const span = 800 - 2*PAD;
+  insts.forEach((inst, i) => {
+    let x;
+    if (n === 1) x = 400;
+    else x = PAD + (i / (n - 1)) * span;
+    // Y depth based on relative position
+    let y;
+    const rel = n === 1 ? 0.5 : i / (n - 1); // 0..1 left-to-right
+    const fromCenter = Math.abs(rel - 0.5) * 2; // 0 at center, 1 at edges
+    // Outer slots get y=315, center gets y=285, smooth interpolation
+    y = 285 + (315 - 285) * fromCenter;
+    positions[inst.id] = { x, y };
+  });
+  return positions;
+}
+function getStageShape() {
+  // Returns SVG path data for stage + bezier control points for vocalists.
+  // stage floor: always runs from ~(20,360) bottom-left to (780,360) bottom-right.
+  // Top edge (audience side) varies by shape.
+  const shape = (state.config && state.config.stageShape) || 'curved';
+  if (shape === 'flat') {
+    return {
+      path: 'M 20 360 L 780 360 L 780 60 L 20 60 Z',
+      edge: 'M 780 60 L 20 60',
+      P0: { x:780, y:85 }, P1: { x:400, y:85 }, P2: { x:20, y:85 }
+    };
+  }
+  if (shape === 'light-curve') {
+    return {
+      path: 'M 20 360 L 780 360 L 780 110 Q 400 60 20 110 Z',
+      edge: 'M 780 110 Q 400 60 20 110',
+      P0: { x:780, y:110 }, P1: { x:400, y:60 }, P2: { x:20, y:110 }
+    };
+  }
+  // curved (default)
+  return {
+    path: 'M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z',
+    edge: 'M 780 146 Q 400 22 20 146',
+    P0: { x:780, y:146 }, P1: { x:400, y:22 }, P2: { x:20, y:146 }
+  };
+}
 function getVoxPositions(count) {
-  const P0 = { x:780, y:146 }, P1 = { x:400, y:22 }, P2 = { x:20, y:146 };
+  const shape = getStageShape();
+  const { P0, P1, P2 } = shape;
   function bez(t) { const mt = 1-t; return { x:mt*mt*P0.x + 2*mt*t*P1.x + t*t*P2.x, y:mt*mt*P0.y + 2*mt*t*P1.y + t*t*P2.y }; }
   const MARGIN = 38;
   const inset = Math.max(0.08, 0.5/count);
+  const direction = (state.config && state.config.vocalDirection) || 'rtl';
   const positions = [];
   for (let i=0; i<count; i++) {
-    // VOCAL 1 (i=0) goes to P0 (stage right = right side); last vocal goes to P2 (stage left = left side)
-    const t = count === 1 ? 0.5 : inset + (i/(count-1)) * (1-2*inset);
+    // rtl (default): VOCAL 1 → P0 (stage right = right side); last → P2 (stage left)
+    // ltr: VOCAL 1 → P2 (stage left); last → P0 (stage right)
+    let t;
+    if (count === 1) t = 0.5;
+    else if (direction === 'ltr') t = (1-inset) - (i/(count-1)) * (1-2*inset);
+    else                          t = inset       + (i/(count-1)) * (1-2*inset);
     const pt = bez(t);
-    // Audience is at top now — push vocalists INWARD (down, toward the back of stage)
     positions.push({ x:pt.x, y:pt.y + MARGIN });
   }
   return positions;
 }
+function renderStageShape() {
+  // Update the SVG path for both setup and display views whenever the stage shape config changes
+  const shape = getStageShape();
+  document.querySelectorAll('.stage-svg path').forEach((el, i) => {
+    if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
+    else el.setAttribute('d', shape.path);
+  });
+  document.querySelectorAll('.dv-stage-svg path').forEach((el) => {
+    if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
+    else el.setAttribute('d', shape.path);
+  });
+}
+function vocalistInstrumentTags(vId) {
+  // Returns array of short tags (e.g. ['AG','Keys']) for instruments this vocalist plays
+  return state.instruments.filter(i => i.vocalistPlayer === vId).map(i => i.tag || i.label);
+}
 function renderStage() {
   const wrap = document.getElementById('stagePeople');
   if (!wrap) return;
+  renderStageShape();
   wrap.innerHTML = '';
+  const bandPositions = getBandStagePositions();
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
-  const vocalistPlaysAG = state.vocalists.some(v => v.hasAcoustic);
-  BAND_POSITIONS.forEach(p => {
-    const name = (state.band[p.key]||'').trim();
-    // If a vocalist is flagged as playing AG, hide the separate AG band box — the vocalist's slot gets a /AG tag instead
-    if (p.key === 'ag' && vocalistPlaysAG) return;
-    if ((p.key==='eg2' || p.key==='ag') && !name) return;
-    const pos = BAND_STAGE_POS[p.key]; if (!pos) return;
-    const isMD = state.musicDirector === p.key;
+  state.instruments.forEach(inst => {
+    // Hide instruments played by a vocalist — they get a /TAG appended to the vocal slot instead
+    if (inst.vocalistPlayer) return;
+    const name = (inst.assignedTo || '').trim();
+    const isOptional = !!inst.optional;
+    if (isOptional && !name) return;
+    const pos = bandPositions[inst.id]; if (!pos) return;
+    const isMD = state.musicDirectorId === inst.id;
     const el = document.createElement('div');
     el.className = 'sp ' + (name ? 'occupied' : 'empty');
     const css = toPct(pos);
     el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="sp-role">${esc(p.label)}${isMD?' · MD':''}</div><div class="sp-name">${name?esc(firstName(name)):p.placeholder}</div>`;
+    el.innerHTML = `<div class="sp-role">${esc(inst.label)}${isMD?' · MD':''}</div><div class="sp-name">${name?esc(firstName(name)):esc(inst.placeholder || inst.label)}</div>`;
     wrap.appendChild(el);
   });
   const filledIds = state.assignments.filter(a => a !== null);
@@ -944,7 +1191,7 @@ function renderStage() {
   if (count > 0) {
     const voxPositions = getVoxPositions(count);
     let posIdx = 0;
-    for (let i=0; i<6; i++) {
+    for (let i=0; i<MAX_VOCALISTS; i++) {
       const id = state.assignments[i];
       if (!id) continue;
       const v = state.vocalists.find(x => x.id === id);
@@ -956,7 +1203,9 @@ function renderStage() {
       el.style.left = css.left; el.style.top = css.top;
       el.draggable = true;
       el.dataset.voxIdx = String(i);
-      el.innerHTML = `<div class="sp-role">VOCAL ${i+1}${v.hasAcoustic?' / AG':''}</div><div class="sp-name">${esc(firstName(v.name) || '—')}</div>`;
+      const tags = vocalistInstrumentTags(v.id);
+      const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
+      el.innerHTML = `<div class="sp-role">VOCAL ${i+1}${tagSuffix}</div><div class="sp-name">${esc(firstName(v.name) || '—')}</div>`;
       el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.voxIdx); e.dataTransfer.effectAllowed='move'; el.classList.add('dragging'); });
       el.addEventListener('dragend', () => { el.classList.remove('dragging'); document.querySelectorAll('.sp').forEach(p => p.classList.remove('drop-target')); });
       el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-target'); });
@@ -982,11 +1231,284 @@ function openSettings(tab='inventory') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
   renderInvEditor();
   renderPrefEditor();
+  renderLayoutEditor();
   renderBrandEditor();
   renderPCOSettings();
   document.getElementById('settingsOverlay').classList.add('show');
 }
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); renderAll(); }
+
+function renderLayoutEditor() {
+  const el = document.getElementById('layoutEdit');
+  if (!el) return;
+  const c = state.config;
+  // Stage shape previews (mini SVGs)
+  const SHAPE_PREVIEWS = {
+    curved: '<path d="M 4 38 L 76 38 L 76 16 Q 40 3 4 16 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 16 Q 40 3 4 16 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>',
+    'light-curve': '<path d="M 4 38 L 76 38 L 76 12 Q 40 6 4 12 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 12 Q 40 6 4 12 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>',
+    flat: '<path d="M 4 38 L 76 38 L 76 8 L 4 8 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 8 L 4 8 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>'
+  };
+  // Build instrument rows
+  const presetOptions = ['', ...c.iemPackPresets].map(p => `<option value="${esc(p)}">${esc(p || '— pick preset —')}</option>`).join('');
+  const vocalistOptions = state.vocalists.map(v => `<option value="${esc(v.id)}">${esc(v.name || '(unnamed)')}</option>`).join('');
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:18px;">Configure stage shape, vocal direction, instruments &amp; IEM packs, and display options.</p>
+
+    <div class="section-label" style="margin-bottom:10px;">Stage Shape</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;">
+      ${['curved','light-curve','flat'].map(shape => `
+        <button class="shape-pick ${c.stageShape===shape?'active':''}" data-shape="${shape}">
+          <svg viewBox="0 0 80 42" style="width:100%;height:auto;color:var(--accent);">${SHAPE_PREVIEWS[shape]}</svg>
+          <span>${shape==='curved'?'Curved Front':shape==='light-curve'?'Lightly Curved':'Flat Front'}</span>
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Vocal Arrangement</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+      <button class="shape-pick ${c.vocalDirection==='rtl'?'active':''}" data-voc-dir="rtl">
+        <div style="font-family:var(--ff-mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;">VOCAL 1 →</div>
+        <div style="font-family:var(--ff-display);font-size:13px;">Right-to-Left (SR → SL)</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">VOCAL 1 on Stage Right</div>
+      </button>
+      <button class="shape-pick ${c.vocalDirection==='ltr'?'active':''}" data-voc-dir="ltr">
+        <div style="font-family:var(--ff-mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;">VOCAL 1 →</div>
+        <div style="font-family:var(--ff-display);font-size:13px;">Left-to-Right (SL → SR)</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">VOCAL 1 on Stage Left</div>
+      </button>
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Instruments
+      <span style="font-size:9px;color:var(--text-faint);margin-left:8px;text-transform:none;letter-spacing:.05em;">(top → bottom of list = Stage Left → Stage Right on the diagram)</span>
+    </div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Add, rename, delete, or reorder instruments. Pick which IEM pack each goes on. Toggle "Played by vocalist" to assign an instrument to one of your vocalists (replaces the AG dropdown).</p>
+    <div id="instEditor" class="inst-editor">
+      ${state.instruments.map((inst, idx) => `
+        <div class="inst-row" data-inst-id="${esc(inst.id)}" draggable="true">
+          <div class="inst-grip" title="Drag to reorder">⋮⋮</div>
+          <div class="inst-num">${idx+1}</div>
+          <div class="inst-fields">
+            <input type="text" class="field-input inst-label" data-id="${esc(inst.id)}" data-field="label" value="${esc(inst.label||'')}" placeholder="Label (e.g. Keys 2)" />
+            <input type="text" class="field-input inst-tag" data-id="${esc(inst.id)}" data-field="tag" value="${esc(inst.tag||'')}" placeholder="Short tag (e.g. Keys)" title="Shown next to vocal name when a vocalist plays this" />
+            <select class="field-input inst-pack" data-id="${esc(inst.id)}" data-field="pack">
+              <option value="">— pick preset —</option>
+              ${c.iemPackPresets.map(p => `<option value="${esc(p)}"${p === inst.pack ? ' selected' : ''}>${esc(p)}</option>`).join('')}
+              ${(c.iemPackPresets.indexOf(inst.pack) === -1 && inst.pack) ? `<option value="${esc(inst.pack)}" selected>${esc(inst.pack)} (custom)</option>` : ''}
+            </select>
+          </div>
+          <div class="inst-vocalist">
+            <select class="field-input" data-id="${esc(inst.id)}" data-field="vocalistPlayer">
+              <option value="">— Not played by vocalist —</option>
+              ${state.vocalists.map(v => `<option value="${esc(v.id)}"${inst.vocalistPlayer === v.id ? ' selected' : ''}>${esc(v.name || '(unnamed)')}</option>`).join('')}
+            </select>
+          </div>
+          <button class="x-btn inst-del" data-id="${esc(inst.id)}" title="Delete">✕</button>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:24px;">
+      <button class="add-row-btn" id="addInstrumentBtn" style="margin-top:8px;flex:1;${state.instruments.length>=MAX_INSTRUMENTS?'opacity:.4;pointer-events:none;':''}">+ Add Instrument</button>
+      <button class="add-row-btn" id="resetInstrumentsBtn" style="margin-top:8px;flex:1;">Reset to defaults</button>
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">IEM Pack Presets</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Edit the presets that show up in each instrument's pack dropdown above.</p>
+    <div id="iemPresetList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
+      ${c.iemPackPresets.map((p,i) => `
+        <div class="iem-preset-row">
+          <input type="text" class="field-input" data-preset-idx="${i}" value="${esc(p)}" placeholder="Pack name" />
+          <button class="x-btn" data-preset-del="${i}" title="Delete preset">✕</button>
+        </div>
+      `).join('')}
+    </div>
+    <button class="add-row-btn" id="addPresetBtn" style="margin-top:6px;margin-bottom:24px;">+ Add IEM pack preset</button>
+
+    <div class="section-label" style="margin-bottom:10px;">Vocal IEM Packs</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Pack names for each vocal slot.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px;margin-bottom:24px;">
+      ${c.voxIemPacks.slice(0, MAX_VOCALISTS).map((pack, i) => `
+        <div class="iem-row">
+          <span class="iem-lbl">Vocal ${i+1}</span>
+          <input type="text" class="field-input" data-vox-pack-idx="${i}" value="${esc(pack)}" placeholder="Vocal ${i+1} Pack" />
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Display Options</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;">
+      <label class="cfg-toggle"><input type="checkbox" data-cfg="showMicCapsules" ${c.showMicCapsules?'checked':''} /><span>Show mic capsule type on vocalist cards (edit view + display view)</span></label>
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Display View — What to Show</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Check what you want visible when you hit ▶ Display.</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+      ${[
+        ['showStage','Stage diagram'],
+        ['showVocalists','Vocalist cards'],
+        ['showBand','Band list (sidebar)'],
+        ['showHosts','Handhelds list (sidebar)'],
+        ['showServiceOrder','Service Order / Run Sheet']
+      ].map(([k,label]) => `
+        <label class="cfg-toggle"><input type="checkbox" data-display="${k}" ${c.display[k]?'checked':''} /><span>${label}</span></label>
+      `).join('')}
+    </div>
+  `;
+
+  // Stage shape buttons
+  el.querySelectorAll('[data-shape]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      c.stageShape = btn.dataset.shape;
+      saveState(); renderLayoutEditor(); renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+  // Vocal direction
+  el.querySelectorAll('[data-voc-dir]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      c.vocalDirection = btn.dataset.vocDir;
+      saveState(); renderLayoutEditor(); renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+
+  // Instrument field edits
+  el.querySelectorAll('[data-field]').forEach(input => {
+    input.addEventListener('change', e => {
+      const inst = instById(e.target.dataset.id);
+      if (!inst) return;
+      const f = e.target.dataset.field;
+      if (f === 'vocalistPlayer') {
+        inst.vocalistPlayer = e.target.value || null;
+      } else {
+        inst[f] = e.target.value;
+      }
+      saveState();
+      renderAll();
+      renderLayoutEditor();
+    });
+  });
+
+  // Instrument delete
+  el.querySelectorAll('.inst-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = btn.dataset.id;
+      const inst = instById(id); if (!inst) return;
+      if (!confirm(`Delete "${inst.label}"?`)) return;
+      state.instruments = state.instruments.filter(i => i.id !== id);
+      if (state.musicDirectorId === id) state.musicDirectorId = null;
+      saveState(); renderAll(); renderLayoutEditor();
+    });
+  });
+
+  // Add instrument
+  el.querySelector('#addInstrumentBtn').addEventListener('click', () => {
+    if (state.instruments.length >= MAX_INSTRUMENTS) return;
+    const newInst = {
+      id: instUid(),
+      label: 'New Instrument',
+      pack: c.iemPackPresets[0] || 'New Pack',
+      placeholder: 'Player',
+      tag: '',
+      assignedTo: '',
+      vocalistPlayer: null
+    };
+    state.instruments.push(newInst);
+    saveState(); renderAll(); renderLayoutEditor();
+  });
+
+  // Reset instruments
+  el.querySelector('#resetInstrumentsBtn').addEventListener('click', () => {
+    if (!confirm('Reset instruments to defaults? This will clear current assignments.')) return;
+    state.instruments = structuredClone(DEFAULT_INSTRUMENTS);
+    state.musicDirectorId = 'inst_keys';
+    saveState(); renderAll(); renderLayoutEditor();
+  });
+
+  // Drag-reorder instruments
+  let draggedInstId = null;
+  el.querySelectorAll('.inst-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      // Don't start drag from form elements
+      if (e.target.matches('input, select, option, button, textarea')) {
+        e.preventDefault(); return;
+      }
+      draggedInstId = row.dataset.instId;
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      el.querySelectorAll('.inst-row').forEach(r => r.classList.remove('drop-target'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
+      row.classList.add('drop-target');
+    });
+    row.addEventListener('dragleave', e => {
+      if (!row.contains(e.relatedTarget)) row.classList.remove('drop-target');
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drop-target');
+      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
+      const fromIdx = state.instruments.findIndex(i => i.id === draggedInstId);
+      const toIdx = state.instruments.findIndex(i => i.id === row.dataset.instId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = state.instruments.splice(fromIdx, 1);
+      state.instruments.splice(toIdx, 0, moved);
+      draggedInstId = null;
+      saveState(); renderAll(); renderLayoutEditor();
+    });
+  });
+
+  // IEM pack presets
+  el.querySelectorAll('[data-preset-idx]').forEach(input => {
+    input.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.presetIdx, 10);
+      const v = e.target.value.trim();
+      if (v) c.iemPackPresets[idx] = v;
+      saveState(); renderLayoutEditor();
+    });
+  });
+  el.querySelectorAll('[data-preset-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(btn.dataset.presetDel, 10);
+      c.iemPackPresets.splice(idx, 1);
+      saveState(); renderLayoutEditor();
+    });
+  });
+  el.querySelector('#addPresetBtn').addEventListener('click', () => {
+    c.iemPackPresets.push('New Pack');
+    saveState(); renderLayoutEditor();
+  });
+
+  // Vocal IEM packs
+  el.querySelectorAll('[data-vox-pack-idx]').forEach(input => {
+    input.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.voxPackIdx, 10);
+      c.voxIemPacks[idx] = e.target.value.trim() || `Vocal ${idx+1} Pack`;
+      saveState(); renderAll();
+    });
+  });
+
+  // Plain config toggles
+  el.querySelectorAll('[data-cfg]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      c[e.target.dataset.cfg] = e.target.checked;
+      saveState(); renderAll();
+    });
+  });
+
+  // Display toggles
+  el.querySelectorAll('[data-display]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      c.display[e.target.dataset.display] = e.target.checked;
+      saveState();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+}
 
 function renderBrandEditor() {
   const el = document.getElementById('brandEdit');
@@ -1571,7 +2093,12 @@ async function pcoPullPlan(planId) {
     const stId = state.pcoConfig.selectedServiceTypeId;
     const tmRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
     const planRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}`);
-    applyPCOPlanData(planRes.data, tmRes);
+    // Plan items (songs + headers + notes in order). Include "song" to pull title & "item_notes" for leader info.
+    let itemsRes = { data: [], included: [] };
+    try {
+      itemsRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`);
+    } catch (e) { console.warn('Items fetch failed:', e); }
+    applyPCOPlanData(planRes.data, tmRes, itemsRes);
     setPCOStatus('Plan loaded ✓','ok');
     document.getElementById('pcoPullBtn').innerHTML = 'Pull Plan';
     document.getElementById('pcoPullBtn').disabled = false;
@@ -1584,24 +2111,25 @@ async function pcoPullPlan(planId) {
   }
 }
 
-function applyPCOPlanData(planData, tmRes) {
+function applyPCOPlanData(planData, tmRes, itemsRes) {
   const teamMembers = tmRes.data || [];
   if (planData && planData.attributes && planData.attributes.sort_date) {
     state.service.date = planData.attributes.sort_date.slice(0,10);
   }
-  // Pull event title from PCO: prefer "series_title" (often the sermon series), fallback to plan title
   if (planData && planData.attributes) {
     const a = planData.attributes;
     const title = a.series_title || a.title || a.plan_title || '';
     if (title) state.service.name = title;
   }
   state.vocalists = [];
-  state.assignments = [null,null,null,null,null,null];
-  state.band = { drums:'', bass:'', eg1:'', eg2:'', keys:'', ag:'' };
+  state.assignments = new Array(MAX_VOCALISTS).fill(null);
+  // Reset all instrument assignments and vocalist-coverage on a fresh PCO pull
+  state.instruments.forEach(i => { i.assignedTo = ''; i.vocalistPlayer = null; });
   state.hosts = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
+  state.serviceOrder = [];
   let mdNameCandidate = null;
   const egNames = [];
-  // First pass: figure out which people have an Acoustic Guitar position assigned in this plan
+  // First pass: figure out who plays acoustic
   const acousticPlayers = new Set();
   teamMembers.forEach(tm => {
     const a = tm.attributes;
@@ -1611,28 +2139,37 @@ function applyPCOPlanData(planData, tmRes) {
       acousticPlayers.add(normName(a.name));
     }
   });
+  // Helper to assign a name to an instrument by short key (drums/bass/etc.)
+  const assignToShort = (shortKey, name) => {
+    const inst = instById('inst_' + shortKey);
+    if (inst && !inst.assignedTo) inst.assignedTo = name;
+  };
   teamMembers.forEach(tm => {
     const a = tm.attributes;
     const name = a.name || '';
     if (!name) return;
     const positionName = a.team_position_name || '';
     const status = a.status || '';
-    if (status === 'D') return; // skip declined
+    if (status === 'D') return;
     const cls = classifyPosition(positionName);
     if (cls.kind === 'vocalist') {
       if (state.vocalists.length >= MAX_VOCALISTS) return;
-      // Don't double-add the same person if they have multiple vocal positions
       if (state.vocalists.some(v => normName(v.name) === normName(name))) return;
+      const vid = uid();
       state.vocalists.push({
-        id: uid(), name,
+        id: vid, name,
         leadsSongs: cls.leadsSongs,
         isWL: cls.isWL && !state.vocalists.some(v => v.isWL),
-        hasAcoustic: acousticPlayers.has(normName(name)),
         micAssigned: ''
       });
+      // Mark acoustic instrument as covered by this vocalist if applicable
+      if (acousticPlayers.has(normName(name))) {
+        const ag = instById('inst_ag');
+        if (ag && !ag.vocalistPlayer) ag.vocalistPlayer = vid;
+      }
     } else if (cls.kind === 'band') {
       if (cls.position === 'eg') egNames.push(name);
-      else if (!state.band[cls.position]) state.band[cls.position] = name;
+      else assignToShort(cls.position, name);
     } else if (cls.kind === 'md_flag') {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
@@ -1644,15 +2181,81 @@ function applyPCOPlanData(planData, tmRes) {
       }
     }
   });
-  if (egNames[0]) state.band.eg1 = egNames[0];
-  if (egNames[1]) state.band.eg2 = egNames[1];
+  if (egNames[0]) assignToShort('eg1', egNames[0]);
+  if (egNames[1]) assignToShort('eg2', egNames[1]);
   if (mdNameCandidate) {
-    for (const pos of ['drums','bass','eg1','eg2','keys','ag']) {
-      if (state.band[pos] && normName(state.band[pos]) === normName(mdNameCandidate)) {
-        state.musicDirector = pos; break;
+    // Try to find an instrument whose assigned name matches the MD candidate
+    for (const inst of state.instruments) {
+      if (inst.assignedTo && normName(inst.assignedTo) === normName(mdNameCandidate)) {
+        state.musicDirectorId = inst.id; break;
       }
     }
   }
+
+  // Process service order items (songs, headers, media, etc.) with their PCO "sequence" preserved
+  if (itemsRes && itemsRes.data) {
+    const songById = {};
+    const noteByItemId = {};
+    (itemsRes.included || []).forEach(inc => {
+      if (inc.type === 'Song') songById[inc.id] = inc.attributes;
+      if (inc.type === 'ItemNote') {
+        const itemId = inc.relationships && inc.relationships.item && inc.relationships.item.data && inc.relationships.item.data.id;
+        if (itemId) {
+          if (!noteByItemId[itemId]) noteByItemId[itemId] = [];
+          noteByItemId[itemId].push(inc.attributes);
+        }
+      }
+    });
+    // PCO items have a .attributes.sequence integer — sort by that
+    const sorted = [...itemsRes.data].sort((a, b) => {
+      return (a.attributes.sequence || 0) - (b.attributes.sequence || 0);
+    });
+    sorted.forEach(item => {
+      const a = item.attributes || {};
+      const kind = a.item_type || 'item'; // "song" | "header" | "media" | "item" | etc.
+      const title = a.title || '';
+      const length = a.length || 0; // seconds
+      // Song metadata: from the included Song resource
+      let songRel = item.relationships && item.relationships.song && item.relationships.song.data;
+      let key = null;
+      let songLeader = null;
+      if (songRel && songById[songRel.id]) {
+        const song = songById[songRel.id];
+        // Key comes from the item's arrangement info — PCO sometimes has it on the item attributes as "key_name"
+        if (a.key_name) key = a.key_name;
+      }
+      if (a.key_name) key = a.key_name;
+      // Item notes: look for one labeled "Leader" or just grab first note text for song leader indication
+      const notes = noteByItemId[item.id] || [];
+      notes.forEach(n => {
+        const catName = (n.category_name || '').toLowerCase();
+        const content = n.content || '';
+        if (!content) return;
+        if (catName === 'leader' || catName === 'song leader' || catName === 'worship leader') {
+          if (!songLeader) songLeader = content.trim();
+        }
+      });
+      // Combine all non-leader notes into a single notes string
+      const generalNotes = notes
+        .filter(n => {
+          const c = (n.category_name || '').toLowerCase();
+          return c !== 'leader' && c !== 'song leader' && c !== 'worship leader';
+        })
+        .map(n => (n.content || '').trim())
+        .filter(Boolean)
+        .join(' · ');
+      state.serviceOrder.push({
+        id: item.id,
+        kind,
+        title,
+        length,
+        key,
+        leader: songLeader,
+        notes: generalNotes
+      });
+    });
+  }
+
   saveState();
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists();
@@ -1676,7 +2279,35 @@ function pcoLoadDemo() {
     ]
   };
   const demoPlan = { attributes: { sort_date: new Date().toISOString().slice(0,10), title: 'Sunday Morning' } };
-  applyPCOPlanData(demoPlan, demoTM);
+  const demoItems = {
+    data: [
+      { id:'i1', attributes:{ sequence:1, item_type:'header', title:'PRE-SERVICE', length:0 } },
+      { id:'i2', attributes:{ sequence:2, item_type:'item',   title:'Countdown', length:300 } },
+      { id:'i3', attributes:{ sequence:3, item_type:'header', title:'WORSHIP', length:0 } },
+      { id:'i4', attributes:{ sequence:4, item_type:'song',   title:'Holy Forever',            length:360, key_name:'A' }, relationships:{ song:{ data:{ id:'s1', type:'Song' } } } },
+      { id:'i5', attributes:{ sequence:5, item_type:'song',   title:'Great Are You Lord',      length:300, key_name:'G' }, relationships:{ song:{ data:{ id:'s2', type:'Song' } } } },
+      { id:'i6', attributes:{ sequence:6, item_type:'song',   title:'Way Maker',               length:420, key_name:'E' }, relationships:{ song:{ data:{ id:'s3', type:'Song' } } } },
+      { id:'i7', attributes:{ sequence:7, item_type:'item',   title:'Welcome & Announcements', length:180 } },
+      { id:'i8', attributes:{ sequence:8, item_type:'item',   title:'Offering',                length:120 } },
+      { id:'i9', attributes:{ sequence:9, item_type:'header', title:'MESSAGE', length:0 } },
+      { id:'i10', attributes:{ sequence:10, item_type:'item', title:'Sermon: Being a Disciple', length:1800 } },
+      { id:'i11', attributes:{ sequence:11, item_type:'header', title:'RESPONSE', length:0 } },
+      { id:'i12', attributes:{ sequence:12, item_type:'song', title:'King of Kings',            length:360, key_name:'D' }, relationships:{ song:{ data:{ id:'s4', type:'Song' } } } },
+      { id:'i13', attributes:{ sequence:13, item_type:'item', title:'Benediction',              length:60 } }
+    ],
+    included: [
+      { id:'s1', type:'Song', attributes:{ title:'Holy Forever' } },
+      { id:'s2', type:'Song', attributes:{ title:'Great Are You Lord' } },
+      { id:'s3', type:'Song', attributes:{ title:'Way Maker' } },
+      { id:'s4', type:'Song', attributes:{ title:'King of Kings' } },
+      { id:'n1', type:'ItemNote', attributes:{ category_name:'Leader', content:'Grayson' }, relationships:{ item:{ data:{ id:'i4' } } } },
+      { id:'n2', type:'ItemNote', attributes:{ category_name:'Leader', content:'Ella' },    relationships:{ item:{ data:{ id:'i5' } } } },
+      { id:'n3', type:'ItemNote', attributes:{ category_name:'Leader', content:'Grayson' }, relationships:{ item:{ data:{ id:'i6' } } } },
+      { id:'n4', type:'ItemNote', attributes:{ category_name:'Leader', content:'Mo' },      relationships:{ item:{ data:{ id:'i12' } } } },
+      { id:'n5', type:'ItemNote', attributes:{ category_name:'Notes',  content:'Host: Ben' }, relationships:{ item:{ data:{ id:'i7' } } } }
+    ]
+  };
+  applyPCOPlanData(demoPlan, demoTM, demoItems);
   toast('Demo data loaded — this is what a real PCO pull gives you','success');
   setPCOStatus('Demo data loaded','ok');
 }
@@ -1760,23 +2391,27 @@ function fillSummary() {
   document.getElementById('s_footerMeta').textContent = new Date().toLocaleDateString(undefined, {month:'short',day:'numeric'});
   const vocList = document.getElementById('s_vocList');
   vocList.innerHTML = '';
-  for (let i=0; i<6; i++) {
+  for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const li = document.createElement('li');
     li.className = 's-item';
-    li.innerHTML = `<span class="pos">VOCAL ${i+1}</span><span class="name">${esc(v.name||'—')}${v.hasAcoustic?' <span style="color:#7a9960;font-size:.8em;">+ AG</span>':''}</span><span class="detail">${esc(v.micAssigned||'—')}</span>`;
+    const tags = vocalistInstrumentTags(v.id);
+    const tagSuffix = tags.length ? ` <span style="color:#7a9960;font-size:.8em;">+ ${esc(tags.join(', '))}</span>` : '';
+    li.innerHTML = `<span class="pos">VOCAL ${i+1}</span><span class="name">${esc(v.name||'—')}${tagSuffix}</span><span class="detail">${esc(v.micAssigned||'—')}</span>`;
     vocList.appendChild(li);
   }
   const bandList = document.getElementById('s_bandList');
   bandList.innerHTML = '';
-  BAND_POSITIONS.forEach(p => {
-    const name = state.band[p.key];
-    if ((p.key==='eg2'||p.key==='ag') && !name) return;
-    const isMD = state.musicDirector === p.key;
+  state.instruments.forEach(inst => {
+    const isMD = state.musicDirectorId === inst.id;
+    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const name = player ? player.name : (inst.assignedTo || '');
+    if (inst.optional && !name && !player) return;
     const li = document.createElement('li');
     li.className = 's-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(p.label)}${isMD?' · MD':''}</span><span class="name">${esc(name||'—')}</span><span class="detail">${esc(p.pack)}</span>`;
+    const suffix = player ? ' (vocalist)' : '';
+    li.innerHTML = `<span class="pos">${esc(inst.label)}${isMD?' · MD':''}</span><span class="name">${esc(name||'—')}${esc(suffix)}</span><span class="detail">${esc(iemPackFor(inst))}</span>`;
     bandList.appendChild(li);
   });
   const hhList = document.getElementById('s_hhList');
@@ -1791,38 +2426,69 @@ function fillSummary() {
   if (!hhList.innerHTML) hhList.innerHTML = '<li class="s-item empty"><span class="pos">—</span><span class="name">No hosts</span><span class="detail"></span></li>';
   const iemList = document.getElementById('s_iemList');
   iemList.innerHTML = '';
-  BAND_POSITIONS.forEach(p => {
-    const name = state.band[p.key];
-    if ((p.key==='eg2'||p.key==='ag') && !name) return;
+  state.instruments.forEach(inst => {
+    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const name = player ? player.name : (inst.assignedTo || '');
+    if (inst.optional && !name && !player) return;
     const li = document.createElement('li');
     li.className = 's-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(p.pack)}</span><span class="name">${esc(name||'—')}</span><span class="detail"></span>`;
+    li.innerHTML = `<span class="pos">${esc(iemPackFor(inst))}</span><span class="name">${esc(name||'—')}</span><span class="detail"></span>`;
     iemList.appendChild(li);
   });
-  for (let i=0; i<6; i++) {
+  for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const li = document.createElement('li');
     li.className = 's-item';
-    li.innerHTML = `<span class="pos">Vocal ${i+1} Pack</span><span class="name">${esc(v.name||'—')}</span><span class="detail"></span>`;
+    const packName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
+    li.innerHTML = `<span class="pos">${esc(packName)}</span><span class="name">${esc(v.name||'—')}</span><span class="detail"></span>`;
     iemList.appendChild(li);
+  }
+  // Service Order block (hidden when empty)
+  const orderWrap = document.getElementById('s_orderWrap');
+  const orderList = document.getElementById('s_orderList');
+  if (orderWrap && orderList) {
+    if (!state.serviceOrder || state.serviceOrder.length === 0) {
+      orderWrap.style.display = 'none';
+    } else {
+      orderWrap.style.display = 'block';
+      orderList.innerHTML = '';
+      state.serviceOrder.forEach((it, idx) => {
+        const li = document.createElement('li');
+        li.className = 's-item';
+        if (it.kind === 'header') {
+          li.innerHTML = `<span class="pos" style="color:#8a7530;font-weight:700;">${esc(it.title||'')}</span><span class="name"></span><span class="detail"></span>`;
+        } else {
+          const isSong = it.kind === 'song';
+          const meta = [];
+          if (it.key) meta.push(it.key);
+          if (it.leader) meta.push(it.leader);
+          const prefix = isSong ? '♪' : String(idx+1).padStart(2,'0');
+          li.innerHTML = `<span class="pos">${prefix}${it.key?' · '+esc(it.key):''}</span><span class="name${isSong?' is-wl':''}">${esc(it.title||'—')}${it.leader?` <span style="color:#8a7530;font-size:.85em;"> — ${esc(it.leader)}</span>`:''}</span><span class="detail">${esc(fmtDuration(it.length))}</span>`;
+        }
+        orderList.appendChild(li);
+      });
+    }
   }
 }
 function copySummaryText() {
   const s = state.service;
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString() : '';
   const lines = [`${s.name||'Service'} — ${dateStr}`, '━'.repeat(40), '', 'VOCALISTS'];
-  for (let i=0; i<6; i++) {
+  for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
-    lines.push(`  VOCAL ${i+1}  ${v.name}${v.isWL?' ★':''}${v.hasAcoustic?' +AG':''}  —  ${v.micAssigned||'—'}`);
+    const tags = vocalistInstrumentTags(v.id);
+    const tagSuffix = tags.length ? ' +' + tags.join(', ') : '';
+    lines.push(`  VOCAL ${i+1}  ${v.name}${v.isWL?' ★':''}${tagSuffix}  —  ${v.micAssigned||'—'}`);
   }
   lines.push('', 'BAND');
-  BAND_POSITIONS.forEach(p => {
-    const n = state.band[p.key];
-    if ((p.key==='eg2'||p.key==='ag') && !n) return;
-    const md = state.musicDirector === p.key ? ' ★MD' : '';
-    lines.push(`  ${p.label}${md}: ${n||'—'}  (${p.pack})`);
+  state.instruments.forEach(inst => {
+    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const n = player ? player.name + ' (vocalist)' : (inst.assignedTo || '');
+    if (inst.optional && !n) return;
+    const md = state.musicDirectorId === inst.id ? ' ★MD' : '';
+    lines.push(`  ${inst.label}${md}: ${n||'—'}  (${iemPackFor(inst)})`);
   });
   lines.push('', 'HANDHELDS');
   if (state.hosts.speaker)      lines.push(`  Pastor:  ${state.hosts.speaker}`);
@@ -1860,23 +2526,43 @@ function renderDisplayView() {
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString(undefined, {weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
   document.getElementById('dv_date').textContent = dateStr;
 
+  // Apply display toggles — hide blocks the user has turned off in Settings → Layout
+  const d = state.config.display;
+  const toggleBlock = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; };
+  toggleBlock('dvVocalistsBlock', d.showVocalists);
+  toggleBlock('dvStageBlock',     d.showStage);
+  toggleBlock('dvBandBlock',      d.showBand);
+  toggleBlock('dvHostsBlock',     d.showHosts);
+  const showRS = d.showServiceOrder && state.serviceOrder && state.serviceOrder.length > 0;
+  toggleBlock('dvRunSheetBlock', showRS);
+  // Hide the whole sidebar if all three sidebar blocks are off
+  const sideHasContent = d.showBand || d.showHosts || showRS;
+  toggleBlock('dvSide', sideHasContent);
+  // If stage is off but sidebar is on, widen the sidebar to fill
+  const dvContent = document.getElementById('dvContent');
+  if (dvContent) {
+    if (!d.showStage && sideHasContent)       dvContent.style.gridTemplateColumns = '0 1fr';
+    else if (d.showStage && !sideHasContent)  dvContent.style.gridTemplateColumns = '1fr 0';
+    else                                       dvContent.style.gridTemplateColumns = '';
+  }
+
   // Stage diagram
   const wrap = document.getElementById('dvStagePeople');
   wrap.innerHTML = '';
+  renderStageShape();
+  const bandPositions = getBandStagePositions();
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
-  const vocalistPlaysAG = state.vocalists.some(v => v.hasAcoustic);
-  BAND_POSITIONS.forEach(p => {
-    const name = (state.band[p.key]||'').trim();
-    // If a vocalist plays AG, skip the separate AG box — the vocalist slot gets a /AG tag
-    if (p.key === 'ag' && vocalistPlaysAG) return;
-    if ((p.key==='eg2' || p.key==='ag') && !name) return;
-    const pos = BAND_STAGE_POS[p.key]; if (!pos) return;
-    const isMD = state.musicDirector === p.key;
+  state.instruments.forEach(inst => {
+    if (inst.vocalistPlayer) return; // covered by vocalist — gets a /TAG instead
+    const name = (inst.assignedTo || '').trim();
+    if (inst.optional && !name) return;
+    const pos = bandPositions[inst.id]; if (!pos) return;
+    const isMD = state.musicDirectorId === inst.id;
     const el = document.createElement('div');
     el.className = 'dv-sp ' + (name ? 'occupied' : 'empty');
     const css = toPct(pos);
     el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="dv-sp-role">${esc(p.label)}${isMD?' · MD':''}</div><div class="dv-sp-name">${name?esc(firstName(name)):p.placeholder}</div>`;
+    el.innerHTML = `<div class="dv-sp-role">${esc(inst.label)}${isMD?' · MD':''}</div><div class="dv-sp-name">${name?esc(firstName(name)):esc(inst.placeholder || inst.label)}</div>`;
     wrap.appendChild(el);
   });
   const filledIds = state.assignments.filter(a => a !== null);
@@ -1884,7 +2570,7 @@ function renderDisplayView() {
   if (count > 0) {
     const voxPositions = getVoxPositions(count);
     let posIdx = 0;
-    for (let i=0; i<6; i++) {
+    for (let i=0; i<MAX_VOCALISTS; i++) {
       const id = state.assignments[i]; if (!id) continue;
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[posIdx++];
@@ -1892,7 +2578,9 @@ function renderDisplayView() {
       el.className = 'dv-sp';
       const css = toPct(pos);
       el.style.left = css.left; el.style.top = css.top;
-      el.innerHTML = `<div class="dv-sp-role">VOCAL ${i+1}${v.hasAcoustic?' / AG':''}</div><div class="dv-sp-name">${esc(firstName(v.name) || '—')}</div>`;
+      const tags = vocalistInstrumentTags(v.id);
+      const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
+      el.innerHTML = `<div class="dv-sp-role">VOCAL ${i+1}${tagSuffix}</div><div class="dv-sp-name">${esc(firstName(v.name) || '—')}</div>`;
       wrap.appendChild(el);
     }
   }
@@ -1900,17 +2588,21 @@ function renderDisplayView() {
   // Vocalist cards
   const vocGrid = document.getElementById('dvVocGrid');
   vocGrid.innerHTML = '';
-  for (let i=0; i<6; i++) {
+  for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const card = document.createElement('div');
     card.className = 'dv-voc-card';
+    const iemPackName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
+    const showMic = state.config.showMicCapsules;
+    const tags = vocalistInstrumentTags(v.id);
+    const tagBadges = tags.map(t => `<span class="dv-voc-ag">🎸 ${esc(t)}</span>`).join('');
     card.innerHTML = `
       <div class="dv-voc-pos">VOCAL ${i+1}</div>
-      <div class="dv-voc-name">${esc(v.name||'—')}${v.hasAcoustic?'<span class="dv-voc-ag">🎸 AG</span>':''}</div>
+      <div class="dv-voc-name">${esc(v.name||'—')}${tagBadges}</div>
       <div class="dv-voc-meta">
-        <div class="dv-voc-line"><span class="lbl">Mic</span><span class="val ${v.micAssigned?'':'empty'}">${esc(v.micAssigned||'—')}</span></div>
-        <div class="dv-voc-line"><span class="lbl">IEM Pack</span><span class="val">Vocal ${i+1}</span></div>
+        ${showMic?`<div class="dv-voc-line"><span class="lbl">Mic</span><span class="val ${v.micAssigned?'':'empty'}">${esc(v.micAssigned||'—')}</span></div>`:''}
+        <div class="dv-voc-line"><span class="lbl">IEM Pack</span><span class="val">${esc(iemPackName)}</span></div>
       </div>
     `;
     vocGrid.appendChild(card);
@@ -1922,15 +2614,14 @@ function renderDisplayView() {
   // Band list
   const bandList = document.getElementById('dvBandList');
   bandList.innerHTML = '';
-  BAND_POSITIONS.forEach(p => {
-    const name = state.band[p.key];
-    // Hide AG row if vocalist covers it (same reason as stage diagram)
-    if (p.key === 'ag' && vocalistPlaysAG) return;
-    if ((p.key==='eg2'||p.key==='ag') && !name) return;
-    const isMD = state.musicDirector === p.key;
+  state.instruments.forEach(inst => {
+    if (inst.vocalistPlayer) return;
+    const name = inst.assignedTo || '';
+    if (inst.optional && !name) return;
+    const isMD = state.musicDirectorId === inst.id;
     const li = document.createElement('li');
     li.className = 'dv-list-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(p.label)}</span><span class="name ${isMD?'is-md':''}">${esc(name||'—')}</span><span class="detail">${esc(p.pack)}</span>`;
+    li.innerHTML = `<span class="pos">${esc(inst.label)}</span><span class="name ${isMD?'is-md':''}">${esc(name||'—')}</span><span class="detail">${esc(iemPackFor(inst))}</span>`;
     bandList.appendChild(li);
   });
 
@@ -1954,6 +2645,39 @@ function renderDisplayView() {
   });
   if (!anyHost) {
     hostsList.innerHTML = '<li class="dv-list-item empty"><span class="pos">—</span><span class="name">No hosts assigned</span><span class="detail"></span></li>';
+  }
+
+  // Service order in display view
+  const rsList = document.getElementById('dvRunSheetList');
+  if (rsList && showRS) {
+    rsList.innerHTML = '';
+    let songIdx = 0;
+    state.serviceOrder.forEach((it, idx) => {
+      if (it.kind === 'header') {
+        const el = document.createElement('div');
+        el.className = 'dv-rs-item header';
+        el.innerHTML = `<div class="dv-rs-title">${esc(it.title || '—')}</div>`;
+        rsList.appendChild(el);
+        return;
+      }
+      const isSong = it.kind === 'song';
+      if (isSong) songIdx++;
+      const el = document.createElement('div');
+      el.className = 'dv-rs-item' + (isSong ? ' song' : '');
+      const metaParts = [];
+      if (it.key) metaParts.push(`<span class="key-tag">${esc(it.key)}</span>`);
+      if (it.leader) metaParts.push(`<span class="lead">${esc(it.leader)}</span>`);
+      if (it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
+      el.innerHTML = `
+        <div class="dv-rs-seq">${isSong ? '♪' : String(idx+1).padStart(2,'0')}</div>
+        <div class="dv-rs-main">
+          <div class="dv-rs-title">${esc(it.title || '—')}</div>
+          ${metaParts.length ? `<div class="dv-rs-meta">${metaParts.join('')}</div>` : ''}
+        </div>
+        <div class="dv-rs-dur">${esc(fmtDuration(it.length))}</div>
+      `;
+      rsList.appendChild(el);
+    });
   }
 }
 
@@ -1991,18 +2715,75 @@ function applyBrand() {
 
 /* ===================== RESET / RENDER ALL ===================== */
 function resetAll() {
-  if (!confirm('Clear this week\'s vocalists, band, hosts, and notes? Mic inventory, preferences, and Planning Center connection will be kept.')) return;
-  const preserved = { inventory: state.inventory, preferences: state.preferences, pcoConfig: state.pcoConfig, brand: state.brand };
+  if (!confirm('Clear this week\'s vocalists, band, hosts, notes, and service order? Mic inventory, preferences, layout config, and Planning Center connection will be kept.')) return;
+  const preserved = { inventory: state.inventory, preferences: state.preferences, pcoConfig: state.pcoConfig, brand: state.brand, config: state.config };
   state = structuredClone(DEFAULT_STATE);
   state.service.date = new Date().toISOString().slice(0,10);
   state.inventory = preserved.inventory;
   state.preferences = preserved.preferences;
   state.pcoConfig = preserved.pcoConfig;
   state.brand = preserved.brand;
+  state.config = preserved.config;
   saveState();
   renderAll();
   toast('Reset for a new service');
 }
+function fmtDuration(seconds) {
+  if (!seconds || seconds <= 0) return '';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m === 0) return `${s}s`;
+  if (s === 0) return `${m}m`;
+  return `${m}m ${s}s`;
+}
+function renderRunSheet() {
+  const section = document.getElementById('runSheetSection');
+  const grid = document.getElementById('runSheetGrid');
+  const counter = document.getElementById('runSheetItemCount');
+  const workspace = document.getElementById('workspace');
+  if (!section || !grid) return;
+  const items = state.serviceOrder || [];
+  if (items.length === 0) {
+    section.style.display = 'none';
+    workspace.classList.remove('has-order');
+    return;
+  }
+  section.style.display = 'flex';
+  workspace.classList.add('has-order');
+  // Total duration (skip headers)
+  const totalSec = items.reduce((acc, it) => acc + (it.kind === 'header' ? 0 : (it.length || 0)), 0);
+  const totalM = Math.floor(totalSec / 60);
+  counter.textContent = `${items.filter(i => i.kind !== 'header').length} items${totalM ? ' · ' + totalM + ' min' : ''}`;
+  grid.innerHTML = '';
+  let songIdx = 0;
+  items.forEach((it, idx) => {
+    if (it.kind === 'header') {
+      const el = document.createElement('div');
+      el.className = 'rs-item header';
+      el.innerHTML = `<div class="rs-title">${esc(it.title || '—')}</div>`;
+      grid.appendChild(el);
+      return;
+    }
+    const isSong = it.kind === 'song';
+    if (isSong) songIdx++;
+    const el = document.createElement('div');
+    el.className = 'rs-item' + (isSong ? ' song' : '');
+    const metaParts = [];
+    if (it.key) metaParts.push(`<span class="rs-key">${esc(it.key)}</span>`);
+    if (it.leader) metaParts.push(`<span class="rs-leader">${esc(it.leader)}</span>`);
+    if (it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
+    el.innerHTML = `
+      <div class="rs-seq">${isSong ? '♪' : String(idx+1).padStart(2,'0')}</div>
+      <div class="rs-main">
+        <div class="rs-title">${esc(it.title || '—')}</div>
+        ${metaParts.length ? `<div class="rs-meta">${metaParts.join('')}</div>` : ''}
+      </div>
+      <div class="rs-dur">${esc(fmtDuration(it.length))}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
 function renderAll() {
   applyBrand();
   renderService();
@@ -2010,6 +2791,7 @@ function renderAll() {
   renderBand();
   renderHosts();
   renderStage();
+  renderRunSheet();
   if (state.viewMode === 'display') renderDisplayView();
 }
 
@@ -2058,16 +2840,19 @@ function init() {
   window.addEventListener('resize', renderStage);
 
   if (state.vocalists.length === 0 && !localStorage.getItem(STORAGE_KEY)) {
+    const graysonId = uid();
     state.vocalists = [
-      { id:uid(), name:'Mo',      leadsSongs:true,  isWL:false, hasAcoustic:false, micAssigned:'' },
-      { id:uid(), name:'Ella',    leadsSongs:true,  isWL:false, hasAcoustic:false, micAssigned:'' },
-      { id:uid(), name:'Grayson', leadsSongs:true,  isWL:true,  hasAcoustic:true,  micAssigned:'' },
-      { id:uid(), name:'Elena',   leadsSongs:false, isWL:false, hasAcoustic:false, micAssigned:'' }
+      { id:uid(),      name:'Mo',      leadsSongs:true,  isWL:false, micAssigned:'' },
+      { id:uid(),      name:'Ella',    leadsSongs:true,  isWL:false, micAssigned:'' },
+      { id:graysonId,  name:'Grayson', leadsSongs:true,  isWL:true,  micAssigned:'' },
+      { id:uid(),      name:'Elena',   leadsSongs:false, isWL:false, micAssigned:'' }
     ];
-    state.band.drums = 'Danny Barragan';
-    state.band.eg1   = 'Petey Nieves';
-    state.band.keys  = 'Marcus Donalson';
-    state.musicDirector = 'keys';
+    const set = (id, name) => { const i = instById(id); if (i) i.assignedTo = name; };
+    set('inst_drums', 'Danny Barragan');
+    set('inst_eg1',   'Petey Nieves');
+    set('inst_keys',  'Marcus Donalson');
+    const ag = instById('inst_ag'); if (ag) ag.vocalistPlayer = graysonId;
+    state.musicDirectorId = 'inst_keys';
     state.hosts.speaker = 'Jason Graves';
     state.hosts.welcomeHost1 = 'Ben Graves';
     saveState();
