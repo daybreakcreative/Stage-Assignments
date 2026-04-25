@@ -89,7 +89,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .run-sheet-header .title{font-family:var(--ff-display);font-size:20px;font-weight:500;font-style:italic;letter-spacing:-.01em}
 .run-sheet-header .meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em}
 .run-sheet-grid{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px;padding-bottom:8px;min-height:0;flex:1}
-.rs-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:baseline;transition:border-color .15s;font-family:var(--ff-body)}
+.rs-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:baseline;transition:border-color .15s;font-family:var(--ff-body)}
+.rs-item.editable{padding:6px 9px}
+.rs-item.editable.header{grid-template-columns:1fr auto;padding:8px 6px 4px}
 .rs-item:hover{border-color:var(--border-2)}
 .rs-item.header{background:transparent;border-color:transparent;padding:8px 2px 4px;margin-top:6px;grid-template-columns:1fr}
 .rs-item.header:first-child{margin-top:0}
@@ -103,6 +105,24 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .rs-meta .rs-leader{color:var(--accent);font-weight:600}
 .rs-meta .rs-key{background:var(--accent-dim);color:var(--accent);padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.08em}
 .rs-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);font-weight:500;white-space:nowrap;align-self:baseline}
+.rs-edit{background:transparent;border:1px solid transparent;color:var(--text);font-family:inherit;font-size:inherit;font-weight:inherit;outline:none;padding:2px 5px;border-radius:4px;width:100%;min-width:0;transition:all .12s}
+.rs-edit:hover{background:var(--bg-inset);border-color:var(--border)}
+.rs-edit:focus{background:var(--bg-elev);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.rs-edit-title{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text);letter-spacing:-.005em;line-height:1.2}
+.rs-item.song .rs-edit-title{font-style:italic}
+.rs-edit-header{font-family:var(--ff-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:var(--accent);padding:4px 6px}
+.rs-edit-key{font-family:var(--ff-mono);font-size:10px;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.08em;width:auto;max-width:60px;flex-shrink:0;text-align:center}
+.rs-edit-leader{font-family:var(--ff-mono);font-size:10px;color:var(--accent);font-weight:600;flex:0 1 auto;width:auto;min-width:80px;max-width:140px}
+.rs-edit-notes{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);flex:1 1 auto;min-width:80px}
+.rs-edit-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);font-weight:500;text-align:right;width:60px;flex-shrink:0;align-self:baseline}
+.rs-edit.empty{color:var(--text-faint)}
+.rs-meta-edit{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline;margin-top:2px}
+.rs-del{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:11px;padding:2px 6px;border-radius:4px;transition:all .12s;align-self:baseline;opacity:.4}
+.rs-item:hover .rs-del{opacity:1}
+.rs-del:hover{color:var(--danger);background:var(--accent-dim)}
+.rs-add-row{display:flex;gap:6px;margin-top:8px;padding-top:10px;border-top:1px dashed var(--border)}
+.rs-add-btn{flex:1;background:transparent;border:1px dashed var(--border);color:var(--text-muted);padding:6px 8px;border-radius:6px;font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .12s}
+.rs-add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 /* Display view — service order */
 .dv-run-sheet{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px;flex:1;min-height:0}
 .dv-rs-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:baseline;font-family:var(--ff-body)}
@@ -699,7 +719,10 @@ const DEFAULT_STATE = {
     stageShape: 'curved', // 'curved' | 'light-curve' | 'flat'
     voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
-    display: { showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true }
+    display: {
+      showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true,
+      runSheet: { songsOnly:false, showDuration:true, showDescriptions:true, showKey:true, showLeader:true }
+    }
   },
   viewMode: 'setup',
   theme: 'dark'
@@ -774,7 +797,14 @@ function loadState() {
           ...loadedConfig,
           voxIemPacks: voxPacks,
           iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
-          display: { ...DEFAULT_STATE.config.display, ...(loadedConfig.display||{}) }
+          display: {
+            ...DEFAULT_STATE.config.display,
+            ...(loadedConfig.display||{}),
+            runSheet: {
+              ...DEFAULT_STATE.config.display.runSheet,
+              ...((loadedConfig.display && loadedConfig.display.runSheet) || {})
+            }
+          }
         },
         instruments,
         musicDirectorId: mdId,
@@ -1361,7 +1391,7 @@ function renderLayoutEditor() {
 
     <div class="section-label" style="margin-bottom:10px;">Display View — What to Show</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Check what you want visible when you hit ▶ Display.</p>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
       ${[
         ['showStage','Stage diagram'],
         ['showVocalists','Vocalist cards'],
@@ -1370,6 +1400,20 @@ function renderLayoutEditor() {
         ['showServiceOrder','Service Order / Run Sheet']
       ].map(([k,label]) => `
         <label class="cfg-toggle"><input type="checkbox" data-display="${k}" ${c.display[k]?'checked':''} /><span>${label}</span></label>
+      `).join('')}
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Service Order — What to Include</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Fine-tune what shows in the Service Order on both edit view and Display view.</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+      ${[
+        ['songsOnly','Songs only (hide other items like welcome, sermon, offering)'],
+        ['showDuration','Show item durations'],
+        ['showDescriptions','Show item descriptions / notes'],
+        ['showKey','Show song key'],
+        ['showLeader','Show song leader']
+      ].map(([k,label]) => `
+        <label class="cfg-toggle"><input type="checkbox" data-rs="${k}" ${c.display.runSheet[k]?'checked':''} /><span>${label}</span></label>
       `).join('')}
     </div>
   `;
@@ -1525,6 +1569,15 @@ function renderLayoutEditor() {
     cb.addEventListener('change', e => {
       c.display[e.target.dataset.display] = e.target.checked;
       saveState();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+  // Run sheet sub-toggles
+  el.querySelectorAll('[data-rs]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      c.display.runSheet[e.target.dataset.rs] = e.target.checked;
+      saveState();
+      renderRunSheet();
       if (state.viewMode === 'display') renderDisplayView();
     });
   });
@@ -2571,7 +2624,9 @@ function renderDisplayView() {
 
   // Run sheet meta (item count + duration)
   if (showRS) {
-    const items = state.serviceOrder;
+    const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+    let items = state.serviceOrder;
+    if (rsCfg.songsOnly) items = items.filter(it => it.kind === 'song' || it.kind === 'header');
     const totalSec = items.reduce((acc, it) => acc + (it.kind === 'header' ? 0 : (it.length || 0)), 0);
     const totalM = Math.floor(totalSec / 60);
     const meta = document.getElementById('dvRunSheetMeta');
@@ -2683,8 +2738,11 @@ function renderDisplayView() {
   const rsList = document.getElementById('dvRunSheetList');
   if (rsList && showRS) {
     rsList.innerHTML = '';
-    let songIdx = 0;
-    state.serviceOrder.forEach((it, idx) => {
+    const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    visibleItems.forEach((it) => {
+      const trueIdx = state.serviceOrder.indexOf(it);
       if (it.kind === 'header') {
         const el = document.createElement('div');
         el.className = 'dv-rs-item header';
@@ -2693,20 +2751,19 @@ function renderDisplayView() {
         return;
       }
       const isSong = it.kind === 'song';
-      if (isSong) songIdx++;
       const el = document.createElement('div');
       el.className = 'dv-rs-item' + (isSong ? ' song' : '');
       const metaParts = [];
-      if (it.key) metaParts.push(`<span class="key-tag">${esc(it.key)}</span>`);
-      if (it.leader) metaParts.push(`<span class="lead">${esc(it.leader)}</span>`);
-      if (it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
+      if (rsCfg.showKey && it.key) metaParts.push(`<span class="key-tag">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) metaParts.push(`<span class="lead">${esc(it.leader)}</span>`);
+      if (rsCfg.showDescriptions && it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
       el.innerHTML = `
-        <div class="dv-rs-seq">${isSong ? '♪' : String(idx+1).padStart(2,'0')}</div>
+        <div class="dv-rs-seq">${isSong ? '♪' : String(trueIdx+1).padStart(2,'0')}</div>
         <div class="dv-rs-main">
           <div class="dv-rs-title">${esc(it.title || '—')}</div>
           ${metaParts.length ? `<div class="dv-rs-meta">${metaParts.join('')}</div>` : ''}
         </div>
-        <div class="dv-rs-dur">${esc(fmtDuration(it.length))}</div>
+        ${rsCfg.showDuration ? `<div class="dv-rs-dur">${esc(fmtDuration(it.length))}</div>` : ''}
       `;
       rsList.appendChild(el);
     });
@@ -2782,38 +2839,128 @@ function renderRunSheet() {
   }
   section.style.display = 'flex';
   workspace.classList.add('has-order');
-  // Total duration (skip headers)
-  const totalSec = items.reduce((acc, it) => acc + (it.kind === 'header' ? 0 : (it.length || 0)), 0);
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  // Filter visible items based on songsOnly + don't strip headers between visible items
+  let visibleItems = items;
+  if (rsCfg.songsOnly) visibleItems = items.filter(it => it.kind === 'song' || it.kind === 'header');
+  // Total duration of visible non-header items
+  const totalSec = visibleItems.reduce((acc, it) => acc + (it.kind === 'header' ? 0 : (it.length || 0)), 0);
   const totalM = Math.floor(totalSec / 60);
-  counter.textContent = `${items.filter(i => i.kind !== 'header').length} items${totalM ? ' · ' + totalM + ' min' : ''}`;
+  const itemCt = visibleItems.filter(i => i.kind !== 'header').length;
+  counter.textContent = `${itemCt} items${totalM ? ' · ' + totalM + ' min' : ''}`;
   grid.innerHTML = '';
-  let songIdx = 0;
-  items.forEach((it, idx) => {
+  visibleItems.forEach((it) => {
+    const trueIdx = items.indexOf(it);
     if (it.kind === 'header') {
       const el = document.createElement('div');
       el.className = 'rs-item header';
-      el.innerHTML = `<div class="rs-title">${esc(it.title || '—')}</div>`;
+      el.innerHTML = `
+        <input type="text" class="rs-edit rs-edit-header" data-idx="${trueIdx}" data-field="title" value="${esc(it.title || '')}" placeholder="Section header" />
+        <button class="rs-del" data-idx="${trueIdx}" title="Delete">✕</button>
+      `;
       grid.appendChild(el);
       return;
     }
     const isSong = it.kind === 'song';
-    if (isSong) songIdx++;
     const el = document.createElement('div');
-    el.className = 'rs-item' + (isSong ? ' song' : '');
+    el.className = 'rs-item' + (isSong ? ' song' : '') + ' editable';
     const metaParts = [];
-    if (it.key) metaParts.push(`<span class="rs-key">${esc(it.key)}</span>`);
-    if (it.leader) metaParts.push(`<span class="rs-leader">${esc(it.leader)}</span>`);
-    if (it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
+    if (rsCfg.showKey && it.key) {
+      metaParts.push(`<input type="text" class="rs-edit rs-edit-key" data-idx="${trueIdx}" data-field="key" value="${esc(it.key)}" placeholder="Key" />`);
+    } else if (rsCfg.showKey && isSong) {
+      metaParts.push(`<input type="text" class="rs-edit rs-edit-key empty" data-idx="${trueIdx}" data-field="key" value="" placeholder="Key" />`);
+    }
+    if (rsCfg.showLeader) {
+      const leaderClass = it.leader ? 'rs-edit-leader' : 'rs-edit-leader empty';
+      metaParts.push(`<input type="text" class="rs-edit ${leaderClass}" data-idx="${trueIdx}" data-field="leader" value="${esc(it.leader||'')}" placeholder="${isSong?'Leader':'Notes'}" />`);
+    }
+    if (rsCfg.showDescriptions) {
+      const notesClass = it.notes ? 'rs-edit-notes' : 'rs-edit-notes empty';
+      metaParts.push(`<input type="text" class="rs-edit ${notesClass}" data-idx="${trueIdx}" data-field="notes" value="${esc(it.notes||'')}" placeholder="Description" />`);
+    }
     el.innerHTML = `
-      <div class="rs-seq">${isSong ? '♪' : String(idx+1).padStart(2,'0')}</div>
+      <div class="rs-seq">${isSong ? '♪' : String(trueIdx+1).padStart(2,'0')}</div>
       <div class="rs-main">
-        <div class="rs-title">${esc(it.title || '—')}</div>
-        ${metaParts.length ? `<div class="rs-meta">${metaParts.join('')}</div>` : ''}
+        <input type="text" class="rs-edit rs-edit-title" data-idx="${trueIdx}" data-field="title" value="${esc(it.title || '')}" placeholder="Item title" />
+        ${metaParts.length ? `<div class="rs-meta-edit">${metaParts.join('')}</div>` : ''}
       </div>
-      <div class="rs-dur">${esc(fmtDuration(it.length))}</div>
+      ${rsCfg.showDuration ? `<input type="text" class="rs-edit rs-edit-dur" data-idx="${trueIdx}" data-field="length" value="${esc(fmtDuration(it.length))}" placeholder="0m" />` : ''}
+      <button class="rs-del" data-idx="${trueIdx}" title="Delete">✕</button>
     `;
     grid.appendChild(el);
   });
+
+  // Add-item buttons row at the bottom
+  const addRow = document.createElement('div');
+  addRow.className = 'rs-add-row';
+  addRow.innerHTML = `
+    <button class="rs-add-btn" data-add="item">+ Item</button>
+    <button class="rs-add-btn" data-add="song">+ Song</button>
+    <button class="rs-add-btn" data-add="header">+ Header</button>
+  `;
+  grid.appendChild(addRow);
+
+  // Wire editable fields
+  grid.querySelectorAll('.rs-edit').forEach(input => {
+    input.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const field = e.target.dataset.field;
+      const item = state.serviceOrder[idx];
+      if (!item) return;
+      if (field === 'length') {
+        item.length = parseDurationInput(e.target.value);
+      } else {
+        item[field] = e.target.value.trim();
+      }
+      saveState();
+      renderRunSheet();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+  // Delete
+  grid.querySelectorAll('.rs-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      state.serviceOrder.splice(idx, 1);
+      saveState();
+      renderRunSheet();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+  // Add new item
+  grid.querySelectorAll('.rs-add-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.add;
+      const newItem = { id: 'local_' + Math.random().toString(36).slice(2,8), kind, title: '', length: 0, key:null, leader:null, notes:'' };
+      if (kind === 'header') newItem.title = 'NEW SECTION';
+      else if (kind === 'song') newItem.title = 'New Song';
+      else newItem.title = 'New Item';
+      state.serviceOrder.push(newItem);
+      saveState();
+      renderRunSheet();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+}
+// Parse "5m 30s" or "5:30" or "330" (seconds) into integer seconds
+function parseDurationInput(str) {
+  if (!str) return 0;
+  str = str.trim().toLowerCase();
+  // Pattern "5m 30s" or "5m" or "30s"
+  const mMatch = str.match(/(\d+)\s*m/);
+  const sMatch = str.match(/(\d+)\s*s/);
+  if (mMatch || sMatch) {
+    return (parseInt(mMatch?.[1]||'0',10) * 60) + parseInt(sMatch?.[1]||'0',10);
+  }
+  // Pattern "5:30"
+  if (str.includes(':')) {
+    const [m, s] = str.split(':').map(x => parseInt(x,10)||0);
+    return m*60 + s;
+  }
+  // Plain number = minutes if small, seconds if large
+  const n = parseInt(str, 10);
+  if (isNaN(n)) return 0;
+  return n < 60 ? n*60 : n;  // treat <60 as minutes
 }
 
 function renderAll() {
