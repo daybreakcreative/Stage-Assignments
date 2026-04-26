@@ -2303,22 +2303,42 @@ function populatePlanSelect() {
 }
 
 function classifyPosition(name) {
-  const n = (name||'').toLowerCase().trim();
+  const original = (name||'').trim();
+  const n = original.toLowerCase().trim();
   if (!n) return { kind:'unknown' };
-  // Order matters — most specific first
-  // SHADOW positions don't get mics, get added to shadows list instead
+  // Order matters — most specific first.
+
+  // SHADOW positions don't get mics, get added to shadows list instead.
   if (n.includes('shadow')) return { kind:'shadow' };
-  // BAPTISMAL — "Pastor Baptizing" / similar — gets HH3 with baptismal flag
-  if (n.includes('baptiz') || n.includes('baptism')) return { kind:'host', host:'baptismal' };
-  // IGNORE — announcement video hosts and similar non-mic'd roles
-  // These are people who appear in a pre-recorded video, not on stage with a mic
-  if (n.includes('announcement video') || n.includes('video host') || n.includes('video announcement')) return { kind:'ignore' };
+
+  // BAPTISMAL — ONLY "Pastor Baptizing" (or close variants) gets HH3.
+  // Other baptism roles (host, participant, facilities, door, etc.) are support staff — ignored.
+  if (n === 'pastor baptizing' || n === 'baptizing pastor' ||
+      n.includes('officiant') ||
+      (n.includes('baptiz') && (n.includes('pastor') || n.includes('priest') || n.includes('elder')))) {
+    return { kind:'host', host:'baptismal' };
+  }
+
+  // IGNORE — these positions never get a mic and shouldn't go on stage:
+  //   • Anything with "video" (Announcement Video Host, Video Host, Pre-Service Video, etc.)
+  //   • Baptism support roles: Baptism Host, Baptism Participant, Baptism Facilities, Baptismal anything else
+  //   • Door Assistant, Greeter, Usher, Parking, Tech roles
+  //   • Photo, Team Lead, Creative roles, etc.
+  if (n.includes('video')) return { kind:'ignore' };
+  if (n.includes('baptism') || n.includes('baptiz')) return { kind:'ignore' };
+  if (n.includes('door') || n.includes('greeter') || n.includes('usher') || n.includes('parking')) return { kind:'ignore' };
+  if (n.includes('photo') || n.includes('camera') || n.includes('audio') || n.includes('lighting') || n.includes('production')) return { kind:'ignore' };
+  if (n.includes('team lead') || n.includes('creative') || n.includes('communion') || n.includes('facility') || n.includes('facilities')) return { kind:'ignore' };
+  if (n.includes('participant') || n.includes('assistant') || n.includes('coordinator')) return { kind:'ignore' };
+  if (n.includes('pre service prayer') || n.includes('pre-service prayer')) return { kind:'ignore' };
+
   // VOCALISTS
   if (n.includes('worship leader') || /^wl\b/.test(n) || n === 'wl') return { kind:'vocalist', isWL:true, leadsSongs:true };
   if (n.includes('vocal') || n.includes('vox') || n.includes('singer') || n.includes('back up') || n.includes('backup') || n.includes('bgv')) {
     const leads = n.includes('lead');
     return { kind:'vocalist', isWL:false, leadsSongs:leads };
   }
+
   // BAND
   if (n.includes('drum')) return { kind:'band', position:'drums' };
   if (n.includes('bass')) return { kind:'band', position:'bass' };
@@ -2326,10 +2346,15 @@ function classifyPosition(name) {
   if (n.includes('electric') || n === 'eg' || (n.includes('guitar') && !n.includes('acoustic'))) return { kind:'band', position:'eg' };
   if (n.includes('keys') || n.includes('piano') || n.includes('keyboard')) return { kind:'band', position:'keys' };
   if (n.includes('music director') || n === 'md') return { kind:'md_flag' };
-  // SPEAKING — pastor (who isn't baptizing — already handled above), preacher, speaker
+
+  // SPEAKING — pastor (not baptizing — already handled above), preacher, speaker
   if (n.includes('speaker') || n.includes('speaking') || n.includes('preacher') || n.includes('teaching pastor') || n.includes('pastor')) return { kind:'host', host:'speaker' };
-  // WELCOME HOSTS — fill HH1/HH2 first
-  if (n.includes('welcome') || n.includes('host') || n.includes('emcee')) return { kind:'host', host:'welcome' };
+
+  // WELCOME HOSTS — fill HH1/HH2 first.
+  // Note: "Announcement" alone is a welcome-style host (someone makes announcements live on stage).
+  // The "Announcement Video Host" case is already caught by the 'video' check above.
+  if (n.includes('welcome') || n.includes('host') || n.includes('emcee') || n.includes('announcement')) return { kind:'host', host:'welcome' };
+
   return { kind:'unknown' };
 }
 
@@ -2401,6 +2426,9 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   const welcomeNames = [];
   let baptismalName = null;
 
+  // Debug: log every team member's position + how it was classified.
+  // Open browser console (right-click → Inspect → Console tab) after a Pull Plan to see this.
+  console.group('[Stage·Assign] PCO team member classification');
   teamMembers.forEach(tm => {
     const a = tm.attributes;
     const name = a.name || '';
@@ -2409,6 +2437,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     const status = a.status || '';
     if (status === 'D') return;
     const cls = classifyPosition(positionName);
+    console.log(`  "${positionName}" → ${name} → ${cls.kind}${cls.host?'/'+cls.host:''}${cls.position?'/'+cls.position:''}`);
     if (cls.kind === 'ignore') return; // announcement video hosts etc.
     if (cls.kind === 'shadow') {
       // Add to shadows list; default pack from config
@@ -2447,6 +2476,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       else if (cls.host === 'welcome') { welcomeNames.push(name); }
     }
   });
+  console.groupEnd();
 
   // Welcome hosts go into HH1, HH2 first
   if (welcomeNames[0]) state.hosts.welcomeHost1 = welcomeNames[0];
@@ -2640,10 +2670,17 @@ function renderPCOSettings() {
         • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2 Pack)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
         • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → Pastor handheld<br>
-        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → HH 1 / HH 2 (HH 3 if 3+ welcome hosts)<br>
-        • <span style="color:#3a8bd5;">"Pastor Baptizing", "Baptism"</span> → HH 3 (flagged for baptism)<br>
-        • <span style="color:var(--text-faint);">"Announcement Video Host", "Video Host"</span> → ignored (not on stage with mic)<br>
-        • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)
+        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → HH 1 / HH 2 (HH 3 only if 3+ welcome hosts)<br>
+        • <span style="color:#3a8bd5;">"Pastor Baptizing"</span> → HH 3 (flagged for baptism)<br>
+        • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)<br>
+        <br>
+        <span style="color:var(--text-faint);">Ignored (no mic, never assigned):</span><br>
+        • Anything with "video" (Announcement Video Host, etc.)<br>
+        • Baptism support roles (Baptism Host, Baptism Participant, Baptism Facilities)<br>
+        • Door Assistant, Greeter, Usher, Parking<br>
+        • Photo, Camera, Audio, Lighting, Production, Tech<br>
+        • Team Lead, Creative, Communion, Facility roles<br>
+        • Pre-Service Prayer (and other prep roles)
       </div>
     </div>
   `;
