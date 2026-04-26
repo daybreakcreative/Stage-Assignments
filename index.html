@@ -242,7 +242,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .md-row{display:flex;align-items:center;gap:8px;padding:0 2px;font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
 .md-row select{flex:1;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:10.5px;padding:4px 6px;border-radius:5px;outline:none}
 .hosts{display:flex;flex-direction:column;gap:5px}
-.host-row{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 11px;display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:center;transition:border-color .15s}
+.host-row{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 11px;display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;transition:border-color .15s}
+.baptism-badge{font-family:var(--ff-mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;color:#3a8bd5;background:rgba(58,139,213,.13);padding:3px 7px;border-radius:4px;white-space:nowrap;border:1px solid rgba(58,139,213,.25)}
+.baptism-tag{font-family:var(--ff-mono);font-size:8.5px;font-weight:700;letter-spacing:.1em;color:#3a8bd5;text-transform:uppercase}
 .host-row:hover{border-color:var(--border-2)}
 .host-row .lbl{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
 .host-row input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:13px;font-weight:500;width:100%}
@@ -549,7 +551,7 @@ body>*:not(.summary-overlay){display:none!important}
             <div class="host-row pastor"><span class="lbl">Pastor</span><input type="text" id="speaker" placeholder="Speaker (PCO)" /></div>
             <div class="host-row"><span class="lbl">HH 1</span><input type="text" id="welcomeHost1" placeholder="Welcome host" /></div>
             <div class="host-row"><span class="lbl">HH 2</span><input type="text" id="welcomeHost2" placeholder="2nd host (if any)" /></div>
-            <div class="host-row"><span class="lbl">HH 3</span><input type="text" id="hh3" placeholder="Baptism / misc" /></div>
+            <div class="host-row" id="hh3Row"><span class="lbl">HH 3</span><input type="text" id="hh3" placeholder="Baptism / misc" /><span class="baptism-badge" id="hh3Baptism" style="display:none;" title="Baptism handheld">💧 BAPTISM</span></div>
           </div>
         </div>
       </div>
@@ -736,7 +738,7 @@ const DEFAULT_STATE = {
   shadows: [],
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
-  hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' },
+  hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'', hh3IsBaptismal:false },
   notes: '',
   serviceOrder: [],
   inventory: structuredClone(DEFAULT_INVENTORY),
@@ -1197,8 +1199,16 @@ function renderHosts() {
     const el = document.getElementById(id);
     if (!el) return;
     el.value = state.hosts[id] || '';
-    el.oninput = (e) => { state.hosts[id] = e.target.value; saveState(); };
+    el.oninput = (e) => {
+      state.hosts[id] = e.target.value;
+      // If the user edits HH3 manually, drop the baptism flag (since it might no longer be the baptizing pastor)
+      if (id === 'hh3') { state.hosts.hh3IsBaptismal = false; renderHosts(); }
+      saveState();
+    };
   });
+  // Show baptism badge on HH3 when applicable
+  const badge = document.getElementById('hh3Baptism');
+  if (badge) badge.style.display = (state.hosts.hh3IsBaptismal && state.hosts.hh3) ? '' : 'none';
 }
 function renderService() {
   document.getElementById('serviceDate').value = state.service.date || '';
@@ -2289,19 +2299,31 @@ function populatePlanSelect() {
 function classifyPosition(name) {
   const n = (name||'').toLowerCase().trim();
   if (!n) return { kind:'unknown' };
+  // Order matters — most specific first
+  // SHADOW positions don't get mics, get added to shadows list instead
+  if (n.includes('shadow')) return { kind:'shadow' };
+  // BAPTISMAL — "Pastor Baptizing" / similar — gets HH3 with baptismal flag
+  if (n.includes('baptiz') || n.includes('baptism')) return { kind:'host', host:'baptismal' };
+  // IGNORE — announcement video hosts and similar non-mic'd roles
+  // These are people who appear in a pre-recorded video, not on stage with a mic
+  if (n.includes('announcement video') || n.includes('video host') || n.includes('video announcement')) return { kind:'ignore' };
+  // VOCALISTS
   if (n.includes('worship leader') || /^wl\b/.test(n) || n === 'wl') return { kind:'vocalist', isWL:true, leadsSongs:true };
   if (n.includes('vocal') || n.includes('vox') || n.includes('singer') || n.includes('back up') || n.includes('backup') || n.includes('bgv')) {
     const leads = n.includes('lead');
     return { kind:'vocalist', isWL:false, leadsSongs:leads };
   }
+  // BAND
   if (n.includes('drum')) return { kind:'band', position:'drums' };
   if (n.includes('bass')) return { kind:'band', position:'bass' };
   if (n.includes('acoustic') || n === 'ag') return { kind:'band', position:'ag' };
   if (n.includes('electric') || n === 'eg' || (n.includes('guitar') && !n.includes('acoustic'))) return { kind:'band', position:'eg' };
   if (n.includes('keys') || n.includes('piano') || n.includes('keyboard')) return { kind:'band', position:'keys' };
   if (n.includes('music director') || n === 'md') return { kind:'md_flag' };
+  // SPEAKING — pastor (who isn't baptizing — already handled above), preacher, speaker
   if (n.includes('speaker') || n.includes('speaking') || n.includes('preacher') || n.includes('teaching pastor') || n.includes('pastor')) return { kind:'host', host:'speaker' };
-  if (n.includes('welcome') || n.includes('host') || n.includes('announcement') || n.includes('emcee')) return { kind:'host', host:'welcome' };
+  // WELCOME HOSTS — fill HH1/HH2 first
+  if (n.includes('welcome') || n.includes('host') || n.includes('emcee')) return { kind:'host', host:'welcome' };
   return { kind:'unknown' };
 }
 
@@ -2349,7 +2371,8 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.assignments = new Array(MAX_VOCALISTS).fill(null);
   // Reset all instrument assignments and vocalist-coverage on a fresh PCO pull
   state.instruments.forEach(i => { i.assignedTo = ''; i.vocalistPlayer = null; });
-  state.hosts = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
+  state.hosts = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'', hh3IsBaptismal:false };
+  state.shadows = [];
   state.serviceOrder = [];
   let mdNameCandidate = null;
   const egNames = [];
@@ -2368,6 +2391,10 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     const inst = instById('inst_' + shortKey);
     if (inst && !inst.assignedTo) inst.assignedTo = name;
   };
+  // Buckets we'll fill at the end (since order in PCO is arbitrary)
+  const welcomeNames = [];
+  let baptismalName = null;
+
   teamMembers.forEach(tm => {
     const a = tm.attributes;
     const name = a.name || '';
@@ -2376,6 +2403,18 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     const status = a.status || '';
     if (status === 'D') return;
     const cls = classifyPosition(positionName);
+    if (cls.kind === 'ignore') return; // announcement video hosts etc.
+    if (cls.kind === 'shadow') {
+      // Add to shadows list; default pack from config
+      if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normName(s.name) === normName(name))) {
+        state.shadows.push({
+          id: 'sh_'+Math.random().toString(36).slice(2,8),
+          name,
+          pack: state.config.shadowPack || 'Misc 2 Pack'
+        });
+      }
+      return;
+    }
     if (cls.kind === 'vocalist') {
       if (state.vocalists.length >= MAX_VOCALISTS) return;
       if (state.vocalists.some(v => normName(v.name) === normName(name))) return;
@@ -2398,13 +2437,25 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
       if (cls.host === 'speaker' && !state.hosts.speaker) state.hosts.speaker = name;
-      else if (cls.host === 'welcome') {
-        if (!state.hosts.welcomeHost1) state.hosts.welcomeHost1 = name;
-        else if (!state.hosts.welcomeHost2) state.hosts.welcomeHost2 = name;
-        else if (!state.hosts.hh3) state.hosts.hh3 = name;
-      }
+      else if (cls.host === 'baptismal') { if (!baptismalName) baptismalName = name; }
+      else if (cls.host === 'welcome') { welcomeNames.push(name); }
     }
   });
+
+  // Welcome hosts go into HH1, HH2 first
+  if (welcomeNames[0]) state.hosts.welcomeHost1 = welcomeNames[0];
+  if (welcomeNames[1]) state.hosts.welcomeHost2 = welcomeNames[1];
+  // HH3 logic:
+  //   - If there's a baptismal pastor → they get HH3 (flagged for baptism)
+  //   - Else if there are 3+ welcome hosts → 3rd welcome host gets HH3
+  //   - Otherwise HH3 stays empty
+  state.hosts.hh3IsBaptismal = false;
+  if (baptismalName) {
+    state.hosts.hh3 = baptismalName;
+    state.hosts.hh3IsBaptismal = true;
+  } else if (welcomeNames[2]) {
+    state.hosts.hh3 = welcomeNames[2];
+  }
   if (egNames[0]) assignToShort('eg1', egNames[0]);
   if (egNames[1]) assignToShort('eg2', egNames[1]);
   if (mdNameCandidate) {
@@ -2580,9 +2631,12 @@ function renderPCOSettings() {
       <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);line-height:1.7;">
         • <span style="color:var(--wl);">"Worship Leader"</span> → WL vocalist<br>
         • <span style="color:var(--text);">"Vocals", "Vocal Lead", "BGV"</span> → vocalist (lead flag if "lead" in name)<br>
+        • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2 Pack)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
         • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → Pastor handheld<br>
-        • <span style="color:var(--text);">"Welcome Host", "Host", "Announcement"</span> → HH 1 / HH 2 / HH 3<br>
+        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → HH 1 / HH 2 (HH 3 if 3+ welcome hosts)<br>
+        • <span style="color:#3a8bd5;">"Pastor Baptizing", "Baptism"</span> → HH 3 (flagged for baptism)<br>
+        • <span style="color:var(--text-faint);">"Announcement Video Host", "Video Host"</span> → ignored (not on stage with mic)<br>
         • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)
       </div>
     </div>
@@ -2634,11 +2688,17 @@ function fillSummary() {
   });
   const hhList = document.getElementById('s_hhList');
   hhList.innerHTML = '';
-  [{pos:'Pastor',name:state.hosts.speaker},{pos:'HH 1',name:state.hosts.welcomeHost1},{pos:'HH 2',name:state.hosts.welcomeHost2},{pos:'HH 3',name:state.hosts.hh3}].forEach(h => {
+  [
+    {pos:'Pastor',name:state.hosts.speaker},
+    {pos:'HH 1',name:state.hosts.welcomeHost1},
+    {pos:'HH 2',name:state.hosts.welcomeHost2},
+    {pos:'HH 3',name:state.hosts.hh3, baptism:state.hosts.hh3IsBaptismal}
+  ].forEach(h => {
     if (!h.name) return;
     const li = document.createElement('li');
     li.className = 's-item';
-    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail"></span>`;
+    const detail = h.baptism ? '<span style="color:#3a8bd5;font-family:var(--ff-mono);font-size:.78em;font-weight:700;letter-spacing:.08em;">💧 BAPTISM</span>' : '';
+    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail">${detail}</span>`;
     hhList.appendChild(li);
   });
   if (!hhList.innerHTML) hhList.innerHTML = '<li class="s-item empty"><span class="pos">—</span><span class="name">No hosts</span><span class="detail"></span></li>';
@@ -2720,7 +2780,7 @@ function copySummaryText() {
   if (state.hosts.speaker)      lines.push(`  Pastor:  ${state.hosts.speaker}`);
   if (state.hosts.welcomeHost1) lines.push(`  HH 1:    ${state.hosts.welcomeHost1}`);
   if (state.hosts.welcomeHost2) lines.push(`  HH 2:    ${state.hosts.welcomeHost2}`);
-  if (state.hosts.hh3)          lines.push(`  HH 3:    ${state.hosts.hh3}`);
+  if (state.hosts.hh3)          lines.push(`  HH 3:    ${state.hosts.hh3}${state.hosts.hh3IsBaptismal?' [BAPTISM]':''}`);
   navigator.clipboard.writeText(lines.join('\n')).then(() => toast('Copied','success'), () => toast('Copy failed','error'));
 }
 
@@ -2874,7 +2934,7 @@ function renderDisplayView() {
     { pos:'Pastor', name:state.hosts.speaker },
     { pos:'HH 1',   name:state.hosts.welcomeHost1 },
     { pos:'HH 2',   name:state.hosts.welcomeHost2 },
-    { pos:'HH 3',   name:state.hosts.hh3 }
+    { pos:'HH 3',   name:state.hosts.hh3, baptism: state.hosts.hh3IsBaptismal }
   ];
   let anyHost = false;
   hosts.forEach(h => {
@@ -2882,7 +2942,8 @@ function renderDisplayView() {
     anyHost = true;
     const li = document.createElement('li');
     li.className = 'dv-list-item';
-    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail"></span>`;
+    const detail = h.baptism ? '<span class="baptism-tag">💧 Baptism</span>' : '';
+    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail">${detail}</span>`;
     hostsList.appendChild(li);
   });
   if (!anyHost) {
