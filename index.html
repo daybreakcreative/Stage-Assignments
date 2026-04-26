@@ -234,6 +234,12 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .band-vocalist-tag .bv-icon{color:var(--accent);font-size:11px}
 .band-vocalist-tag .bv-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .band-vocalist-tag .bv-sub{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.bv-unlink{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:4px;line-height:1;transition:all .12s;flex-shrink:0;font-family:var(--ff-mono)}
+.bv-unlink:hover{color:#a83838;background:var(--accent-dim)}
+.band-input-row{display:flex;align-items:center;gap:6px;width:100%}
+.band-input-row input{flex:1;min-width:0}
+.bv-link-btn{background:var(--accent-dim);color:var(--accent);border:1px solid transparent;font-family:var(--ff-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 7px;border-radius:4px;cursor:pointer;flex-shrink:0;transition:all .12s;animation:fadeIn .2s ease;white-space:nowrap}
+.bv-link-btn:hover{background:var(--accent);color:var(--btn-primary-text,#1a1408);border-color:var(--accent)}
 .md-row{display:flex;align-items:center;gap:8px;padding:0 2px;font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
 .md-row select{flex:1;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:10.5px;padding:4px 6px;border-radius:5px;outline:none}
 .hosts{display:flex;flex-direction:column;gap:5px}
@@ -285,7 +291,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .iem-row .iem-lbl{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
 .iem-row input{font-family:var(--ff-mono);font-size:11.5px;padding:6px 9px}
 .inst-editor{display:flex;flex-direction:column;gap:4px}
-.inst-row{display:grid;grid-template-columns:18px 22px 2.4fr 1.2fr 28px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;transition:border-color .15s}
+.inst-row{display:grid;grid-template-columns:18px 22px 2.4fr 1.2fr 44px 28px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;transition:border-color .15s}
+.inst-opt{display:flex;align-items:center;gap:3px;font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;font-weight:600;cursor:pointer;justify-content:center}
+.inst-opt input{accent-color:var(--accent);width:14px;height:14px;margin:0;cursor:pointer}
 .inst-row:hover{border-color:var(--border-2)}
 .inst-row.dragging{opacity:.4}
 .inst-row.drop-target{border-color:var(--accent);background:var(--accent-dim)}
@@ -426,18 +434,35 @@ body.display-mode{overflow:hidden}
 }
 
 @media print{
-@page{size:letter;margin:.4in}
-body{background:white!important;overflow:visible}
+@page{size:letter;margin:.35in}
+*{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+html,body{background:white!important;overflow:visible;height:auto}
 body>*:not(.summary-overlay){display:none!important}
-.summary-overlay{display:block!important;position:static;padding:0;background:white!important}
-.summary-sheet{box-shadow:none;margin:0;max-width:100%;background:white!important;color:black!important;padding:0}
-.summary-sheet::before{border-color:#999}
+.summary-overlay{display:block!important;position:static;padding:0;background:white!important;height:auto;overflow:visible}
+.summary-sheet{box-shadow:none;margin:0;max-width:100%;background:white!important;color:black!important;padding:0;font-family:Arial,'Helvetica Neue',sans-serif!important;border-radius:0}
+.summary-sheet::before{display:none!important}
 .summary-close,.summary-actions{display:none!important}
-.s-header h1{color:black!important}
-.s-block h3{color:#444!important;border-color:#999!important}
-.s-item .name{color:black!important}
-.s-item .detail,.s-item .pos{color:#444!important}
-.s-footer{color:#666!important;border-color:#999!important}
+/* HEADER: compress vertically, remove decoration */
+.s-header{margin-bottom:14px!important;padding-bottom:10px!important;border-bottom:1.5px solid #000!important;text-align:left!important}
+.s-eyebrow{display:none!important}
+.s-ornament{display:none!important}
+.s-header h1{font-size:22px!important;font-style:normal!important;color:black!important;margin-bottom:2px!important;font-weight:700!important;letter-spacing:0!important;line-height:1.1!important}
+.s-date{font-size:11px!important;color:#000!important;font-style:normal!important;letter-spacing:0!important}
+/* Top grid (Vocalists/Band, Hosts/IEMs): more compact */
+.s-grid{gap:14px 24px!important;margin-bottom:14px!important;page-break-inside:avoid}
+.s-block h3{font-size:9px!important;color:#000!important;border-color:#000!important;margin-bottom:6px!important;padding-bottom:3px!important;font-weight:700!important;letter-spacing:.16em!important}
+.s-list{gap:2px!important}
+.s-item{font-size:11px!important;font-family:Arial,'Helvetica Neue',sans-serif!important;gap:8px!important;line-height:1.25!important;page-break-inside:avoid}
+.s-item .pos{font-size:9px!important;color:#444!important;min-width:40px!important;letter-spacing:.04em!important;font-weight:600!important}
+.s-item .name{color:black!important;font-weight:500!important}
+.s-item .name.is-wl{color:black!important}
+.s-item .name.is-wl::after{content:' (WL)'!important;color:#444!important;font-size:.85em!important}
+.s-item .detail{font-size:9px!important;color:#444!important}
+.s-item.empty{display:none!important}
+/* SERVICE ORDER: compact list, songs lightly emphasized */
+#s_orderWrap{margin-bottom:8px!important;page-break-before:auto!important}
+#s_orderList .s-item{grid-template-columns:auto 1fr auto!important}
+.s-footer{margin-top:14px!important;padding-top:8px!important;border-color:#000!important;color:#444!important;font-size:8px!important;letter-spacing:.12em!important}
 }
 </style>
 </head>
@@ -456,9 +481,9 @@ body>*:not(.summary-overlay){display:none!important}
   <div class="actions">
     <button class="btn pco" id="pcoBtn"><span class="dot"></span> Planning Center</button>
     <button class="btn ghost" id="themeBtn" title="Toggle light/dark mode">☾</button>
-    <button class="btn ghost" id="settingsBtn">⚙︎</button>
+    <button class="btn ghost" id="settingsBtn">Set Up</button>
     <button class="btn ghost" id="resetBtn">Reset</button>
-    <button class="btn" id="summaryBtn">Summary</button>
+    <button class="btn" id="summaryBtn">Print Summary</button>
     <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
     <button class="btn primary" id="assignBtn">Auto-Assign <span class="kbd">⌘↵</span></button>
   </div>
@@ -472,7 +497,6 @@ body>*:not(.summary-overlay){display:none!important}
   <button class="btn ghost" id="pcoRefreshBtn" disabled title="Re-fetch current plan">↻ Refresh</button>
   <span class="pco-spacer"></span>
   <span class="pco-status" id="pcoStatusText"></span>
-  <button class="btn ghost" id="pcoDisconnectBtn" style="font-size:10.5px;padding:4px 9px;">Disconnect</button>
 </div>
 
 <div class="workspace" id="workspace">
@@ -526,7 +550,7 @@ body>*:not(.summary-overlay){display:none!important}
               <option value="">— None —</option>
             </select>
           </div>
-          <div class="md-row" id="agRow" style="margin-top:6px;display:none;">
+          <div class="md-row" id="agRow" style="margin-top:6px;">
             <span>AG →</span>
             <select id="agSelect">
               <option value="">— None —</option>
@@ -711,12 +735,12 @@ const DEFAULT_IEM_PACK_PRESETS = ['Drum Pack','Bass Pack','EG Pack','Keys Pack',
 //   vocalistPlayer (vocalist id or null — when set, this instrument is "covered by a vocalist"),
 //   tag (short label shown after vocal slot when covered, e.g. "AG" or "Keys")
 const DEFAULT_INSTRUMENTS = [
-  { id:'inst_drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer', tag:'Drums', assignedTo:'', vocalistPlayer:null },
-  { id:'inst_bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass',    tag:'Bass',  assignedTo:'', vocalistPlayer:null },
-  { id:'inst_eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2',     tag:'EG',    assignedTo:'', vocalistPlayer:null },
-  { id:'inst_ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG',      tag:'AG',    assignedTo:'', vocalistPlayer:null },
-  { id:'inst_eg1',   label:'Electric 1', pack:'EG Pack',       placeholder:'EG1',     tag:'EG',    assignedTo:'', vocalistPlayer:null },
-  { id:'inst_keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null }
+  { id:'inst_drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer', tag:'Drums', assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass',    tag:'Bass',  assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:true },
+  { id:'inst_ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG',      tag:'AG',    assignedTo:'', vocalistPlayer:null, optional:true },
+  { id:'inst_eg1',   label:'Electric 1', pack:'EG Pack',       placeholder:'EG1',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null, optional:false }
 ];
 
 const DEFAULT_STATE = {
@@ -773,6 +797,14 @@ function loadState() {
           });
         }
       }
+      // Backfill `optional` flag for older saved states (so EG2 / AG hide when unassigned)
+      const OPTIONAL_DEFAULTS = { 'inst_eg2': true, 'inst_ag': true };
+      instruments.forEach(inst => {
+        if (typeof inst.optional !== 'boolean' && OPTIONAL_DEFAULTS[inst.id] !== undefined) {
+          inst.optional = OPTIONAL_DEFAULTS[inst.id];
+        }
+        if (typeof inst.optional !== 'boolean') inst.optional = false;
+      });
       // Migrate legacy musicDirector ('keys') → musicDirectorId ('inst_keys')
       let mdId = p.musicDirectorId;
       if (!mdId && p.musicDirector) {
@@ -943,6 +975,7 @@ function addVocalist() {
 function removeVocalist(id) {
   state.vocalists = state.vocalists.filter(v => v.id !== id);
   state.assignments = computePositions(state.vocalists);
+  autoLinkBandToVocalists(); // clears any stale instrument links to this vocalist
   saveState(); renderAll();
 }
 function toggleVocField(id, field) {
@@ -958,7 +991,13 @@ function toggleVocField(id, field) {
 }
 function updateVocName(id, name) {
   const v = state.vocalists.find(x => x.id === id); if (!v) return;
-  v.name = name; saveState(); renderStage();
+  v.name = name;
+  // Auto-link any band slots that now match this vocalist
+  if (autoLinkBandToVocalists()) {
+    saveState(); renderAll();
+  } else {
+    saveState(); renderStage();
+  }
 }
 function setVocMic(id, mic) {
   const v = state.vocalists.find(x => x.id === id); if (!v) return;
@@ -1150,27 +1189,74 @@ function iemPackFor(instOrId) {
 }
 function getMD() { return state.musicDirectorId ? instById(state.musicDirectorId) : null; }
 
+function vocalistByName(name) {
+  const target = normName(name);
+  if (!target) return null;
+  // Match on first name (case-insensitive). If full name is given, also try matching full lowercase.
+  const fullTarget = (name||'').trim().toLowerCase();
+  return state.vocalists.find(v => {
+    if (!v.name) return false;
+    if (normName(v.name) === target) return true;
+    if (v.name.trim().toLowerCase() === fullTarget) return true;
+    return false;
+  }) || null;
+}
+
+// Scan all instruments — if a band slot has a typed name that matches a current vocalist,
+// auto-promote it to a vocalistPlayer link. Also clears any vocalistPlayer that points to a deleted vocalist.
+function autoLinkBandToVocalists() {
+  let changed = false;
+  state.instruments.forEach(inst => {
+    // Drop stale links to deleted vocalists
+    if (inst.vocalistPlayer && !state.vocalists.some(v => v.id === inst.vocalistPlayer)) {
+      inst.vocalistPlayer = null; changed = true;
+    }
+    // Auto-link typed names that match a vocalist
+    if (!inst.vocalistPlayer && inst.assignedTo) {
+      const v = vocalistByName(inst.assignedTo);
+      if (v) {
+        inst.vocalistPlayer = v.id;
+        inst.assignedTo = ''; // collapse the typed name into the link
+        changed = true;
+      }
+    }
+  });
+  return changed;
+}
+
 function renderBand() {
   const grid = document.getElementById('bandGrid');
   grid.innerHTML = '';
   state.instruments.forEach(inst => {
+    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const playedByVocalist = !!player;
+    const hasName = !!(inst.assignedTo||'').trim();
+    // Hide optional instruments when nobody's assigned and no vocalist plays them
+    if (inst.optional && !hasName && !playedByVocalist) return;
     const isMD = state.musicDirectorId === inst.id;
     const slot = document.createElement('div');
     slot.className = 'band-input' + (isMD ? ' is-md' : '');
-    const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
-    const playedByVocalist = !!player;
+    // If they typed a name AND it matches a vocalist, surface a quick toggle
+    let nameMatchedVoc = null;
+    if (!playedByVocalist && hasName) {
+      nameMatchedVoc = vocalistByName(inst.assignedTo);
+    }
     slot.innerHTML = `
       <span class="lbl">
         <span>${esc(inst.label)}${isMD ? ' <span class="md-tag">MD</span>' : ''}</span>
         <span class="pack-mini">${esc((inst.pack||'').replace(' Pack',''))}</span>
       </span>
       ${playedByVocalist
-        ? `<div class="band-vocalist-tag" title="Played by vocalist — manage in Settings → Layout">
+        ? `<div class="band-vocalist-tag" title="Played by vocalist — click ✕ to unlink">
              <span class="bv-icon">★</span>
              <span class="bv-name">${esc(player.name || '(unnamed vocalist)')}</span>
              <span class="bv-sub">also a vocalist</span>
+             <button class="bv-unlink" data-inst-id="${esc(inst.id)}" title="Unlink — treat as a separate band person">✕</button>
            </div>`
-        : `<input type="text" value="${esc(inst.assignedTo||'')}" placeholder="${esc(inst.placeholder || inst.label)}" data-inst-id="${esc(inst.id)}"/>`
+        : `<div class="band-input-row">
+             <input type="text" value="${esc(inst.assignedTo||'')}" placeholder="${esc(inst.placeholder || inst.label)}" data-inst-id="${esc(inst.id)}"/>
+             ${nameMatchedVoc ? `<button class="bv-link-btn" data-link-inst="${esc(inst.id)}" data-link-voc="${esc(nameMatchedVoc.id)}" title="${esc(nameMatchedVoc.name)} is also in the vocalist list — click to mark this instrument as covered by them">★ link</button>` : ''}
+           </div>`
       }
     `;
     grid.appendChild(slot);
@@ -1178,7 +1264,42 @@ function renderBand() {
   grid.querySelectorAll('input[data-inst-id]').forEach(input => {
     input.addEventListener('input', e => {
       const inst = instById(e.target.dataset.instId);
-      if (inst) { inst.assignedTo = e.target.value; saveState(); renderStage(); if (state.viewMode==='display') renderDisplayView(); }
+      if (inst) {
+        inst.assignedTo = e.target.value;
+        saveState();
+        // Re-render so the link button appears/disappears based on current name match
+        renderBand();
+        renderStage();
+        if (state.viewMode==='display') renderDisplayView();
+      }
+    });
+    // On blur (finished typing), auto-link if the name matches a vocalist exactly
+    input.addEventListener('change', e => {
+      const inst = instById(e.target.dataset.instId);
+      if (inst && autoLinkBandToVocalists()) {
+        saveState(); renderAll();
+      }
+    });
+  });
+  // Manual link button: mark instrument as played by matched vocalist
+  grid.querySelectorAll('.bv-link-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const inst = instById(btn.dataset.linkInst);
+      if (!inst) return;
+      inst.vocalistPlayer = btn.dataset.linkVoc;
+      inst.assignedTo = ''; // clear typed name since they're now represented as the vocalist
+      saveState();
+      renderAll();
+    });
+  });
+  // Unlink button: detach vocalist from instrument
+  grid.querySelectorAll('.bv-unlink').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const inst = instById(btn.dataset.instId);
+      if (!inst) return;
+      inst.vocalistPlayer = null;
+      saveState();
+      renderAll();
     });
   });
   // MD selector — list current instruments
@@ -1194,9 +1315,28 @@ function renderBand() {
       saveState(); renderBand(); renderStage(); if (state.viewMode==='display') renderDisplayView();
     };
   }
-  // AG selector is now removed from main view — handled in Settings → Layout (per Q3 answer)
+  // AG selector — populate with current vocalists, bind to acoustic instrument's vocalistPlayer
   const agRow = document.getElementById('agRow');
-  if (agRow) agRow.style.display = 'none';
+  const agSel = document.getElementById('agSelect');
+  if (agRow && agSel) {
+    const ag = instById('inst_ag');
+    if (!ag) {
+      agRow.style.display = 'none';
+    } else {
+      agRow.style.display = '';
+      let agHtml = '<option value="">— None —</option>';
+      state.vocalists.forEach(v => {
+        const label = (v.name||'').trim() || '(unnamed)';
+        agHtml += `<option value="${esc(v.id)}"${ag.vocalistPlayer === v.id ? ' selected' : ''}>${esc(label)}</option>`;
+      });
+      agSel.innerHTML = agHtml;
+      agSel.onchange = (e) => {
+        ag.vocalistPlayer = e.target.value || null;
+        if (ag.vocalistPlayer) ag.assignedTo = '';
+        saveState(); renderAll();
+      };
+    }
+  }
 }
 
 /* ===================== HOSTS / SERVICE ===================== */
@@ -1502,6 +1642,7 @@ function renderLayoutEditor() {
               ${state.vocalists.map(v => `<option value="${esc(v.id)}"${inst.vocalistPlayer === v.id ? ' selected' : ''}>${esc(v.name || '(unnamed)')}</option>`).join('')}
             </select>
           </div>
+          <label class="inst-opt" title="When checked, this instrument is hidden from the band list and stage diagram if no one is assigned"><input type="checkbox" data-id="${esc(inst.id)}" data-field="optional" ${inst.optional?'checked':''} /><span>opt</span></label>
           <button class="x-btn inst-del" data-id="${esc(inst.id)}" title="Delete">✕</button>
         </div>
       `).join('')}
@@ -1598,6 +1739,8 @@ function renderLayoutEditor() {
       const f = e.target.dataset.field;
       if (f === 'vocalistPlayer') {
         inst.vocalistPlayer = e.target.value || null;
+      } else if (f === 'optional') {
+        inst.optional = !!e.target.checked;
       } else {
         inst[f] = e.target.value;
       }
@@ -2564,6 +2707,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   saveState();
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists();
+  autoLinkBandToVocalists(); // catch any band positions that match a vocalist's name
   saveState();
   renderAll();
 }
@@ -3289,7 +3433,9 @@ function init() {
     if (planId) pcoPullPlan(planId);
   });
   document.getElementById('pcoRefreshBtn').addEventListener('click', () => { if (state.pcoConfig.selectedPlanId) pcoPullPlan(state.pcoConfig.selectedPlanId); });
-  document.getElementById('pcoDisconnectBtn').addEventListener('click', pcoDisconnect);
+  // pcoDisconnectBtn was removed from the main PCO bar — Disconnect is now only inside Settings → Planning Center.
+  const oldDisconnect = document.getElementById('pcoDisconnectBtn');
+  if (oldDisconnect) oldDisconnect.addEventListener('click', pcoDisconnect);
   document.getElementById('settingsOverlay').addEventListener('click', e => { if (e.target.id === 'settingsOverlay') closeSettings(); });
   document.getElementById('summaryOverlay').addEventListener('click', e => { if (e.target.id === 'summaryOverlay') hideSummary(); });
   document.addEventListener('keydown', e => {
