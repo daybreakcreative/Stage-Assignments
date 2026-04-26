@@ -227,6 +227,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .band-input .lbl{font-family:var(--ff-mono);font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint);display:flex;justify-content:space-between;align-items:center}
 .band-input .md-tag{font-family:var(--ff-mono);font-size:8.5px;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(212,161,71,.35);padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:4px;vertical-align:middle}
 .band-input .pack-mini{font-size:7.5px;color:var(--text-faint);opacity:.7}
+.band-input .lbl-right{display:flex;align-items:center;gap:6px}
+.band-swap-btn{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;font-size:10px;padding:1px 5px;border-radius:3px;line-height:1;transition:all .12s;font-family:var(--ff-mono)}
+.band-swap-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
 .band-input input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:13px;font-weight:500;width:100%}
 .band-input input::placeholder{color:var(--text-faint);font-style:italic;font-size:12px;font-weight:400}
 .band-input.is-md{border-color:rgba(232,184,87,.35);background:linear-gradient(180deg,rgba(232,184,87,.04),transparent),var(--surface)}
@@ -1227,6 +1230,17 @@ function autoLinkBandToVocalists() {
 function renderBand() {
   const grid = document.getElementById('bandGrid');
   grid.innerHTML = '';
+  // Helper: detect position type from any instrument (drums/bass/keys/eg/ag/null)
+  const getInstPosType = (inst) => {
+    const cls = classifyPosition(inst.label || '');
+    if (cls.kind === 'band') return cls.position;
+    if (inst.id === 'inst_drums') return 'drums';
+    if (inst.id === 'inst_bass') return 'bass';
+    if (inst.id === 'inst_keys') return 'keys';
+    if (inst.id === 'inst_eg1' || inst.id === 'inst_eg2') return 'eg';
+    if (inst.id === 'inst_ag') return 'ag';
+    return null;
+  };
   state.instruments.forEach(inst => {
     const player = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
     const playedByVocalist = !!player;
@@ -1234,6 +1248,12 @@ function renderBand() {
     // Hide optional instruments when nobody's assigned and no vocalist plays them
     if (inst.optional && !hasName && !playedByVocalist) return;
     const isMD = state.musicDirectorId === inst.id;
+    // Find sibling of same position type for swap button
+    const myPos = getInstPosType(inst);
+    const myIdx = state.instruments.indexOf(inst);
+    const siblings = state.instruments
+      .map((i, idx) => ({ i, idx }))
+      .filter(({ i, idx }) => idx !== myIdx && getInstPosType(i) === myPos);
     const slot = document.createElement('div');
     slot.className = 'band-input' + (isMD ? ' is-md' : '');
     // If they typed a name AND it matches a vocalist, surface a quick toggle
@@ -1241,10 +1261,16 @@ function renderBand() {
     if (!playedByVocalist && hasName) {
       nameMatchedVoc = vocalistByName(inst.assignedTo);
     }
+    const swapBtn = siblings.length > 0
+      ? `<button class="band-swap-btn" data-swap-inst="${esc(inst.id)}" title="Swap with ${esc(siblings.map(s => s.i.label).join(' / '))}">⇄</button>`
+      : '';
     slot.innerHTML = `
       <span class="lbl">
         <span>${esc(inst.label)}${isMD ? ' <span class="md-tag">MD</span>' : ''}</span>
-        <span class="pack-mini">${esc((inst.pack||'').replace(' Pack',''))}</span>
+        <span class="lbl-right">
+          ${swapBtn}
+          <span class="pack-mini">${esc((inst.pack||'').replace(' Pack',''))}</span>
+        </span>
       </span>
       ${playedByVocalist
         ? `<div class="band-vocalist-tag" title="Played by vocalist — click ✕ to unlink">
@@ -1298,6 +1324,28 @@ function renderBand() {
       const inst = instById(btn.dataset.instId);
       if (!inst) return;
       inst.vocalistPlayer = null;
+      saveState();
+      renderAll();
+    });
+  });
+  // Swap button: trades place with the next sibling of same position type
+  grid.querySelectorAll('.band-swap-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const inst = instById(btn.dataset.swapInst);
+      if (!inst) return;
+      const myPos = getInstPosType(inst);
+      const myIdx = state.instruments.indexOf(inst);
+      // Find first sibling of same type
+      const siblingIdx = state.instruments.findIndex((i, idx) => idx !== myIdx && getInstPosType(i) === myPos);
+      if (siblingIdx === -1) return;
+      const sibling = state.instruments[siblingIdx];
+      // Swap their player content (assignedTo + vocalistPlayer) — keeps slot labels in place
+      const tmpAssign = inst.assignedTo;
+      const tmpPlayer = inst.vocalistPlayer;
+      inst.assignedTo = sibling.assignedTo;
+      inst.vocalistPlayer = sibling.vocalistPlayer;
+      sibling.assignedTo = tmpAssign;
+      sibling.vocalistPlayer = tmpPlayer;
       saveState();
       renderAll();
     });
@@ -2549,7 +2597,8 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.shadows = [];
   state.serviceOrder = [];
   let mdNameCandidate = null;
-  const egNames = [];
+  // Buckets — collect all names per band-position type, then distribute below
+  const bandBuckets = { drums:[], bass:[], keys:[], eg:[], ag:[] };
   // First pass: figure out who plays acoustic
   const acousticPlayers = new Set();
   teamMembers.forEach(tm => {
@@ -2560,17 +2609,10 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       acousticPlayers.add(normName(a.name));
     }
   });
-  // Helper to assign a name to an instrument by short key (drums/bass/etc.)
-  const assignToShort = (shortKey, name) => {
-    const inst = instById('inst_' + shortKey);
-    if (inst && !inst.assignedTo) inst.assignedTo = name;
-  };
   // Buckets we'll fill at the end (since order in PCO is arbitrary)
   const welcomeNames = [];
   let baptismalName = null;
 
-  // Debug: log every team member's position + how it was classified.
-  // Open browser console (right-click → Inspect → Console tab) after a Pull Plan to see this.
   console.group('[Stage·Assign] PCO team member classification');
   teamMembers.forEach(tm => {
     const a = tm.attributes;
@@ -2581,9 +2623,8 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     if (status === 'D') return;
     const cls = classifyPosition(positionName);
     console.log(`  "${positionName}" → ${name} → ${cls.kind}${cls.host?'/'+cls.host:''}${cls.position?'/'+cls.position:''}`);
-    if (cls.kind === 'ignore') return; // announcement video hosts etc.
+    if (cls.kind === 'ignore') return;
     if (cls.kind === 'shadow') {
-      // Add to shadows list; default pack from config
       if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normName(s.name) === normName(name))) {
         state.shadows.push({
           id: 'sh_'+Math.random().toString(36).slice(2,8),
@@ -2609,8 +2650,9 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
         if (ag && !ag.vocalistPlayer) ag.vocalistPlayer = vid;
       }
     } else if (cls.kind === 'band') {
-      if (cls.position === 'eg') egNames.push(name);
-      else assignToShort(cls.position, name);
+      // Collect into the right bucket; dedupe by name
+      const bucket = bandBuckets[cls.position];
+      if (bucket && !bucket.some(n => normName(n) === normName(name))) bucket.push(name);
     } else if (cls.kind === 'md_flag') {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
@@ -2624,10 +2666,6 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   // Welcome hosts go into HH1, HH2 first
   if (welcomeNames[0]) state.hosts.welcomeHost1 = welcomeNames[0];
   if (welcomeNames[1]) state.hosts.welcomeHost2 = welcomeNames[1];
-  // HH3 logic:
-  //   - If there's a baptismal pastor → they get HH3 (flagged for baptism)
-  //   - Else if there are 3+ welcome hosts → 3rd welcome host gets HH3
-  //   - Otherwise HH3 stays empty
   state.hosts.hh3IsBaptismal = false;
   if (baptismalName) {
     state.hosts.hh3 = baptismalName;
@@ -2635,12 +2673,121 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   } else if (welcomeNames[2]) {
     state.hosts.hh3 = welcomeNames[2];
   }
-  if (egNames[0]) assignToShort('eg1', egNames[0]);
-  if (egNames[1]) assignToShort('eg2', egNames[1]);
+
+  // ----- DISTRIBUTE BAND BUCKETS INTO INSTRUMENT SLOTS -----
+  // For each position type, find/create the right number of slots, and fill them in priority order.
+  // MD priority: if one of the bucket names matches the MD candidate, they go first (Keys 1, EG 1, etc.)
+  // AG special case: bucket names that match a vocalist become a vocalistPlayer link instead of typed name.
+  function distributeBucket(positionShort, names) {
+    if (!names || names.length === 0) return;
+    // Sort: MD candidate (if matched) first, others in original PCO order
+    if (mdNameCandidate) {
+      const mdIdx = names.findIndex(n => normName(n) === normName(mdNameCandidate));
+      if (mdIdx > 0) {
+        const [md] = names.splice(mdIdx, 1);
+        names.unshift(md);
+      }
+    }
+    // Find existing instruments of this type, sorted by numeric suffix (Electric 1 before Electric 2)
+    function instSortKey(inst) {
+      const m = (inst.label||'').match(/(\d+)\s*$/);
+      return m ? parseInt(m[1], 10) : 0;
+    }
+    const existing = state.instruments
+      .filter(i => instPositionType(i) === positionShort)
+      .sort((a, b) => instSortKey(a) - instSortKey(b));
+    // Fill existing slots first
+    let idx = 0;
+    for (const inst of existing) {
+      if (idx >= names.length) break;
+      const name = names[idx++];
+      // For AG: if this name is a vocalist, link by vocalistPlayer instead
+      if (positionShort === 'ag') {
+        const v = state.vocalists.find(x => normName(x.name) === normName(name));
+        if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; continue; }
+      }
+      inst.assignedTo = name;
+      inst.vocalistPlayer = null;
+    }
+    // Auto-create new slots for remaining names (Keys 2, EG 2, AG 2, …) — only for keys/eg/ag
+    const ALLOW_AUTO_CREATE = new Set(['keys', 'eg', 'ag']);
+    if (idx < names.length && ALLOW_AUTO_CREATE.has(positionShort)) {
+      // Cap: max 3 of any one position type to prevent runaway
+      const MAX_PER_POS = 3;
+      while (idx < names.length && existing.length + (idx - existing.length) < MAX_PER_POS && state.instruments.length < MAX_INSTRUMENTS) {
+        const slotNum = existing.length + (idx - existing.length) + 1; // 2, 3, ...
+        const baseTemplate = autoCreateTemplate(positionShort);
+        if (!baseTemplate) break;
+        const newInst = {
+          id: instUid(),
+          label: `${baseTemplate.baseLabel} ${slotNum}`,
+          pack: baseTemplate.pack,
+          placeholder: `${baseTemplate.placeholder} ${slotNum}`,
+          tag: baseTemplate.tag,
+          assignedTo: '',
+          vocalistPlayer: null,
+          optional: true
+        };
+        // Link if vocalist (AG case)
+        const name = names[idx++];
+        if (positionShort === 'ag') {
+          const v = state.vocalists.find(x => normName(x.name) === normName(name));
+          if (v) newInst.vocalistPlayer = v.id;
+          else newInst.assignedTo = name;
+        } else {
+          newInst.assignedTo = name;
+        }
+        // Insert near sibling instruments of same type (after the last one in that position type)
+        let insertIdx = state.instruments.length;
+        for (let i = state.instruments.length - 1; i >= 0; i--) {
+          if (instPositionType(state.instruments[i]) === positionShort) { insertIdx = i + 1; break; }
+        }
+        state.instruments.splice(insertIdx, 0, newInst);
+      }
+      // Also: if the very FIRST instrument of this type was unlabeled (e.g. just "Keys"),
+      // rename it to "Keys 1" so the grouping is consistent
+      if (existing.length > 0 && existing[0]) {
+        const e0 = existing[0];
+        const baseTemplate = autoCreateTemplate(positionShort);
+        if (baseTemplate && !/\d/.test(e0.label)) {
+          e0.label = `${baseTemplate.baseLabel} 1`;
+        }
+      }
+    }
+  }
+  // Helper: figure out which short position-type an instrument represents (drums/bass/keys/eg/ag/null)
+  function instPositionType(inst) {
+    // First try to classify by the instrument's label
+    const cls = classifyPosition(inst.label || '');
+    if (cls.kind === 'band') return cls.position;
+    // Fallback: legacy ID-based detection
+    if (inst.id === 'inst_drums') return 'drums';
+    if (inst.id === 'inst_bass') return 'bass';
+    if (inst.id === 'inst_keys') return 'keys';
+    if (inst.id === 'inst_eg1' || inst.id === 'inst_eg2') return 'eg';
+    if (inst.id === 'inst_ag') return 'ag';
+    return null;
+  }
+  function autoCreateTemplate(positionShort) {
+    const map = {
+      drums: { baseLabel:'Drums',    pack:'Drum Pack',     placeholder:'Drummer', tag:'Drums' },
+      bass:  { baseLabel:'Bass',     pack:'Bass Pack',     placeholder:'Bass',    tag:'Bass'  },
+      keys:  { baseLabel:'Keys',     pack:'Keys Pack',     placeholder:'Keys',    tag:'Keys'  },
+      eg:    { baseLabel:'Electric', pack:'EG Pack',       placeholder:'EG',      tag:'EG'    },
+      ag:    { baseLabel:'Acoustic', pack:'Acoustic Pack', placeholder:'AG',      tag:'AG'    }
+    };
+    return map[positionShort] || null;
+  }
+  // Run distribution for each bucket
+  ['drums','bass','keys','eg','ag'].forEach(p => distributeBucket(p, bandBuckets[p]));
+
   if (mdNameCandidate) {
-    // Try to find an instrument whose assigned name matches the MD candidate
+    // Find an instrument whose name matches MD candidate (after distribution)
     for (const inst of state.instruments) {
-      if (inst.assignedTo && normName(inst.assignedTo) === normName(mdNameCandidate)) {
+      const playerName = inst.vocalistPlayer
+        ? (state.vocalists.find(v => v.id === inst.vocalistPlayer)?.name || '')
+        : (inst.assignedTo || '');
+      if (playerName && normName(playerName) === normName(mdNameCandidate)) {
         state.musicDirectorId = inst.id; break;
       }
     }
