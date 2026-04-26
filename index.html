@@ -111,7 +111,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .rs-edit-title{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text);letter-spacing:-.005em;line-height:1.2}
 .rs-item.song .rs-edit-title{font-style:italic}
 .rs-edit-header{font-family:var(--ff-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:var(--accent);padding:4px 6px}
-.rs-edit-key{font-family:var(--ff-mono);font-size:10px;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.08em;width:auto;max-width:60px;flex-shrink:0;text-align:center}
+.rs-edit-key{font-family:var(--ff-mono);font-size:11px;color:var(--btn-primary-text,#1a1408);background:var(--accent);padding:2px 7px;border-radius:4px;font-weight:800;letter-spacing:.08em;width:auto;max-width:60px;flex-shrink:0;text-align:center;border-color:transparent}
+.rs-edit-key:hover{background:var(--accent);border-color:var(--accent-2)}
+.rs-edit-key.empty{background:var(--accent-dim);color:var(--accent);font-weight:600}
 .rs-edit-leader{font-family:var(--ff-mono);font-size:10px;color:var(--accent);font-weight:600;flex:0 1 auto;width:auto;min-width:80px;max-width:140px}
 .rs-edit-notes{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);flex:1 1 auto;min-width:80px}
 .rs-edit-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);font-weight:500;text-align:right;width:60px;flex-shrink:0;align-self:baseline}
@@ -134,19 +136,31 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .dv-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0}
 .dv-rs-title{font-family:var(--ff-display);font-size:14.5px;font-weight:500;color:var(--text);line-height:1.15}
 .dv-rs-item.song .dv-rs-title{font-style:italic}
-.dv-rs-meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap}
-.dv-rs-meta .lead{color:var(--accent);font-weight:600}
-.dv-rs-meta .key-tag{background:var(--accent-dim);color:var(--accent);padding:1px 6px;border-radius:3px;font-weight:600}
+.dv-rs-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dv-rs-meta .lead{color:var(--accent);font-weight:700;letter-spacing:.04em}
+.dv-rs-meta .key-tag{background:var(--accent);color:var(--btn-primary-text,#1a1408);padding:2px 8px;border-radius:4px;font-weight:800;font-size:11px;letter-spacing:.08em}
+.dv-rs-desc{font-family:var(--ff-body);font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:4px;font-style:italic;padding-left:1px}
 .dv-rs-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap}
 .workspace.with-pco{height:calc(100vh - 54px - 38px)}
-.hero{padding:16px 24px 8px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.hero{padding:16px 24px 8px;display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
 .hero-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
 .hero-header .title{font-family:var(--ff-display);font-size:30px;font-weight:500;font-style:italic;letter-spacing:-.02em}
 .hero-header .meta{font-family:var(--ff-mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;display:flex;gap:14px;align-items:center}
 .hero-header .meta .count{color:var(--accent)}
 .hero-header .add-link{color:var(--text-muted);cursor:pointer;transition:color .15s}
 .hero-header .add-link:hover{color:var(--accent)}
-.voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;overflow-y:auto;padding-right:6px;padding-bottom:6px;min-height:0;align-content:start}
+.voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding-right:6px;padding-bottom:6px;align-content:start}
+.shadow-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;padding-right:6px;padding-bottom:6px;align-content:start}
+.shadow-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text-muted);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;transition:border-color .15s;animation:fadeIn .25s ease}
+.shadow-card:hover{border-color:var(--border-2)}
+.shadow-card .sh-tag{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;background:var(--bg-inset);padding:2px 6px;border-radius:4px;flex-shrink:0}
+.shadow-card .sh-name{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;min-width:0;border-bottom:1px dashed transparent;padding:1px 0}
+.shadow-card .sh-name:hover{border-bottom-color:var(--border-2)}
+.shadow-card .sh-name:focus{border-bottom-color:var(--accent)}
+.shadow-card .sh-pack{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-faint);letter-spacing:.06em;flex-shrink:0;text-align:right;line-height:1.2}
+.shadow-card .x-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;flex-shrink:0;opacity:.5;transition:all .12s}
+.shadow-card:hover .x-btn{opacity:1}
+.shadow-card .x-btn:hover{color:#a83838;background:var(--accent-dim)}
 .voc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;display:flex;flex-direction:column;transition:border-color .15s,transform .15s;position:relative;animation:fadeIn .25s ease;min-height:130px;overflow:hidden}
 .voc-card:hover{border-color:var(--border-2);transform:translateY(-1px)}
 .voc-pos-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg-inset);border-bottom:1px solid var(--border)}
@@ -208,6 +222,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .sp-name{font-family:var(--ff-display);font-size:11px;font-weight:500;line-height:1.1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp.empty .sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
 .sp-mic{font-family:var(--ff-mono);font-size:8px;color:var(--text-muted);margin-top:1px}
+.sp-x{position:absolute;top:-7px;right:-7px;background:var(--bg);color:var(--text-faint);border:1px solid var(--border);width:16px;height:16px;border-radius:50%;font-size:9px;line-height:1;cursor:pointer;opacity:0;transition:all .15s;z-index:4;display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--ff-mono)}
+.sp:hover .sp-x{opacity:1}
+.sp-x:hover{background:#a83838;color:#fff;border-color:#a83838;transform:scale(1.15)}
 .right-content{flex:1;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:14px;min-height:0}
 .band-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .band-input{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 10px;display:flex;flex-direction:column;gap:1px;transition:border-color .15s;position:relative}
@@ -466,11 +483,19 @@ body>*:not(.summary-overlay){display:none!important}
     <div class="hero-header">
       <div class="title">Vocalists</div>
       <div class="meta">
-        <span class="count" id="vocCount">0/6</span>
+        <span class="count" id="vocCount">0/8</span>
         <span class="add-link" id="addVocLink">+ Add</span>
       </div>
     </div>
     <div class="voc-grid" id="vocGrid"></div>
+    <div class="hero-header" id="shadowHeader" style="margin-top:14px;">
+      <div class="title">Shadows</div>
+      <div class="meta">
+        <span class="count" id="shadowCount">0</span>
+        <span class="add-link" id="addShadowLink">+ Add</span>
+      </div>
+    </div>
+    <div class="shadow-grid" id="shadowGrid"></div>
   </section>
 
   <section class="bottom-row">
@@ -646,6 +671,10 @@ body>*:not(.summary-overlay){display:none!important}
             <div class="dv-section-label">Handhelds</div>
             <ul class="dv-list" id="dvHostsList"></ul>
           </div>
+          <div class="dv-side-block" id="dvShadowsBlock">
+            <div class="dv-section-label">Shadows</div>
+            <ul class="dv-list" id="dvShadowsList"></ul>
+          </div>
         </div>
       </div>
     </div>
@@ -704,6 +733,7 @@ const DEFAULT_STATE = {
   service: { date: new Date().toISOString().slice(0, 10), time: '9:45 AM', name: 'Sunday Morning' },
   vocalists: [],
   assignments: new Array(MAX_VOCALISTS).fill(null),
+  shadows: [],
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
   hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' },
@@ -719,8 +749,9 @@ const DEFAULT_STATE = {
     stageShape: 'curved', // 'curved' | 'light-curve' | 'flat'
     voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
+    shadowPack: 'Misc 2 Pack',
     display: {
-      showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true,
+      showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true, showShadows:true,
       runSheet: { songsOnly:false, showDuration:true, showDescriptions:true, showKey:true, showLeader:true }
     }
   },
@@ -797,6 +828,7 @@ function loadState() {
           ...loadedConfig,
           voxIemPacks: voxPacks,
           iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
+          shadowPack: loadedConfig.shadowPack || 'Misc 2 Pack',
           display: {
             ...DEFAULT_STATE.config.display,
             ...(loadedConfig.display||{}),
@@ -809,6 +841,7 @@ function loadState() {
         instruments,
         musicDirectorId: mdId,
         assignments,
+        shadows: Array.isArray(p.shadows) ? p.shadows : [],
         serviceOrder: p.serviceOrder || [],
         inventory: p.inventory || structuredClone(DEFAULT_INVENTORY),
         preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES)
@@ -942,6 +975,50 @@ function setVocMic(id, mic) {
   v.micAssigned = mic; saveState(); renderAll();
   // If settings panel is showing, refresh the mic assignments view too
   if (document.getElementById('settingsOverlay').classList.contains('show')) renderPrefEditor();
+}
+
+/* ===================== SHADOWS ===================== */
+const MAX_SHADOWS = 6;
+function addShadow() {
+  if (state.shadows.length >= MAX_SHADOWS) { toast(`Max ${MAX_SHADOWS} shadows`, 'warn'); return; }
+  state.shadows.push({ id: 'sh_'+Math.random().toString(36).slice(2,8), name: '', pack: state.config.shadowPack || 'Misc 2 Pack' });
+  saveState(); renderShadows();
+}
+function removeShadow(id) {
+  state.shadows = state.shadows.filter(s => s.id !== id);
+  saveState(); renderShadows();
+}
+function updateShadowName(id, name) {
+  const s = state.shadows.find(x => x.id === id); if (!s) return;
+  s.name = name; saveState();
+}
+function updateShadowPack(id, pack) {
+  const s = state.shadows.find(x => x.id === id); if (!s) return;
+  s.pack = pack; saveState(); renderShadows();
+}
+function renderShadows() {
+  const countEl = document.getElementById('shadowCount');
+  const grid = document.getElementById('shadowGrid');
+  if (!grid) return;
+  countEl.textContent = `${state.shadows.length}/${MAX_SHADOWS}`;
+  grid.innerHTML = '';
+  state.shadows.forEach((s, idx) => {
+    const card = document.createElement('div');
+    card.className = 'shadow-card';
+    card.innerHTML = `
+      <span class="sh-tag">SH ${idx+1}</span>
+      <input type="text" class="sh-name" data-id="${esc(s.id)}" value="${esc(s.name||'')}" placeholder="Shadow name" />
+      <span class="sh-pack" title="IEM pack">${esc(s.pack||'')}</span>
+      <button class="x-btn" data-id="${esc(s.id)}" title="Remove">✕</button>
+    `;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.sh-name').forEach(input => {
+    input.addEventListener('input', e => updateShadowName(e.target.dataset.id, e.target.value));
+  });
+  grid.querySelectorAll('.x-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeShadow(btn.dataset.id));
+  });
 }
 
 /* ===================== RENDER VOCALISTS ===================== */
@@ -1221,8 +1298,22 @@ function renderStage() {
   wrap.innerHTML = '';
   const bandPositions = getBandStagePositions();
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
+
+  // Helper: swap band positions in state.instruments by their ids
+  function swapInstruments(idA, idB) {
+    const a = state.instruments.findIndex(i => i.id === idA);
+    const b = state.instruments.findIndex(i => i.id === idB);
+    if (a < 0 || b < 0) return;
+    [state.instruments[a], state.instruments[b]] = [state.instruments[b], state.instruments[a]];
+  }
+  // Helper: clear a vocal slot (keeps the vocalist in the list, just unassigned from stage)
+  function clearVocalSlot(idx) {
+    if (idx < 0 || idx >= MAX_VOCALISTS) return;
+    state.assignments[idx] = null;
+  }
+
+  // ----- BAND BOXES -----
   state.instruments.forEach(inst => {
-    // Hide instruments played by a vocalist — they get a /TAG appended to the vocal slot instead
     if (inst.vocalistPlayer) return;
     const name = (inst.assignedTo || '').trim();
     const isOptional = !!inst.optional;
@@ -1233,9 +1324,15 @@ function renderStage() {
     el.className = 'sp ' + (name ? 'occupied' : 'empty');
     const css = toPct(pos);
     el.style.left = css.left; el.style.top = css.top;
+    el.draggable = true;
+    el.dataset.kind = 'band';
+    el.dataset.instId = inst.id;
     el.innerHTML = `<div class="sp-role">${esc(inst.label)}${isMD?' · MD':''}</div><div class="sp-name">${name?esc(firstName(name)):esc(inst.placeholder || inst.label)}</div>`;
+    wireSpDrag(el);
     wrap.appendChild(el);
   });
+
+  // ----- VOCAL BOXES -----
   const filledIds = state.assignments.filter(a => a !== null);
   const count = filledIds.length;
   if (count > 0) {
@@ -1252,26 +1349,63 @@ function renderStage() {
       const css = toPct(pos);
       el.style.left = css.left; el.style.top = css.top;
       el.draggable = true;
+      el.dataset.kind = 'vocal';
       el.dataset.voxIdx = String(i);
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
-      el.innerHTML = `<div class="sp-role">VOCAL ${i+1}${tagSuffix}</div><div class="sp-name">${esc(firstName(v.name) || '—')}</div>`;
-      el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.voxIdx); e.dataTransfer.effectAllowed='move'; el.classList.add('dragging'); });
-      el.addEventListener('dragend', () => { el.classList.remove('dragging'); document.querySelectorAll('.sp').forEach(p => p.classList.remove('drop-target')); });
-      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-target'); });
-      el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
-      el.addEventListener('drop', e => {
-        e.preventDefault();
-        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'),10);
-        const toIdx = parseInt(el.dataset.voxIdx,10);
-        if (fromIdx === toIdx || isNaN(fromIdx)) return;
+      el.innerHTML = `
+        <button class="sp-x" title="Remove from stage">✕</button>
+        <div class="sp-role">VOCAL ${i+1}${tagSuffix}</div>
+        <div class="sp-name">${esc(firstName(v.name) || '—')}</div>
+      `;
+      el.querySelector('.sp-x').addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearVocalSlot(i);
+        saveState(); renderAll();
+      });
+      wireSpDrag(el);
+      wrap.appendChild(el);
+    }
+  }
+
+  function wireSpDrag(el) {
+    el.addEventListener('dragstart', e => {
+      // Don't trigger drag from buttons
+      if (e.target.closest('.sp-x')) { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/plain', JSON.stringify({ kind: el.dataset.kind, voxIdx: el.dataset.voxIdx, instId: el.dataset.instId }));
+      e.dataTransfer.effectAllowed = 'move';
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      wrap.querySelectorAll('.sp').forEach(p => p.classList.remove('drop-target'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.classList.add('drop-target');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drop-target');
+      let from;
+      try { from = JSON.parse(e.dataTransfer.getData('text/plain')); } catch(_) { return; }
+      // Only swap within same kind. Vocal↔band swaps would be confusing.
+      if (from.kind !== el.dataset.kind) return;
+      if (from.kind === 'vocal') {
+        const fromIdx = parseInt(from.voxIdx, 10);
+        const toIdx = parseInt(el.dataset.voxIdx, 10);
+        if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx === toIdx) return;
         const tmp = state.assignments[fromIdx];
         state.assignments[fromIdx] = state.assignments[toIdx];
         state.assignments[toIdx] = tmp;
-        saveState(); renderStage();
-      });
-      wrap.appendChild(el);
-    }
+        saveState(); renderAll();
+      } else if (from.kind === 'band') {
+        if (!from.instId || from.instId === el.dataset.instId) return;
+        swapInstruments(from.instId, el.dataset.instId);
+        saveState(); renderAll();
+      }
+    });
   }
 }
 
@@ -1375,13 +1509,17 @@ function renderLayoutEditor() {
 
     <div class="section-label" style="margin-bottom:10px;">Vocal IEM Packs</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Pack names for each vocal slot.</p>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px;margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px;margin-bottom:14px;">
       ${c.voxIemPacks.slice(0, MAX_VOCALISTS).map((pack, i) => `
         <div class="iem-row">
           <span class="iem-lbl">Vocal ${i+1}</span>
           <input type="text" class="field-input" data-vox-pack-idx="${i}" value="${esc(pack)}" placeholder="Vocal ${i+1} Pack" />
         </div>
       `).join('')}
+    </div>
+    <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
+      <span class="iem-lbl">Shadows</span>
+      <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
     </div>
 
     <div class="section-label" style="margin-bottom:10px;">Display Options</div>
@@ -1395,6 +1533,7 @@ function renderLayoutEditor() {
       ${[
         ['showStage','Stage diagram'],
         ['showVocalists','Vocalist cards'],
+        ['showShadows','Shadows list'],
         ['showBand','Band list (sidebar)'],
         ['showHosts','Handhelds list (sidebar)'],
         ['showServiceOrder','Service Order / Run Sheet']
@@ -1555,6 +1694,18 @@ function renderLayoutEditor() {
       saveState(); renderAll();
     });
   });
+  // Shadow IEM pack (default for new shadows; existing shadows that match the old value also update)
+  const shadowInput = el.querySelector('[data-shadow-pack]');
+  if (shadowInput) {
+    shadowInput.addEventListener('change', e => {
+      const oldPack = c.shadowPack;
+      const newPack = e.target.value.trim() || 'Misc 2 Pack';
+      c.shadowPack = newPack;
+      // Update any existing shadow that was using the old default pack
+      state.shadows.forEach(s => { if (s.pack === oldPack) s.pack = newPack; });
+      saveState(); renderAll();
+    });
+  }
 
   // Plain config toggles
   el.querySelectorAll('[data-cfg]').forEach(cb => {
@@ -2285,38 +2436,32 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     });
     sorted.forEach(item => {
       const a = item.attributes || {};
-      const kind = a.item_type || 'item'; // "song" | "header" | "media" | "item" | etc.
+      const kind = a.item_type || 'item';
       const title = a.title || '';
-      const length = a.length || 0; // seconds
-      // Song metadata: from the included Song resource
-      let songRel = item.relationships && item.relationships.song && item.relationships.song.data;
-      let key = null;
-      let songLeader = null;
-      if (songRel && songById[songRel.id]) {
-        const song = songById[songRel.id];
-        // Key comes from the item's arrangement info — PCO sometimes has it on the item attributes as "key_name"
-        if (a.key_name) key = a.key_name;
-      }
-      if (a.key_name) key = a.key_name;
-      // Item notes: look for one labeled "Leader" or just grab first note text for song leader indication
+      const length = a.length || 0;
+      // Song key — PCO puts it on the item's own attributes, not the included Song
+      const key = a.key_name || null;
+      // Find leader: look at any item note whose category contains "leader" (case-insensitive)
+      // Anything else becomes part of the description.
       const notes = noteByItemId[item.id] || [];
+      let songLeader = null;
+      const otherNotes = [];
       notes.forEach(n => {
         const catName = (n.category_name || '').toLowerCase();
-        const content = n.content || '';
+        const content = (n.content || '').trim();
         if (!content) return;
-        if (catName === 'leader' || catName === 'song leader' || catName === 'worship leader') {
-          if (!songLeader) songLeader = content.trim();
+        if (!songLeader && catName.includes('leader')) {
+          songLeader = content;
+        } else {
+          otherNotes.push(content);
         }
       });
-      // Combine all non-leader notes into a single notes string
-      const generalNotes = notes
-        .filter(n => {
-          const c = (n.category_name || '').toLowerCase();
-          return c !== 'leader' && c !== 'song leader' && c !== 'worship leader';
-        })
-        .map(n => (n.content || '').trim())
-        .filter(Boolean)
-        .join(' · ');
+      // PCO items also have an `description` attribute (the body text shown on the item)
+      // Combine that with any non-leader item notes
+      const descPieces = [];
+      if (a.description && a.description.trim()) descPieces.push(a.description.trim());
+      if (otherNotes.length) descPieces.push(...otherNotes);
+      const description = descPieces.join('\n').trim();
       state.serviceOrder.push({
         id: item.id,
         kind,
@@ -2324,7 +2469,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
         length,
         key,
         leader: songLeader,
-        notes: generalNotes
+        notes: description
       });
     });
   }
@@ -2517,6 +2662,14 @@ function fillSummary() {
     li.innerHTML = `<span class="pos">${esc(packName)}</span><span class="name">${esc(v.name||'—')}</span><span class="detail"></span>`;
     iemList.appendChild(li);
   }
+  // Shadows in IEM list
+  state.shadows.forEach((s, idx) => {
+    if (!s.name && !s.pack) return;
+    const li = document.createElement('li');
+    li.className = 's-item';
+    li.innerHTML = `<span class="pos">${esc(s.pack||'')}</span><span class="name">${esc(s.name||'—')} <span style="color:var(--text-faint);font-size:.85em;">shadow ${idx+1}</span></span><span class="detail"></span>`;
+    iemList.appendChild(li);
+  });
   // Service Order block (hidden when empty)
   const orderWrap = document.getElementById('s_orderWrap');
   const orderList = document.getElementById('s_orderList');
@@ -2606,13 +2759,15 @@ function renderDisplayView() {
   toggleBlock('dvStageBlock',     d.showStage);
   toggleBlock('dvBandBlock',      d.showBand);
   toggleBlock('dvHostsBlock',     d.showHosts);
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  toggleBlock('dvShadowsBlock',   d.showShadows && hasShadows);
   const showRS = d.showServiceOrder && state.serviceOrder && state.serviceOrder.length > 0;
   toggleBlock('dvRunSheetBlock', showRS);
   // Toggle the whole right rail
   const dvLayout = document.getElementById('dvLayout');
   if (dvLayout) dvLayout.classList.toggle('has-rail', showRS);
-  // Hide the inner sidebar (band/hosts) if both are off
-  const sideHasContent = d.showBand || d.showHosts;
+  // Hide the inner sidebar if all sidebar blocks are off
+  const sideHasContent = d.showBand || d.showHosts || (d.showShadows && hasShadows);
   toggleBlock('dvSide', sideHasContent);
   // If stage is off but sidebar is on (or vice versa), adjust the inner content grid
   const dvContent = document.getElementById('dvContent');
@@ -2734,6 +2889,19 @@ function renderDisplayView() {
     hostsList.innerHTML = '<li class="dv-list-item empty"><span class="pos">—</span><span class="name">No hosts assigned</span><span class="detail"></span></li>';
   }
 
+  // Shadows in display view
+  const dvShadowsList = document.getElementById('dvShadowsList');
+  if (dvShadowsList) {
+    dvShadowsList.innerHTML = '';
+    state.shadows.forEach((s, idx) => {
+      if (!s.name && !s.pack) return;
+      const li = document.createElement('li');
+      li.className = 'dv-list-item';
+      li.innerHTML = `<span class="pos">SH ${idx+1}</span><span class="name">${esc(s.name || '—')}</span><span class="detail">${esc(s.pack||'')}</span>`;
+      dvShadowsList.appendChild(li);
+    });
+  }
+
   // Service order in display view
   const rsList = document.getElementById('dvRunSheetList');
   if (rsList && showRS) {
@@ -2753,15 +2921,21 @@ function renderDisplayView() {
       const isSong = it.kind === 'song';
       const el = document.createElement('div');
       el.className = 'dv-rs-item' + (isSong ? ' song' : '');
-      const metaParts = [];
-      if (rsCfg.showKey && it.key) metaParts.push(`<span class="key-tag">${esc(it.key)}</span>`);
-      if (rsCfg.showLeader && it.leader) metaParts.push(`<span class="lead">${esc(it.leader)}</span>`);
-      if (rsCfg.showDescriptions && it.notes) metaParts.push(`<span>${esc(it.notes)}</span>`);
+      // Inline meta: key and leader (compact pills/tags shown next to the title)
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key)     inlineMeta.push(`<span class="key-tag">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="lead">${esc(it.leader)}</span>`);
+      const inlineHtml = inlineMeta.length ? `<div class="dv-rs-meta">${inlineMeta.join('')}</div>` : '';
+      // Description on its own line below — preserve line breaks
+      const descHtml = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="dv-rs-desc">${esc(it.notes).replace(/\n/g,'<br>')}</div>`
+        : '';
       el.innerHTML = `
         <div class="dv-rs-seq">${isSong ? '♪' : String(trueIdx+1).padStart(2,'0')}</div>
         <div class="dv-rs-main">
           <div class="dv-rs-title">${esc(it.title || '—')}</div>
-          ${metaParts.length ? `<div class="dv-rs-meta">${metaParts.join('')}</div>` : ''}
+          ${inlineHtml}
+          ${descHtml}
         </div>
         ${rsCfg.showDuration ? `<div class="dv-rs-dur">${esc(fmtDuration(it.length))}</div>` : ''}
       `;
@@ -2967,6 +3141,7 @@ function renderAll() {
   applyBrand();
   renderService();
   renderVocalists();
+  renderShadows();
   renderBand();
   renderHosts();
   renderStage();
@@ -2979,6 +3154,7 @@ function init() {
   document.getElementById('serviceDate').addEventListener('change', e => { state.service.date = e.target.value; saveState(); });
   document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
+  document.getElementById('addShadowLink').addEventListener('click', addShadow);
   document.getElementById('assignBtn').addEventListener('click', autoAssign);
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
