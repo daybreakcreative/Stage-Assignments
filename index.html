@@ -150,17 +150,12 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .hero-header .add-link{color:var(--text-muted);cursor:pointer;transition:color .15s}
 .hero-header .add-link:hover{color:var(--accent)}
 .voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding-right:6px;padding-bottom:6px;align-content:start}
-.shadow-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;padding-right:6px;padding-bottom:6px;align-content:start}
-.shadow-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text-muted);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;transition:border-color .15s;animation:fadeIn .25s ease}
-.shadow-card:hover{border-color:var(--border-2)}
-.shadow-card .sh-tag{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;background:var(--bg-inset);padding:2px 6px;border-radius:4px;flex-shrink:0}
-.shadow-card .sh-name{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;min-width:0;border-bottom:1px dashed transparent;padding:1px 0}
-.shadow-card .sh-name:hover{border-bottom-color:var(--border-2)}
-.shadow-card .sh-name:focus{border-bottom-color:var(--accent)}
-.shadow-card .sh-pack{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-faint);letter-spacing:.06em;flex-shrink:0;text-align:right;line-height:1.2}
-.shadow-card .x-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;flex-shrink:0;opacity:.5;transition:all .12s}
-.shadow-card:hover .x-btn{opacity:1}
-.shadow-card .x-btn:hover{color:#a83838;background:var(--accent-dim)}
+.voc-card.shadow-mode{border-left:3px solid var(--text-muted);min-height:auto}
+.voc-card.shadow-mode .voc-pos-bar{background:var(--bg-inset)}
+.voc-pos.shadow-tag{background:rgba(150,150,150,.12);color:var(--text-muted);border:1px solid rgba(150,150,150,.18)}
+.shadow-pack-pill{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);background:var(--bg-inset);padding:3px 8px;border-radius:5px;letter-spacing:.06em;font-weight:600}
+.add-card-shadow{border-style:dashed;opacity:.7}
+.add-card-shadow:hover{opacity:1}
 .voc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;display:flex;flex-direction:column;transition:border-color .15s,transform .15s;position:relative;animation:fadeIn .25s ease;min-height:130px;overflow:hidden}
 .voc-card:hover{border-color:var(--border-2);transform:translateY(-1px)}
 .voc-pos-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg-inset);border-bottom:1px solid var(--border)}
@@ -486,18 +481,11 @@ body>*:not(.summary-overlay){display:none!important}
       <div class="title">Vocalists</div>
       <div class="meta">
         <span class="count" id="vocCount">0/8</span>
-        <span class="add-link" id="addVocLink">+ Add</span>
+        <span class="add-link" id="addVocLink">+ Vocal</span>
+        <span class="add-link" id="addShadowLink">+ Shadow</span>
       </div>
     </div>
     <div class="voc-grid" id="vocGrid"></div>
-    <div class="hero-header" id="shadowHeader" style="margin-top:14px;">
-      <div class="title">Shadows</div>
-      <div class="meta">
-        <span class="count" id="shadowCount">0</span>
-        <span class="add-link" id="addShadowLink">+ Add</span>
-      </div>
-    </div>
-    <div class="shadow-grid" id="shadowGrid"></div>
   </section>
 
   <section class="bottom-row">
@@ -984,11 +972,11 @@ const MAX_SHADOWS = 6;
 function addShadow() {
   if (state.shadows.length >= MAX_SHADOWS) { toast(`Max ${MAX_SHADOWS} shadows`, 'warn'); return; }
   state.shadows.push({ id: 'sh_'+Math.random().toString(36).slice(2,8), name: '', pack: state.config.shadowPack || 'Misc 2 Pack' });
-  saveState(); renderShadows();
+  saveState(); renderAll();
 }
 function removeShadow(id) {
   state.shadows = state.shadows.filter(s => s.id !== id);
-  saveState(); renderShadows();
+  saveState(); renderAll();
 }
 function updateShadowName(id, name) {
   const s = state.shadows.find(x => x.id === id); if (!s) return;
@@ -996,31 +984,11 @@ function updateShadowName(id, name) {
 }
 function updateShadowPack(id, pack) {
   const s = state.shadows.find(x => x.id === id); if (!s) return;
-  s.pack = pack; saveState(); renderShadows();
+  s.pack = pack; saveState(); renderAll();
 }
 function renderShadows() {
-  const countEl = document.getElementById('shadowCount');
-  const grid = document.getElementById('shadowGrid');
-  if (!grid) return;
-  countEl.textContent = `${state.shadows.length}/${MAX_SHADOWS}`;
-  grid.innerHTML = '';
-  state.shadows.forEach((s, idx) => {
-    const card = document.createElement('div');
-    card.className = 'shadow-card';
-    card.innerHTML = `
-      <span class="sh-tag">SH ${idx+1}</span>
-      <input type="text" class="sh-name" data-id="${esc(s.id)}" value="${esc(s.name||'')}" placeholder="Shadow name" />
-      <span class="sh-pack" title="IEM pack">${esc(s.pack||'')}</span>
-      <button class="x-btn" data-id="${esc(s.id)}" title="Remove">✕</button>
-    `;
-    grid.appendChild(card);
-  });
-  grid.querySelectorAll('.sh-name').forEach(input => {
-    input.addEventListener('input', e => updateShadowName(e.target.dataset.id, e.target.value));
-  });
-  grid.querySelectorAll('.x-btn').forEach(btn => {
-    btn.addEventListener('click', () => removeShadow(btn.dataset.id));
-  });
+  // Shadows are now rendered inside renderVocalists() (mixed into the same grid).
+  // Kept as a no-op for backward compat if called directly.
 }
 
 /* ===================== RENDER VOCALISTS ===================== */
@@ -1117,6 +1085,27 @@ function renderVocalists() {
     });
     grid.appendChild(card);
   }
+
+  // Shadow cards (mixed into same grid, after vocalists, before Add buttons)
+  state.shadows.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'voc-card shadow-mode';
+    card.dataset.shadowId = s.id;
+    card.innerHTML = `
+      <div class="voc-pos-bar">
+        <span class="voc-pos shadow-tag">SHADOW</span>
+        <button class="x-btn" data-shadow-id="${esc(s.id)}" title="Remove">✕</button>
+      </div>
+      <div class="voc-body">
+        <input class="voc-name" type="text" value="${esc(s.name||'')}" placeholder="Shadow name" data-shadow-id="${esc(s.id)}" />
+        <div class="mic-pick" style="border-top:none;padding-top:6px;justify-content:flex-start;">
+          <span class="shadow-pack-pill" title="IEM Pack">🎧 ${esc(s.pack||'Misc 2 Pack')}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
   if (state.vocalists.length < MAX_VOCALISTS) {
     const add = document.createElement('button');
     add.className = 'add-card';
@@ -1124,9 +1113,26 @@ function renderVocalists() {
     add.addEventListener('click', addVocalist);
     grid.appendChild(add);
   }
-  grid.querySelectorAll('.voc-name').forEach(input => input.addEventListener('input', e => updateVocName(e.target.dataset.id, e.target.value)));
+  if (state.shadows.length < MAX_SHADOWS) {
+    const addSh = document.createElement('button');
+    addSh.className = 'add-card add-card-shadow';
+    addSh.innerHTML = `<span class="plus">+</span><span>Add shadow</span>`;
+    addSh.addEventListener('click', addShadow);
+    grid.appendChild(addSh);
+  }
+  grid.querySelectorAll('.voc-name[data-id]').forEach(input => input.addEventListener('input', e => updateVocName(e.target.dataset.id, e.target.value)));
+  grid.querySelectorAll('.voc-name[data-shadow-id]').forEach(input => input.addEventListener('input', e => updateShadowName(e.target.dataset.shadowId, e.target.value)));
   grid.querySelectorAll('[data-action="remove"]').forEach(b => b.addEventListener('click', () => removeVocalist(b.dataset.id)));
+  grid.querySelectorAll('.x-btn[data-shadow-id]').forEach(b => b.addEventListener('click', () => removeShadow(b.dataset.shadowId)));
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
+  // Update count to reflect both
+  const countEl = document.getElementById('vocCount');
+  if (countEl) {
+    const shCount = state.shadows.length;
+    countEl.textContent = shCount > 0
+      ? `${state.vocalists.length}/${MAX_VOCALISTS}  ·  ${shCount} shadow${shCount===1?'':'s'}`
+      : `${state.vocalists.length}/${MAX_VOCALISTS}`;
+  }
 }
 
 /* ===================== INSTRUMENTS / BAND ===================== */
