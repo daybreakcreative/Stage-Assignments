@@ -134,13 +134,15 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .dv-rs-item.song{border-left:3px solid var(--accent);padding-left:9px}
 .dv-rs-seq{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-faint);font-weight:500}
 .dv-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0}
-.dv-rs-title{font-family:var(--ff-display);font-size:14.5px;font-weight:500;color:var(--text);line-height:1.15}
+.dv-rs-title{font-family:var(--ff-display);font-size:calc(14.5px * var(--rs-scale, 1));font-weight:500;color:var(--text);line-height:1.15}
 .dv-rs-item.song .dv-rs-title{font-style:italic}
-.dv-rs-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dv-rs-meta{font-family:var(--ff-mono);font-size:calc(10px * var(--rs-scale, 1));color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .dv-rs-meta .lead{color:var(--accent);font-weight:700;letter-spacing:.04em}
-.dv-rs-meta .key-tag{background:var(--accent);color:var(--btn-primary-text,#1a1408);padding:2px 8px;border-radius:4px;font-weight:800;font-size:11px;letter-spacing:.08em}
-.dv-rs-desc{font-family:var(--ff-body);font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:4px;font-style:italic;padding-left:1px}
-.dv-rs-dur{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap}
+.dv-rs-meta .key-tag{background:var(--accent);color:var(--btn-primary-text,#1a1408);padding:2px 8px;border-radius:4px;font-weight:800;font-size:calc(11px * var(--rs-scale, 1));letter-spacing:.08em}
+.dv-rs-desc{font-family:var(--ff-body);font-size:calc(11px * var(--rs-scale, 1));color:var(--text-muted);line-height:1.4;margin-top:4px;font-style:italic;padding-left:1px}
+.dv-rs-dur{font-family:var(--ff-mono);font-size:calc(10.5px * var(--rs-scale, 1));color:var(--text-muted);white-space:nowrap}
+.dv-rs-seq{font-family:var(--ff-mono);font-size:calc(10px * var(--rs-scale, 1));color:var(--text-faint);font-weight:600;text-align:center;width:22px;flex-shrink:0;line-height:1.25;align-self:baseline}
+.dv-rs-item.header .dv-rs-title{font-size:calc(11px * var(--rs-scale, 1))!important;font-family:var(--ff-mono);font-style:normal;color:var(--accent);font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .workspace.with-pco{height:calc(100vh - 54px - 38px)}
 .hero{padding:16px 24px 8px;display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
 .hero-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
@@ -276,6 +278,36 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 .shape-pick{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px 10px;cursor:pointer;color:var(--text);font-family:var(--ff-body);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;text-align:center}
+/* Curvature slider row */
+.curvature-row{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:6px}
+.curvature-preview{background:var(--bg-inset);border:1px solid var(--border);border-radius:7px;padding:8px;display:flex;align-items:center;justify-content:center;min-height:90px}
+.curvature-controls{display:flex;flex-direction:column;justify-content:center;gap:6px}
+.curvature-header{display:flex;justify-content:space-between;align-items:baseline}
+.curvature-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+.curvature-value{font-family:var(--ff-mono);font-size:14px;color:var(--accent);font-weight:700;letter-spacing:.04em}
+.curvature-slider{width:100%;accent-color:var(--accent);margin:4px 0 0}
+.curvature-ticks{display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+/* Stage orientation indicator */
+.stage-orient-card{background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:6px;display:flex;flex-direction:column;gap:10px}
+.stage-orient-svg-wrap{max-width:380px;margin:0 auto;width:100%}
+.stage-orient-note{font-family:var(--ff-body);font-size:12px;color:var(--text-muted);text-align:center;line-height:1.45}
+.stage-orient-note strong{color:var(--text);font-weight:600}
+/* Custom font picker (shows each font in its actual face) */
+.font-picker{position:relative;display:inline-block;width:100%;max-width:340px}
+.font-picker-button{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:7px;font-size:15px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .15s;line-height:1.3}
+.font-picker-button:hover{border-color:var(--border-2)}
+.font-picker-button.open,.font-picker-button:focus{border-color:var(--accent);outline:none}
+.font-picker-current{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.font-picker-caret{font-family:var(--ff-mono);font-size:11px;color:var(--text-faint);flex-shrink:0;transition:transform .15s}
+.font-picker-button.open .font-picker-caret{transform:rotate(180deg)}
+.font-picker-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.4);max-height:340px;overflow-y:auto;z-index:50;padding:4px;display:none}
+.font-picker-menu.open{display:block}
+.font-picker-option{display:block;width:100%;background:transparent;border:none;color:var(--text);padding:9px 12px;font-size:15px;text-align:left;cursor:pointer;border-radius:5px;line-height:1.25;transition:background .1s}
+.font-picker-option:hover{background:var(--surface)}
+.font-picker-option.selected{background:var(--accent-dim);color:var(--accent);font-weight:600}
+@media (max-width: 640px){
+  .curvature-row{grid-template-columns:1fr}
+}
 .shape-pick:hover{border-color:var(--border-2);transform:translateY(-1px)}
 .shape-pick.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent-dim)}
 .shape-pick span{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:600}
@@ -339,6 +371,125 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .setup-steps a:hover{text-decoration:underline}
 .setup-steps code{background:var(--bg);padding:1px 5px;border-radius:3px;font-family:var(--ff-mono);font-size:11px;color:var(--accent)}
 .summary-overlay{position:fixed;inset:0;background:rgba(5,5,7,.88);backdrop-filter:blur(8px);z-index:100;display:none;overflow-y:auto;padding:40px 20px 60px}
+/* First-run wizard */
+.wizard-overlay{position:fixed;inset:0;background:rgba(5,5,7,.92);backdrop-filter:blur(10px);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:60px 20px 40px;overflow-y:auto}
+.wizard-overlay.show{display:flex}
+.wizard-sheet{background:var(--bg-elev);border:1px solid var(--border);border-radius:16px;width:100%;max-width:680px;padding:36px 40px 24px;box-shadow:0 30px 90px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:24px}
+.wizard-header{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--border);padding-bottom:22px}
+.wizard-eyebrow{font-family:var(--ff-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.wizard-header h1{font-family:var(--ff-display);font-size:30px;font-weight:500;font-style:italic;letter-spacing:-.015em;color:var(--text);margin:2px 0 0}
+.wizard-sub{font-size:13px;color:var(--text-muted);line-height:1.45;margin:4px 0 0}
+.wizard-steps{display:flex;gap:6px;margin-top:14px}
+.wizard-step{flex:1;height:3px;background:var(--border);border-radius:2px;transition:background .25s}
+.wizard-step.done{background:var(--accent)}
+.wizard-step.current{background:var(--accent-2)}
+.wizard-body{display:flex;flex-direction:column;gap:18px;min-height:260px}
+.wiz-q-title{font-family:var(--ff-display);font-size:20px;font-weight:500;color:var(--text);margin-bottom:4px}
+.wiz-q-help{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:10px}
+.wiz-field{display:flex;flex-direction:column;gap:6px}
+.wiz-field label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+.wiz-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-family:var(--ff-body);font-size:14px;outline:none;transition:border-color .15s}
+.wiz-input:focus{border-color:var(--accent)}
+.wiz-input-num{max-width:120px;text-align:center}
+.wiz-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.wiz-card{background:var(--surface);border:1.5px solid var(--border);padding:12px 14px;border-radius:9px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:3px}
+.wiz-card:hover{border-color:var(--border-2)}
+.wiz-card.selected{border-color:var(--accent);background:var(--accent-dim)}
+.wiz-card .wc-name{font-family:var(--ff-display);font-size:16px;font-weight:500;color:var(--text)}
+.wiz-card .wc-sub{font-family:var(--ff-mono);font-size:10.5px;color:var(--text-muted);letter-spacing:.04em}
+.wiz-chips{display:flex;flex-wrap:wrap;gap:6px}
+.wiz-chip{background:var(--surface);border:1px solid var(--border);padding:5px 11px;border-radius:14px;cursor:pointer;font-family:var(--ff-mono);font-size:11px;font-weight:600;color:var(--text-muted);transition:all .15s}
+.wiz-chip:hover{border-color:var(--border-2)}
+.wiz-chip.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.wiz-mic-row{display:grid;grid-template-columns:1fr 80px 28px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.wiz-mic-row:last-child{border-bottom:none}
+.wiz-mic-row input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;outline:none}
+.wiz-mic-row .wm-rm{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
+.wiz-mic-row .wm-rm:hover{color:#a83838;background:var(--accent-dim)}
+.wiz-add-line{font-family:var(--ff-mono);font-size:11px;color:var(--accent);cursor:pointer;letter-spacing:.06em;padding:6px 0;display:inline-block;font-weight:600;background:transparent;border:none}
+.wiz-add-line:hover{text-decoration:underline}
+.wizard-footer{display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);padding-top:18px;margin-top:6px}
+/* Instrument list with toggle + count */
+.wiz-inst-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.wiz-inst-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1.5px solid var(--border);padding:8px 12px;border-radius:8px;transition:all .15s}
+.wiz-inst-row.selected{border-color:var(--accent);background:var(--accent-dim)}
+.wiz-inst-row:hover{border-color:var(--border-2)}
+.wiz-inst-row.selected:hover{border-color:var(--accent)}
+.wiz-inst-toggle{background:var(--bg-inset);border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;padding:0;line-height:1;transition:all .15s}
+.wiz-inst-row.selected .wiz-inst-toggle{background:var(--accent);color:var(--btn-primary-text,#1a1408);border-color:var(--accent)}
+.wiz-inst-name{font-family:var(--ff-display);font-size:15px;font-weight:500;color:var(--text)}
+.wiz-inst-name-wrap{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.wiz-inst-name-edit{background:transparent;border:1px solid transparent;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;padding:4px 7px;border-radius:5px;outline:none;width:100%;min-width:0;transition:all .12s}
+.wiz-inst-name-edit:hover{background:var(--bg-inset);border-color:var(--border)}
+.wiz-inst-name-edit:focus{background:var(--bg-elev);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.wiz-inst-row.selected .wiz-inst-name-edit:hover{background:rgba(0,0,0,.1)}
+.wiz-inst-count{font-family:var(--ff-mono);font-size:11px;color:var(--accent);background:var(--accent-dim);padding:2px 7px;border-radius:4px;margin-left:4px;font-weight:700;letter-spacing:.04em}
+.wiz-inst-actions{display:flex;gap:4px}
+.wiz-inst-actions button{background:var(--bg-elev);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;padding:0;line-height:1;transition:all .12s}
+.wiz-inst-actions button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.wiz-inst-actions button:disabled{opacity:.3;cursor:not-allowed}
+.wiz-add-custom{display:flex;gap:8px;margin-top:8px;padding-top:14px;border-top:1px dashed var(--border)}
+.wiz-add-custom .wiz-input{flex:1}
+.wiz-preview{margin-top:18px;padding:12px 14px;background:var(--bg-inset);border:1px solid var(--border);border-radius:8px}
+.wiz-preview-label{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:8px}
+.wiz-preview-list{display:flex;flex-wrap:wrap;gap:6px}
+.wiz-preview-chip{font-family:var(--ff-mono);font-size:10.5px;background:var(--accent-dim);color:var(--accent);padding:3px 9px;border-radius:5px;font-weight:600;letter-spacing:.04em}
+/* Mic step header */
+.wiz-mic-header{display:grid;grid-template-columns:1fr 80px 28px;gap:8px;padding:6px 0;font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border);margin-bottom:4px}
+.wiz-mic-row.suggested input{color:var(--text-muted);opacity:.65;font-style:italic}
+.wiz-mic-row.suggested input:focus{color:var(--text);opacity:1;font-style:normal}
+/* IEM assignment list */
+.wiz-iem-section-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-top:14px;margin-bottom:8px}
+/* PCO step */
+.wiz-pco-help{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:18px}
+.wiz-pco-help-title{font-family:var(--ff-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:8px}
+.wiz-pco-steps{margin:0;padding-left:20px;line-height:1.65;font-size:13px;color:var(--text)}
+.wiz-pco-steps li{margin-bottom:6px}
+.wiz-pco-steps a{color:var(--accent);text-decoration:underline}
+.wiz-pco-steps strong{color:var(--text);font-weight:600}
+.wiz-pco-code{display:inline-block;font-family:var(--ff-mono);font-size:11px;background:var(--bg-elev);border:1px solid var(--border);color:var(--accent);padding:3px 8px;border-radius:4px;margin-top:3px;word-break:break-all;max-width:100%}
+.wiz-pco-copy{background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);font-family:var(--ff-mono);font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;cursor:pointer;letter-spacing:.04em;margin-left:6px;text-transform:uppercase;transition:all .12s}
+.wiz-pco-copy:hover{border-color:var(--accent);color:var(--accent)}
+.wiz-pco-connected{display:flex;align-items:center;gap:14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:14px 18px}
+.wiz-pco-check{font-size:20px;color:var(--accent);font-weight:700}
+.wiz-pco-conn-title{font-family:var(--ff-display);font-size:15px;font-weight:500;color:var(--text)}
+.wiz-pco-conn-sub{font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);letter-spacing:.04em;margin-top:2px}
+/* Stage shape picker */
+.wiz-stage-shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.wiz-stage-shape{background:var(--surface);border:1.5px solid var(--border);padding:14px 12px;border-radius:9px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;color:var(--text)}
+.wiz-stage-shape:hover{border-color:var(--border-2)}
+.wiz-stage-shape.selected{border-color:var(--accent);background:var(--accent-dim)}
+.wiz-stage-shape svg{margin-bottom:4px}
+.wiz-shape-label{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text)}
+.wiz-shape-sub{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em}
+/* Palette grid */
+.wiz-palette-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.wiz-palette{background:var(--surface);border:1.5px solid var(--border);padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;font-family:inherit;color:var(--text)}
+.wiz-palette:hover{border-color:var(--border-2)}
+.wiz-palette.selected{border-color:var(--accent);background:var(--accent-dim)}
+.wiz-palette-swatch{width:22px;height:22px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.wiz-palette-name{font-family:var(--ff-display);font-size:13.5px;font-weight:500;color:var(--text);flex:1;text-align:left}
+.wiz-palette-custom{justify-content:flex-start}
+.wiz-input select, select.wiz-input{padding:10px 12px;cursor:pointer}
+@media (max-width: 600px){
+  .wiz-stage-shapes{grid-template-columns:1fr}
+  .wiz-palette-grid{grid-template-columns:1fr}
+}
+.wiz-iem-list{display:flex;flex-direction:column;gap:5px}
+.wiz-iem-row{display:grid;grid-template-columns:120px 24px 1fr;gap:10px;align-items:center;padding:4px 0}
+.wiz-iem-role{font-family:var(--ff-display);font-size:14px;color:var(--text);font-weight:500}
+.wiz-iem-arrow{font-family:var(--ff-mono);font-size:14px;color:var(--text-faint);text-align:center}
+.wiz-iem-row .wiz-input{padding:6px 10px;font-size:13px}
+@media (max-width: 600px){
+  .wiz-iem-row{grid-template-columns:1fr;gap:4px}
+  .wiz-iem-arrow{display:none}
+  .wiz-iem-role{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-family:var(--ff-mono)}
+  .wiz-add-custom{flex-direction:column}
+}
+@media (max-width: 600px){
+  .wizard-sheet{padding:24px 18px;border-radius:10px;max-width:100%}
+  .wizard-header h1{font-size:22px}
+}
 .summary-overlay.show{display:block}
 .summary-sheet{max-width:900px;margin:0 auto;background:linear-gradient(180deg,#f8f3e7 0%,#efe7d4 100%);color:#26200f;border-radius:4px;padding:60px 70px;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative;font-family:var(--ff-display);animation:slideUp .4s cubic-bezier(.2,.8,.2,1)}
 .summary-sheet::before{content:'';position:absolute;inset:16px;border:1px solid rgba(38,32,15,.15);pointer-events:none;border-radius:2px}
@@ -377,6 +528,156 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 /* ========== DISPLAY VIEW ========== */
 .display-view{position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:90;display:none;flex-direction:column;overflow:hidden;font-family:var(--ff-display)}
 body.display-mode .display-view{display:flex}
+/* ===== SETUP ITEMS VIEW ===== */
+.setup-items-view{position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:95;display:none;flex-direction:column;overflow:hidden}
+body.setup-items-mode .setup-items-view{display:flex}
+body.setup-items-mode .container{display:none}
+.si-header{background:var(--bg-elev);border-bottom:1px solid var(--border);padding:18px 24px 0;flex-shrink:0}
+.si-header-inner{display:flex;align-items:center;gap:14px;max-width:1200px;margin:0 auto;padding-bottom:14px}
+.si-back-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:9px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.si-back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.si-header-text{flex:1}
+.si-eyebrow{font-family:var(--ff-mono);font-size:10px;letter-spacing:.22em;color:var(--accent);font-weight:600;margin-bottom:2px}
+.si-title{font-family:var(--ff-display);font-size:24px;font-weight:500;color:var(--text);margin:0;font-style:italic;letter-spacing:-.015em}
+.si-summary{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.si-summary-value{font-family:var(--ff-mono);font-size:22px;font-weight:700;color:var(--text);letter-spacing:.02em}
+.si-summary-value.complete{color:#7ba968}
+.si-summary-label{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-top:2px}
+.si-progress-bar{height:4px;background:var(--border);position:relative;overflow:hidden;margin:0 -24px}
+.si-progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), var(--accent-2));width:0%;transition:width .25s ease}
+.si-progress-fill.complete{background:linear-gradient(90deg, #7ba968, #9bc587)}
+.si-content{flex:1;overflow-y:auto;padding:24px 24px 80px;max-width:1200px;margin:0 auto;width:100%}
+.si-empty{text-align:center;padding:80px 20px;color:var(--text-muted)}
+.si-empty-icon{font-size:48px;margin-bottom:14px;opacity:.5}
+.si-empty-title{font-family:var(--ff-display);font-size:20px;font-weight:500;color:var(--text);margin-bottom:8px}
+.si-empty-sub{font-size:13.5px;color:var(--text-muted);max-width:380px;margin:0 auto;line-height:1.5}
+/* Area card */
+.si-area{background:var(--bg-elev);border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;transition:border-color .2s}
+.si-area-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.si-area-icon{font-size:20px}
+.si-area-name{font-family:var(--ff-display);font-size:17px;font-weight:500;color:var(--text);flex:1;font-style:italic}
+.si-area-stats{font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;color:var(--text-faint);font-weight:600;padding:3px 9px;border-radius:5px;background:var(--surface);border:1px solid var(--border)}
+.si-area-stats.green{color:#7ba968;border-color:rgba(123,169,104,.3);background:rgba(123,169,104,.08)}
+.si-area-stats.yellow{color:var(--accent);border-color:rgba(212,161,71,.3);background:rgba(212,161,71,.08)}
+.si-area-stats.red{color:#c8554d;border-color:rgba(200,85,77,.3);background:rgba(200,85,77,.08)}
+/* Person card inside area */
+.si-people{display:flex;flex-direction:column;gap:10px}
+.si-person{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;transition:all .2s;position:relative;overflow:hidden}
+.si-person::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent;transition:background .2s}
+.si-person.status-red::before{background:#c8554d}
+.si-person.status-yellow::before{background:var(--accent)}
+.si-person.status-green::before{background:#7ba968}
+.si-person.status-red{background:rgba(200,85,77,.04);border-color:rgba(200,85,77,.25)}
+.si-person.status-yellow{background:rgba(212,161,71,.04);border-color:rgba(212,161,71,.22)}
+.si-person.status-green{background:rgba(123,169,104,.04);border-color:rgba(123,169,104,.25)}
+.si-person.status-empty{opacity:.7}
+.si-person-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-left:8px}
+.si-person-name{font-family:var(--ff-display);font-size:15.5px;font-weight:500;color:var(--text);flex:1}
+.si-person-name .wl-star{color:var(--wl-color);margin-right:4px;font-size:13px}
+.si-person-role{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;color:var(--text-faint);font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg-inset);border:1px solid var(--border)}
+.si-person-count{font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:5px;background:var(--bg-inset);color:var(--text-muted)}
+.si-person-count.green{color:#7ba968;background:rgba(123,169,104,.1)}
+.si-person-count.yellow{color:var(--accent);background:rgba(212,161,71,.1)}
+.si-person-count.red{color:#c8554d;background:rgba(200,85,77,.1)}
+.si-actions{display:flex;gap:6px;margin-left:auto}
+.si-action-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:var(--ff-mono);font-size:10px;font-weight:600;padding:4px 9px;border-radius:5px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .12s}
+.si-action-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* Items */
+.si-items{display:flex;flex-direction:column;gap:4px;margin-left:8px}
+.si-item{display:flex;align-items:flex-start;gap:10px;padding:8px 8px 8px 4px;border-radius:6px;transition:background .12s;position:relative}
+.si-item:hover{background:rgba(255,255,255,.02)}
+.si-item-checkbox{flex-shrink:0;margin-top:2px;width:18px;height:18px;border:1.5px solid var(--border-2);border-radius:4px;background:var(--bg-elev);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;appearance:none;-webkit-appearance:none}
+.si-item-checkbox:hover{border-color:var(--accent)}
+.si-item-checkbox:checked{background:#7ba968;border-color:#7ba968}
+.si-item-checkbox:checked::after{content:'✓';color:#fff;font-size:13px;font-weight:700;line-height:1}
+.si-item-text{flex:1;font-family:var(--ff-body);font-size:14px;color:var(--text);line-height:1.4;padding-top:1px;cursor:pointer}
+.si-item.done .si-item-text{text-decoration:line-through;text-decoration-color:#7ba968;text-decoration-thickness:1.5px;color:var(--text-muted)}
+.si-item-flags{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-top:1px}
+.si-item-flag{font-family:var(--ff-mono);font-size:9px;letter-spacing:.06em;padding:1.5px 6px;border-radius:3px;font-weight:600;text-transform:uppercase;cursor:default}
+.si-item-flag.one-time{background:rgba(212,161,71,.13);color:var(--accent);border:1px solid rgba(212,161,71,.3)}
+.si-item-flag.last-done{background:rgba(123,169,104,.13);color:#7ba968;border:1px solid rgba(123,169,104,.3);cursor:help}
+.si-item-remove{background:transparent;border:none;color:var(--text-faint);font-size:14px;cursor:pointer;padding:2px 5px;border-radius:4px;opacity:0;transition:all .12s;flex-shrink:0}
+.si-item:hover .si-item-remove{opacity:.7}
+.si-item-remove:hover{color:#c8554d;opacity:1;background:rgba(200,85,77,.1)}
+/* Fallback notice card */
+.si-fallback{background:rgba(212,161,71,.08);border:1px dashed var(--accent);border-radius:8px;padding:10px 14px;margin:6px 0 10px 8px;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:12px}
+.si-fallback-text{flex:1;line-height:1.4}
+.si-fallback-text strong{color:var(--accent);font-weight:600}
+.si-fallback-btn{background:var(--accent);color:#1a1408;border:none;padding:6px 11px;border-radius:5px;font-family:var(--ff-mono);font-size:10.5px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0;transition:opacity .12s}
+.si-fallback-btn:hover{opacity:.85}
+.si-fallback-dismiss{background:transparent;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;padding:4px 6px}
+.si-fallback-dismiss:hover{color:var(--text)}
+/* Add new item form */
+.si-add-row{display:flex;gap:6px;margin-left:8px;margin-top:6px;padding-top:8px;border-top:1px dashed var(--border)}
+.si-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;font-family:var(--ff-body);outline:none}
+.si-add-input:focus{border-color:var(--accent)}
+.si-add-onetime{display:flex;align-items:center;gap:6px;font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0 8px;white-space:nowrap}
+.si-add-onetime input{accent-color:var(--accent);cursor:pointer}
+.si-add-btn{background:var(--accent);color:#1a1408;border:none;padding:6px 13px;border-radius:6px;font-family:var(--ff-mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase}
+.si-add-btn:hover{opacity:.9}
+.si-add-btn:disabled{opacity:.4;cursor:not-allowed}
+/* Templates */
+.si-template-menu{position:absolute;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.5);padding:6px;z-index:200;min-width:240px;max-width:340px}
+.si-template-menu-header{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:8px 10px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.si-template-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;cursor:pointer;transition:background .1s}
+.si-template-option:hover{background:var(--surface)}
+.si-template-option-info{flex:1;min-width:0}
+.si-template-option-name{font-family:var(--ff-display);font-size:13.5px;color:var(--text);font-weight:500;line-height:1.2}
+.si-template-option-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em;margin-top:1px}
+.si-template-option-suggested{font-family:var(--ff-mono);font-size:8.5px;color:var(--accent);letter-spacing:.1em;background:rgba(212,161,71,.13);padding:2px 6px;border-radius:3px;font-weight:600;text-transform:uppercase}
+.si-template-empty{padding:14px 12px;text-align:center;color:var(--text-muted);font-size:12px;font-style:italic}
+/* Templates settings editor */
+.tpl-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:10px}
+.tpl-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.tpl-name-input{flex:1;background:transparent;border:1px solid transparent;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;padding:5px 8px;border-radius:5px;outline:none;transition:all .12s}
+.tpl-name-input:hover{background:var(--bg-inset);border-color:var(--border)}
+.tpl-name-input:focus{background:var(--bg-elev);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.tpl-card-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;flex-shrink:0}
+.tpl-remove-btn{padding:4px 9px;font-size:12px;color:var(--text-faint)}
+.tpl-remove-btn:hover{color:#c8554d;border-color:#c8554d}
+.tpl-items-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.tpl-item-row{display:flex;align-items:center;gap:8px;padding:2px 0}
+.tpl-item-bullet{color:var(--accent);font-size:14px;flex-shrink:0;width:10px;text-align:center}
+.tpl-item-input{flex:1;background:transparent;border:1px solid transparent;color:var(--text);font-size:13px;padding:5px 8px;border-radius:5px;outline:none;font-family:var(--ff-body);transition:all .12s}
+.tpl-item-input:hover{background:var(--bg-inset);border-color:var(--border)}
+.tpl-item-input:focus{background:var(--bg-elev);border-color:var(--accent)}
+.tpl-item-rm{background:transparent;border:none;color:var(--text-faint);font-size:12px;cursor:pointer;padding:3px 7px;border-radius:4px;opacity:.5;transition:all .12s}
+.tpl-item-row:hover .tpl-item-rm{opacity:1}
+.tpl-item-rm:hover{color:#c8554d;background:rgba(200,85,77,.1)}
+.tpl-add-row{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.tpl-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-size:12.5px;outline:none}
+.tpl-add-input:focus{border-color:var(--accent)}
+/* Stage Areas editor */
+.sa-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+.sa-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sa-name-input{flex:1;background:transparent;border:1px solid transparent;color:var(--text);font-family:var(--ff-display);font-size:14.5px;font-weight:500;padding:4px 8px;border-radius:5px;outline:none;transition:all .12s}
+.sa-name-input:hover{background:var(--bg-inset);border-color:var(--border)}
+.sa-name-input:focus{background:var(--bg-elev);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.sa-rm-btn{padding:3px 8px;font-size:11px;color:var(--text-faint)}
+.sa-rm-btn:hover{color:#c8554d;border-color:#c8554d}
+.sa-section-lbl{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:6px}
+.sa-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:22px}
+.sa-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);padding:3px 4px 3px 10px;border-radius:14px;font-family:var(--ff-mono);font-size:10.5px;font-weight:600;letter-spacing:.04em}
+.sa-chip-rm{background:transparent;border:none;color:var(--accent);width:18px;height:18px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:.6;transition:all .12s}
+.sa-chip-rm:hover{opacity:1;background:rgba(200,85,77,.2);color:#c8554d}
+.sa-add-inst{margin-top:4px}
+.sa-add-select{font-size:12px;padding:6px 10px;cursor:pointer}
+.tpl-add-input:focus{border-color:var(--accent)}
+.si-template-save-form{padding:10px;display:flex;flex-direction:column;gap:8px}
+.si-template-save-form input{background:var(--bg-inset);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;outline:none}
+.si-template-save-form input:focus{border-color:var(--accent)}
+/* Mobile tuning */
+@media (max-width: 700px){
+  .si-content{padding:14px 12px 80px}
+  .si-area{padding:14px 14px 16px}
+  .si-header{padding:12px 14px 0}
+  .si-header-inner{gap:10px;padding-bottom:10px}
+  .si-title{font-size:18px}
+  .si-summary-value{font-size:17px}
+  .si-add-row{flex-wrap:wrap}
+  .si-add-onetime{padding:6px 0}
+  .si-fallback{flex-wrap:wrap}
+}
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
 .display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10;font-family:var(--ff-mono)}
@@ -479,7 +780,7 @@ body>*:not(.summary-overlay){display:none!important}
   <div class="service-meta">
     <input type="date" id="serviceDate" />
     <div class="sep"></div>
-    <input type="text" id="serviceName" placeholder="Event title (e.g. Sunday Morning, Lovely Weekend)" style="min-width:240px;" />
+    <input type="text" id="serviceName" placeholder="Event title (e.g. Sunday Morning, Christmas Eve)" style="min-width:240px;" />
   </div>
   <div class="actions">
     <button class="btn pco" id="pcoBtn"><span class="dot"></span> Planning Center</button>
@@ -487,6 +788,7 @@ body>*:not(.summary-overlay){display:none!important}
     <button class="btn ghost" id="settingsBtn">Set Up</button>
     <button class="btn ghost" id="resetBtn">Reset</button>
     <button class="btn" id="summaryBtn">Print Summary</button>
+    <button class="btn" id="setupItemsBtn" title="Per-musician setup checklist">✓ Items</button>
     <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
     <button class="btn primary" id="assignBtn">Auto-Assign <span class="kbd">⌘↵</span></button>
   </div>
@@ -594,6 +896,8 @@ body>*:not(.summary-overlay){display:none!important}
       <button class="tab" data-tab="layout">Layout</button>
       <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="pco">Planning Center</button>
+      <button class="tab" data-tab="templates">Templates</button>
+      <button class="tab" data-tab="data">Data</button>
     </div>
     <div class="tab-panel active" id="tab-inventory">
       <p class="subtitle" style="margin-bottom:12px;">Mics ranked best → worst. Auto-assign hands the best mics out to worship leaders first.</p>
@@ -611,6 +915,12 @@ body>*:not(.summary-overlay){display:none!important}
     </div>
     <div class="tab-panel" id="tab-pco">
       <div id="pcoSettingsContent"></div>
+    </div>
+    <div class="tab-panel" id="tab-templates">
+      <div id="templatesEdit"></div>
+    </div>
+    <div class="tab-panel" id="tab-data">
+      <div id="dataEdit"></div>
     </div>
   </div>
 </div>
@@ -644,6 +954,45 @@ body>*:not(.summary-overlay){display:none!important}
       <span id="s_footerMeta"></span>
     </div>
   </div>
+</div>
+
+<!-- ========== FIRST-RUN WIZARD ========== -->
+<div class="wizard-overlay" id="wizardOverlay">
+  <div class="wizard-sheet">
+    <div class="wizard-header">
+      <div class="wizard-eyebrow">Welcome to Stage·Assign</div>
+      <h1>Let's set up your church</h1>
+      <p class="wizard-sub">Just a few questions to tailor the app to your team. You can change anything later in Set Up.</p>
+      <div class="wizard-steps" id="wizardSteps"></div>
+    </div>
+    <div class="wizard-body" id="wizardBody"></div>
+    <div class="wizard-footer">
+      <button class="btn ghost" id="wizardSkipBtn">Skip & explore</button>
+      <div style="flex:1;"></div>
+      <button class="btn ghost" id="wizardBackBtn" style="display:none;">← Back</button>
+      <button class="btn primary" id="wizardNextBtn">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SETUP ITEMS VIEW (full-screen takeover) ========== -->
+<div class="setup-items-view" id="setupItemsView">
+  <div class="si-header">
+    <div class="si-header-inner">
+      <button class="si-back-btn" id="siBackBtn" title="Back to setup">←</button>
+      <div class="si-header-text">
+        <div class="si-eyebrow">SETUP ITEMS</div>
+        <h1 class="si-title" id="si_title">—</h1>
+      </div>
+      <div class="si-summary" id="si_summary">
+        <div class="si-summary-value" id="si_summary_value">0/0</div>
+        <div class="si-summary-label">items done</div>
+      </div>
+      <button class="si-back-btn" id="siSettingsBtn" title="Open Set Up settings">⚙︎</button>
+    </div>
+    <div class="si-progress-bar"><div class="si-progress-fill" id="si_progress_fill"></div></div>
+  </div>
+  <div class="si-content" id="si_content"></div>
 </div>
 
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
@@ -713,7 +1062,17 @@ body>*:not(.summary-overlay){display:none!important}
 const STORAGE_KEY = 'stageAssign.v3';
 const PCO_TOKEN_KEY = 'stageAssign.v3.pcoTokens';
 const PCO_PKCE_KEY = 'stageAssign.v3.pcoPKCE';
-const MAX_VOCALISTS = 8;     // bumped from 6 → 8 since vocals are now flexible
+// MAX_VOCALISTS is no longer a hard cap — `let` so we can grow it.
+// Call ensureVocalCapacity() any time we add vocalists.
+let MAX_VOCALISTS = 8;
+function ensureVocalCapacity() {
+  const need = Math.max(8, (state && state.vocalists ? state.vocalists.length + 2 : 8));
+  if (need > MAX_VOCALISTS) MAX_VOCALISTS = need;
+  // Also grow the assignments array if needed
+  if (state && state.assignments && state.assignments.length < MAX_VOCALISTS) {
+    while (state.assignments.length < MAX_VOCALISTS) state.assignments.push(null);
+  }
+}
 const MAX_INSTRUMENTS = 12;  // cap for total band slots (incl. customs)
 
 const DEFAULT_INVENTORY = [
@@ -727,7 +1086,8 @@ const DEFAULT_INVENTORY = [
   { name: 'Beta 87', total: 2, rank: 8 },
   { name: 'NX8',     total: 1, rank: 9 }
 ];
-const DEFAULT_PREFERENCES = { 'grayson': 'KMS105', 'marcus': 'D:Facto' };
+// Per-vocalist mic preferences (lowercased first name → mic name). Empty by default; populated by the user.
+const DEFAULT_PREFERENCES = {};
 const DEFAULT_VOCAL_DIRECTION = 'rtl';
 
 // IEM pack presets the user can pick from for any instrument
@@ -763,20 +1123,38 @@ const DEFAULT_STATE = {
   config: {
     showMicCapsules: true,
     vocalDirection: DEFAULT_VOCAL_DIRECTION,
-    stageShape: 'curved', // 'curved' | 'light-curve' | 'flat'
+    stageShape: 'curved', // 'curved' | 'light-curve' | 'flat' (legacy; superseded by stageCurvature)
+    stageCurvature: 70,   // 0 = flat, 100 = deeply curved. Default 70 matches the legacy "curved" shape.
+    stageDepth: 100,      // 0 = shallow stage, 100 = full depth (back wall at viewBox bottom)
     voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
     shadowPack: 'Misc 2 Pack',
+    enableShadows: false, // off by default; user opts in via Set Up → Layout
+    // Setup Items: lock display until setup done (soft warning; off by default)
+    blockDisplayUntilSetup: false,
+    // Custom stage area mapping. Empty array means "each instrument is its own area".
+    // Each entry: { id, name, instrumentIds: [array of inst ids], includesVocalists: false }
+    stageAreas: [],
     display: {
       showStage:true, showServiceOrder:true, showVocalists:true, showBand:true, showHosts:true, showShadows:true,
-      runSheet: { songsOnly:false, showDuration:true, showDescriptions:true, showKey:true, showLeader:true }
+      runSheet: { songsOnly:false, showDuration:true, showDescriptions:true, showKey:true, showLeader:true, textScale:1.0 }
     }
+  },
+  // Setup Items state — keyed by 'fullname|instId' or 'fullname|vocal'
+  setupItems: {},
+  // Template library — universal templates with usage stats for smart sorting
+  setupTemplates: [],
+  // Metadata: last service date + last completion state for "done last week" indicators
+  setupServiceMeta: {
+    lastServiceDate: null,
+    lastCompletionByKey: {}
   },
   viewMode: 'setup',
   theme: 'dark'
 };
 
 let state = loadState();
+ensureVocalCapacity();
 let pcoTokens = loadPCOTokens();
 let pcoServiceTypes = [];
 let pcoPlans = [];
@@ -854,6 +1232,12 @@ function loadState() {
           voxIemPacks: voxPacks,
           iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
           shadowPack: loadedConfig.shadowPack || 'Misc 2 Pack',
+          // Existing users with shadows: keep them enabled. Brand-new users: off by default.
+          enableShadows: typeof loadedConfig.enableShadows === 'boolean'
+            ? loadedConfig.enableShadows
+            : (Array.isArray(p.shadows) && p.shadows.length > 0),
+          blockDisplayUntilSetup: !!loadedConfig.blockDisplayUntilSetup,
+          stageAreas: Array.isArray(loadedConfig.stageAreas) ? loadedConfig.stageAreas : [],
           display: {
             ...DEFAULT_STATE.config.display,
             ...(loadedConfig.display||{}),
@@ -869,11 +1253,20 @@ function loadState() {
         shadows: Array.isArray(p.shadows) ? p.shadows : [],
         serviceOrder: p.serviceOrder || [],
         inventory: p.inventory || structuredClone(DEFAULT_INVENTORY),
-        preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES)
+        preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES),
+        // Setup Items state
+        setupItems: (p.setupItems && typeof p.setupItems === 'object') ? p.setupItems : {},
+        setupTemplates: Array.isArray(p.setupTemplates) ? p.setupTemplates : [],
+        setupServiceMeta: (p.setupServiceMeta && typeof p.setupServiceMeta === 'object')
+          ? { lastServiceDate: p.setupServiceMeta.lastServiceDate || null, lastCompletionByKey: p.setupServiceMeta.lastCompletionByKey || {} }
+          : { lastServiceDate: null, lastCompletionByKey: {} }
       };
     }
   } catch(e) { console.warn('State load failed:', e); }
-  return structuredClone(DEFAULT_STATE);
+  // Brand-new visitor — flag for wizard to trigger
+  const fresh = structuredClone(DEFAULT_STATE);
+  fresh._firstRun = true;
+  return fresh;
 }
 function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
 function loadPCOTokens() { try { const r = localStorage.getItem(PCO_TOKEN_KEY); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
@@ -881,6 +1274,8 @@ function savePCOTokens(t) { if (t) localStorage.setItem(PCO_TOKEN_KEY, JSON.stri
 function uid() { return 'v_' + Math.random().toString(36).slice(2,9); }
 function esc(s) { if (s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function normName(n) { return (n||'').trim().toLowerCase().split(/\s+/)[0]; }
+// Full-name normalized — used for dedup and exact equality checks so two "Brian"s with different last names are distinct
+function normFullName(n) { return (n||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function firstName(n) { return (n||'').trim().split(/\s+/)[0] || ''; }
 function getPref(name) {
   const k = normName(name);
@@ -898,27 +1293,87 @@ function getMicPool() {
   pool.sort((a,b) => a.rank - b.rank);
   return pool;
 }
+// Returns an ordered array of leader names (most-frequent first) from the current service order.
+// Only considers items where `leader` field is non-empty.
+function getLeaderFrequencyOrder() {
+  const counts = new Map();
+  (state.serviceOrder || []).forEach(it => {
+    const leader = (it.leader || '').trim();
+    if (!leader) return;
+    counts.set(leader, (counts.get(leader) || 0) + 1);
+  });
+  // Sort by count desc, then by first appearance order in service order
+  const firstSeen = new Map();
+  (state.serviceOrder || []).forEach((it, idx) => {
+    const leader = (it.leader || '').trim();
+    if (leader && !firstSeen.has(leader)) firstSeen.set(leader, idx);
+  });
+  return [...counts.entries()]
+    .sort((a, b) => (b[1] - a[1]) || (firstSeen.get(a[0]) - firstSeen.get(b[0])))
+    .map(([name]) => name);
+}
+
+// Find vocalist matching a leader name (full name first, first-name fallback only if unambiguous)
+function findVocalistByLeaderName(leaderName) {
+  if (!leaderName) return null;
+  const full = normFullName(leaderName);
+  const first = normName(leaderName);
+  // Try full match first
+  let v = state.vocalists.find(x => x.name && normFullName(x.name) === full);
+  if (v) return v;
+  // First-name fallback only if unambiguous
+  const firstMatches = state.vocalists.filter(x => x.name && normName(x.name) === first);
+  if (firstMatches.length === 1) return firstMatches[0];
+  return null;
+}
+
+// Compute fan-out order around a center: [center, center-1, center+1, center-2, center+2, ...]
+function centerFanOutIndices(count) {
+  if (count === 0) return [];
+  const center = Math.floor(count / 2);
+  const out = [center];
+  for (let d = 1; d < count; d++) {
+    if (center - d >= 0) out.push(center - d);
+    if (center + d < count) out.push(center + d);
+  }
+  // Edge case: even count, center is floored — also include the slot just before center if not added
+  // (already handled by fan-out)
+  return [...new Set(out)].slice(0, count);
+}
+
 function computePositions(vocs) {
   const count = vocs.length;
-  if (count === 0) return [null,null,null,null,null,null];
-  const center = Math.floor(count/2);
+  if (count === 0) return new Array(MAX_VOCALISTS).fill(null);
   const positions = new Array(count).fill(null);
-  const wl = vocs.find(v => v.isWL);
-  const leaders = vocs.filter(v => v.leadsSongs && !v.isWL);
-  const nonLeaders = vocs.filter(v => !v.leadsSongs && !v.isWL);
-  let centerPerson = wl;
-  let remaining = [...leaders, ...nonLeaders];
-  if (!centerPerson && leaders.length > 0) { centerPerson = leaders[0]; remaining = [...leaders.slice(1), ...nonLeaders]; }
-  else if (!centerPerson && nonLeaders.length > 0) { centerPerson = nonLeaders[0]; remaining = nonLeaders.slice(1); }
-  if (centerPerson) positions[center] = centerPerson;
-  let ptr = 0;
-  for (let i=0; i<count; i++) {
-    if (i === center && centerPerson) continue;
-    if (ptr >= remaining.length) break;
-    positions[i] = remaining[ptr++];
+  // Build a priority list of leaders from service order — most-frequent first
+  const leaderOrder = getLeaderFrequencyOrder();
+  const leaderVocs = []; // vocalists matched to leaders (in priority order)
+  const used = new Set();
+  for (const lname of leaderOrder) {
+    const v = findVocalistByLeaderName(lname);
+    if (v && !used.has(v.id)) { leaderVocs.push(v); used.add(v.id); }
   }
-  const full = [null,null,null,null,null,null];
-  positions.forEach((v,i) => { if (v) full[i] = v.id; });
+  // Fan out the leaders around the center
+  const fanIdx = centerFanOutIndices(count);
+  for (let i = 0; i < leaderVocs.length && i < fanIdx.length; i++) {
+    positions[fanIdx[i]] = leaderVocs[i];
+  }
+  // Remaining vocalists: prioritize WL → vocalists marked as leadsSongs → others.
+  // Fill any open slots, working from the next fan-out slot outward.
+  const remaining = [];
+  const wl = vocs.find(v => v.isWL && !used.has(v.id));
+  if (wl) { remaining.push(wl); used.add(wl.id); }
+  vocs.filter(v => v.leadsSongs && !used.has(v.id)).forEach(v => { remaining.push(v); used.add(v.id); });
+  vocs.filter(v => !used.has(v.id)).forEach(v => remaining.push(v));
+  // Drop the leader-assigned vocs from the remaining list (they're already in `used`)
+  let r = 0;
+  for (const idx of fanIdx) {
+    if (positions[idx] === null && r < remaining.length) {
+      positions[idx] = remaining[r++];
+    }
+  }
+  const full = new Array(MAX_VOCALISTS).fill(null);
+  positions.forEach((v, i) => { if (v) full[i] = v.id; });
   return full;
 }
 function assignMicsToVocalists() {
@@ -955,9 +1410,10 @@ function autoAssign() {
 
 /* ===================== VOCALIST CRUD ===================== */
 function addVocalist() {
-  if (state.vocalists.length >= MAX_VOCALISTS) return;
+  // No hard cap — list grows as needed
   const newV = { id:uid(), name:'', leadsSongs:false, isWL:state.vocalists.length===0, micAssigned:'' };
   state.vocalists.push(newV);
+  ensureVocalCapacity();
   // Give them a position immediately
   state.assignments = computePositions(state.vocalists);
   // Give them best-available mic without disturbing existing assignments
@@ -995,12 +1451,17 @@ function toggleVocField(id, field) {
 function updateVocName(id, name) {
   const v = state.vocalists.find(x => x.id === id); if (!v) return;
   v.name = name;
-  // Auto-link any band slots that now match this vocalist
-  if (autoLinkBandToVocalists()) {
-    saveState(); renderAll();
-  } else {
-    saveState(); renderStage();
-  }
+  saveState();
+  // DO NOT render mid-typing — that destroys the focused input.
+  // The change handler (on blur) below handles the full refresh.
+}
+// Called on blur from a vocalist name input — do the heavy work
+function finalizeVocName(id) {
+  // Auto-link any band slots whose typed name matches this vocalist
+  const changed = autoLinkBandToVocalists();
+  saveState();
+  if (changed) renderAll();
+  else { renderStage(); if (state.viewMode === 'display') renderDisplayView(); }
 }
 function setVocMic(id, mic) {
   const v = state.vocalists.find(x => x.id === id); if (!v) return;
@@ -1035,7 +1496,8 @@ function renderShadows() {
 
 /* ===================== RENDER VOCALISTS ===================== */
 function renderVocalists() {
-  document.getElementById('vocCount').textContent = `${state.vocalists.length}/${MAX_VOCALISTS}`;
+  // Display vocalist count without a cap (cap is dynamic, never hit in normal usage)
+  document.getElementById('vocCount').textContent = `${state.vocalists.length} vocalist${state.vocalists.length===1?'':'s'}`;
   const grid = document.getElementById('vocGrid');
   grid.innerHTML = '';
   // Tally how many of each mic are currently assigned to vocalists
@@ -1128,25 +1590,31 @@ function renderVocalists() {
     grid.appendChild(card);
   }
 
-  // Shadow cards (mixed into same grid, after vocalists, before Add buttons)
-  state.shadows.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'voc-card shadow-mode';
-    card.dataset.shadowId = s.id;
-    card.innerHTML = `
-      <div class="voc-pos-bar">
-        <span class="voc-pos shadow-tag">SHADOW</span>
-        <button class="x-btn" data-shadow-id="${esc(s.id)}" title="Remove">✕</button>
-      </div>
-      <div class="voc-body">
-        <input class="voc-name" type="text" value="${esc(s.name||'')}" placeholder="Shadow name" data-shadow-id="${esc(s.id)}" />
-        <div class="mic-pick" style="border-top:none;padding-top:6px;justify-content:flex-start;">
-          <span class="shadow-pack-pill" title="IEM Pack">🎧 ${esc(s.pack||'Misc 2 Pack')}</span>
+  // Shadow cards — only rendered when shadows are enabled in config
+  const shadowsEnabled = !!state.config.enableShadows;
+  // Show/hide the "+ Shadow" link in the hero header
+  const addShadowLink = document.getElementById('addShadowLink');
+  if (addShadowLink) addShadowLink.style.display = shadowsEnabled ? '' : 'none';
+  if (shadowsEnabled) {
+    state.shadows.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'voc-card shadow-mode';
+      card.dataset.shadowId = s.id;
+      card.innerHTML = `
+        <div class="voc-pos-bar">
+          <span class="voc-pos shadow-tag">SHADOW</span>
+          <button class="x-btn" data-shadow-id="${esc(s.id)}" title="Remove">✕</button>
         </div>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+        <div class="voc-body">
+          <input class="voc-name" type="text" value="${esc(s.name||'')}" placeholder="Shadow name" data-shadow-id="${esc(s.id)}" />
+          <div class="mic-pick" style="border-top:none;padding-top:6px;justify-content:flex-start;">
+            <span class="shadow-pack-pill" title="IEM Pack">🎧 ${esc(s.pack||'Misc 2 Pack')}</span>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
 
   if (state.vocalists.length < MAX_VOCALISTS) {
     const add = document.createElement('button');
@@ -1155,25 +1623,33 @@ function renderVocalists() {
     add.addEventListener('click', addVocalist);
     grid.appendChild(add);
   }
-  if (state.shadows.length < MAX_SHADOWS) {
+  if (shadowsEnabled && state.shadows.length < MAX_SHADOWS) {
     const addSh = document.createElement('button');
     addSh.className = 'add-card add-card-shadow';
     addSh.innerHTML = `<span class="plus">+</span><span>Add shadow</span>`;
     addSh.addEventListener('click', addShadow);
     grid.appendChild(addSh);
   }
-  grid.querySelectorAll('.voc-name[data-id]').forEach(input => input.addEventListener('input', e => updateVocName(e.target.dataset.id, e.target.value)));
-  grid.querySelectorAll('.voc-name[data-shadow-id]').forEach(input => input.addEventListener('input', e => updateShadowName(e.target.dataset.shadowId, e.target.value)));
+  grid.querySelectorAll('.voc-name[data-id]').forEach(input => {
+    input.addEventListener('input', e => updateVocName(e.target.dataset.id, e.target.value));
+    input.addEventListener('change', e => finalizeVocName(e.target.dataset.id));
+  });
+  grid.querySelectorAll('.voc-name[data-shadow-id]').forEach(input => {
+    input.addEventListener('input', e => updateShadowName(e.target.dataset.shadowId, e.target.value));
+    input.addEventListener('change', e => { renderStage(); if (state.viewMode === 'display') renderDisplayView(); });
+  });
   grid.querySelectorAll('[data-action="remove"]').forEach(b => b.addEventListener('click', () => removeVocalist(b.dataset.id)));
   grid.querySelectorAll('.x-btn[data-shadow-id]').forEach(b => b.addEventListener('click', () => removeShadow(b.dataset.shadowId)));
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
-  // Update count to reflect both
+  // Update count to reflect both vocalists and shadows
   const countEl = document.getElementById('vocCount');
   if (countEl) {
+    const vCount = state.vocalists.length;
     const shCount = state.shadows.length;
+    const vTxt = `${vCount} vocalist${vCount===1?'':'s'}`;
     countEl.textContent = shCount > 0
-      ? `${state.vocalists.length}/${MAX_VOCALISTS}  ·  ${shCount} shadow${shCount===1?'':'s'}`
-      : `${state.vocalists.length}/${MAX_VOCALISTS}`;
+      ? `${vTxt}  ·  ${shCount} shadow${shCount===1?'':'s'}`
+      : vTxt;
   }
 }
 
@@ -1193,16 +1669,17 @@ function iemPackFor(instOrId) {
 function getMD() { return state.musicDirectorId ? instById(state.musicDirectorId) : null; }
 
 function vocalistByName(name) {
-  const target = normName(name);
-  if (!target) return null;
-  // Match on first name (case-insensitive). If full name is given, also try matching full lowercase.
-  const fullTarget = (name||'').trim().toLowerCase();
-  return state.vocalists.find(v => {
-    if (!v.name) return false;
-    if (normName(v.name) === target) return true;
-    if (v.name.trim().toLowerCase() === fullTarget) return true;
-    return false;
-  }) || null;
+  const firstTarget = normName(name);
+  const fullTarget = normFullName(name);
+  if (!firstTarget) return null;
+  // 1. Exact full-name match always wins (handles two Brians correctly)
+  const fullMatch = state.vocalists.find(v => v.name && normFullName(v.name) === fullTarget);
+  if (fullMatch) return fullMatch;
+  // 2. First-name match — but only if it's UNAMBIGUOUS (only one vocalist with that first name)
+  const firstMatches = state.vocalists.filter(v => v.name && normName(v.name) === firstTarget);
+  if (firstMatches.length === 1) return firstMatches[0];
+  // If 2+ share a first name, refuse to guess
+  return null;
 }
 
 // Scan all instruments — if a band slot has a typed name that matches a current vocalist,
@@ -1289,22 +1766,26 @@ function renderBand() {
   });
   grid.querySelectorAll('input[data-inst-id]').forEach(input => {
     input.addEventListener('input', e => {
+      // Update state on every keystroke but DO NOT re-render the band grid
+      // (that would destroy this input element and kill focus). Stage shows the typed name
+      // so update that separately.
       const inst = instById(e.target.dataset.instId);
       if (inst) {
         inst.assignedTo = e.target.value;
         saveState();
-        // Re-render so the link button appears/disappears based on current name match
-        renderBand();
         renderStage();
-        if (state.viewMode==='display') renderDisplayView();
       }
     });
-    // On blur (finished typing), auto-link if the name matches a vocalist exactly
+    // On blur (finished typing), do the heavier work — re-render band so link button appears,
+    // auto-link if name matches a vocalist exactly, refresh display view.
     input.addEventListener('change', e => {
       const inst = instById(e.target.dataset.instId);
-      if (inst && autoLinkBandToVocalists()) {
-        saveState(); renderAll();
-      }
+      if (!inst) return;
+      const changed = autoLinkBandToVocalists();
+      saveState();
+      // Always re-render band so the link-suggestion button updates based on current name
+      renderBand();
+      if (changed || state.viewMode==='display') renderAll();
     });
   });
   // Manual link button: mark instrument as played by matched vocalist
@@ -1433,30 +1914,98 @@ function getBandStagePositions() {
   });
   return positions;
 }
+// Standard curvature value (default): 0 = flat, 100 = deeply curved
+const DEFAULT_STAGE_CURVATURE = 70;
+// Standard stage depth (default): 0 = shallow, 100 = full depth
+const DEFAULT_STAGE_DEPTH = 100;
+// Legacy stageShape string → curvature mapping (for migration)
+function legacyShapeToCurvature(shape) {
+  if (shape === 'flat') return 0;
+  if (shape === 'light-curve') return 35;
+  return DEFAULT_STAGE_CURVATURE; // 'curved' (default)
+}
+
+function getStageCurvature() {
+  const cfg = state.config || {};
+  let cur = cfg.stageCurvature;
+  if (typeof cur !== 'number') {
+    cur = legacyShapeToCurvature(cfg.stageShape);
+  }
+  return Math.max(0, Math.min(100, cur));
+}
+
+function getStageDepth() {
+  const cfg = state.config || {};
+  const d = cfg.stageDepth;
+  if (typeof d !== 'number') return DEFAULT_STAGE_DEPTH;
+  return Math.max(0, Math.min(100, d));
+}
+
+// Build a mini SVG path for previewing a stage at a given curvature + depth (each 0–100)
+// viewBox 0 0 180 80; back wall position and front edge curve both reflect the inputs.
+function buildStagePreviewSvg(curvature, depth) {
+  const tc = Math.max(0, Math.min(100, curvature || 0)) / 100;
+  const td = Math.max(0, Math.min(100, (depth == null ? DEFAULT_STAGE_DEPTH : depth))) / 100;
+  // viewBox is 0 0 200 110; we reserve y=0..18 for AUDIENCE label, y=18..100 for stage
+  // Front edge sides go from y=24 (flat) to y=54 (deep curve sides pulled down)
+  const edgeY = 24 + (30 * tc);
+  // Mid pulls up to edgeY - 56 at full curve
+  const midY = edgeY - (56 * tc);
+  // Back wall: depth=100 → y=98; depth=0 → y=58 (shallow stage)
+  const backY = 58 + (40 * td);
+  const safeBack = Math.max(backY, edgeY + 12);
+  const isFlat = (tc === 0);
+  const pathTop = isFlat
+    ? `L 184 ${edgeY} L 16 ${edgeY}`
+    : `L 184 ${edgeY} Q 100 ${midY} 16 ${edgeY}`;
+  const fullPath = `M 16 ${safeBack} L 184 ${safeBack} ${pathTop} Z`;
+  // Audience label sits ABOVE the stage (where the apron bulges toward).
+  // SL label on the right edge (performer's left = audience's right view).
+  // SR label on the left edge (performer's right = audience's left view).
+  return `<svg viewBox="0 0 200 110" style="width:100%;height:100%;">
+    <text x="100" y="11" text-anchor="middle" font-family="var(--ff-mono)" font-size="8" fill="var(--text-faint)" letter-spacing="2.5">AUDIENCE</text>
+    <line x1="16" y1="15" x2="184" y2="15" stroke="var(--text-faint)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5"/>
+    <path d="${fullPath}" fill="var(--accent)" opacity="0.16"/>
+    <path d="${fullPath}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="12" y="${(edgeY + safeBack)/2 + 3}" text-anchor="end" font-family="var(--ff-mono)" font-size="8" fill="var(--accent)" font-weight="700" letter-spacing="1">SR</text>
+    <text x="188" y="${(edgeY + safeBack)/2 + 3}" text-anchor="start" font-family="var(--ff-mono)" font-size="8" fill="var(--accent)" font-weight="700" letter-spacing="1">SL</text>
+  </svg>`;
+}
+
 function getStageShape() {
   // Returns SVG path data for stage + bezier control points for vocalists.
-  // stage floor: always runs from ~(20,360) bottom-left to (780,360) bottom-right.
-  // Top edge (audience side) varies by shape.
-  const shape = (state.config && state.config.stageShape) || 'curved';
-  if (shape === 'flat') {
+  // Two dimensions:
+  //   curvature (0-100): how much the front apron bows toward audience
+  //   depth (0-100): how deep the stage extends back from the front edge
+  // At curvature 0: front edge is a flat horizontal line.
+  // At curvature 100: deep bow with mid pulled aggressively toward audience.
+  // At depth 0: shallow stage (back wall close to front edge).
+  // At depth 100: deep stage (back wall at y=360, viewBox bottom).
+  const curvature = getStageCurvature();
+  const depth = getStageDepth();
+  const tc = curvature / 100;
+  const td = depth / 100;
+
+  // Front edge sides interpolate from y=40 (flat) to y=180 (deep curve pulls sides down)
+  const edgeY = 40 + (140 * tc);
+  // Mid pulls UP toward audience aggressively at high curvature (up to 220px above the side edges).
+  // At curvature 100, mid sits at edgeY - 220 → very deep bow.
+  const midY = edgeY - (220 * tc);
+  // Back wall position: depth=100 puts it at y=360, depth=0 puts it at y=180 (shallow)
+  const backY = 180 + (180 * td);
+
+  if (tc === 0) {
+    // Pure flat — straight line, not a quadratic curve
     return {
-      path: 'M 20 360 L 780 360 L 780 60 L 20 60 Z',
-      edge: 'M 780 60 L 20 60',
-      P0: { x:780, y:85 }, P1: { x:400, y:85 }, P2: { x:20, y:85 }
+      path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} L 20 ${edgeY} Z`,
+      edge: `M 780 ${edgeY} L 20 ${edgeY}`,
+      P0: { x:780, y:edgeY + 25 }, P1: { x:400, y:edgeY + 25 }, P2: { x:20, y:edgeY + 25 }
     };
   }
-  if (shape === 'light-curve') {
-    return {
-      path: 'M 20 360 L 780 360 L 780 110 Q 400 60 20 110 Z',
-      edge: 'M 780 110 Q 400 60 20 110',
-      P0: { x:780, y:110 }, P1: { x:400, y:60 }, P2: { x:20, y:110 }
-    };
-  }
-  // curved (default)
   return {
-    path: 'M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z',
-    edge: 'M 780 146 Q 400 22 20 146',
-    P0: { x:780, y:146 }, P1: { x:400, y:22 }, P2: { x:20, y:146 }
+    path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} Q 400 ${midY} 20 ${edgeY} Z`,
+    edge: `M 780 ${edgeY} Q 400 ${midY} 20 ${edgeY}`,
+    P0: { x:780, y:edgeY }, P1: { x:400, y:midY }, P2: { x:20, y:edgeY }
   };
 }
 function getVoxPositions(count) {
@@ -1622,47 +2171,165 @@ function openSettings(tab='inventory') {
   renderLayoutEditor();
   renderBrandEditor();
   renderPCOSettings();
+  renderTemplatesEditor();
+  renderDataEditor();
   document.getElementById('settingsOverlay').classList.add('show');
 }
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); renderAll(); }
+
+function renderStageAreasEditor() {
+  const el = document.getElementById('stageAreasEditor');
+  if (!el) return;
+  const areas = state.config.stageAreas || [];
+  // Calculate which instruments are already in an area
+  const usedInstIds = new Set();
+  areas.forEach(a => (a.instrumentIds || []).forEach(id => usedInstIds.add(id)));
+  // Available instruments (must have a label)
+  const availableInsts = state.instruments.filter(i => i.label && i.label.trim());
+
+  if (areas.length === 0) {
+    el.innerHTML = `<div style="background:var(--bg-inset);border:1px dashed var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px;color:var(--text-muted);font-size:12.5px;text-align:center;">
+      No custom areas. Each instrument shows as its own area in <strong>✓ Items</strong>.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = areas.map((a, idx) => {
+    const areaInsts = (a.instrumentIds || []).map(id => availableInsts.find(i => i.id === id)).filter(Boolean);
+    const otherInsts = availableInsts.filter(i => !(a.instrumentIds || []).includes(i.id));
+    return `
+      <div class="sa-card" data-sa-idx="${idx}">
+        <div class="sa-card-header">
+          <input type="text" class="sa-name-input" data-sa-name="${idx}" value="${esc(a.name)}" placeholder="Area name" />
+          <button class="btn ghost sa-rm-btn" data-sa-rm="${idx}" title="Delete area">✕</button>
+        </div>
+        <div class="sa-instruments">
+          <div class="sa-section-lbl">Instruments in this area:</div>
+          <div class="sa-chips">
+            ${areaInsts.length === 0
+              ? '<span style="color:var(--text-faint);font-size:12px;font-style:italic;">No instruments yet — pick from the dropdown below.</span>'
+              : areaInsts.map(inst => `
+                <span class="sa-chip" data-sa-inst="${idx}:${esc(inst.id)}">
+                  ${esc(inst.label)}
+                  <button class="sa-chip-rm" data-sa-inst-rm="${idx}:${esc(inst.id)}" title="Remove from area">✕</button>
+                </span>
+              `).join('')
+            }
+          </div>
+          ${otherInsts.length > 0 ? `
+            <div class="sa-add-inst">
+              <select class="field-input sa-add-select" data-sa-add="${idx}" style="max-width:240px;">
+                <option value="">+ Add instrument...</option>
+                ${otherInsts.map(i => `<option value="${esc(i.id)}">${esc(i.label)}${usedInstIds.has(i.id) ? ' (in another area)' : ''}</option>`).join('')}
+              </select>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Wire
+  el.querySelectorAll('[data-sa-name]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.saName, 10);
+      if (state.config.stageAreas[idx]) {
+        state.config.stageAreas[idx].name = e.target.value.trim() || 'Area';
+        saveState();
+      }
+    });
+  });
+  el.querySelectorAll('[data-sa-rm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.saRm, 10);
+      if (!confirm(`Delete area "${state.config.stageAreas[idx]?.name || ''}"?`)) return;
+      state.config.stageAreas.splice(idx, 1);
+      saveState();
+      renderStageAreasEditor();
+    });
+  });
+  el.querySelectorAll('[data-sa-inst-rm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const [idxStr, instId] = e.target.dataset.saInstRm.split(':');
+      const idx = parseInt(idxStr, 10);
+      if (state.config.stageAreas[idx]) {
+        state.config.stageAreas[idx].instrumentIds = (state.config.stageAreas[idx].instrumentIds || []).filter(id => id !== instId);
+        saveState();
+        renderStageAreasEditor();
+      }
+    });
+  });
+  el.querySelectorAll('[data-sa-add]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.saAdd, 10);
+      const instId = e.target.value;
+      if (!instId || !state.config.stageAreas[idx]) return;
+      // Remove from any other area first (instruments belong to one area at a time)
+      state.config.stageAreas.forEach((other, oi) => {
+        if (oi !== idx) {
+          other.instrumentIds = (other.instrumentIds || []).filter(id => id !== instId);
+        }
+      });
+      // Add to this area
+      if (!state.config.stageAreas[idx].instrumentIds) state.config.stageAreas[idx].instrumentIds = [];
+      if (!state.config.stageAreas[idx].instrumentIds.includes(instId)) {
+        state.config.stageAreas[idx].instrumentIds.push(instId);
+      }
+      saveState();
+      renderStageAreasEditor();
+    });
+  });
+}
 
 function renderLayoutEditor() {
   const el = document.getElementById('layoutEdit');
   if (!el) return;
   const c = state.config;
-  // Stage shape previews (mini SVGs)
-  const SHAPE_PREVIEWS = {
-    curved: '<path d="M 4 38 L 76 38 L 76 16 Q 40 3 4 16 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 16 Q 40 3 4 16 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>',
-    'light-curve': '<path d="M 4 38 L 76 38 L 76 12 Q 40 6 4 12 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 12 Q 40 6 4 12 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>',
-    flat: '<path d="M 4 38 L 76 38 L 76 8 L 4 8 Z" fill="currentColor" opacity="0.15"/><path d="M 4 38 L 76 38 L 76 8 L 4 8 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>'
-  };
+  const curCurvature = typeof c.stageCurvature === 'number' ? c.stageCurvature : legacyShapeToCurvature(c.stageShape);
   // Build instrument rows
   const presetOptions = ['', ...c.iemPackPresets].map(p => `<option value="${esc(p)}">${esc(p || '— pick preset —')}</option>`).join('');
   const vocalistOptions = state.vocalists.map(v => `<option value="${esc(v.id)}">${esc(v.name || '(unnamed)')}</option>`).join('');
+  // Compute SVG path for the preview at the current curvature value
+  const curDepth = typeof c.stageDepth === 'number' ? c.stageDepth : DEFAULT_STAGE_DEPTH;
+  const previewSvg = buildStagePreviewSvg(curCurvature, curDepth);
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:18px;">Configure stage shape, vocal direction, instruments &amp; IEM packs, and display options.</p>
 
     <div class="section-label" style="margin-bottom:10px;">Stage Shape</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;">
-      ${['curved','light-curve','flat'].map(shape => `
-        <button class="shape-pick ${c.stageShape===shape?'active':''}" data-shape="${shape}">
-          <svg viewBox="0 0 80 42" style="width:100%;height:auto;color:var(--accent);">${SHAPE_PREVIEWS[shape]}</svg>
-          <span>${shape==='curved'?'Curved Front':shape==='light-curve'?'Lightly Curved':'Flat Front'}</span>
-        </button>
-      `).join('')}
+    <div class="curvature-row">
+      <div class="curvature-preview" id="layoutCurvaturePreview">${previewSvg}</div>
+      <div class="curvature-controls">
+        <div class="curvature-header">
+          <span class="curvature-label">Curve depth</span>
+          <span class="curvature-value" id="layoutCurvatureValue">${curCurvature}%</span>
+        </div>
+        <input type="range" min="0" max="100" step="1" value="${curCurvature}" id="layoutCurvatureSlider" class="curvature-slider" />
+        <div class="curvature-ticks"><span>Flat</span><span>Light</span><span>Curved</span><span>Deep</span></div>
+
+        <div class="curvature-header" style="margin-top:14px;">
+          <span class="curvature-label">Stage depth</span>
+          <span class="curvature-value" id="layoutDepthValue">${curDepth}%</span>
+        </div>
+        <input type="range" min="0" max="100" step="1" value="${curDepth}" id="layoutDepthSlider" class="curvature-slider" />
+        <div class="curvature-ticks"><span>Shallow</span><span></span><span></span><span>Deep</span></div>
+
+        <button class="btn ghost" id="layoutCurvatureReset" style="margin-top:10px;font-size:11px;">Reset shape to defaults</button>
+      </div>
     </div>
+    <div style="height:18px;"></div>
 
     <div class="section-label" style="margin-bottom:10px;">Vocal Arrangement</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Stage right and left are from the performer's perspective looking at the audience.</em></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 24px;">
       <button class="shape-pick ${c.vocalDirection==='rtl'?'active':''}" data-voc-dir="rtl">
         <div style="font-family:var(--ff-mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;">VOCAL 1 →</div>
-        <div style="font-family:var(--ff-display);font-size:13px;">Right-to-Left (SR → SL)</div>
-        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">VOCAL 1 on Stage Right</div>
+        <div style="font-family:var(--ff-display);font-size:13px;">Stage Right</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Standard layout</div>
       </button>
       <button class="shape-pick ${c.vocalDirection==='ltr'?'active':''}" data-voc-dir="ltr">
         <div style="font-family:var(--ff-mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;">VOCAL 1 →</div>
-        <div style="font-family:var(--ff-display);font-size:13px;">Left-to-Right (SL → SR)</div>
-        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">VOCAL 1 on Stage Left</div>
+        <div style="font-family:var(--ff-display);font-size:13px;">Stage Left</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Inverted layout</div>
       </button>
     </div>
 
@@ -1718,14 +2385,33 @@ function renderLayoutEditor() {
       ${c.voxIemPacks.slice(0, MAX_VOCALISTS).map((pack, i) => `
         <div class="iem-row">
           <span class="iem-lbl">Vocal ${i+1}</span>
-          <input type="text" class="field-input" data-vox-pack-idx="${i}" value="${esc(pack)}" placeholder="Vocal ${i+1} Pack" />
+          <input type="text" class="field-input" data-vox-pack-idx="${i}" value="${esc(pack)}" placeholder="Vocal ${i+1}" />
         </div>
       `).join('')}
     </div>
-    <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
-      <span class="iem-lbl">Shadows</span>
-      <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
+
+    <div class="section-label" style="margin-bottom:10px;">Shadows</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Shadow vocalists fill in extra harmonies without being on stage. They get an IEM pack but no mic. Off by default.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:${c.enableShadows ? '14' : '24'}px;">
+      <label class="cfg-toggle"><input type="checkbox" data-cfg-shadows ${c.enableShadows?'checked':''} /><span>Enable Shadow positions</span></label>
     </div>
+    ${c.enableShadows ? `
+      <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
+        <span class="iem-lbl">Shadow IEM Pack</span>
+        <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
+      </div>
+    ` : ''}
+
+    <div class="section-label" style="margin-bottom:10px;">Setup Items</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">The <strong>✓ Items</strong> page is your per-musician setup checklist for each service. These options affect how it behaves.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+      <label class="cfg-toggle"><input type="checkbox" data-cfg-blockdisplay ${c.blockDisplayUntilSetup?'checked':''} /><span>Warn before entering Display View if setup is incomplete</span></label>
+    </div>
+
+    <div class="section-label" style="margin-bottom:6px;">Stage Areas</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Group instruments into named areas (e.g. "Guitars" combining Electric Guitar 1 + 2). Vocalists are always their own area. Leave empty to keep each instrument separate.</p>
+    <div id="stageAreasEditor"></div>
+    <button class="add-row-btn" id="addStageAreaBtn" style="margin-bottom:18px;">+ Add custom area</button>
 
     <div class="section-label" style="margin-bottom:10px;">Display Options</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;">
@@ -1738,7 +2424,7 @@ function renderLayoutEditor() {
       ${[
         ['showStage','Stage diagram'],
         ['showVocalists','Vocalist cards'],
-        ['showShadows','Shadows list'],
+        ...(c.enableShadows ? [['showShadows','Shadows list']] : []),
         ['showBand','Band list (sidebar)'],
         ['showHosts','Handhelds list (sidebar)'],
         ['showServiceOrder','Service Order / Run Sheet']
@@ -1749,7 +2435,7 @@ function renderLayoutEditor() {
 
     <div class="section-label" style="margin-bottom:10px;">Service Order — What to Include</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Fine-tune what shows in the Service Order on both edit view and Display view.</p>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
       ${[
         ['songsOnly','Songs only (hide other items like welcome, sermon, offering)'],
         ['showDuration','Show item durations'],
@@ -1760,16 +2446,63 @@ function renderLayoutEditor() {
         <label class="cfg-toggle"><input type="checkbox" data-rs="${k}" ${c.display.runSheet[k]?'checked':''} /><span>${label}</span></label>
       `).join('')}
     </div>
+    <div style="margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted);">
+        <span style="min-width:90px;">Text size</span>
+        <input type="range" min="0.7" max="1.6" step="0.05" data-rs-textscale value="${c.display.runSheet.textScale || 1.0}" style="flex:1;accent-color:var(--accent);" />
+        <span id="rsTextScaleLabel" style="font-family:var(--ff-mono);font-size:11px;min-width:42px;text-align:right;">${Math.round((c.display.runSheet.textScale || 1.0) * 100)}%</span>
+      </label>
+      <p class="subtitle" style="margin:6px 0 0 102px;font-size:11px;">Scales the Service Order text on the display view only. Edit view stays normal size.</p>
+    </div>
   `;
 
-  // Stage shape buttons
-  el.querySelectorAll('[data-shape]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      c.stageShape = btn.dataset.shape;
-      saveState(); renderLayoutEditor(); renderStage();
+  // Curvature + Depth sliders (shared preview)
+  const curvSlider = el.querySelector('#layoutCurvatureSlider');
+  const curvValue = el.querySelector('#layoutCurvatureValue');
+  const depthSlider = el.querySelector('#layoutDepthSlider');
+  const depthValue = el.querySelector('#layoutDepthValue');
+  const curvPreview = el.querySelector('#layoutCurvaturePreview');
+  function refreshShapePreview() {
+    if (curvPreview) {
+      const cv = parseInt(curvSlider ? curvSlider.value : c.stageCurvature, 10) || 0;
+      const dv = parseInt(depthSlider ? depthSlider.value : c.stageDepth, 10);
+      const dvFinal = isNaN(dv) ? DEFAULT_STAGE_DEPTH : dv;
+      curvPreview.innerHTML = buildStagePreviewSvg(cv, dvFinal);
+    }
+  }
+  if (curvSlider) {
+    curvSlider.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      c.stageCurvature = v;
+      if (curvValue) curvValue.textContent = v + '%';
+      refreshShapePreview();
+      renderStage();
       if (state.viewMode === 'display') renderDisplayView();
     });
-  });
+    curvSlider.addEventListener('change', () => saveState());
+  }
+  if (depthSlider) {
+    depthSlider.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      c.stageDepth = v;
+      if (depthValue) depthValue.textContent = v + '%';
+      refreshShapePreview();
+      renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+    depthSlider.addEventListener('change', () => saveState());
+  }
+  const curvReset = el.querySelector('#layoutCurvatureReset');
+  if (curvReset) {
+    curvReset.addEventListener('click', () => {
+      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
+      c.stageDepth = DEFAULT_STAGE_DEPTH;
+      saveState();
+      renderLayoutEditor();
+      renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  }
   // Vocal direction
   el.querySelectorAll('[data-voc-dir]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1921,6 +2654,48 @@ function renderLayoutEditor() {
       saveState(); renderAll();
     });
   });
+  // Enable Shadows master toggle — also re-renders the layout editor to show/hide sub-rows
+  const shToggle = el.querySelector('[data-cfg-shadows]');
+  if (shToggle) {
+    shToggle.addEventListener('change', e => {
+      c.enableShadows = e.target.checked;
+      // If turning OFF and shadows exist, ask for confirmation since their data will stay but be hidden
+      if (!c.enableShadows && state.shadows.length > 0) {
+        // Don't delete — just hide. The data persists in case they re-enable.
+        toast('Shadow positions hidden — your existing shadows are still saved', 'success');
+      } else if (c.enableShadows) {
+        toast('Shadow positions enabled — use "+ Shadow" in the vocalist area to add', 'success');
+      }
+      saveState();
+      renderLayoutEditor();
+      renderAll();
+    });
+  }
+
+  // Block-display-until-setup-complete toggle
+  const blockToggle = el.querySelector('[data-cfg-blockdisplay]');
+  if (blockToggle) {
+    blockToggle.addEventListener('change', e => {
+      c.blockDisplayUntilSetup = e.target.checked;
+      saveState();
+    });
+  }
+
+  // Stage Areas editor
+  renderStageAreasEditor();
+  const addAreaBtn = el.querySelector('#addStageAreaBtn');
+  if (addAreaBtn) {
+    addAreaBtn.addEventListener('click', () => {
+      if (!Array.isArray(c.stageAreas)) c.stageAreas = [];
+      c.stageAreas.push({
+        id: 'sa_' + Math.random().toString(36).slice(2,9),
+        name: 'New Area',
+        instrumentIds: []
+      });
+      saveState();
+      renderStageAreasEditor();
+    });
+  }
 
   // Display toggles
   el.querySelectorAll('[data-display]').forEach(cb => {
@@ -1939,6 +2714,25 @@ function renderLayoutEditor() {
       if (state.viewMode === 'display') renderDisplayView();
     });
   });
+  // Text scale slider
+  const tsSlider = el.querySelector('[data-rs-textscale]');
+  if (tsSlider) {
+    const label = el.querySelector('#rsTextScaleLabel');
+    tsSlider.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      c.display.runSheet.textScale = v;
+      if (label) label.textContent = Math.round(v * 100) + '%';
+      saveState();
+      applyRunSheetScale();
+    });
+  }
+  applyRunSheetScale();
+}
+
+// Apply the text scale to the display-view run sheet via a CSS variable
+function applyRunSheetScale() {
+  const scale = (state.config.display && state.config.display.runSheet && state.config.display.runSheet.textScale) || 1.0;
+  document.documentElement.style.setProperty('--rs-scale', String(scale));
 }
 
 function renderBrandEditor() {
@@ -1980,10 +2774,8 @@ function renderBrandEditor() {
     </div>
     <div class="field-group">
       <label class="field-label">Display Font</label>
-      <select id="brandFont" class="field-input" style="cursor:pointer;">
-        ${FONT_OPTIONS.map(f => `<option value="${esc(f)}"${f===b.font?' selected':''}>${esc(f)}</option>`).join('')}
-      </select>
-      <div class="field-help">All these are loaded from Google Fonts when you save. Picks similar to typical church website typography.</div>
+      <div id="brandFontPicker"></div>
+      <div class="field-help">All these are loaded from Google Fonts. Each option is rendered in its own face — pick the one that feels right.</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:18px;">
       <button class="btn primary" id="brandSaveBtn">Apply Brand</button>
@@ -2021,10 +2813,11 @@ function renderBrandEditor() {
   syncColor(document.getElementById('brandAccent'),  document.getElementById('brandAccentHex'),  'accent');
   syncColor(document.getElementById('brandAccent2'), document.getElementById('brandAccent2Hex'), 'accent2');
   syncColor(document.getElementById('brandWl'),      document.getElementById('brandWlHex'),      'wl');
-  document.getElementById('brandFont').addEventListener('change', e => {
-    state.brand.font = e.target.value;
+  // Custom font picker (renders each font in its own face)
+  renderFontPicker(document.getElementById('brandFontPicker'), state.brand.font || 'Fraunces', (fontName) => {
+    state.brand.font = fontName;
     saveState(); applyBrand();
-    ensureFontLoaded(state.brand.font);
+    ensureFontLoaded(fontName);
   });
   document.getElementById('brandSaveBtn').addEventListener('click', () => {
     applyBrand();
@@ -2040,6 +2833,231 @@ function renderBrandEditor() {
   });
 }
 
+/* ===================== DATA EDITOR (export/import) ===================== */
+/* ===================== TEMPLATES EDITOR (Settings → Templates) ===================== */
+function renderTemplatesEditor() {
+  const el = document.getElementById('templatesEdit');
+  if (!el) return;
+  const templates = state.setupTemplates || [];
+
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:18px;">
+      Reusable setup item bundles. Apply any template to a musician in <strong>✓ Items</strong> to drop a stack of setup tasks into their card at once.
+      Templates remember which roles they're used for and surface as <em>Suggested</em> next time.
+    </p>
+
+    <div class="section-label" style="margin-bottom:10px;">Your templates ${templates.length > 0 ? `(${templates.length})` : ''}</div>
+
+    <div id="templatesList">
+      ${templates.length === 0 ? `
+        <div style="background:var(--bg-inset);border:1px dashed var(--border);border-radius:9px;padding:24px 18px;text-align:center;color:var(--text-muted);font-size:13px;">
+          No templates yet. Open <strong>✓ Items</strong>, add some setup items to a musician, then click <strong>Save…</strong> on their card to create your first template.
+        </div>
+      ` : templates.map((t, idx) => `
+        <div class="tpl-card" data-tpl-idx="${idx}">
+          <div class="tpl-card-header">
+            <input type="text" class="tpl-name-input" data-tpl-name="${idx}" value="${esc(t.name)}" />
+            <div class="tpl-card-meta">${t.items.length} item${t.items.length===1?'':'s'}${Object.keys(t.usage||{}).length > 0 ? ` · used for ${Object.entries(t.usage).map(([k,v]) => `${esc(k)} ${v}×`).join(', ')}` : ''}</div>
+            <button class="btn ghost tpl-remove-btn" data-tpl-rm="${idx}" title="Delete template">✕</button>
+          </div>
+          <ul class="tpl-items-list">
+            ${t.items.map((text, itemIdx) => `
+              <li class="tpl-item-row">
+                <span class="tpl-item-bullet">•</span>
+                <input type="text" class="tpl-item-input" data-tpl-item="${idx}:${itemIdx}" value="${esc(text)}" />
+                <button class="tpl-item-rm" data-tpl-item-rm="${idx}:${itemIdx}" title="Remove">✕</button>
+              </li>
+            `).join('')}
+          </ul>
+          <div class="tpl-add-row">
+            <input type="text" class="tpl-add-input" data-tpl-add="${idx}" placeholder="Add new item to this template..." />
+            <button class="si-add-btn" data-tpl-add-btn="${idx}">Add</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <button class="add-row-btn" id="tplCreateBtn" style="margin-top:14px;">+ Create blank template</button>
+  `;
+
+  // Wire interactions
+  el.querySelectorAll('[data-tpl-name]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.tplName, 10);
+      if (state.setupTemplates[idx]) {
+        state.setupTemplates[idx].name = e.target.value.trim() || 'Untitled template';
+        saveState();
+      }
+    });
+  });
+  el.querySelectorAll('[data-tpl-rm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.tplRm, 10);
+      const t = state.setupTemplates[idx];
+      if (!t) return;
+      if (!confirm(`Delete template "${t.name}"?`)) return;
+      state.setupTemplates.splice(idx, 1);
+      saveState();
+      renderTemplatesEditor();
+    });
+  });
+  el.querySelectorAll('[data-tpl-item]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const [tplIdx, itemIdx] = e.target.dataset.tplItem.split(':').map(Number);
+      if (state.setupTemplates[tplIdx]) {
+        state.setupTemplates[tplIdx].items[itemIdx] = e.target.value;
+        saveState();
+      }
+    });
+  });
+  el.querySelectorAll('[data-tpl-item-rm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const [tplIdx, itemIdx] = e.target.dataset.tplItemRm.split(':').map(Number);
+      if (state.setupTemplates[tplIdx]) {
+        state.setupTemplates[tplIdx].items.splice(itemIdx, 1);
+        saveState();
+        renderTemplatesEditor();
+      }
+    });
+  });
+  el.querySelectorAll('[data-tpl-add-btn]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.tplAddBtn, 10);
+      const inp = el.querySelector(`[data-tpl-add="${idx}"]`);
+      if (!inp) return;
+      const text = inp.value.trim();
+      if (!text) return;
+      state.setupTemplates[idx].items.push(text);
+      saveState();
+      renderTemplatesEditor();
+    });
+  });
+  el.querySelectorAll('[data-tpl-add]').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const idx = parseInt(e.target.dataset.tplAdd, 10);
+        const btn = el.querySelector(`[data-tpl-add-btn="${idx}"]`);
+        if (btn) btn.click();
+      }
+    });
+  });
+  const createBtn = el.querySelector('#tplCreateBtn');
+  if (createBtn) {
+    createBtn.addEventListener('click', () => {
+      if (!Array.isArray(state.setupTemplates)) state.setupTemplates = [];
+      state.setupTemplates.push({
+        id: 'tpl_' + Math.random().toString(36).slice(2,9),
+        name: 'Untitled template',
+        items: [],
+        usage: {}
+      });
+      saveState();
+      renderTemplatesEditor();
+    });
+  }
+}
+
+function renderDataEditor() {
+  const el = document.getElementById('dataEdit');
+  if (!el) return;
+  const sizeStr = (() => {
+    try {
+      const blob = new Blob([JSON.stringify(state)]);
+      const kb = blob.size / 1024;
+      return kb < 1 ? `${blob.size} bytes` : `${kb.toFixed(1)} KB`;
+    } catch(e) { return ''; }
+  })();
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:18px;">Export your full configuration to a JSON file (good for backups or moving to another browser). Import overwrites everything currently in this browser.</p>
+
+    <div class="section-label" style="margin-bottom:10px;">Export</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Saves a snapshot of everything in this browser: your team, instruments, mic inventory, preferences, brand, and PCO config. Current size: ${sizeStr}.</p>
+    <div style="display:flex;gap:8px;margin-bottom:24px;">
+      <button class="btn primary" id="exportJsonBtn">Download JSON</button>
+      <button class="btn ghost" id="copyJsonBtn">Copy to clipboard</button>
+    </div>
+
+    <div class="section-label" style="margin-bottom:10px;">Import</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Paste a previously-exported JSON below and click Import. <strong style="color:#a83838;">This will overwrite everything you have set up right now.</strong></p>
+    <textarea id="importJsonText" placeholder="Paste exported JSON here..." style="width:100%;min-height:160px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:11px;padding:10px 12px;border-radius:7px;resize:vertical;outline:none;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn primary" id="importJsonBtn">Import & overwrite</button>
+      <label class="btn ghost" style="cursor:pointer;">
+        Choose file…
+        <input type="file" id="importJsonFile" accept=".json,application/json" style="display:none;" />
+      </label>
+    </div>
+
+    <div class="section-label" style="margin-top:32px;margin-bottom:10px;">Re-run setup wizard</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Open the first-run wizard again. Note: applying wizard choices will overwrite your instruments, mics, and IEM pack count (but won't touch vocalists or service order).</p>
+    <button class="btn ghost" id="rerunWizardBtn">Open setup wizard</button>
+
+    <div class="section-label" style="margin-top:32px;margin-bottom:10px;color:#a83838;">Danger zone</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Wipe all stored data in this browser — vocalists, band, hosts, instruments, mic inventory, preferences, brand, everything. This cannot be undone. You'll be returned to a fresh state with the first-run wizard.</p>
+    <button class="btn ghost" id="wipeAllBtn" style="color:#a83838;border-color:#a83838;">Wipe everything</button>
+  `;
+
+  document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safe = (state.service.name || 'stageassign').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+    a.download = `${safe}-${state.service.date || 'export'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Downloaded ✓', 'success');
+  });
+  document.getElementById('copyJsonBtn').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
+      toast('Copied to clipboard ✓', 'success');
+    } catch(e) { toast('Copy failed','warn'); }
+  });
+  document.getElementById('importJsonBtn').addEventListener('click', () => {
+    const txt = document.getElementById('importJsonText').value.trim();
+    if (!txt) { toast('Paste JSON first', 'warn'); return; }
+    if (!confirm('Overwrite ALL current data with the imported JSON?')) return;
+    try {
+      const parsed = JSON.parse(txt);
+      if (!parsed || typeof parsed !== 'object') throw new Error('Not an object');
+      // Basic sanity check: must have at least a config and a service
+      if (!parsed.config && !parsed.service && !parsed.vocalists && !parsed.instruments) {
+        throw new Error('Doesn\'t look like a Stage·Assign export');
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      toast('Imported ✓ — reloading...', 'success');
+      setTimeout(() => location.reload(), 600);
+    } catch(e) { toast('Import failed: ' + e.message, 'warn'); }
+  });
+  document.getElementById('importJsonFile').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('importJsonText').value = ev.target.result;
+      toast('File loaded — click Import to apply', 'success');
+    };
+    reader.readAsText(f);
+  });
+  document.getElementById('rerunWizardBtn').addEventListener('click', () => {
+    closeSettings();
+    setTimeout(() => startWizard(), 200);
+  });
+  document.getElementById('wipeAllBtn').addEventListener('click', () => {
+    if (!confirm('This will erase EVERYTHING in this browser — your team, mics, brand, PCO connection. Continue?')) return;
+    if (!confirm('Are you absolutely sure? There is no undo.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PCO_TOKEN_KEY);
+    localStorage.removeItem('stageAssign.v3.pcoPKCE');
+    toast('Wiped — reloading...', 'success');
+    setTimeout(() => location.reload(), 600);
+  });
+}
+
 function ensureFontLoaded(fontName) {
   if (!fontName) return;
   const id = 'brand-font-' + fontName.replace(/\s+/g,'-');
@@ -2049,6 +3067,73 @@ function ensureFontLoaded(fontName) {
   link.rel = 'stylesheet';
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap`;
   document.head.appendChild(link);
+}
+
+// Master font list — used by both the wizard and Settings → Brand picker
+const ALL_FONTS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
+
+// Eagerly preload all font CSS so the picker shows them in their true face the first time it opens
+function preloadAllFonts() {
+  ALL_FONTS.forEach(f => ensureFontLoaded(f));
+}
+
+// Render a custom font picker into a container. Each option shown in its own face.
+// containerEl: a parent element (will be emptied and re-populated)
+// currentFont: the currently selected font name
+// onChange: callback(fontName) when a new font is picked
+function renderFontPicker(containerEl, currentFont, onChange) {
+  if (!containerEl) return;
+  preloadAllFonts();
+  containerEl.innerHTML = '';
+  containerEl.classList.add('font-picker');
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'font-picker-button';
+  button.style.fontFamily = `'${currentFont}', serif`;
+  button.innerHTML = `<span class="font-picker-current">${esc(currentFont)}</span><span class="font-picker-caret">▾</span>`;
+  containerEl.appendChild(button);
+
+  const menu = document.createElement('div');
+  menu.className = 'font-picker-menu';
+  ALL_FONTS.forEach(f => {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'font-picker-option' + (f === currentFont ? ' selected' : '');
+    opt.style.fontFamily = `'${f}', serif`;
+    opt.textContent = f;
+    opt.addEventListener('click', () => {
+      menu.classList.remove('open');
+      button.classList.remove('open');
+      if (f !== currentFont) {
+        onChange && onChange(f);
+        // Re-render picker so selection reflects
+        renderFontPicker(containerEl, f, onChange);
+      }
+    });
+    menu.appendChild(opt);
+  });
+  containerEl.appendChild(menu);
+
+  button.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = menu.classList.contains('open');
+    // Close any other open pickers
+    document.querySelectorAll('.font-picker-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.font-picker-button.open').forEach(b => b.classList.remove('open'));
+    if (!isOpen) {
+      menu.classList.add('open');
+      button.classList.add('open');
+    }
+  });
+  // Click outside closes the menu
+  if (!window._fontPickerClosed) {
+    window._fontPickerClosed = true;
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.font-picker-menu.open').forEach(m => m.classList.remove('open'));
+      document.querySelectorAll('.font-picker-button.open').forEach(b => b.classList.remove('open'));
+    });
+  }
 }
 function renderInvEditor() {
   const el = document.getElementById('invEdit');
@@ -2329,9 +3414,29 @@ async function pcoHandleRedirect() {
     toast('Connected to Planning Center ✓', 'success');
     showPCOBar();
     await pcoLoadServiceTypes();
+    // If we were mid-wizard before the redirect, resume on the next step
+    const resume = loadWizardForResume();
+    if (resume) {
+      clearWizardResume();
+      wizardData = resume.data;
+      // Advance past the PCO step (which was the one that triggered the redirect)
+      const pcoIdx = WIZARD_STEPS.indexOf('pco');
+      wizardStepIdx = Math.min(WIZARD_STEPS.length - 1, Math.max(resume.stepIdx, pcoIdx + 1));
+      document.getElementById('wizardOverlay').classList.add('show');
+      renderWizardStep();
+    }
   } catch (e) {
     toast(e.message, 'error');
     setPCOStatus('Auth failed','err');
+    // If wizard was in progress, restore it on the PCO step so the user can try again
+    const resume = loadWizardForResume();
+    if (resume) {
+      clearWizardResume();
+      wizardData = resume.data;
+      wizardStepIdx = WIZARD_STEPS.indexOf('pco');
+      document.getElementById('wizardOverlay').classList.add('show');
+      renderWizardStep();
+    }
   }
 }
 
@@ -2606,7 +3711,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     if ((a.status||'') === 'D') return;
     const cls = classifyPosition(a.team_position_name || '');
     if (cls.kind === 'band' && cls.position === 'ag' && a.name) {
-      acousticPlayers.add(normName(a.name));
+      acousticPlayers.add(normFullName(a.name));
     }
   });
   // Buckets we'll fill at the end (since order in PCO is arbitrary)
@@ -2625,7 +3730,9 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     console.log(`  "${positionName}" → ${name} → ${cls.kind}${cls.host?'/'+cls.host:''}${cls.position?'/'+cls.position:''}`);
     if (cls.kind === 'ignore') return;
     if (cls.kind === 'shadow') {
-      if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normName(s.name) === normName(name))) {
+      // If shadows are disabled in config, ignore these PCO assignments entirely
+      if (!state.config.enableShadows) return;
+      if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normFullName(s.name) === normFullName(name))) {
         state.shadows.push({
           id: 'sh_'+Math.random().toString(36).slice(2,8),
           name,
@@ -2635,8 +3742,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       return;
     }
     if (cls.kind === 'vocalist') {
-      if (state.vocalists.length >= MAX_VOCALISTS) return;
-      if (state.vocalists.some(v => normName(v.name) === normName(name))) return;
+      if (state.vocalists.some(v => normFullName(v.name) === normFullName(name))) return;
       const vid = uid();
       state.vocalists.push({
         id: vid, name,
@@ -2644,15 +3750,16 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
         isWL: cls.isWL && !state.vocalists.some(v => v.isWL),
         micAssigned: ''
       });
+      ensureVocalCapacity();
       // Mark acoustic instrument as covered by this vocalist if applicable
-      if (acousticPlayers.has(normName(name))) {
+      if (acousticPlayers.has(normFullName(name))) {
         const ag = instById('inst_ag');
         if (ag && !ag.vocalistPlayer) ag.vocalistPlayer = vid;
       }
     } else if (cls.kind === 'band') {
-      // Collect into the right bucket; dedupe by name
+      // Collect into the right bucket; dedupe by full name
       const bucket = bandBuckets[cls.position];
-      if (bucket && !bucket.some(n => normName(n) === normName(name))) bucket.push(name);
+      if (bucket && !bucket.some(n => normFullName(n) === normFullName(name))) bucket.push(name);
     } else if (cls.kind === 'md_flag') {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
@@ -2850,6 +3957,12 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       });
     });
   }
+
+  // Mark vocalists who lead songs in this service as leadsSongs
+  const leaderNames = new Set(getLeaderFrequencyOrder().map(n => normFullName(n)));
+  state.vocalists.forEach(v => {
+    if (leaderNames.has(normFullName(v.name))) v.leadsSongs = true;
+  });
 
   saveState();
   state.assignments = computePositions(state.vocalists);
@@ -3542,10 +4655,1454 @@ function renderAll() {
   renderStage();
   renderRunSheet();
   if (state.viewMode === 'display') renderDisplayView();
+  if (state.viewMode === 'setup-items') renderSetupItemsView();
+}
+
+/* ===================== SETUP ITEMS ===================== */
+// Key generation: 'fullname|instId' (e.g. "santiago lopez|inst_keys_1")
+// For vocalists: 'fullname|vocal'
+function setupKeyForBand(name, instId) {
+  return `${normFullName(name)}|${instId}`;
+}
+function setupKeyForVocal(name) {
+  return `${normFullName(name)}|vocal`;
+}
+function setupKeyForShadow(name) {
+  return `${normFullName(name)}|shadow`;
+}
+// Sibling key generator — for tag fallback (e.g. "santiago lopez|tag:keys")
+function setupTagKey(name, tag) {
+  return `${normFullName(name)}|tag:${(tag||'').toLowerCase()}`;
+}
+
+// Find existing items for this person+instrument; fall back to tag/sibling if not found.
+// Returns { items, fallbackFrom } — fallbackFrom is the key items came from if it wasn't the exact match
+function getSetupItemsForBand(name, inst) {
+  if (!name || !inst) return { items: [], fallbackFrom: null };
+  const exactKey = setupKeyForBand(name, inst.id);
+  if (state.setupItems[exactKey] && state.setupItems[exactKey].items && state.setupItems[exactKey].items.length) {
+    return { items: state.setupItems[exactKey].items, fallbackFrom: null };
+  }
+  // Try same-tag siblings
+  if (inst.tag) {
+    const siblings = state.instruments.filter(i => i.id !== inst.id && i.tag === inst.tag);
+    for (const sib of siblings) {
+      const sibKey = setupKeyForBand(name, sib.id);
+      if (state.setupItems[sibKey] && state.setupItems[sibKey].items && state.setupItems[sibKey].items.length) {
+        return { items: [], fallbackFrom: sibKey, fallbackInst: sib };
+      }
+    }
+  }
+  return { items: [], fallbackFrom: null };
+}
+function getSetupItemsForVocal(name) {
+  const k = setupKeyForVocal(name);
+  return (state.setupItems[k] && state.setupItems[k].items) || [];
+}
+function getSetupItemsForShadow(name) {
+  const k = setupKeyForShadow(name);
+  return (state.setupItems[k] && state.setupItems[k].items) || [];
+}
+
+// Ensure bucket exists for a key
+function ensureSetupBucket(key) {
+  if (!state.setupItems[key]) state.setupItems[key] = { items: [] };
+  return state.setupItems[key];
+}
+
+// Item shape:
+//   { id, text, doneThisService, scopeOneTime (bool, default false) }
+// doneLastService is tracked via setupServiceMeta.lastCompletionByKey
+function newSetupItem(text, scopeOneTime) {
+  return {
+    id: 'si_' + Math.random().toString(36).slice(2, 9),
+    text: text || '',
+    doneThisService: false,
+    scopeOneTime: !!scopeOneTime
+  };
+}
+
+// Detect service-date change. Called every time we render setup items.
+// On new date: snapshot last service's completion → lastCompletionByKey,
+// reset doneThisService on all items, drop one-time items.
+function maybeRollOverToNewService() {
+  const today = state.service.date;
+  const lastDate = state.setupServiceMeta.lastServiceDate;
+  if (!today) return;
+  if (today === lastDate) return; // no change
+  // Snapshot the now-current (about-to-be-previous) completion
+  const completionSnapshot = {};
+  Object.entries(state.setupItems).forEach(([key, bucket]) => {
+    bucket.items.forEach(it => {
+      if (it.doneThisService) {
+        if (!completionSnapshot[key]) completionSnapshot[key] = {};
+        completionSnapshot[key][it.id] = true;
+      }
+    });
+    // Drop one-time items
+    bucket.items = bucket.items.filter(it => !it.scopeOneTime);
+    // Reset doneThisService
+    bucket.items.forEach(it => { it.doneThisService = false; });
+  });
+  state.setupServiceMeta = {
+    lastServiceDate: today,
+    lastCompletionByKey: completionSnapshot
+  };
+  saveState();
+}
+
+// Was this exact item done in the previous service (carry-over indicator)?
+function itemDoneLastService(key, itemId) {
+  const last = state.setupServiceMeta.lastCompletionByKey || {};
+  return !!(last[key] && last[key][itemId]);
+}
+
+// Compute completion stats for a key
+function setupCompletionStats(key) {
+  const bucket = state.setupItems[key];
+  if (!bucket || !bucket.items.length) return { total: 0, done: 0, status: 'empty' };
+  const total = bucket.items.length;
+  const done = bucket.items.filter(it => it.doneThisService).length;
+  let status = 'red';
+  if (done === total) status = 'green';
+  else if (done > 0) status = 'yellow';
+  return { total, done, status };
+}
+
+// Get the stage area structure for the current configuration.
+// Returns array of areas: [{ id, name, people: [{name, key, isVocalist, isShadow, inst?}], stats }]
+function getStageAreas() {
+  const areas = [];
+
+  // Always: Vocalists area at the top
+  const vocPeople = state.vocalists
+    .filter(v => v.name && v.name.trim())
+    .map(v => ({
+      name: v.name.trim(),
+      key: setupKeyForVocal(v.name.trim()),
+      role: 'vocalist',
+      isWL: v.isWL
+    }));
+  if (vocPeople.length > 0) {
+    areas.push({
+      id: 'area_vocals',
+      name: 'Vocalists',
+      icon: '🎤',
+      people: vocPeople
+    });
+  }
+
+  // Shadows area (if enabled and any exist)
+  if (state.config.enableShadows && state.shadows && state.shadows.length > 0) {
+    const shadowPeople = state.shadows
+      .filter(s => s.name && s.name.trim())
+      .map(s => ({
+        name: s.name.trim(),
+        key: setupKeyForShadow(s.name.trim()),
+        role: 'shadow'
+      }));
+    if (shadowPeople.length > 0) {
+      areas.push({
+        id: 'area_shadows',
+        name: 'Shadows',
+        icon: '👤',
+        people: shadowPeople
+      });
+    }
+  }
+
+  // Custom areas defined in config (instruments grouped into named areas)
+  const customAreas = (state.config.stageAreas || []).filter(a => a && a.name && Array.isArray(a.instrumentIds));
+  const usedInstIds = new Set();
+  customAreas.forEach(ca => {
+    const people = [];
+    ca.instrumentIds.forEach(instId => {
+      usedInstIds.add(instId);
+      const inst = instById(instId);
+      if (!inst) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      // Skip if this is a vocalist-played instrument (they're already in the Vocalists area)
+      if (inst.vocalistPlayer) return;
+      people.push({
+        name,
+        key: setupKeyForBand(name, inst.id),
+        role: 'band',
+        inst,
+        instLabel: inst.label
+      });
+    });
+    if (people.length > 0) {
+      areas.push({
+        id: 'area_custom_' + ca.id,
+        name: ca.name,
+        icon: '🎸',
+        people
+      });
+    }
+  });
+
+  // Remaining instruments — each is its own area
+  state.instruments.forEach(inst => {
+    if (usedInstIds.has(inst.id)) return;
+    const name = (inst.assignedTo || '').trim();
+    if (!name) return;
+    if (inst.vocalistPlayer) return; // already covered by vocalist
+    areas.push({
+      id: 'area_inst_' + inst.id,
+      name: inst.label,
+      icon: '🎸',
+      people: [{
+        name,
+        key: setupKeyForBand(name, inst.id),
+        role: 'band',
+        inst,
+        instLabel: inst.label
+      }]
+    });
+  });
+
+  // Compute total stats per area
+  areas.forEach(area => {
+    let total = 0, done = 0;
+    area.people.forEach(p => {
+      const s = setupCompletionStats(p.key);
+      total += s.total;
+      done += s.done;
+    });
+    let status = 'red';
+    if (total === 0) status = 'empty';
+    else if (done === total) status = 'green';
+    else if (done > 0) status = 'yellow';
+    area.stats = { total, done, status };
+  });
+
+  return areas;
+}
+
+// Overall completion across ALL areas + people
+function setupOverallStats() {
+  let total = 0, done = 0;
+  Object.values(state.setupItems).forEach(bucket => {
+    bucket.items.forEach(it => {
+      total++;
+      if (it.doneThisService) done++;
+    });
+  });
+  return { total, done, complete: total > 0 && done === total };
+}
+
+// ===== Setup Items: Render + interactions =====
+
+function renderSetupItemsView() {
+  maybeRollOverToNewService();
+
+  const titleEl = document.getElementById('si_title');
+  const summaryValEl = document.getElementById('si_summary_value');
+  const progressFillEl = document.getElementById('si_progress_fill');
+  const content = document.getElementById('si_content');
+
+  if (!content) return;
+
+  const dateStr = state.service.date ? new Date(state.service.date+'T00:00').toLocaleDateString(undefined, {weekday:'short',month:'short',day:'numeric'}) : '';
+  titleEl.textContent = (state.service.name || 'Service') + (dateStr ? ` · ${dateStr}` : '');
+
+  const overall = setupOverallStats();
+  summaryValEl.textContent = `${overall.done}/${overall.total}`;
+  summaryValEl.classList.toggle('complete', overall.complete);
+  const pct = overall.total === 0 ? 0 : (overall.done / overall.total) * 100;
+  progressFillEl.style.width = pct + '%';
+  progressFillEl.classList.toggle('complete', overall.complete);
+
+  const areas = getStageAreas();
+
+  if (areas.length === 0) {
+    content.innerHTML = `
+      <div class="si-empty">
+        <div class="si-empty-icon">✓</div>
+        <div class="si-empty-title">No musicians yet</div>
+        <div class="si-empty-sub">Add vocalists, band members, or pull a service from Planning Center to start building your setup checklist.</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = areas.map(area => renderAreaCard(area)).join('');
+  wireSetupItemsContent();
+}
+
+function renderAreaCard(area) {
+  return `
+    <div class="si-area" data-area-id="${esc(area.id)}">
+      <div class="si-area-header">
+        <span class="si-area-icon">${area.icon || '🎶'}</span>
+        <span class="si-area-name">${esc(area.name)}</span>
+        ${area.stats.total > 0
+          ? `<span class="si-area-stats ${area.stats.status}">${area.stats.done}/${area.stats.total}</span>`
+          : `<span class="si-area-stats">empty</span>`
+        }
+      </div>
+      <div class="si-people">
+        ${area.people.map(p => renderPersonCard(p)).join('')}
+      </div>
+    </div>`;
+}
+
+function renderPersonCard(p) {
+  const bucket = ensureSetupBucket(p.key);
+  const stats = setupCompletionStats(p.key);
+  const items = bucket.items;
+  const status = stats.status === 'empty' ? 'empty' : stats.status;
+
+  // Detect sibling fallback (only for band roles, when there are no items here)
+  let fallbackBlock = '';
+  if (p.role === 'band' && p.inst && items.length === 0) {
+    const fb = getSetupItemsForBand(p.name, p.inst);
+    if (fb.fallbackFrom) {
+      fallbackBlock = `
+        <div class="si-fallback" data-fallback-key="${esc(p.key)}" data-fallback-source="${esc(fb.fallbackFrom)}">
+          <div class="si-fallback-text">
+            <strong>${esc(p.name)}</strong> has setup items saved for <strong>${esc(fb.fallbackInst.label)}</strong>. Want to copy them here?
+          </div>
+          <button class="si-fallback-btn" data-action="copy-fallback">Copy items</button>
+          <button class="si-fallback-dismiss" data-action="dismiss-fallback" title="Dismiss">✕</button>
+        </div>`;
+    }
+  }
+
+  // Roles label
+  let roleLabel = '';
+  if (p.role === 'band' && p.instLabel) roleLabel = p.instLabel;
+  else if (p.role === 'vocalist') roleLabel = 'VOCAL';
+  else if (p.role === 'shadow') roleLabel = 'SHADOW';
+
+  return `
+    <div class="si-person status-${status}" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-person-role="${esc(p.role||'')}" ${p.inst ? `data-person-inst-id="${esc(p.inst.id)}"` : ''} ${p.inst && p.inst.tag ? `data-person-inst-tag="${esc(p.inst.tag)}"` : ''}>
+      <div class="si-person-header">
+        <span class="si-person-name">${p.isWL ? '<span class="wl-star">★</span>' : ''}${esc(p.name)}</span>
+        ${roleLabel ? `<span class="si-person-role">${esc(roleLabel)}</span>` : ''}
+        ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
+        <div class="si-actions">
+          <button class="si-action-btn" data-action="apply-template" data-person-key="${esc(p.key)}" title="Apply template">+ Template</button>
+          ${items.length > 0 ? `<button class="si-action-btn" data-action="save-template" data-person-key="${esc(p.key)}" title="Save these items as a reusable template">Save…</button>` : ''}
+        </div>
+      </div>
+      ${fallbackBlock}
+      <div class="si-items">
+        ${items.map(it => renderItemRow(p.key, it)).join('')}
+      </div>
+      <div class="si-add-row">
+        <input type="text" class="si-add-input" placeholder="Add a setup item…" data-add-input="${esc(p.key)}" />
+        <label class="si-add-onetime" title="If checked, this item is only for today's service and won't be saved as a recurring need.">
+          <input type="checkbox" data-add-onetime="${esc(p.key)}" />
+          <span>One-time</span>
+        </label>
+        <button class="si-add-btn" data-action="add-item" data-person-key="${esc(p.key)}">Add</button>
+      </div>
+    </div>`;
+}
+
+function renderItemRow(personKey, item) {
+  const doneLast = itemDoneLastService(personKey, item.id);
+  return `
+    <div class="si-item ${item.doneThisService ? 'done' : ''}" data-item-id="${esc(item.id)}" data-person-key="${esc(personKey)}">
+      <input type="checkbox" class="si-item-checkbox" ${item.doneThisService ? 'checked' : ''} data-action="toggle-item" />
+      <span class="si-item-text" data-action="edit-item">${esc(item.text)}</span>
+      <div class="si-item-flags">
+        ${item.scopeOneTime ? `<span class="si-item-flag one-time" title="Only for this service — won't be saved for future services">1×</span>` : ''}
+        ${doneLast ? `<span class="si-item-flag last-done" title="This item was completed in the previous service. Re-verify, but it may already be done.">✓ last</span>` : ''}
+      </div>
+      <button class="si-item-remove" data-action="remove-item" title="Remove item">✕</button>
+    </div>`;
+}
+
+// Wire all the interactions for the rendered content
+function wireSetupItemsContent() {
+  const root = document.getElementById('si_content');
+  if (!root) return;
+
+  // Toggle item completion
+  root.querySelectorAll('[data-action="toggle-item"]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const row = e.target.closest('.si-item');
+      if (!row) return;
+      const personKey = row.dataset.personKey;
+      const itemId = row.dataset.itemId;
+      const bucket = state.setupItems[personKey];
+      if (!bucket) return;
+      const item = bucket.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.doneThisService = e.target.checked;
+      saveState();
+      // Light update — just refresh classes/counts instead of full re-render to preserve scroll
+      refreshSetupItemsUI();
+    });
+  });
+
+  // Inline edit on click of text
+  root.querySelectorAll('[data-action="edit-item"]').forEach(el => {
+    el.addEventListener('click', e => {
+      const row = e.target.closest('.si-item');
+      if (!row) return;
+      const personKey = row.dataset.personKey;
+      const itemId = row.dataset.itemId;
+      const bucket = state.setupItems[personKey];
+      if (!bucket) return;
+      const item = bucket.items.find(i => i.id === itemId);
+      if (!item) return;
+      const newText = prompt('Edit setup item:', item.text);
+      if (newText !== null && newText.trim() !== item.text) {
+        item.text = newText.trim();
+        saveState();
+        renderSetupItemsView();
+      }
+    });
+  });
+
+  // Remove item
+  root.querySelectorAll('[data-action="remove-item"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const row = e.target.closest('.si-item');
+      if (!row) return;
+      const personKey = row.dataset.personKey;
+      const itemId = row.dataset.itemId;
+      const bucket = state.setupItems[personKey];
+      if (!bucket) return;
+      bucket.items = bucket.items.filter(i => i.id !== itemId);
+      saveState();
+      renderSetupItemsView();
+    });
+  });
+
+  // Add a new item
+  root.querySelectorAll('[data-action="add-item"]').forEach(btn => {
+    btn.addEventListener('click', () => addItemForPerson(btn.dataset.personKey));
+  });
+  root.querySelectorAll('[data-add-input]').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItemForPerson(inp.dataset.addInput);
+    });
+  });
+
+  // Copy items from sibling fallback
+  root.querySelectorAll('[data-action="copy-fallback"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const wrap = e.target.closest('.si-fallback');
+      if (!wrap) return;
+      const targetKey = wrap.dataset.fallbackKey;
+      const sourceKey = wrap.dataset.fallbackSource;
+      const source = state.setupItems[sourceKey];
+      if (!source || !source.items) return;
+      const target = ensureSetupBucket(targetKey);
+      // Copy items — give them new ids; reset doneThisService
+      source.items.forEach(it => {
+        target.items.push({
+          id: 'si_' + Math.random().toString(36).slice(2,9),
+          text: it.text,
+          doneThisService: false,
+          scopeOneTime: !!it.scopeOneTime
+        });
+      });
+      saveState();
+      toast(`Copied ${source.items.length} item${source.items.length===1?'':'s'} ✓`, 'success');
+      renderSetupItemsView();
+    });
+  });
+  root.querySelectorAll('[data-action="dismiss-fallback"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const wrap = e.target.closest('.si-fallback');
+      if (wrap) wrap.remove();
+    });
+  });
+
+  // Apply template menu
+  root.querySelectorAll('[data-action="apply-template"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openTemplateMenu(btn, 'apply');
+    });
+  });
+
+  // Save as template
+  root.querySelectorAll('[data-action="save-template"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openTemplateMenu(btn, 'save');
+    });
+  });
+}
+
+function addItemForPerson(personKey) {
+  const input = document.querySelector(`[data-add-input="${cssEscape(personKey)}"]`);
+  const onetimeCb = document.querySelector(`[data-add-onetime="${cssEscape(personKey)}"]`);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const isOneTime = !!(onetimeCb && onetimeCb.checked);
+  const bucket = ensureSetupBucket(personKey);
+  bucket.items.push(newSetupItem(text, isOneTime));
+  saveState();
+  renderSetupItemsView();
+}
+
+// CSS-attribute selector escape helper for keys with special chars
+function cssEscape(s) {
+  return (s+'').replace(/(["'\\\\\[\]])/g, '\\$1');
+}
+
+// Light-touch UI refresh — updates counts, statuses, progress bar without full re-render
+function refreshSetupItemsUI() {
+  const root = document.getElementById('si_content');
+  if (!root) return;
+
+  // Update per-person card statuses
+  root.querySelectorAll('.si-person').forEach(card => {
+    const key = card.dataset.personKey;
+    const stats = setupCompletionStats(key);
+    const status = stats.status === 'empty' ? 'empty' : stats.status;
+    card.classList.remove('status-red','status-yellow','status-green','status-empty');
+    card.classList.add('status-' + status);
+    const countEl = card.querySelector('.si-person-count');
+    if (countEl) {
+      countEl.textContent = `${stats.done}/${stats.total}`;
+      countEl.className = 'si-person-count ' + stats.status;
+    }
+    // Update item rows
+    card.querySelectorAll('.si-item').forEach(row => {
+      const itemId = row.dataset.itemId;
+      const bucket = state.setupItems[key];
+      if (!bucket) return;
+      const item = bucket.items.find(i => i.id === itemId);
+      if (!item) return;
+      row.classList.toggle('done', item.doneThisService);
+    });
+  });
+  // Update area stats
+  root.querySelectorAll('.si-area').forEach(areaEl => {
+    const id = areaEl.dataset.areaId;
+    // Find this area's people in current data
+    const allAreas = getStageAreas();
+    const a = allAreas.find(x => x.id === id);
+    const statsEl = areaEl.querySelector('.si-area-stats');
+    if (a && statsEl) {
+      if (a.stats.total > 0) {
+        statsEl.textContent = `${a.stats.done}/${a.stats.total}`;
+        statsEl.className = 'si-area-stats ' + a.stats.status;
+      } else {
+        statsEl.textContent = 'empty';
+        statsEl.className = 'si-area-stats';
+      }
+    }
+  });
+  // Update header summary
+  const overall = setupOverallStats();
+  const summaryValEl = document.getElementById('si_summary_value');
+  const progressFillEl = document.getElementById('si_progress_fill');
+  if (summaryValEl) {
+    summaryValEl.textContent = `${overall.done}/${overall.total}`;
+    summaryValEl.classList.toggle('complete', overall.complete);
+  }
+  if (progressFillEl) {
+    const pct = overall.total === 0 ? 0 : (overall.done / overall.total) * 100;
+    progressFillEl.style.width = pct + '%';
+    progressFillEl.classList.toggle('complete', overall.complete);
+  }
+}
+
+// ===== Templates =====
+
+function openTemplateMenu(anchorBtn, mode) {
+  // Close any existing menus
+  document.querySelectorAll('.si-template-menu').forEach(m => m.remove());
+
+  const personKey = anchorBtn.dataset.personKey;
+  const personCard = anchorBtn.closest('.si-person');
+  if (!personCard) return;
+  const instTag = personCard.dataset.personInstTag || '';
+  const personRole = personCard.dataset.personRole || '';
+
+  const menu = document.createElement('div');
+  menu.className = 'si-template-menu';
+
+  if (mode === 'apply') {
+    // Show available templates, sorted with smart suggestions first
+    let templates = [...(state.setupTemplates || [])];
+    if (templates.length === 0) {
+      menu.innerHTML = `
+        <div class="si-template-menu-header">Apply template</div>
+        <div class="si-template-empty">No templates yet. Build items here, then click "Save…" to create your first template.</div>`;
+    } else {
+      // Sort: templates that have been applied to this tag/role most often come first
+      const matchTag = instTag.toLowerCase();
+      templates.sort((a, b) => {
+        const aMatches = (a.usage && (a.usage[matchTag] || a.usage[personRole])) || 0;
+        const bMatches = (b.usage && (b.usage[matchTag] || b.usage[personRole])) || 0;
+        if (aMatches !== bMatches) return bMatches - aMatches;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      const topMatchCount = templates[0] && templates[0].usage
+        ? (templates[0].usage[matchTag] || templates[0].usage[personRole] || 0)
+        : 0;
+      menu.innerHTML = `
+        <div class="si-template-menu-header">Apply template</div>
+        ${templates.map(t => {
+          const usageHere = (t.usage && (t.usage[matchTag] || t.usage[personRole])) || 0;
+          const isSuggested = usageHere > 0 && usageHere === topMatchCount;
+          return `
+            <div class="si-template-option" data-template-id="${esc(t.id)}">
+              <div class="si-template-option-info">
+                <div class="si-template-option-name">${esc(t.name)}</div>
+                <div class="si-template-option-meta">${t.items.length} item${t.items.length===1?'':'s'}${usageHere > 0 ? ` · used ${usageHere}× for ${esc(matchTag || personRole)}` : ''}</div>
+              </div>
+              ${isSuggested ? '<span class="si-template-option-suggested">Suggested</span>' : ''}
+            </div>
+          `;
+        }).join('')}`;
+    }
+    document.body.appendChild(menu);
+    positionMenu(menu, anchorBtn);
+    menu.querySelectorAll('[data-template-id]').forEach(opt => {
+      opt.addEventListener('click', () => {
+        applyTemplateToPerson(opt.dataset.templateId, personKey, instTag || personRole);
+        menu.remove();
+      });
+    });
+  } else if (mode === 'save') {
+    // Save current items as template
+    const bucket = state.setupItems[personKey];
+    if (!bucket || !bucket.items.length) {
+      menu.innerHTML = `
+        <div class="si-template-menu-header">Save as template</div>
+        <div class="si-template-empty">Add some items first, then you can save them as a template.</div>`;
+      document.body.appendChild(menu);
+      positionMenu(menu, anchorBtn);
+    } else {
+      const defaultName = personCard.dataset.personName ? `${personCard.dataset.personName} default` : 'Untitled template';
+      menu.innerHTML = `
+        <div class="si-template-menu-header">Save ${bucket.items.length} item${bucket.items.length===1?'':'s'} as template</div>
+        <div class="si-template-save-form">
+          <input type="text" id="si_template_name_input" placeholder="Template name" value="${esc(defaultName)}" />
+          <button class="si-add-btn" id="si_template_save_btn">Save template</button>
+        </div>`;
+      document.body.appendChild(menu);
+      positionMenu(menu, anchorBtn);
+      const nameInput = menu.querySelector('#si_template_name_input');
+      nameInput.focus();
+      nameInput.select();
+      const submit = () => {
+        const name = nameInput.value.trim();
+        if (!name) return;
+        saveCurrentItemsAsTemplate(personKey, name, instTag || personRole);
+        menu.remove();
+      };
+      menu.querySelector('#si_template_save_btn').addEventListener('click', submit);
+      nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+    }
+  }
+
+  // Click-outside closes
+  setTimeout(() => {
+    const onDoc = (ev) => {
+      if (!menu.contains(ev.target)) {
+        menu.remove();
+        document.removeEventListener('click', onDoc);
+      }
+    };
+    document.addEventListener('click', onDoc);
+  }, 50);
+}
+
+function positionMenu(menu, anchorBtn) {
+  const r = anchorBtn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  // Position below the button, right-aligned to it
+  const menuWidth = 280;
+  let left = r.right - menuWidth;
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  menu.style.left = left + 'px';
+  menu.style.top = (r.bottom + 6) + 'px';
+  menu.style.minWidth = menuWidth + 'px';
+}
+
+function applyTemplateToPerson(templateId, personKey, contextTag) {
+  const tpl = (state.setupTemplates || []).find(t => t.id === templateId);
+  if (!tpl) return;
+  const bucket = ensureSetupBucket(personKey);
+  tpl.items.forEach(text => {
+    bucket.items.push(newSetupItem(text, false));
+  });
+  // Bump usage stats
+  if (!tpl.usage) tpl.usage = {};
+  const k = (contextTag || '').toLowerCase();
+  if (k) tpl.usage[k] = (tpl.usage[k] || 0) + 1;
+  saveState();
+  toast(`Applied template "${tpl.name}" ✓`, 'success');
+  renderSetupItemsView();
+}
+
+function saveCurrentItemsAsTemplate(personKey, name, contextTag) {
+  const bucket = state.setupItems[personKey];
+  if (!bucket || !bucket.items.length) return;
+  const tpl = {
+    id: 'tpl_' + Math.random().toString(36).slice(2,9),
+    name: name,
+    items: bucket.items.map(it => it.text),
+    usage: {}
+  };
+  const k = (contextTag || '').toLowerCase();
+  if (k) tpl.usage[k] = 1;
+  if (!Array.isArray(state.setupTemplates)) state.setupTemplates = [];
+  state.setupTemplates.push(tpl);
+  saveState();
+  toast(`Saved "${name}" as template ✓`, 'success');
+}
+
+// ===== View mode switching =====
+
+function enterSetupItemsView() {
+  state.viewMode = 'setup-items';
+  saveState();
+  document.body.classList.add('setup-items-mode');
+  document.body.classList.remove('display-mode');
+  renderSetupItemsView();
+}
+
+function exitSetupItemsView() {
+  state.viewMode = 'setup';
+  saveState();
+  document.body.classList.remove('setup-items-mode');
+  renderAll();
+}
+
+/* ===================== FIRST-RUN WIZARD ===================== */
+const WIZARD_STEPS = ['identity', 'pco', 'vocalists', 'shadows', 'instruments', 'mics', 'iems', 'stage', 'look'];
+let wizardData = null;
+let wizardStepIdx = 0;
+let wizardBrandSnapshot = null;
+
+// Default instrument templates available in the wizard chips
+const WIZ_INSTRUMENT_TEMPLATES = [
+  { key:'drums',    label:'Drums',           tag:'Drums',  pack:'Drum Pack',     placeholder:'Drummer' },
+  { key:'bass',     label:'Bass',            tag:'Bass',   pack:'Bass Pack',     placeholder:'Bass' },
+  { key:'eg',       label:'Electric Guitar', tag:'EG',     pack:'EG Pack',       placeholder:'EG' },
+  { key:'ag',       label:'Acoustic Guitar', tag:'AG',     pack:'Acoustic Pack', placeholder:'AG' },
+  { key:'keys',     label:'Keys',            tag:'Keys',   pack:'Keys Pack',     placeholder:'Keys' },
+  { key:'synth',    label:'Synth',           tag:'Synth',  pack:'Misc 1 Pack',   placeholder:'Synth' },
+  { key:'strings',  label:'Strings',         tag:'Strings',pack:'Misc 1 Pack',   placeholder:'Strings' },
+  { key:'brass',    label:'Brass',           tag:'Brass',  pack:'Misc 1 Pack',   placeholder:'Brass' },
+  { key:'perc',     label:'Percussion',      tag:'Perc',   pack:'Misc 1 Pack',   placeholder:'Perc' }
+];
+
+function startWizard() {
+  wizardStepIdx = 0;
+  // Snapshot brand BEFORE we let the wizard preview live changes — used to restore on Skip
+  wizardBrandSnapshot = structuredClone(state.brand);
+  wizardData = {
+    churchName: '',
+    vocalistCount: 5,
+    instruments: [
+      { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='drums'), count:1, selected:true },
+      { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='bass'),  count:1, selected:true },
+      { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='eg'),    count:1, selected:true },
+      { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='ag'),    count:1, selected:true },
+      { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='keys'),  count:1, selected:true }
+    ],
+    customInstrumentDraft: '',
+    // mics: blank rows. Placeholders rotate through common mic models.
+    mics: [
+      { name:'', total:0 },
+      { name:'', total:0 },
+      { name:'', total:0 }
+    ],
+    iemAssignments: null,
+    // PCO step: store client id/secret in wizardData; only commit to state on Connect or wizard finish
+    pco: {
+      clientId: state.pcoConfig.clientId || '',
+      clientSecret: state.pcoConfig.clientSecret || ''
+    },
+    // Shadow opt-in (own step)
+    enableShadows: false,
+    shadowCount: 0,
+    // Stage layout (separate step)
+    stageShape: 'curved', // legacy; not used after slider migration
+    stageCurvature: DEFAULT_STAGE_CURVATURE,
+    stageDepth: DEFAULT_STAGE_DEPTH,
+    vocalDirection: 'rtl', // 'rtl' (SR→SL) or 'ltr' (SL→SR)
+    // Branding (final step)
+    accentPreset: 'gold',  // 'gold' | 'blue' | 'green' | 'mono' | 'custom'
+    accentColor: '#d4a147',
+    fontFamily: 'Fraunces'
+  };
+  document.getElementById('wizardOverlay').classList.add('show');
+  renderWizardStep();
+}
+
+// Persistence for resume-after-PCO-redirect
+const WIZARD_RESUME_KEY = 'stageAssign.v3.wizardResume';
+function saveWizardForResume() {
+  try {
+    localStorage.setItem(WIZARD_RESUME_KEY, JSON.stringify({
+      stepIdx: wizardStepIdx,
+      data: wizardData
+    }));
+  } catch(e) {}
+}
+function loadWizardForResume() {
+  try {
+    const raw = localStorage.getItem(WIZARD_RESUME_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+function clearWizardResume() {
+  try { localStorage.removeItem(WIZARD_RESUME_KEY); } catch(e) {}
+}
+
+// (no-op — kept for backward compat; suggested SM58 sync no longer needed)
+function syncSm58ToVocalistCount() {}
+function exitWizard(applyChanges) {
+  if (applyChanges && wizardData) {
+    applyWizardChoices();
+  } else if (wizardBrandSnapshot) {
+    // User skipped — restore the brand to what it was before the wizard previewed changes
+    state.brand = structuredClone(wizardBrandSnapshot);
+    applyBrand();
+  }
+  wizardBrandSnapshot = null;
+  document.getElementById('wizardOverlay').classList.remove('show');
+  delete state._firstRun;
+  clearWizardResume();
+  saveState();
+  renderAll();
+}
+function renderWizardStep() {
+  const stepsEl = document.getElementById('wizardSteps');
+  stepsEl.innerHTML = WIZARD_STEPS.map((_, i) => {
+    let cls = 'wizard-step';
+    if (i < wizardStepIdx) cls += ' done';
+    else if (i === wizardStepIdx) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  const body = document.getElementById('wizardBody');
+  const step = WIZARD_STEPS[wizardStepIdx];
+  body.innerHTML = renderWizardStepBody(step);
+  wireWizardStep(step);
+  document.getElementById('wizardBackBtn').style.display = wizardStepIdx > 0 ? '' : 'none';
+  const isLast = wizardStepIdx === WIZARD_STEPS.length - 1;
+  document.getElementById('wizardNextBtn').textContent = isLast ? 'Finish ✓' : 'Next →';
+}
+// Build the list of instrument "slots" with auto-numbered labels (e.g. count=2 of Keys → "Keys 1", "Keys 2")
+function expandedInstrumentSlots() {
+  const out = [];
+  wizardData.instruments.forEach(inst => {
+    if (!inst.selected) return;
+    const cnt = Math.max(1, inst.count || 1);
+    if (cnt === 1) {
+      out.push({ ...inst, label: inst.label, optional: !!inst.optional });
+    } else {
+      for (let i = 1; i <= cnt; i++) {
+        out.push({ ...inst, label: `${inst.label} ${i}`, slotIdx: i, optional: i > 1 });
+      }
+    }
+  });
+  return out;
+}
+function renderWizardStepBody(step) {
+  switch (step) {
+    case 'identity':
+      return `
+        <div>
+          <div class="wiz-q-title">What's your church called?</div>
+          <div class="wiz-q-help">Used only for your app's header. Leave blank if you'd prefer to keep it generic.</div>
+          <div class="wiz-field">
+            <input type="text" class="wiz-input" id="wiz_church" value="${esc(wizardData.churchName||'')}" placeholder="e.g. Grace Community Church" autofocus />
+          </div>
+        </div>`;
+    case 'pco': {
+      const isConnected = !!pcoTokens;
+      return `
+        <div>
+          <div class="wiz-q-title">Connect to Planning Center</div>
+          <div class="wiz-q-help">Optional — but if you use PCO Services, connecting now lets the app pull your team and song list automatically every week. You can always do this later in Set Up → Planning Center.</div>
+
+          ${isConnected ? `
+            <div class="wiz-pco-connected">
+              <span class="wiz-pco-check">✓</span>
+              <div>
+                <div class="wiz-pco-conn-title">Already connected to Planning Center</div>
+                <div class="wiz-pco-conn-sub">You're all set. Click Next to continue.</div>
+              </div>
+            </div>
+          ` : `
+            <div class="wiz-pco-help">
+              <div class="wiz-pco-help-title">First, get your API credentials from PCO:</div>
+              <ol class="wiz-pco-steps">
+                <li>Go to <a href="https://api.planningcenteronline.com/oauth/applications" target="_blank" rel="noopener">api.planningcenteronline.com/oauth/applications</a> and sign in.</li>
+                <li>Click <strong>Create one now</strong> (or <strong>New Application</strong>).</li>
+                <li>Name it anything (e.g. "Stage·Assign") and set the <strong>Redirect URI</strong> to exactly:<br><code class="wiz-pco-code" id="wiz_pco_redirect">${esc(window.location.origin + window.location.pathname)}</code> <button class="wiz-pco-copy" id="wiz_pco_copy_redirect">Copy</button></li>
+                <li>After creating, copy the <strong>Client ID</strong> and <strong>Client Secret</strong> from the page and paste them below.</li>
+              </ol>
+            </div>
+
+            <div class="wiz-field" style="margin-bottom:12px;">
+              <label>Client ID</label>
+              <input type="text" class="wiz-input" id="wiz_pco_client_id" value="${esc(wizardData.pco.clientId||'')}" placeholder="paste your Client ID here…" />
+            </div>
+            <div class="wiz-field" style="margin-bottom:14px;">
+              <label>Client Secret</label>
+              <input type="password" class="wiz-input" id="wiz_pco_client_secret" value="${esc(wizardData.pco.clientSecret||'')}" placeholder="paste your Client Secret here…" />
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn primary" id="wiz_pco_connect">Connect to Planning Center →</button>
+              <span style="color:var(--text-faint);font-size:12px;">After clicking, you'll be redirected to PCO to sign in.</span>
+            </div>
+            <p class="subtitle" style="margin-top:14px;font-size:11.5px;color:var(--text-faint);">Don't have a PCO Services account, or want to skip this? Click "Next →" below — you can always come back and connect later.</p>
+          `}
+        </div>`;
+    }
+    case 'vocalists':
+      return `
+        <div>
+          <div class="wiz-q-title">How many vocalists?</div>
+          <div class="wiz-q-help">Type the typical count for your team. You can always add more later — there's no hard cap.</div>
+          <div class="wiz-field" style="max-width:200px;">
+            <input type="number" min="1" max="50" class="wiz-input wiz-input-num" id="wiz_vox_count" value="${wizardData.vocalistCount}" autofocus />
+          </div>
+        </div>`;
+    case 'shadows':
+      return `
+        <div>
+          <div class="wiz-q-title">Do you use Shadow positions?</div>
+          <div class="wiz-q-help">Shadows are team members who get an IEM pack and a name on the run sheet, but aren't on stage with a mic. They can be vocalists adding harmonies from the side, or instrumentalists playing parts off-stage (click track operator, extra keys, etc.) — the app treats them the same.</div>
+
+          <label class="cfg-toggle" style="font-size:14px;margin-bottom:14px;">
+            <input type="checkbox" id="wiz_enable_shadows" ${wizardData.enableShadows ? 'checked' : ''} />
+            <span>Yes, use Shadow positions</span>
+          </label>
+
+          ${wizardData.enableShadows ? `
+            <div style="margin-top:8px;padding:14px 16px;background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;">
+              <div class="wiz-field" style="max-width:220px;">
+                <label>How many shadow slots to start with?</label>
+                <input type="number" min="0" max="12" class="wiz-input wiz-input-num" id="wiz_shadow_count" value="${wizardData.shadowCount}" />
+              </div>
+              <p class="subtitle" style="margin:10px 0 0;font-size:11.5px;">We'll pre-create this many empty shadow slots so you can fill in names later. You can always add or remove more from the vocalist area.</p>
+            </div>
+          ` : `
+            <p class="subtitle" style="margin:6px 0 0;font-size:11.5px;">Skip this if you don't use shadows. You can always enable them later in Set Up → Layout.</p>
+          `}
+        </div>`;
+    case 'instruments': {
+      const slots = expandedInstrumentSlots();
+      return `
+        <div>
+          <div class="wiz-q-title">What instruments are on stage?</div>
+          <div class="wiz-q-help">Click to toggle. Tap a name to rename it. Hit + on a selected instrument to add another (e.g. Keys 1 + Keys 2).</div>
+          <div class="wiz-inst-list">
+            ${wizardData.instruments.map((inst, i) => `
+              <div class="wiz-inst-row${inst.selected ? ' selected' : ''}" data-winst-idx="${i}">
+                <button class="wiz-inst-toggle" data-winst-toggle="${i}">
+                  ${inst.selected ? '✓' : '+'}
+                </button>
+                <div class="wiz-inst-name-wrap">
+                  <input type="text" class="wiz-inst-name-edit" value="${esc(inst.label)}" data-winst-rename="${i}" placeholder="Instrument name" />
+                  ${inst.selected && inst.count > 1 ? `<span class="wiz-inst-count">×${inst.count}</span>` : ''}
+                </div>
+                ${inst.selected ? `
+                  <div class="wiz-inst-actions">
+                    <button class="wiz-inst-dec" data-winst-dec="${i}" ${inst.count <= 1 ? 'disabled' : ''} title="Remove one">−</button>
+                    <button class="wiz-inst-inc" data-winst-inc="${i}" title="Add another ${esc(inst.label)}">+</button>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <div class="wiz-add-custom">
+            <input type="text" class="wiz-input" id="wiz_custom_inst" value="${esc(wizardData.customInstrumentDraft||'')}" placeholder="Add custom instrument (e.g. Cello, Cajon, Pedal Steel)" />
+            <button class="btn primary" id="wiz_custom_add">+ Add</button>
+          </div>
+          ${(() => {
+            const slots = expandedInstrumentSlots();
+            return slots.length > 0 ? `
+              <div class="wiz-preview">
+                <div class="wiz-preview-label">Preview — your band</div>
+                <div class="wiz-preview-list">
+                  ${slots.map(s => `<span class="wiz-preview-chip">${esc(s.label)}</span>`).join('')}
+                </div>
+              </div>
+            ` : '';
+          })()}
+        </div>`;
+    }
+    case 'mics':
+      const MIC_EXAMPLES = ['e.g. SM58', 'e.g. Beta 87A', 'e.g. KSM9', 'e.g. SE V7', 'e.g. e935', 'e.g. KMS105'];
+      return `
+        <div>
+          <div class="wiz-q-title">What vocal mics do you have?</div>
+          <div class="wiz-q-help">List each mic model and quantity. Leave any unused rows blank — they'll be ignored. You can fine-tune all of this later in Set Up → Mic Inventory.</div>
+          <div class="wiz-mic-header">
+            <span>Mic model</span>
+            <span style="text-align:center;">Qty</span>
+            <span></span>
+          </div>
+          <div id="wiz_mics_list">
+            ${wizardData.mics.map((m, i) => `
+              <div class="wiz-mic-row" data-wmic-idx="${i}">
+                <input type="text" placeholder="${esc(MIC_EXAMPLES[i % MIC_EXAMPLES.length])}" value="${esc(m.name||'')}" data-wmic-name="${i}" />
+                <input type="number" min="0" max="50" placeholder="qty" value="${m.total ? m.total : ''}" data-wmic-qty="${i}" />
+                <button class="wm-rm" data-wmic-rm="${i}" title="Remove">✕</button>
+              </div>
+            `).join('')}
+          </div>
+          <button class="wiz-add-line" id="wiz_mic_add">+ Add another mic</button>
+        </div>`;
+    case 'iems':
+      // Build/rebuild assignments dynamically based on current instruments + vocalist count
+      if (!wizardData.iemAssignments) wizardData.iemAssignments = {};
+      const a = wizardData.iemAssignments;
+      const slots = expandedInstrumentSlots();
+      // Initialize defaults — use the role name directly (no " Pack" suffix). Users often label
+      // their packs by role: "Drums", "Vocal 1", etc.
+      slots.forEach(s => {
+        const key = `inst:${s.label}`;
+        if (a[key] === undefined) a[key] = s.label;
+      });
+      for (let i = 1; i <= wizardData.vocalistCount; i++) {
+        const key = `vocal:${i}`;
+        if (a[key] === undefined) a[key] = `Vocal ${i}`;
+      }
+      return `
+        <div>
+          <div class="wiz-q-title">Assign IEM pack names</div>
+          <div class="wiz-q-help">Each band slot and vocalist gets a default pack name. Rename anything if your pack labels don't match the role names (e.g. EG 2 → "Extra 2 Pack"). You can always change these later in Set Up → Layout.</div>
+          ${slots.length > 0 ? `
+            <div class="wiz-iem-section-label">Band</div>
+            <div class="wiz-iem-list">
+              ${slots.map(s => `
+                <div class="wiz-iem-row">
+                  <span class="wiz-iem-role">${esc(s.label)}</span>
+                  <span class="wiz-iem-arrow">→</span>
+                  <input type="text" class="wiz-input" value="${esc(a[`inst:${s.label}`]||'')}" data-wiem-key="inst:${esc(s.label)}" />
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="wiz-iem-section-label">Vocalists</div>
+          <div class="wiz-iem-list">
+            ${Array.from({length:wizardData.vocalistCount},(_,i)=>i+1).map(n => `
+              <div class="wiz-iem-row">
+                <span class="wiz-iem-role">Vocal ${n}</span>
+                <span class="wiz-iem-arrow">→</span>
+                <input type="text" class="wiz-input" value="${esc(a[`vocal:${n}`]||'')}" data-wiem-key="vocal:${n}" />
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    case 'stage': {
+      const curVal = typeof wizardData.stageCurvature === 'number' ? wizardData.stageCurvature : DEFAULT_STAGE_CURVATURE;
+      const depthVal = typeof wizardData.stageDepth === 'number' ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH;
+      return `
+        <div>
+          <div class="wiz-q-title">Stage shape</div>
+          <div class="wiz-q-help">Drag the sliders to match your stage. The vocal arc follows the curve. You can fine-tune this any time in Set Up → Layout.</div>
+          <div class="curvature-row" style="background:var(--bg-inset);">
+            <div class="curvature-preview" id="wiz_curv_preview">${buildStagePreviewSvg(curVal, depthVal)}</div>
+            <div class="curvature-controls">
+              <div class="curvature-header">
+                <span class="curvature-label">Curve depth</span>
+                <span class="curvature-value" id="wiz_curv_value">${curVal}%</span>
+              </div>
+              <input type="range" min="0" max="100" step="1" value="${curVal}" id="wiz_curv_slider" class="curvature-slider" />
+              <div class="curvature-ticks"><span>Flat</span><span>Light</span><span>Curved</span><span>Deep</span></div>
+
+              <div class="curvature-header" style="margin-top:14px;">
+                <span class="curvature-label">Stage depth</span>
+                <span class="curvature-value" id="wiz_depth_value">${depthVal}%</span>
+              </div>
+              <input type="range" min="0" max="100" step="1" value="${depthVal}" id="wiz_depth_slider" class="curvature-slider" />
+              <div class="curvature-ticks"><span>Shallow</span><span></span><span></span><span>Deep</span></div>
+
+              <button class="btn ghost" id="wiz_curv_reset" style="margin-top:10px;font-size:11px;">Reset shape to defaults</button>
+            </div>
+          </div>
+
+          <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Vocal arrangement</div>
+          <div class="wiz-q-help" style="margin-bottom:10px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Check the SR/SL labels on the preview above — stage right is from the performer's perspective looking at the audience.</em></div>
+          <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
+            <button class="wiz-stage-shape${wizardData.vocalDirection === 'rtl' ? ' selected' : ''}" data-wdir="rtl">
+              <div class="wiz-shape-label">Stage Right</div>
+              <div class="wiz-shape-sub">Standard. Vocal 1 on the leader's side.</div>
+            </button>
+            <button class="wiz-stage-shape${wizardData.vocalDirection === 'ltr' ? ' selected' : ''}" data-wdir="ltr">
+              <div class="wiz-shape-label">Stage Left</div>
+              <div class="wiz-shape-sub">Inverted layout.</div>
+            </button>
+          </div>
+        </div>`;
+    }
+    case 'look': {
+      const PALETTES = [
+        { key:'gold',   name:'Warm gold',     accent:'#d4a147', accent2:'#e8b857' },
+        { key:'blue',   name:'Cool blue',     accent:'#5b9bd5', accent2:'#80b6e8' },
+        { key:'green',  name:'Modern green',  accent:'#7ba968', accent2:'#9bc587' },
+        { key:'mono',   name:'Classic black', accent:'#d8d4cc', accent2:'#f0ece4' },
+        { key:'red',    name:'Deep red',      accent:'#c8554d', accent2:'#de7a72' },
+        { key:'purple', name:'Royal purple',  accent:'#8e7cc3', accent2:'#a698d4' }
+      ];
+      const FONT_OPTIONS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
+      return `
+        <div>
+          <div class="wiz-q-title">Look & feel</div>
+          <div class="wiz-q-help">Pick a color palette and font. You can fine-tune both, plus the secondary color and Worship Leader highlight, in Set Up → Brand.</div>
+
+          <div class="section-label" style="margin-bottom:10px;">Color palette</div>
+          <div class="wiz-palette-grid">
+            ${PALETTES.map(p => `
+              <button class="wiz-palette${wizardData.accentPreset === p.key ? ' selected' : ''}" data-wpalette="${p.key}" data-wpaccent="${p.accent}" data-wpaccent2="${p.accent2}">
+                <span class="wiz-palette-swatch" style="background:${p.accent};"></span>
+                <span class="wiz-palette-name">${esc(p.name)}</span>
+              </button>
+            `).join('')}
+            <button class="wiz-palette wiz-palette-custom${wizardData.accentPreset === 'custom' ? ' selected' : ''}" data-wpalette="custom">
+              <span class="wiz-palette-swatch" style="background:${esc(wizardData.accentColor)};border:2px dashed var(--border);"></span>
+              <span class="wiz-palette-name">Custom…</span>
+              <input type="color" id="wiz_custom_color" value="${esc(wizardData.accentColor)}" style="display:${wizardData.accentPreset === 'custom' ? 'inline-block' : 'none'};margin-left:8px;width:30px;height:24px;padding:0;border:none;background:transparent;cursor:pointer;" />
+            </button>
+          </div>
+
+          <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Display font</div>
+          <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Used for vocalist names, section titles, and the display view. Each option is rendered in its own face.</p>
+          <div id="wiz_font_picker"></div>
+        </div>`;
+    }
+  }
+  return '';
+}
+function wireWizardStep(step) {
+  const body = document.getElementById('wizardBody');
+  if (step === 'identity') {
+    const inp = body.querySelector('#wiz_church');
+    inp && inp.addEventListener('input', e => { wizardData.churchName = e.target.value; });
+    setTimeout(() => inp && inp.focus(), 30);
+  }
+  if (step === 'pco') {
+    const idInp = body.querySelector('#wiz_pco_client_id');
+    const secInp = body.querySelector('#wiz_pco_client_secret');
+    idInp && idInp.addEventListener('input', e => { wizardData.pco.clientId = e.target.value.trim(); });
+    secInp && secInp.addEventListener('input', e => { wizardData.pco.clientSecret = e.target.value.trim(); });
+
+    const copyBtn = body.querySelector('#wiz_pco_copy_redirect');
+    copyBtn && copyBtn.addEventListener('click', async () => {
+      const text = document.getElementById('wiz_pco_redirect').textContent;
+      try { await navigator.clipboard.writeText(text); toast('Redirect URI copied ✓', 'success'); }
+      catch(e) { toast('Copy failed', 'warn'); }
+    });
+
+    const connectBtn = body.querySelector('#wiz_pco_connect');
+    connectBtn && connectBtn.addEventListener('click', async () => {
+      const id = (wizardData.pco.clientId || '').trim();
+      const sec = (wizardData.pco.clientSecret || '').trim();
+      if (!id || !sec) {
+        toast('Paste both Client ID and Client Secret first', 'warn');
+        return;
+      }
+      // Commit credentials to state so pcoStartAuth can use them
+      state.pcoConfig.clientId = id;
+      state.pcoConfig.clientSecret = sec;
+      saveState();
+      // Save wizard progress BEFORE redirect so we can resume after
+      saveWizardForResume();
+      // Kick off OAuth — page will redirect to PCO
+      pcoStartAuth();
+    });
+  }
+  if (step === 'vocalists') {
+    const inp = body.querySelector('#wiz_vox_count');
+    inp && inp.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      if (!isNaN(v) && v > 0) {
+        wizardData.vocalistCount = v;
+        syncSm58ToVocalistCount();
+      }
+    });
+    setTimeout(() => inp && inp.focus(), 30);
+  }
+  if (step === 'shadows') {
+    const cb = body.querySelector('#wiz_enable_shadows');
+    cb && cb.addEventListener('change', e => {
+      wizardData.enableShadows = e.target.checked;
+      if (!e.target.checked) wizardData.shadowCount = 0;
+      else if (wizardData.shadowCount === 0) wizardData.shadowCount = 1;
+      renderWizardStep();
+    });
+    const countInp = body.querySelector('#wiz_shadow_count');
+    countInp && countInp.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      if (!isNaN(v) && v >= 0) wizardData.shadowCount = v;
+    });
+  }
+  if (step === 'instruments') {
+    body.querySelectorAll('[data-winst-toggle]').forEach(b => b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.winstToggle, 10);
+      wizardData.instruments[i].selected = !wizardData.instruments[i].selected;
+      // Reset IEM assignments since the slot list changed
+      wizardData.iemAssignments = null;
+      renderWizardStep();
+    }));
+    // Inline rename — update label as the user types. Don't re-render on input (that would steal focus).
+    body.querySelectorAll('[data-winst-rename]').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const i = parseInt(e.target.dataset.winstRename, 10);
+        if (!wizardData.instruments[i]) return;
+        wizardData.instruments[i].label = e.target.value;
+        // Also derive the short tag from the first word (best-effort) if user changes the name fully
+        const firstWord = (e.target.value.trim().split(/\s+/)[0] || '').slice(0, 8);
+        if (firstWord) wizardData.instruments[i].tag = firstWord;
+        // Invalidate IEM assignments since the labels feed those keys
+        wizardData.iemAssignments = null;
+      });
+      // Re-render only on blur so count badge updates
+      inp.addEventListener('change', () => renderWizardStep());
+    });
+    body.querySelectorAll('[data-winst-inc]').forEach(b => b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.winstInc, 10);
+      wizardData.instruments[i].count = (wizardData.instruments[i].count || 1) + 1;
+      wizardData.iemAssignments = null;
+      renderWizardStep();
+    }));
+    body.querySelectorAll('[data-winst-dec]').forEach(b => b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.winstDec, 10);
+      const cur = wizardData.instruments[i].count || 1;
+      if (cur > 1) {
+        wizardData.instruments[i].count = cur - 1;
+        wizardData.iemAssignments = null;
+        renderWizardStep();
+      }
+    }));
+    const customInput = body.querySelector('#wiz_custom_inst');
+    customInput && customInput.addEventListener('input', e => { wizardData.customInstrumentDraft = e.target.value; });
+    const addCustomBtn = body.querySelector('#wiz_custom_add');
+    const doAddCustom = () => {
+      const name = (wizardData.customInstrumentDraft || '').trim();
+      if (!name) return;
+      const slug = 'inst_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') + '_' + Math.random().toString(36).slice(2,5);
+      wizardData.instruments.push({
+        key: slug,
+        label: name,
+        tag: name.split(/\s+/)[0],
+        pack: 'Misc 1 Pack',
+        placeholder: name,
+        count: 1,
+        selected: true,
+        custom: true
+      });
+      wizardData.customInstrumentDraft = '';
+      wizardData.iemAssignments = null;
+      renderWizardStep();
+    };
+    addCustomBtn && addCustomBtn.addEventListener('click', doAddCustom);
+    customInput && customInput.addEventListener('keydown', e => { if (e.key === 'Enter') doAddCustom(); });
+  }
+  if (step === 'mics') {
+    body.querySelectorAll('[data-wmic-name]').forEach(inp => inp.addEventListener('input', e => {
+      const i = parseInt(e.target.dataset.wmicName, 10);
+      if (wizardData.mics[i]) wizardData.mics[i].name = e.target.value;
+    }));
+    body.querySelectorAll('[data-wmic-qty]').forEach(inp => inp.addEventListener('input', e => {
+      const i = parseInt(e.target.dataset.wmicQty, 10);
+      if (wizardData.mics[i]) wizardData.mics[i].total = parseInt(e.target.value, 10) || 0;
+    }));
+    body.querySelectorAll('[data-wmic-rm]').forEach(btn => btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.wmicRm, 10);
+      wizardData.mics.splice(i, 1);
+      renderWizardStep();
+    }));
+    const addBtn = body.querySelector('#wiz_mic_add');
+    addBtn && addBtn.addEventListener('click', () => {
+      wizardData.mics.push({ name:'', total:0 });
+      renderWizardStep();
+    });
+  }
+  if (step === 'iems') {
+    body.querySelectorAll('[data-wiem-key]').forEach(inp => inp.addEventListener('input', e => {
+      const key = e.target.dataset.wiemKey;
+      wizardData.iemAssignments[key] = e.target.value;
+    }));
+  }
+  if (step === 'stage') {
+    const slider = body.querySelector('#wiz_curv_slider');
+    const valLabel = body.querySelector('#wiz_curv_value');
+    const depthSlider = body.querySelector('#wiz_depth_slider');
+    const depthValLabel = body.querySelector('#wiz_depth_value');
+    const preview = body.querySelector('#wiz_curv_preview');
+    function refreshWizPreview() {
+      if (!preview) return;
+      const cv = slider ? parseInt(slider.value, 10) : wizardData.stageCurvature;
+      const dv = depthSlider ? parseInt(depthSlider.value, 10) : wizardData.stageDepth;
+      preview.innerHTML = buildStagePreviewSvg(isNaN(cv) ? DEFAULT_STAGE_CURVATURE : cv, isNaN(dv) ? DEFAULT_STAGE_DEPTH : dv);
+    }
+    if (slider) {
+      slider.addEventListener('input', e => {
+        const v = parseInt(e.target.value, 10);
+        wizardData.stageCurvature = v;
+        if (valLabel) valLabel.textContent = v + '%';
+        refreshWizPreview();
+      });
+    }
+    if (depthSlider) {
+      depthSlider.addEventListener('input', e => {
+        const v = parseInt(e.target.value, 10);
+        wizardData.stageDepth = v;
+        if (depthValLabel) depthValLabel.textContent = v + '%';
+        refreshWizPreview();
+      });
+    }
+    const resetBtn = body.querySelector('#wiz_curv_reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        wizardData.stageCurvature = DEFAULT_STAGE_CURVATURE;
+        wizardData.stageDepth = DEFAULT_STAGE_DEPTH;
+        if (slider) slider.value = DEFAULT_STAGE_CURVATURE;
+        if (valLabel) valLabel.textContent = DEFAULT_STAGE_CURVATURE + '%';
+        if (depthSlider) depthSlider.value = DEFAULT_STAGE_DEPTH;
+        if (depthValLabel) depthValLabel.textContent = DEFAULT_STAGE_DEPTH + '%';
+        refreshWizPreview();
+      });
+    }
+    body.querySelectorAll('[data-wdir]').forEach(b => b.addEventListener('click', () => {
+      wizardData.vocalDirection = b.dataset.wdir;
+      renderWizardStep();
+    }));
+  }
+  if (step === 'look') {
+    // Helper to apply current wizard branding choices to state + DOM immediately
+    function previewLookNow() {
+      state.brand.accent  = wizardData.accentColor || state.brand.accent;
+      state.brand.accent2 = wizardData.accent2Color || wizardData.accentColor || state.brand.accent2;
+      state.brand.wl      = wizardData.accent2Color || wizardData.accentColor || state.brand.wl;
+      if (wizardData.fontFamily) state.brand.font = wizardData.fontFamily;
+      applyBrand();
+    }
+    body.querySelectorAll('[data-wpalette]').forEach(b => b.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      wizardData.accentPreset = b.dataset.wpalette;
+      if (b.dataset.wpaccent) {
+        wizardData.accentColor = b.dataset.wpaccent;
+        wizardData.accent2Color = b.dataset.wpaccent2 || b.dataset.wpaccent;
+      }
+      previewLookNow();
+      renderWizardStep();
+    }));
+    const colorInput = body.querySelector('#wiz_custom_color');
+    if (colorInput) {
+      colorInput.addEventListener('input', e => {
+        wizardData.accentPreset = 'custom';
+        wizardData.accentColor = e.target.value;
+        wizardData.accent2Color = e.target.value;
+        previewLookNow();
+      });
+      colorInput.addEventListener('click', e => e.stopPropagation());
+    }
+    // Custom font picker (renders each font in its own face)
+    const fontPickerContainer = body.querySelector('#wiz_font_picker');
+    if (fontPickerContainer) {
+      renderFontPicker(fontPickerContainer, wizardData.fontFamily || 'Fraunces', (fontName) => {
+        wizardData.fontFamily = fontName;
+        ensureFontLoaded(fontName);
+        previewLookNow();
+      });
+    }
+    // On first display of look step, apply current choices (in case user clicked Back here)
+    previewLookNow();
+  }
+}
+
+function applyWizardChoices() {
+  // 1. Service title
+  if (wizardData.churchName.trim()) {
+    state.service.name = `${wizardData.churchName.trim()} — Sunday`;
+  }
+  // 2. Build instruments list with proper numbering for duplicates
+  const slots = expandedInstrumentSlots();
+  if (slots.length > 0) {
+    state.instruments = slots.map((s, i) => {
+      // Stable IDs based on key + slotIdx (so duplicates get unique IDs like inst_keys_2)
+      let id = `inst_${s.key}`;
+      if (s.slotIdx) id += `_${s.slotIdx}`;
+      const pack = (wizardData.iemAssignments && wizardData.iemAssignments[`inst:${s.label}`]) || s.label;
+      return {
+        id,
+        label: s.label,
+        pack,
+        placeholder: s.placeholder + (s.slotIdx ? ` ${s.slotIdx}` : ''),
+        tag: s.tag,
+        assignedTo: '',
+        vocalistPlayer: null,
+        optional: !!s.optional
+      };
+    });
+    // MD defaults to first Keys-tagged slot if any, else first instrument
+    const keys = state.instruments.find(i => /keys/i.test(i.tag) || /keys/i.test(i.label));
+    state.musicDirectorId = keys ? keys.id : (state.instruments[0]?.id || null);
+  }
+  // 3. Mic inventory
+  state.inventory = wizardData.mics
+    .filter(m => m.name && m.name.trim() && m.total > 0)
+    .map((m, i) => ({ name: m.name.trim(), total: m.total, rank: i + 1 }));
+  // 4. Per-vocalist IEM packs
+  const packCount = wizardData.vocalistCount;
+  state.config.voxIemPacks = [];
+  for (let i = 1; i <= packCount; i++) {
+    const key = `vocal:${i}`;
+    state.config.voxIemPacks.push((wizardData.iemAssignments && wizardData.iemAssignments[key]) || `Vocal ${i}`);
+  }
+  // pad to at least 8 for safety with internal arrays
+  while (state.config.voxIemPacks.length < 8) {
+    const i = state.config.voxIemPacks.length + 1;
+    state.config.voxIemPacks.push(`Vocal ${i}`);
+  }
+  // Shadow pack
+  if (wizardData.iemAssignments && wizardData.iemAssignments['shadows']) {
+    state.config.shadowPack = wizardData.iemAssignments['shadows'];
+  }
+  // 5. Enable Shadows (from shadows step) + pre-create empty slots
+  state.config.enableShadows = !!wizardData.enableShadows;
+  if (state.config.enableShadows && wizardData.shadowCount > 0) {
+    // Only seed if there are no shadows already (don't blow away existing data)
+    if (!Array.isArray(state.shadows) || state.shadows.length === 0) {
+      state.shadows = [];
+      const cap = Math.min(wizardData.shadowCount, 12);
+      for (let i = 0; i < cap; i++) {
+        state.shadows.push({
+          id: 'sh_'+Math.random().toString(36).slice(2,8),
+          name: '',
+          pack: state.config.shadowPack || 'Misc 2 Pack'
+        });
+      }
+    }
+  }
+  // 6. Stage layout
+  if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
+  if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
+  if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
+  // 7. Branding
+  if (wizardData.accentColor) {
+    state.brand.accent = wizardData.accentColor;
+    state.brand.accent2 = wizardData.accent2Color || wizardData.accentColor;
+    // WL color defaults to accent2 (the lighter shade) for consistency
+    state.brand.wl = wizardData.accent2Color || wizardData.accentColor;
+  }
+  if (wizardData.fontFamily) {
+    state.brand.font = wizardData.fontFamily;
+    ensureFontLoaded(wizardData.fontFamily);
+  }
+  saveState();
 }
 
 /* ===================== INIT ===================== */
 function init() {
+  applyRunSheetScale();
   document.getElementById('serviceDate').addEventListener('change', e => { state.service.date = e.target.value; saveState(); });
   document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
@@ -3554,8 +6111,21 @@ function init() {
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);
-  document.getElementById('displayBtn').addEventListener('click', enterDisplayMode);
+  document.getElementById('displayBtn').addEventListener('click', () => {
+    // Soft warning if Block Display Until Setup Complete is on AND setup is incomplete
+    if (state.config.blockDisplayUntilSetup) {
+      const overall = setupOverallStats();
+      if (overall.total > 0 && !overall.complete) {
+        const remaining = overall.total - overall.done;
+        toast(`Setup incomplete — ${remaining} item${remaining===1?'':'s'} remaining. Switching anyway.`, 'warn');
+      }
+    }
+    enterDisplayMode();
+  });
   document.getElementById('displayBackBtn').addEventListener('click', exitDisplayMode);
+  document.getElementById('setupItemsBtn').addEventListener('click', enterSetupItemsView);
+  document.getElementById('siBackBtn').addEventListener('click', exitSetupItemsView);
+  document.getElementById('siSettingsBtn').addEventListener('click', () => openSettings('templates'));
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
   document.getElementById('printFromSummaryBtn').addEventListener('click', () => window.print());
   document.getElementById('copySummaryBtn').addEventListener('click', copySummaryText);
@@ -3591,36 +6161,42 @@ function init() {
   });
   window.addEventListener('resize', renderStage);
 
-  if (state.vocalists.length === 0 && !localStorage.getItem(STORAGE_KEY)) {
-    const graysonId = uid();
-    state.vocalists = [
-      { id:uid(),      name:'Mo',      leadsSongs:true,  isWL:false, micAssigned:'' },
-      { id:uid(),      name:'Ella',    leadsSongs:true,  isWL:false, micAssigned:'' },
-      { id:graysonId,  name:'Grayson', leadsSongs:true,  isWL:true,  micAssigned:'' },
-      { id:uid(),      name:'Elena',   leadsSongs:false, isWL:false, micAssigned:'' }
-    ];
-    const set = (id, name) => { const i = instById(id); if (i) i.assignedTo = name; };
-    set('inst_drums', 'Danny Barragan');
-    set('inst_eg1',   'Petey Nieves');
-    set('inst_keys',  'Marcus Donalson');
-    const ag = instById('inst_ag'); if (ag) ag.vocalistPlayer = graysonId;
-    state.musicDirectorId = 'inst_keys';
-    state.hosts.speaker = 'Jason Graves';
-    state.hosts.welcomeHost1 = 'Ben Graves';
-    saveState();
-  }
+  // Brand-new visitors start with a completely empty team — no baked-in names.
+  // The first-run wizard handles their initial setup.
+
   setTheme(state.theme || 'dark');
+  // Wire wizard buttons (always wire, even if not first-run, in case user re-launches via Set Up)
+  document.getElementById('wizardNextBtn').addEventListener('click', () => {
+    if (wizardStepIdx < WIZARD_STEPS.length - 1) {
+      wizardStepIdx++;
+      renderWizardStep();
+    } else {
+      exitWizard(true);
+      toast('Welcome! You can change anything in Set Up.', 'success');
+    }
+  });
+  document.getElementById('wizardBackBtn').addEventListener('click', () => {
+    if (wizardStepIdx > 0) { wizardStepIdx--; renderWizardStep(); }
+  });
+  document.getElementById('wizardSkipBtn').addEventListener('click', () => exitWizard(false));
   renderAll();
   if (state.assignments.every(a => a === null) && state.vocalists.length > 0) autoAssign();
   // Restore display mode if it was active
   if (state.viewMode === 'display') {
     document.body.classList.add('display-mode');
     renderDisplayView();
+  } else if (state.viewMode === 'setup-items') {
+    document.body.classList.add('setup-items-mode');
+    renderSetupItemsView();
   }
   // Load any custom font
   if (state.brand && state.brand.font && state.brand.font !== 'Fraunces') ensureFontLoaded(state.brand.font);
   if (window.location.search.includes('code=')) pcoHandleRedirect();
   else if (pcoTokens) { showPCOBar(); pcoLoadServiceTypes(); }
+  // Trigger first-run wizard if this is a brand-new visitor (no saved state)
+  if (state._firstRun) {
+    setTimeout(() => startWizard(), 200);
+  }
 }
 init();
 </script>
