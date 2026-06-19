@@ -189,6 +189,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .mic-select:hover{border-color:var(--border-2)}
 .mic-select:focus{border-color:var(--accent)}
 .pref-tag{font-family:var(--ff-mono);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+.voc-mic-pref-row{display:flex;align-items:center;gap:6px;margin-top:4px;opacity:.7}
+.voc-mic-pref-label{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--text-faint);font-family:var(--ff-mono);white-space:nowrap}
+.voc-mic-pref-sel{font-size:11px;background:var(--bg-inset);border:1px solid var(--border);border-radius:4px;color:var(--text-muted);padding:2px 4px;flex:1;min-width:0}
 .add-card{border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);border-radius:12px;cursor:pointer;font-family:var(--ff-body);font-size:13px;transition:all .15s;min-height:130px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
 .add-card:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .add-card:disabled{opacity:.3;cursor:not-allowed}
@@ -839,10 +842,29 @@ body.setup-items-mode .container{display:none}
 .si-add-btn:hover{opacity:.9}
 .si-add-btn:disabled{opacity:.4;cursor:not-allowed}
 .si-presets{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 10px;border-top:1px solid var(--border)}
-.si-preset-label{font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;margin-right:4px}
+.si-preset-label{font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;margin-right:4px;display:flex;align-items:center;gap:6px}
 .si-preset-btn{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:all .12s}
 .si-preset-btn:hover{border-color:var(--accent);color:var(--accent)}
 .si-preset-default{border-color:rgba(212,161,71,.4);color:var(--accent)}
+.si-preset-edit-link{background:none;border:none;cursor:pointer;color:var(--text-faint);font-family:var(--ff-mono);font-size:9px;text-transform:none;letter-spacing:0;text-decoration:underline;padding:0;transition:color .12s}
+.si-preset-edit-link:hover{color:var(--accent)}
+.si-item-flag.auto-added{background:rgba(212,161,71,.15);color:var(--accent);border:1px solid rgba(212,161,71,.3);padding:1px 5px;border-radius:4px;font-size:9px;font-family:var(--ff-mono)}
+.preset-editor-popup{background:var(--bg-elev);border:1px solid var(--border-2);border-radius:8px;padding:10px 12px;margin-top:6px;display:flex;flex-direction:column;gap:6px;width:100%}
+.preset-editor-popup .pe-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.preset-editor-popup .pe-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--bg-inset);border:1px solid var(--border);font-size:12px}
+.preset-editor-popup .pe-chip button{background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:11px;padding:0}
+.preset-editor-popup .pe-chip button:hover{color:var(--danger)}
+.preset-editor-popup .pe-add-row{display:flex;gap:6px;margin-top:4px}
+.preset-editor-popup .pe-input{flex:1;background:var(--bg-inset);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 8px;font-size:12px;outline:none}
+.preset-editor-popup .pe-input:focus{border-color:var(--accent)}
+.preset-editor-popup .pe-add-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer}
+.preset-editor-popup .pe-reset{font-size:11px;color:var(--text-faint);cursor:pointer;text-decoration:underline;text-align:right;background:none;border:none;font-family:var(--ff-mono)}
+.si-save-menu{position:fixed;z-index:500;background:var(--bg-elev);border:1px solid var(--border-2);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);min-width:260px;overflow:hidden}
+.si-save-menu-option{display:block;width:100%;padding:10px 14px;background:transparent;border:none;color:var(--text);font-family:var(--ff-body);font-size:12.5px;text-align:left;cursor:pointer;transition:background .12s;line-height:1.4}
+.si-save-menu-option:hover{background:var(--surface)}
+.si-save-menu-option .opt-title{font-weight:600;display:block}
+.si-save-menu-option .opt-sub{color:var(--text-muted);font-size:11px;font-family:var(--ff-mono);display:block;margin-top:2px}
+.si-save-menu-sep{height:1px;background:var(--border);margin:2px 0}
 /* Templates */
 .si-template-menu{position:absolute;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.5);padding:6px;z-index:200;min-width:240px;max-width:340px}
 .si-template-menu-header{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:8px 10px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
@@ -1121,6 +1143,107 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
 .sem-close-btn{position:absolute;top:12px;right:16px;width:30px;height:30px;border-radius:50%;border:none;background:var(--bg-elev);color:var(--text-muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .sem-close-btn:hover{background:var(--border);color:var(--text)}
 
+
+/* Stage Draw Modal */
+#stageDrawModal {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+#stageDrawModal .sdm-panel {
+  width: 95vw; height: 92vh;
+  background: var(--surface); border-radius: 14px;
+  border: 1px solid var(--border-2);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#stageDrawModal .sdm-header {
+  display: flex; align-items: center; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); gap: 10px;
+  background: var(--bg-elev); flex-shrink: 0;
+}
+#stageDrawModal .sdm-title { flex: 1; font-size: 15px; font-weight: 600; }
+#stageDrawModal .sdm-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-muted); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+#stageDrawModal .sdm-close:hover { background: var(--border); color: var(--text); }
+#stageDrawModal .sdm-body {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px 12px;
+}
+#stageDrawModal .sdm-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.dv-first-run-tip {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #000; border-radius: 8px;
+  padding: 6px 14px; font-size: 12px; display: flex; align-items: center; gap: 8px;
+  z-index: 10; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.dv-first-run-tip button { background: none; border: none; cursor: pointer; font-size: 14px; color: #000; padding: 0; }
+
+.setup-presets-wrap { display:flex; flex-direction:column; gap:10px; margin-top:8px }
+.setup-preset-label,.setup-items-label { font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--text-faint); font-family:var(--ff-mono) }
+.setup-preset-chips { display:flex; flex-wrap:wrap; gap:6px }
+.setup-preset-chip { padding:5px 12px; border-radius:16px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:12px; cursor:pointer; transition:all .12s }
+.setup-preset-chip:hover { border-color:var(--accent); color:var(--accent) }
+.setup-preset-chip.selected { background:var(--accent); border-color:var(--accent); color:#000 }
+.setup-items-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; min-height:20px }
+.setup-item-row { display:flex; align-items:center; gap:8px; padding:5px 10px; background:var(--bg-elev); border-radius:6px; border:1px solid var(--border); font-size:13px }
+.setup-item-text { flex:1 }
+.setup-item-del { background:none; border:none; cursor:pointer; color:var(--text-faint); font-size:14px; padding:0 2px; transition:color .12s }
+.setup-item-del:hover { color:#e55 }
+.setup-add-custom { display:flex; gap:6px; align-items:center }
+.setup-custom-input { flex:1; background:var(--bg-inset); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:6px 10px; font-size:13px; font-family:var(--ff-sans) }
+.setup-custom-input:focus { outline:none; border-color:var(--accent) }
+.setup-custom-add-btn { padding:6px 14px; border-radius:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); font-size:13px; cursor:pointer; white-space:nowrap }
+.setup-custom-add-btn:hover { background:var(--accent); color:#000 }
+
+/* ========== SETUP CHECKLIST VIEW ========== */
+.setup-checklist-view { display:none; flex-direction:column; height:100%; overflow:hidden }
+.setup-checklist-view.active { display:flex }
+.scv-header { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg-elev) }
+.scv-back-btn { background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); padding:5px 12px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px }
+.scv-back-btn:hover { border-color:var(--border-2); color:var(--text) }
+.scv-title { font-size:14px; font-weight:600; flex:1 }
+.scv-progress-bar-wrap { padding:12px 20px 0; flex-shrink:0 }
+.scv-progress-track { height:8px; background:var(--bg-inset); border-radius:4px; overflow:hidden; margin-bottom:6px }
+.scv-progress-fill { height:100%; background:var(--accent); border-radius:4px; transition:width .3s }
+.scv-progress-label { font-size:11px; color:var(--text-muted); font-family:var(--ff-mono) }
+.scv-body { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:16px }
+.scv-section { display:flex; flex-direction:column; gap:6px }
+.scv-section-title { font-size:10px; font-weight:700; letter-spacing:.12em; color:var(--text-faint); font-family:var(--ff-mono); display:flex; align-items:center; gap:6px; padding-bottom:4px; border-bottom:1px solid var(--border) }
+.scv-item { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all .12s; user-select:none }
+.scv-item:hover { border-color:var(--border-2) }
+.scv-item.done { opacity:.55 }
+.scv-item.done .scv-item-text { text-decoration:line-through; color:var(--text-faint) }
+.scv-checkbox { width:18px; height:18px; border:2px solid var(--border-2); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .12s }
+.scv-item.done .scv-checkbox { background:var(--accent); border-color:var(--accent); color:#000 }
+.scv-item-person { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap }
+.scv-item-dash { color:var(--text-faint); font-size:11px }
+.scv-item-text { font-size:13px; color:var(--text-muted); flex:1 }
+.scv-item-auto { font-size:9px; background:var(--bg-inset); border:1px solid var(--border); border-radius:8px; padding:1px 6px; color:var(--text-faint); font-family:var(--ff-mono) }
+.scv-footer { display:flex; gap:10px; justify-content:flex-end; padding:10px 20px; border-top:1px solid var(--border); flex-shrink:0; background:var(--bg-elev) }
+.scv-btn { padding:7px 18px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:13px; cursor:pointer }
+.scv-btn.primary { border-color:var(--accent); color:var(--accent) }
+.scv-btn.primary:hover { background:var(--accent); color:#000 }
+/* Progress badge on Set Up nav button */
+.nav-setup-badge { display:inline-flex; align-items:center; justify-content:center; background:#e55; color:#fff; border-radius:8px; font-size:9px; font-weight:700; padding:1px 5px; margin-left:4px; min-width:16px }
+/* Setup lock screen */
+#setupLockScreen { position:absolute; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; text-align:center }
+.lock-icon { font-size:48px }
+.lock-title { font-size:22px; font-weight:700 }
+.lock-subtitle { font-size:14px; color:var(--text-muted); max-width:400px }
+.lock-progress-track { width:100%; max-width:400px; height:8px; background:var(--bg-inset); border-radius:4px; overflow:hidden }
+.lock-progress-fill { height:100%; background:var(--accent); border-radius:4px }
+.lock-items { max-width:400px; width:100%; display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto; text-align:left }
+.lock-item-row { font-size:12px; color:var(--text-muted); padding:4px 0; border-bottom:1px solid var(--border) }
+.lock-go-setup-btn { padding:10px 28px; border-radius:8px; background:var(--accent); border:none; color:#000; font-size:14px; font-weight:600; cursor:pointer; margin-top:8px }
+.lock-go-setup-btn:hover { background:var(--accent-2) }
+.lock-override-btn { background:none; border:none; color:var(--text-faint); font-size:12px; cursor:pointer; text-decoration:underline }
+
 </style>
 </head>
 <body>
@@ -1143,10 +1266,10 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <span>PCO: Not connected</span>
       <span class="prp-menu-trigger">⌄</span>
     </button>
-    <button class="btn ghost" id="settingsBtn">Set Up</button>
+    <button class="btn ghost" id="settingsBtn" title="Advanced Settings" aria-label="Advanced Settings">Advanced Settings</button>
     <button class="btn ghost" id="resetBtn">Reset</button>
     <button class="btn" id="summaryBtn">Print Summary</button>
-    <button class="btn" id="setupItemsBtn" title="Per-musician setup checklist">Set Up Items</button>
+    <button class="btn" id="setupItemsBtn" title="Open setup checklist" aria-label="Set Up">Set Up<span class="nav-setup-badge" id="setupNavBadge" style="display:none"></span></button>
     <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
     <button class="btn primary" id="assignBtn">Auto-Assign <span class="kbd">⌘↵</span></button>
   </div>
@@ -1417,8 +1540,23 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
   <div class="si-content" id="si_content"></div>
 </div>
 
+
+<!-- ========== SETUP CHECKLIST VIEW ========== -->
+<div id="setupChecklistView" class="setup-items-view" style="display:none; flex-direction:column;">
+  <!-- rendered by renderSetupChecklist() -->
+</div>
+
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
-<div class="display-view" id="displayView">
+<div class="display-view" id="displayView" style="position:relative;">
+  <div id="setupLockScreen" style="display:none;">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Setup not complete</div>
+    <div class="lock-subtitle" id="lockSubtitle">Items still need to be checked off before going live.</div>
+    <div class="lock-progress-track"><div class="lock-progress-fill" id="lockProgressFill"></div></div>
+    <div class="lock-items" id="lockItemsList"></div>
+    <button class="lock-go-setup-btn" id="lockGoSetupBtn">Go to Setup</button>
+    <button class="lock-override-btn" id="lockOverrideBtn">Show display anyway</button>
+  </div>
   <button class="display-cog" id="displayBackBtn" title="Back to setup">⚙︎</button>
 
   <div class="dv-layout" id="dvLayout">
@@ -1522,7 +1660,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
     <div class="sem-header">
       <span class="sem-title">Edit Stage Layout</span>
       <button id="semDoneBtn" class="sem-done-btn">Done</button>
-      <button id="semCloseBtn" class="sem-close-btn" title="Close">✕</button>
+
     </div>
     <div class="sem-stage-wrap" id="semStageWrap">
       <!-- stage SVG + draggable slots rendered here -->
@@ -1627,6 +1765,9 @@ const DEFAULT_STATE = {
     // Custom stage area mapping. Empty array means "each instrument is its own area".
     // Each entry: { id, name, instrumentIds: [array of inst ids], includesVocalists: false }
     stageAreas: [],
+    setupPresets: null,       // null = use built-in SETUP_ITEM_PRESETS; object = custom overrides per instKey
+    personMicPrefs: {},        // personMicPrefs[personName] = { primary: 'Beta 58A', secondary: 'SM58' }
+    personSetupDefaults: {},  // personSetupDefaults[personName][instKey] = ['item1', 'item2']
     display: {
       showStage:true, showServiceOrder:true, showBand:true, showHosts:true, showShadows:true,
       vocalistRows: 'auto',
@@ -1655,6 +1796,7 @@ const DEFAULT_STATE = {
   // Per-shadow preferences: keyed by normFullName → last selected option
   // value = { role: 'vocalist'|'band', choice: 'on-stage-mic'|'on-stage-iem'|'off-stage-iem'|'off-stage'|'observer', mic?:..., updatedAt: ISO }
   shadowPreferences: {},
+  checklistState: {},
   viewMode: 'setup',
   theme: 'dark'
 };
@@ -1704,6 +1846,11 @@ const SETUP_ITEM_PRESETS = {
     ]
   }
 };
+
+// Feature 2: resolve active presets (custom or built-in)
+function getSetupPresets() {
+  return state.config.setupPresets || SETUP_ITEM_PRESETS;
+}
 
 function detectPresetKey(inst) {
   if (!inst) return null;
@@ -1807,6 +1954,9 @@ function loadState() {
           customStagePositions: (loadedConfig.customStagePositions && typeof loadedConfig.customStagePositions === 'object') ? loadedConfig.customStagePositions : {},
           customStageEnabled: !!loadedConfig.customStageEnabled,
           tvMode: !!loadedConfig.tvMode,
+          setupPresets: (loadedConfig.setupPresets && typeof loadedConfig.setupPresets === 'object') ? loadedConfig.setupPresets : null,
+          personSetupDefaults: (loadedConfig.personSetupDefaults && typeof loadedConfig.personSetupDefaults === 'object') ? loadedConfig.personSetupDefaults : {},
+          personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           display: {
             ...DEFAULT_STATE.config.display,
             ...(loadedConfig.display||{}),
@@ -1831,7 +1981,8 @@ function loadState() {
           ? { lastServiceDate: p.setupServiceMeta.lastServiceDate || null, lastCompletionByKey: p.setupServiceMeta.lastCompletionByKey || {} }
           : { lastServiceDate: null, lastCompletionByKey: {} },
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
-        shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {}
+        shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
+        checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {}
       };
     }
   } catch(e) { console.warn('State load failed:', e); }
@@ -2107,6 +2258,8 @@ function updateVocName(id, name) {
 function finalizeVocName(id) {
   // Auto-link any band slots whose typed name matches this vocalist
   const changed = autoLinkBandToVocalists();
+  // Apply mic preferences for this vocalist (only if no mic assigned yet)
+  resolveVocalistMics();
   saveState();
   if (changed) renderAll();
   else { renderStage(); if (state.viewMode === 'display') renderDisplayView(); }
@@ -2119,6 +2272,50 @@ function setVocMic(id, mic) {
       document.querySelector('.tab[data-tab="prefs"]')?.classList.contains('active')) {
     renderPrefEditor();
   }
+}
+
+/* ===================== VOCALIST MIC PREFERENCE AUTO-FALLBACK ===================== */
+// Resolves primary/secondary mic preferences for vocalists who have personMicPrefs set.
+// Only assigns a mic if the vocalist doesn't already have one manually set.
+// Won't override a mic that was already set this session.
+function resolveVocalistMics() {
+  const prefs = state.config.personMicPrefs || {};
+  const vocalists = state.vocalists.filter(v => v.name && v.name.trim());
+  if (!vocalists.length) return;
+  let changed = false;
+  // Count how many vocalists are already using each mic model
+  function countMicUsage(micName, excludeId) {
+    return vocalists.filter(v => v.id !== excludeId && v.micAssigned === micName).length;
+  }
+  function getMicTotal(micName) {
+    const m = state.inventory.find(x => x.name === micName);
+    return m ? m.total : 0;
+  }
+  for (const v of vocalists) {
+    // Only resolve if no mic assigned yet
+    if (v.micAssigned) continue;
+    const p = prefs[v.name];
+    if (!p) continue;
+    if (p.primary) {
+      const used = countMicUsage(p.primary, v.id);
+      const total = getMicTotal(p.primary);
+      if (total > 0 && used < total) {
+        v.micAssigned = p.primary;
+        changed = true;
+        continue;
+      }
+    }
+    if (p.secondary) {
+      const used = countMicUsage(p.secondary, v.id);
+      const total = getMicTotal(p.secondary);
+      if (total > 0 && used < total) {
+        v.micAssigned = p.secondary;
+        changed = true;
+      }
+    }
+  }
+  if (changed) { saveState(); }
+  return changed;
 }
 
 /* ===================== SHADOWS ===================== */
@@ -2193,7 +2390,31 @@ function renderVocalists() {
           </select>
           ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
           ${pref ? `<span class="pref-tag" title="Preference: ${esc(pref)}">★</span>` : ''}
-        </div>` : `
+        </div>
+        ${(() => {
+          const mp = (state.config.personMicPrefs && v.name) ? (state.config.personMicPrefs[v.name] || {}) : {};
+          const micOptsPref = [
+            '<option value="">—</option>',
+            ...state.inventory.map(m => {
+              const sel1 = m.name === mp.primary ? ' selected' : '';
+              const sel2 = m.name === mp.secondary ? ' selected' : '';
+              return `<option value="${esc(m.name)}"${sel1}>${esc(m.name)}</option>`;
+            })
+          ].join('');
+          const micOptsPref2 = [
+            '<option value="">—</option>',
+            ...state.inventory.map(m => {
+              const sel2 = m.name === mp.secondary ? ' selected' : '';
+              return `<option value="${esc(m.name)}"${sel2}>${esc(m.name)}</option>`;
+            })
+          ].join('');
+          return `<div class="voc-mic-pref-row">
+            <span class="voc-mic-pref-label">1st</span>
+            <select class="voc-mic-pref-sel" data-id="${v.id}" data-pref="primary">${micOptsPref}</select>
+            <span class="voc-mic-pref-label">2nd</span>
+            <select class="voc-mic-pref-sel" data-id="${v.id}" data-pref="secondary">${micOptsPref2}</select>
+          </div>`;
+        })()}` : `
         <div class="mic-pick" style="border-top:none;padding-top:6px;">
           ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
         </div>`}
@@ -2294,6 +2515,16 @@ function renderVocalists() {
   grid.querySelectorAll('[data-action="toggleWL"]').forEach(b => b.addEventListener('click', () => toggleVocField(b.dataset.id, 'isWL')));
   grid.querySelectorAll('.x-btn[data-shadow-id]').forEach(b => b.addEventListener('click', () => removeShadow(b.dataset.shadowId)));
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
+  grid.querySelectorAll('.voc-mic-pref-sel').forEach(sel => sel.addEventListener('change', e => {
+    const id = e.target.dataset.id;
+    const prefKey = e.target.dataset.pref; // 'primary' or 'secondary'
+    const v = state.vocalists.find(x => x.id === id);
+    if (!v || !v.name) return;
+    if (!state.config.personMicPrefs) state.config.personMicPrefs = {};
+    if (!state.config.personMicPrefs[v.name]) state.config.personMicPrefs[v.name] = {};
+    state.config.personMicPrefs[v.name][prefKey] = e.target.value;
+    saveState();
+  }));
   // Update count to reflect both vocalists and shadows
   const countEl = document.getElementById('vocCount');
   if (countEl) {
@@ -2797,7 +3028,7 @@ function clampStagePosition(x, y) {
   const edgeY = shape.edgeY != null ? shape.edgeY : 30;
   const backY = shape.backY != null ? shape.backY : 360;
   const minX = 40, maxX = 760;
-  const minY = edgeY + 10, maxY = backY - 12;
+  const minY = edgeY - 5, maxY = backY - 12;
   return {
     x: Math.max(minX, Math.min(maxX, x)),
     y: Math.max(minY, Math.min(maxY, y))
@@ -2992,6 +3223,7 @@ function wireSlotForPositionDrag(el, customKey) {
     if (!isStageEditing()) return;
     // Edit mode: start drag immediately. Suppress the HTML5 swap-drag for this instance.
     e.preventDefault();
+    e.stopPropagation(); // prevent backdrop from intercepting drag
     try { el.setPointerCapture(e.pointerId); pointerId = e.pointerId; } catch(_) {}
     startPositionDrag(e.clientX, e.clientY);
   }
@@ -5207,10 +5439,10 @@ async function pcoLoadPlans(serviceTypeId) {
 }
 function populatePlanSelect() {
   const sel = document.getElementById('pcoPlanSelect');
-  // Sort by sort_date descending so the next/most-recent plan is at the top
+  // Sort by sort_date ascending so the nearest upcoming plan is at the top
   const sorted = [...pcoPlans].sort((a, b) => {
     const da = a.sortDate || ''; const db = b.sortDate || '';
-    return db.localeCompare(da);
+    return da.localeCompare(db);
   });
   sel.innerHTML = '<option value="">— Plan —</option>' + sorted.map(p => {
     // Format date nicely if present
@@ -5305,6 +5537,7 @@ async function pcoPullPlan(planId) {
       itemsRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`);
     } catch (e) { console.warn('Items fetch failed:', e); }
     applyPCOPlanData(planRes.data, tmRes, itemsRes);
+    resolveVocalistMics();
     setPCOStatus('Plan loaded ✓','ok');
     document.getElementById('pcoPullBtn').innerHTML = 'Pull Plan';
     document.getElementById('pcoPullBtn').disabled = false;
@@ -6238,6 +6471,27 @@ function renderDisplayView() {
   // Re-wire drag-resize dividers after DOM is rebuilt (guard in wireDvDivider prevents double-binding)
   wireAllDvDividers();
 
+  // First-run tip banner
+  const dvViewEl = document.getElementById('displayView');
+  if (dvViewEl) {
+    let tipEl = dvViewEl.querySelector('.dv-first-run-tip');
+    if (!state.config.displayTipSeen) {
+      if (!tipEl) {
+        tipEl = document.createElement('div');
+        tipEl.className = 'dv-first-run-tip';
+        tipEl.innerHTML = 'Tip: drag the dividers to resize sections. Use Layout in the header to customize what&#39;s shown. <button title="Dismiss">×</button>';
+        tipEl.querySelector('button').addEventListener('click', () => {
+          state.config.displayTipSeen = true;
+          saveState();
+          tipEl.remove();
+        });
+        dvViewEl.appendChild(tipEl);
+      }
+    } else if (tipEl) {
+      tipEl.remove();
+    }
+  }
+
   // Wire display-view stage position scale slider each time the DOM is rebuilt
   wireHoverSlider(
     'dvStageScaleTab', 'dvStageScalePopup', 'dvStageScaleSlider', 'dvStageScaleValue',
@@ -6476,6 +6730,7 @@ function renderAll() {
   renderRunSheet();
   if (state.viewMode === 'display') renderDisplayView();
   if (state.viewMode === 'setup-items') renderSetupItemsView();
+  updateSetupProgressBadge();
 }
 
 /* ===================== SETUP ITEMS ===================== */
@@ -6768,17 +7023,41 @@ function renderAreaCard(area) {
 }
 
 function renderPersonCard(p) {
+  // Feature 3: auto-load person defaults if bucket is empty
+  maybeAutoLoadPersonDefaults(p);
+
   const bucket = ensureSetupBucket(p.key);
   const stats = setupCompletionStats(p.key);
   const items = bucket.items;
   const status = stats.status === 'empty' ? 'empty' : stats.status;
   const presetKey = (p.role === 'band') ? detectPresetKey(p.inst) : null;
-  const presetDef = presetKey ? SETUP_ITEM_PRESETS[presetKey] : null;
+  // Feature 2: use editable presets
+  const activePresets = getSetupPresets();
+  const presetDef = presetKey ? activePresets[presetKey] : null;
+
+  // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players
+  if (p.role === 'band' && p.inst) {
+    const assignedPersonId = p.inst.vocalistPlayer || null;
+    // Check if person's name matches any vocalist
+    const personNorm = normFullName(p.name);
+    const isAlsoVocalist = state.vocalists.some(v => v.name && normFullName(v.name) === personNorm);
+    const isMD = state.musicDirectorId && state.musicDirectorId === p.inst.id;
+    if (isAlsoVocalist || isMD) {
+      const BOOM = 'Boom mic stand';
+      const bucket = ensureSetupBucket(p.key);
+      const alreadyHasBoom = bucket.items.some(it => it.text === BOOM);
+      if (!alreadyHasBoom) {
+        bucket.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2,9), text: BOOM, doneThisService: false, scopeOneTime: false, autoAdded: true });
+      }
+    }
+  }
+
   const presetBlock = presetDef ? `
-  <div class="si-presets" data-person-key="${esc(p.key)}">
-    <div class="si-preset-label">Quick add:</div>
+  <div class="si-presets" data-person-key="${esc(p.key)}" data-preset-key="${esc(presetKey || '')}">
+    <div class="si-preset-label">Quick add: <button class="si-preset-edit-link" data-action="edit-presets" data-person-key="${esc(p.key)}" data-preset-key="${esc(presetKey || '')}" title="Edit presets for this instrument">Edit presets</button></div>
     ${presetDef.presets.map((pr, idx) => `<button class="si-preset-btn" data-preset-key="${esc(presetKey)}" data-preset-idx="${idx}" data-person-key="${esc(p.key)}">${esc(pr.name)}</button>`).join('')}
     ${items.length === 0 ? `<button class="si-preset-btn si-preset-default" data-preset-defaults="${esc(presetKey)}" data-person-key="${esc(p.key)}">+ Default setup</button>` : ''}
+    <div class="si-preset-editor-wrap" id="pe_wrap_${esc(p.key)}" style="display:none"></div>
   </div>` : '';
 
   // Detect sibling fallback (only for band roles, when there are no items here)
@@ -6811,7 +7090,7 @@ function renderPersonCard(p) {
         ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
         <div class="si-actions">
           <button class="si-action-btn" data-action="apply-template" data-person-key="${esc(p.key)}" title="Apply template">+ Template</button>
-          ${items.length > 0 ? `<button class="si-action-btn" data-action="save-template" data-person-key="${esc(p.key)}" title="Save these items as a reusable template">Save…</button>` : ''}
+          ${items.length > 0 ? `<button class="si-action-btn" data-action="save-options" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-inst-label="${esc(p.instLabel||'')}" data-preset-key="${esc(presetKey||'')}" title="Save options">Save…</button>` : ''}
         </div>
       </div>
       ${fallbackBlock}
@@ -6838,6 +7117,7 @@ function renderItemRow(personKey, item) {
       <span class="si-item-text" data-action="edit-item">${esc(item.text)}</span>
       <div class="si-item-flags">
         ${item.scopeOneTime ? `<span class="si-item-flag one-time" title="Only for this service — won't be saved for future services">1×</span>` : ''}
+        ${item.autoAdded ? `<span class="si-item-flag auto-added" title="Auto-added: this person is also a vocalist or Music Director">🎤 auto</span>` : ''}
         ${doneLast ? `<span class="si-item-flag last-done" title="This item was completed in the previous service. Re-verify, but it may already be done.">✓ last</span>` : ''}
       </div>
       <button class="si-item-remove" data-action="remove-item" title="Remove item">✕</button>
@@ -6940,6 +7220,29 @@ function wireSetupItemsContent() {
     btn.addEventListener('click', e => {
       const wrap = e.target.closest('.si-fallback');
       if (wrap) wrap.remove();
+    });
+  });
+
+  // Feature 2: Edit presets inline popup
+  root.querySelectorAll('[data-action="edit-presets"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const pKey = btn.dataset.presetKey;
+      const personKey = btn.dataset.personKey;
+      const wrapId = 'pe_wrap_' + personKey;
+      const wrap = document.getElementById(wrapId);
+      if (!wrap) return;
+      if (wrap.style.display !== 'none') { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      renderPresetEditor(wrap, pKey);
+    });
+  });
+
+  // Feature 3: Save options menu
+  root.querySelectorAll('[data-action="save-options"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openSaveOptionsMenu(btn);
     });
   });
 
@@ -7219,7 +7522,480 @@ function saveCurrentItemsAsTemplate(personKey, name, contextTag) {
   toast(`Saved "${name}" as template ✓`, 'success');
 }
 
+// =====================================================================
+// Feature 2: Preset editor popup renderer
+// =====================================================================
+function renderPresetEditor(wrap, pKey) {
+  const activePresets = getSetupPresets();
+  const presetDef = pKey ? activePresets[pKey] : null;
+  const builtinDef = pKey ? SETUP_ITEM_PRESETS[pKey] : null;
+  const presetNames = presetDef ? presetDef.presets.map(p => p.name) : [];
+
+  wrap.innerHTML = `
+    <div class="preset-editor-popup">
+      <div class="pe-row" id="pe_chips_${esc(pKey)}">
+        ${presetNames.map((name, idx) => `
+          <span class="pe-chip">
+            ${esc(name)}
+            <button data-pe-remove="${idx}" title="Remove">✕</button>
+          </span>`).join('')}
+        ${presetNames.length === 0 ? '<span style="font-size:11px;color:var(--text-faint)">No presets yet</span>' : ''}
+      </div>
+      <div class="pe-add-row">
+        <input class="pe-input" id="pe_input_${esc(pKey)}" placeholder="Preset name…" />
+        <button class="pe-add-btn" id="pe_add_${esc(pKey)}">Add</button>
+      </div>
+      <button class="pe-reset" id="pe_reset_${esc(pKey)}">Reset to defaults</button>
+    </div>`;
+
+  // Remove preset
+  wrap.querySelectorAll('[data-pe-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.peRemove, 10);
+      const current = getSetupPresets();
+      const def = current[pKey];
+      if (!def) return;
+      if (!state.config.setupPresets) {
+        // Clone from built-in first
+        state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
+      }
+      state.config.setupPresets[pKey].presets.splice(idx, 1);
+      saveState();
+      renderPresetEditor(wrap, pKey);
+    });
+  });
+
+  // Add preset
+  const addBtn = wrap.querySelector(`#pe_add_${CSS.escape(pKey)}`);
+  const input = wrap.querySelector(`#pe_input_${CSS.escape(pKey)}`);
+  const doAdd = () => {
+    const val = input ? input.value.trim() : '';
+    if (!val) return;
+    if (!state.config.setupPresets) {
+      state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
+    }
+    if (!state.config.setupPresets[pKey]) {
+      const bdef = SETUP_ITEM_PRESETS[pKey];
+      state.config.setupPresets[pKey] = bdef ? JSON.parse(JSON.stringify(bdef)) : { label: pKey, defaults: [], presets: [] };
+    }
+    state.config.setupPresets[pKey].presets.push({ name: val, items: [val] });
+    saveState();
+    if (input) input.value = '';
+    renderPresetEditor(wrap, pKey);
+  };
+  if (addBtn) addBtn.addEventListener('click', doAdd);
+  if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+
+  // Reset
+  const resetBtn = wrap.querySelector(`#pe_reset_${CSS.escape(pKey)}`);
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (!state.config.setupPresets) return;
+      delete state.config.setupPresets[pKey];
+      if (Object.keys(state.config.setupPresets).length === 0) state.config.setupPresets = null;
+      saveState();
+      renderPresetEditor(wrap, pKey);
+      toast('Presets reset to defaults', 'success');
+    });
+  }
+}
+
+// =====================================================================
+// Feature 3: Save options menu (Save as default for person / for instrument)
+// =====================================================================
+function openSaveOptionsMenu(btn) {
+  // Remove any existing menu
+  document.querySelectorAll('.si-save-menu').forEach(m => m.remove());
+
+  const personKey = btn.dataset.personKey;
+  const personName = btn.dataset.personName || '';
+  const instLabel = btn.dataset.instLabel || '';
+  const presetKey = btn.dataset.presetKey || '';
+  const personCard = btn.closest('.si-person');
+  const instTag = personCard ? (personCard.dataset.personInstTag || '') : '';
+  const personRole = personCard ? (personCard.dataset.personRole || '') : '';
+
+  const bucket = state.setupItems[personKey];
+  if (!bucket || !bucket.items.length) {
+    toast('Add some items first', 'warn');
+    return;
+  }
+
+  const menu = document.createElement('div');
+  menu.className = 'si-save-menu';
+
+  const showPersonSave = personName && instLabel;
+  const showInstSave = presetKey;
+  const showTemplateSave = true;
+
+  menu.innerHTML = `
+    ${showPersonSave ? `
+      <button class="si-save-menu-option" data-save-action="person">
+        <span class="opt-title">Save as default for ${esc(personName)} on ${esc(instLabel)}</span>
+        <span class="opt-sub">Auto-loads next time ${esc(personName)} plays ${esc(instLabel)}</span>
+      </button>
+      <div class="si-save-menu-sep"></div>` : ''}
+    ${showInstSave ? `
+      <button class="si-save-menu-option" data-save-action="instrument">
+        <span class="opt-title">Save as default for ${esc(instLabel || presetKey)}</span>
+        <span class="opt-sub">Replaces quick-add preset list for this instrument</span>
+      </button>
+      <div class="si-save-menu-sep"></div>` : ''}
+    <button class="si-save-menu-option" data-save-action="template">
+      <span class="opt-title">Save as reusable template</span>
+      <span class="opt-sub">Available for any musician via + Template</span>
+    </button>`;
+
+  document.body.appendChild(menu);
+  // Position like the template menu
+  const r = btn.getBoundingClientRect();
+  const menuWidth = 280;
+  let left = r.right - menuWidth;
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  menu.style.left = left + 'px';
+  menu.style.top = (r.bottom + 6) + 'px';
+  menu.style.minWidth = menuWidth + 'px';
+
+  // Handlers
+  menu.querySelectorAll('[data-save-action]').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const action = opt.dataset.saveAction;
+      menu.remove();
+      if (action === 'person') {
+        // Feature 3: save person defaults
+        const instKey = presetKey || instLabel.toLowerCase().replace(/\s+/g,'_');
+        if (!state.config.personSetupDefaults) state.config.personSetupDefaults = {};
+        const nameKey = normFullName(personName);
+        if (!state.config.personSetupDefaults[nameKey]) state.config.personSetupDefaults[nameKey] = {};
+        state.config.personSetupDefaults[nameKey][instKey] = bucket.items.map(it => it.text);
+        saveState();
+        toast(`Saved defaults for ${personName} on ${instLabel} ✓`, 'success');
+      } else if (action === 'instrument') {
+        // Feature 2: save as instrument default (updates setupPresets)
+        if (!state.config.setupPresets) {
+          state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
+        }
+        if (!state.config.setupPresets[presetKey]) {
+          const bdef = SETUP_ITEM_PRESETS[presetKey];
+          state.config.setupPresets[presetKey] = bdef ? JSON.parse(JSON.stringify(bdef)) : { label: presetKey, defaults: [], presets: [] };
+        }
+        state.config.setupPresets[presetKey].defaults = bucket.items.map(it => it.text);
+        state.config.setupPresets[presetKey].presets = [{ name: 'Saved default', items: bucket.items.map(it => it.text) }];
+        saveState();
+        toast(`Saved as default for ${instLabel || presetKey} ✓`, 'success');
+      } else if (action === 'template') {
+        // Existing template save — open template name input
+        const defaultName = personName ? `${personName} default` : 'Untitled template';
+        const name = window.prompt('Template name:', defaultName);
+        if (name && name.trim()) {
+          saveCurrentItemsAsTemplate(personKey, name.trim(), instTag || personRole);
+          toast(`Saved "${name.trim()}" as template ✓`, 'success');
+        }
+      }
+    });
+  });
+
+  // Click-outside closes
+  setTimeout(() => {
+    const onDoc = (ev) => {
+      if (!menu.contains(ev.target)) {
+        menu.remove();
+        document.removeEventListener('click', onDoc);
+      }
+    };
+    document.addEventListener('click', onDoc);
+  }, 50);
+}
+
+// =====================================================================
+// Feature 3: Auto-load person defaults when rendering
+// This is called during renderPersonCard — the bucket is populated from
+// personSetupDefaults if the person has no items yet.
+// =====================================================================
+function maybeAutoLoadPersonDefaults(p) {
+  if (!p || !p.name || p.role !== 'band' || !p.inst) return;
+  const bucket = state.setupItems[p.key];
+  // Only auto-load if bucket is empty (no items set yet)
+  if (bucket && bucket.items && bucket.items.length > 0) return;
+  const pDefs = state.config.personSetupDefaults;
+  if (!pDefs) return;
+  const nameKey = normFullName(p.name);
+  const personDefs = pDefs[nameKey];
+  if (!personDefs) return;
+  // Find matching instKey
+  const presetKey = detectPresetKey(p.inst);
+  const instKey = presetKey || (p.inst.label || '').toLowerCase().replace(/\s+/g,'_');
+  const defaults = personDefs[instKey];
+  if (!defaults || !defaults.length) return;
+  // Auto-populate
+  const target = ensureSetupBucket(p.key);
+  if (target.items.length > 0) return; // check again after ensure
+  defaults.forEach(text => {
+    target.items.push(newSetupItem(text, false));
+  });
+  // Don't saveState here to avoid re-render loop; caller saves after render
+}
+
 // ===== View mode switching =====
+
+
+/* ===================== SETUP CHECKLIST VIEW ===================== */
+
+// Session bypass flag — bypasses lock screen once per session without persisting
+let sessionSetupBypass = false;
+
+// Collect all setup items from vocalists and band slots
+function collectChecklistItems() {
+  const sections = [];
+
+  // --- Vocalists section ---
+  const vocItems = [];
+  state.vocalists.forEach(v => {
+    const name = (v.name || '').trim();
+    if (!name) return;
+    const items = (v.setupItems && Array.isArray(v.setupItems)) ? v.setupItems : [];
+    items.forEach((itemText, idx) => {
+      vocItems.push({ personName: name, itemText, key: name + '|' + itemText + '|v' + idx });
+    });
+  });
+  if (vocItems.length > 0) {
+    sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems });
+  }
+
+  // --- Band section ---
+  const bandItems = [];
+  state.instruments.forEach(inst => {
+    const playerVoc = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
+    const personName = playerVoc ? (playerVoc.name || '').trim() : (inst.assignedTo || '').trim();
+    const label = inst.label || '';
+    const items = (inst.setupItems && Array.isArray(inst.setupItems)) ? inst.setupItems : [];
+    items.forEach((itemText, idx) => {
+      const displayName = personName ? (label + ' — ' + personName) : label;
+      bandItems.push({ personName: displayName, itemText, key: label + '|' + (personName || '') + '|' + itemText + '|b' + idx });
+    });
+  });
+  if (bandItems.length > 0) {
+    sections.push({ title: '🎸 BAND', key: 'band', items: bandItems });
+  }
+
+  return sections;
+}
+
+// Get current planKey
+function getChecklistPlanKey() {
+  return state.pcoConfig && state.pcoConfig.selectedPlanId
+    ? state.pcoConfig.selectedPlanId
+    : (state.service && state.service.date ? state.service.date : 'default');
+}
+
+// Get or create checklist state for current plan
+function getChecklistState() {
+  const planKey = getChecklistPlanKey();
+  if (!state.checklistState) state.checklistState = {};
+  if (!state.checklistState[planKey]) state.checklistState[planKey] = {};
+  return state.checklistState[planKey];
+}
+
+// Update badge on "Set Up" nav button
+function updateSetupProgressBadge() {
+  const badge = document.getElementById('setupNavBadge');
+  if (!badge) return;
+  const sections = collectChecklistItems();
+  let total = 0, done = 0;
+  const cs = getChecklistState();
+  sections.forEach(sec => {
+    sec.items.forEach(it => {
+      total++;
+      if (cs[it.key]) done++;
+    });
+  });
+  if (total === 0) {
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = '';
+  const remaining = total - done;
+  if (remaining === 0) {
+    badge.style.background = '#7a9960';
+    badge.textContent = '✓';
+  } else {
+    badge.style.background = '#e55';
+    badge.textContent = remaining;
+  }
+}
+
+// Render the setup checklist into #setupChecklistView
+function renderSetupChecklist() {
+  const container = document.getElementById('setupChecklistView');
+  if (!container) return;
+
+  const sections = collectChecklistItems();
+  const cs = getChecklistState();
+  const planKey = getChecklistPlanKey();
+
+  let total = 0, done = 0;
+  sections.forEach(sec => sec.items.forEach(it => { total++; if (cs[it.key]) done++; }));
+
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  const dateStr = state.service && state.service.date
+    ? new Date(state.service.date + 'T00:00').toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' })
+    : '';
+  const titleText = (state.service && state.service.name ? state.service.name : 'Service') + (dateStr ? ' · ' + dateStr : '');
+
+  let sectionsHtml = '';
+  if (sections.length === 0) {
+    sectionsHtml = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">No setup items configured.<br>Add setup items to vocalists or band positions.</div>';
+  } else {
+    sections.forEach(sec => {
+      const itemsHtml = sec.items.map(it => {
+        const isDone = !!cs[it.key];
+        return `<div class="scv-item${isDone ? ' done' : ''}" data-item-key="${esc(it.key)}">
+          <div class="scv-checkbox">${isDone ? '✓' : ''}</div>
+          <span class="scv-item-person">${esc(it.personName)}</span>
+          <span class="scv-item-dash">—</span>
+          <span class="scv-item-text">${esc(it.itemText)}</span>
+        </div>`;
+      }).join('');
+      sectionsHtml += `<div class="scv-section">
+        <div class="scv-section-title">${sec.title}</div>
+        ${itemsHtml}
+      </div>`;
+    });
+  }
+
+  container.innerHTML = `
+    <div class="scv-header">
+      <button class="scv-back-btn" id="scvBackBtn">← Back to assignments</button>
+      <div class="scv-title">Setup · ${esc(titleText)}</div>
+    </div>
+    <div class="scv-progress-bar-wrap">
+      <div class="scv-progress-track"><div class="scv-progress-fill" style="width:${pct}%"></div></div>
+      <div class="scv-progress-label">${done} / ${total} items done</div>
+    </div>
+    <div class="scv-body">${sectionsHtml}</div>
+    <div class="scv-footer">
+      <button class="scv-btn" id="scvResetBtn">Reset all</button>
+      <button class="scv-btn primary" id="scvMarkAllBtn">Mark all done</button>
+    </div>
+  `;
+
+  // Wire checkbox clicks
+  container.querySelectorAll('.scv-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const k = item.dataset.itemKey;
+      cs[k] = !cs[k];
+      saveState();
+      updateSetupProgressBadge();
+      renderSetupChecklist();
+    });
+  });
+
+  // Back button
+  const scvBack = container.querySelector('#scvBackBtn');
+  if (scvBack) scvBack.addEventListener('click', exitSetupChecklistView);
+
+  // Mark all done
+  const markAll = container.querySelector('#scvMarkAllBtn');
+  if (markAll) markAll.addEventListener('click', () => {
+    sections.forEach(sec => sec.items.forEach(it => { cs[it.key] = true; }));
+    saveState();
+    updateSetupProgressBadge();
+    renderSetupChecklist();
+  });
+
+  // Reset all
+  const resetAll = container.querySelector('#scvResetBtn');
+  if (resetAll) resetAll.addEventListener('click', () => {
+    sections.forEach(sec => sec.items.forEach(it => { delete cs[it.key]; }));
+    saveState();
+    updateSetupProgressBadge();
+    renderSetupChecklist();
+  });
+}
+
+function openSetupChecklistView() {
+  const container = document.getElementById('setupChecklistView');
+  if (!container) return;
+  // Show checklist, hide main workspace
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.position = 'fixed';
+  container.style.inset = '0';
+  container.style.zIndex = '95';
+  container.style.background = 'var(--bg)';
+  container.style.color = 'var(--text)';
+  document.body.classList.add('setup-items-mode');
+  document.body.classList.remove('display-mode');
+  state.viewMode = 'setup-checklist';
+  saveState();
+  renderSetupChecklist();
+}
+
+function exitSetupChecklistView() {
+  const container = document.getElementById('setupChecklistView');
+  if (container) container.style.display = 'none';
+  document.body.classList.remove('setup-items-mode');
+  state.viewMode = 'setup';
+  saveState();
+  renderAll();
+}
+
+// Check if all setup items are done
+function isSetupComplete() {
+  const sections = collectChecklistItems();
+  if (sections.length === 0) return true; // no items = nothing to check
+  const cs = getChecklistState();
+  let total = 0, done = 0;
+  sections.forEach(sec => sec.items.forEach(it => { total++; if (cs[it.key]) done++; }));
+  return total === 0 || done === total;
+}
+
+// Show lock screen overlay on display view
+function showSetupLockScreen() {
+  const lock = document.getElementById('setupLockScreen');
+  if (!lock) return;
+
+  const sections = collectChecklistItems();
+  const cs = getChecklistState();
+  let total = 0, done = 0;
+  const unchecked = [];
+  sections.forEach(sec => sec.items.forEach(it => {
+    total++;
+    if (cs[it.key]) done++;
+    else unchecked.push(it.personName + ' — ' + it.itemText);
+  }));
+
+  const remaining = total - done;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  const subtitle = document.getElementById('lockSubtitle');
+  if (subtitle) subtitle.textContent = remaining + ' item' + (remaining === 1 ? '' : 's') + ' still need to be checked off before going live.';
+
+  const fill = document.getElementById('lockProgressFill');
+  if (fill) fill.style.width = pct + '%';
+
+  const list = document.getElementById('lockItemsList');
+  if (list) list.innerHTML = unchecked.slice(0, 20).map(t => `<div class="lock-item-row">${esc(t)}</div>`).join('');
+
+  lock.style.display = 'flex';
+
+  const goSetup = document.getElementById('lockGoSetupBtn');
+  if (goSetup) {
+    goSetup.onclick = () => {
+      lock.style.display = 'none';
+      exitDisplayMode();
+      openSetupChecklistView();
+    };
+  }
+  const override = document.getElementById('lockOverrideBtn');
+  if (override) {
+    override.onclick = () => {
+      sessionSetupBypass = true;
+      lock.style.display = 'none';
+    };
+  }
+}
 
 function enterSetupItemsView() {
   if (!state.config.enableSetupItems) return;
@@ -7238,7 +8014,17 @@ function exitSetupItemsView() {
 }
 
 /* ===================== FIRST-RUN WIZARD ===================== */
-const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'display-design', 'setup-intro'];
+const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'setup-intro'];
+
+const SETUP_PRESETS = {
+  'drums':   ['Needs drum tech', 'Brings own kit', 'Kick click needed', 'Needs DI for kick', 'In-ear monitor only', 'Needs headphone amp'],
+  'bass':    ['Brings own pedalboard', 'Runs DI direct', 'Needs amp', 'Runs stereo', 'Brings own bass', 'Needs tuner DI'],
+  'eg':      ['Brings own pedalboard', 'Needs amp', 'Runs stereo L/R', 'Brings own guitar', 'Needs tuner', 'Needs MIDI'],
+  'ag':      ['Needs DI box', 'Brings own guitar', 'Runs stereo', 'Needs capo', 'Needs direct box'],
+  'keys':    ['Brings own keyboard', 'Needs MIDI cable', 'Runs stereo', 'Needs sustain pedal', 'Needs DI box', 'Uses Nord', 'Uses Ableton'],
+  'vocals':  ['Needs lyric stand', 'Uses in-ear only', 'Needs wedge monitor', 'Needs confidence monitor'],
+  'default': ['Needs DI box', 'Runs stereo', 'Brings own gear', 'Needs cable snake', 'Needs power strip'],
+};
 let wizardData = null;
 let wizardStepIdx = 0;
 let wizardBrandSnapshot = null;
@@ -8224,25 +9010,13 @@ function renderWizardStepBody(step) {
             </div>
           </div>
 
-          <div style="margin-top:18px">
-            <button class="wiz-draw-toggle${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? ' active' : ''}" id="wizDrawToggle">✏️ ${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'Custom shape active — click to edit' : 'Draw custom stage shape'}</button>
-          </div>
-          <div id="wizDrawWrap" style="display:${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'block' : 'none'};margin-top:12px">
-            <div class="stage-draw-hint">Add: click empty space · Move: drag a point · Erase: select erase tool then click a point · Double-click to save shape</div>
-            <div class="draw-toolbar" id="wizDrawToolbar">
-              <button class="draw-tool-btn active" data-wdtool="move" id="wdToolMove">↖ Move</button>
-              <button class="draw-tool-btn" data-wdtool="add" id="wdToolAdd">✚ Add</button>
-              <button class="draw-tool-btn" data-wdtool="erase" id="wdToolErase">✕ Erase</button>
-              <button class="draw-tool-btn" data-wdtool="smooth" id="wdToolSmooth">◡ Smooth</button>
-              <div class="draw-tool-sep"></div>
-              <button class="draw-tool-btn active" id="wdToolGrid">⊞ Grid</button>
-              <button class="draw-tool-btn" id="wdToolSnap">⊡ Snap</button>
-              <div class="draw-tool-sep"></div>
-              <button class="draw-tool-btn" id="wizDrawUndo">↩ Undo</button>
-              <button class="draw-tool-btn" id="wizDrawClear">⊗ Clear</button>
-              <span class="wiz-draw-status" id="wizDrawStatus" style="font-size:11px;color:var(--text-faint);margin-left:auto"></span>
-            </div>
-            <svg id="wizStageDraw" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);touch-action:none;display:block;"></svg>
+          <div style="margin-top:18px" id="wizDrawBtnWrap">
+            ${(function(){
+              if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
+                return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button class="wiz-draw-toggle active" id="wizDrawOpenBtn">&#9997; Custom shape active (' + wizardData.customStagePoints.length + ' points) &middot; click to edit</button><button class="btn ghost" id="wizDrawClearSaved" style="font-size:11px;padding:3px 9px;">Remove custom shape</button></div>';
+              }
+              return '<button class="wiz-draw-toggle" id="wizDrawOpenBtn">&#9997; Draw custom stage shape</button>';
+            })()}
           </div>
 
           <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Vocal arrangement</div>
@@ -8434,6 +9208,12 @@ function renderWizardStepBody(step) {
     }
     case 'setup-intro': {
       const useSetup = wizardData.useSetupChecklist !== false;
+      // Determine instrument key for presets (use first selected instrument, fallback to 'default')
+      const firstInst = wizardData.instruments && wizardData.instruments.find(i => i.selected !== false);
+      const instKey = firstInst ? (firstInst.key || 'default').toLowerCase() : 'default';
+      const presetKey = SETUP_PRESETS[instKey] ? instKey : 'default';
+      const chips = SETUP_PRESETS[presetKey] || SETUP_PRESETS['default'];
+      const setupItems = wizardData.setupItems || [];
       return `
         <div>
           <div class="wiz-q-title">Setup checklist</div>
@@ -8454,7 +9234,21 @@ function renderWizardStepBody(step) {
             <div class="wiz-setup-intro-card">
               <div class="wiz-setup-intro-icon">📋</div>
               <div class="wiz-setup-intro-text">
-                <strong>Great choice.</strong> After the wizard, click <strong>✓ Items</strong> in the header to start adding setup needs. Items auto-save per person + instrument and are remembered every week. Drag in templates to share common setups across people.
+                <strong>Great choice.</strong> After the wizard, click <strong>✓ Items</strong> in the header to start adding setup needs. Items auto-save per person + instrument and are remembered every week.
+              </div>
+            </div>
+            <div class="setup-presets-wrap" id="wizSetupPresetsWrap">
+              <div class="setup-preset-label">QUICK ADD</div>
+              <div class="setup-preset-chips" id="setupPresetChips">
+                ${chips.map(chip => `<button class="setup-preset-chip${setupItems.includes(chip) ? ' selected' : ''}" data-chip="${chip.replace(/"/g,'&quot;')}">${chip}</button>`).join('')}
+              </div>
+              <div class="setup-items-label">SETUP ITEMS</div>
+              <ul class="setup-items-list" id="setupItemsList">
+                ${setupItems.map((item, idx) => `<li class="setup-item-row"><span class="setup-item-text">${item}</span><button class="setup-item-del" data-del-idx="${idx}" title="Remove">✕</button></li>`).join('')}
+              </ul>
+              <div class="setup-add-custom">
+                <input type="text" id="setupCustomInput" placeholder="Add custom item..." class="setup-custom-input">
+                <button class="setup-custom-add-btn" id="setupCustomAddBtn">+ Add</button>
               </div>
             </div>
           ` : `
@@ -8684,218 +9478,366 @@ function wireWizardStep(step) {
       renderWizardStep();
     }));
 
-    // Custom stage drawing tool
+    // Custom stage drawing tool — full-screen modal with pen-tool Bezier system
     (function() {
-      let wizDrawPoints = (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3)
-        ? wizardData.customStagePoints.slice().map(p => ({x: p.x, y: p.y}))
-        : [];
-      const toggleBtn = body.querySelector('#wizDrawToggle');
-      const drawWrap = body.querySelector('#wizDrawWrap');
-      const drawSvg = body.querySelector('#wizStageDraw');
-      const clearBtn = body.querySelector('#wizDrawClear');
-      const undoBtn = body.querySelector('#wizDrawUndo');
-      const wdToolGrid = body.querySelector('#wdToolGrid');
-      const wdToolSnap = body.querySelector('#wdToolSnap');
-      let draggingPtIdx = -1;
-      let dragStarted = false;
-      let wdCurrentTool = 'move';
-      let wdGridEnabled = true;
-      let wdSnapEnabled = false;
-      let wdSmooth = false;
+      const openBtn = body.querySelector('#wizDrawOpenBtn');
+      const clearSavedBtn = body.querySelector('#wizDrawClearSaved');
 
-      function wdSnapPoint(x, y) {
-        if (!wdSnapEnabled) return { x: Math.round(x), y: Math.round(y) };
-        const gx = 80, gy = 38;
-        return { x: Math.round(x / gx) * gx, y: Math.round(y / gy) * gy };
-      }
-
-      function wdCatmullRomToBezier(pts, closed) {
-        if (pts.length < 2) return '';
-        const tension = 0.4;
-        const n = pts.length;
-        const get = i => pts[((i % n) + n) % n];
-        let d = `M ${pts[0].x} ${pts[0].y}`;
-        const count = closed ? n : n - 1;
-        for (let i = 0; i < count; i++) {
-          const p0 = get(i - 1);
-          const p1 = get(i);
-          const p2 = get(i + 1);
-          const p3 = get(i + 2);
-          const cp1x = p1.x + (p2.x - p0.x) * tension;
-          const cp1y = p1.y + (p2.y - p0.y) * tension;
-          const cp2x = p2.x - (p3.x - p1.x) * tension;
-          const cp2y = p2.y - (p3.y - p1.y) * tension;
-          d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
-        }
-        if (closed) d += ' Z';
-        return d;
-      }
-
-      function wdUpdateToolbar() {
-        if (!drawSvg) return;
-        const cursors = { move: 'default', add: 'crosshair', erase: 'cell' };
-        drawSvg.style.cursor = cursors[wdCurrentTool] || 'default';
-        body.querySelectorAll('[data-wdtool]').forEach(btn => {
-          const t = btn.dataset.wdtool;
-          if (t === 'smooth') btn.classList.toggle('active', wdSmooth);
-          else btn.classList.toggle('active', t === wdCurrentTool);
+      // Wire "Remove custom shape" button if present
+      if (clearSavedBtn) {
+        clearSavedBtn.addEventListener('click', () => {
+          wizardData.customStagePoints = null;
+          renderWizardStep();
         });
-        if (wdToolGrid) wdToolGrid.classList.toggle('active', wdGridEnabled);
-        if (wdToolSnap) wdToolSnap.classList.toggle('active', wdSnapEnabled);
       }
 
-      function wizSvgCoords(e, svg) {
-        const r = svg.getBoundingClientRect();
-        return {
-          x: (e.clientX - r.left) / r.width * 800,
-          y: (e.clientY - r.top) / r.height * 380
-        };
-      }
+      function openStageDrawModal() {
+        // Remove any existing modal
+        const existing = document.getElementById('stageDrawModal');
+        if (existing) existing.remove();
 
-      function renderWizDraw() {
-        if (!drawSvg) return;
-        const pts = wizDrawPoints;
-        let html = '';
-        // Grid
-        if (wdGridEnabled) {
-          html += '<g class="draw-grid">';
-          for (let x = 0; x <= 800; x += 80) html += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
-          for (let y = 0; y <= 380; y += 38) html += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
-          html += '</g>';
+        // State for this modal session
+        let wdPoints = (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3)
+          ? wizardData.customStagePoints.slice().map(p => ({ x: p.x, y: p.y, cp1x: p.cp1x !== undefined ? p.cp1x : p.x, cp1y: p.cp1y !== undefined ? p.cp1y : p.y, cp2x: p.cp2x !== undefined ? p.cp2x : p.x, cp2y: p.cp2y !== undefined ? p.cp2y : p.y }))
+          : [];
+        let wdClosed = false;
+        let wdHistory = [];
+        let wdCurrentTool = 'add';
+        let wdGridEnabled = true;
+        let wdSnapEnabled = false;
+        let wdMouseX = 0, wdMouseY = 0;
+        let wdDragging = null; // { type: 'anchor'|'cp1'|'cp2', idx }
+        let wdDragMoved = false;
+        let wdPendingDragPt = null; // track pointer-down on empty space for drag-to-create-handle
+
+        const modal = document.createElement('div');
+        modal.id = 'stageDrawModal';
+        modal.innerHTML = `
+          <div class="sdm-panel">
+            <div class="sdm-header">
+              <span class="sdm-title">Draw Stage Shape</span>
+              <div class="draw-toolbar" style="margin:0;flex:1;justify-content:flex-start;">
+                <button class="draw-tool-btn" data-wdtool="move" id="sdmToolMove">&#x2196; Move</button>
+                <button class="draw-tool-btn active" data-wdtool="add" id="sdmToolAdd">&#x271A; Add</button>
+                <button class="draw-tool-btn" data-wdtool="erase" id="sdmToolErase">&#x2715; Erase</button>
+                <div class="draw-tool-sep"></div>
+                <button class="draw-tool-btn active" id="sdmToolGrid">&#x229E; Grid</button>
+                <button class="draw-tool-btn" id="sdmToolSnap">&#x22A1; Snap</button>
+                <div class="draw-tool-sep"></div>
+                <button class="draw-tool-btn" id="sdmUndo">&#x21A9; Undo</button>
+                <button class="draw-tool-btn" id="sdmClear">&#x2297; Clear</button>
+                <span id="sdmStatus" style="font-size:11px;color:var(--text-faint);margin-left:auto;white-space:nowrap;"></span>
+              </div>
+              <button class="sdm-close" id="sdmClose" title="Close">&#x2715;</button>
+            </div>
+            <div class="sdm-body">
+              <div class="stage-draw-hint" style="margin-bottom:6px;">Click to add points &middot; Click+drag to create curves &middot; Click first point to close shape</div>
+              <svg id="sdmSvg" viewBox="0 0 800 380" style="flex:1;width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);touch-action:none;display:block;min-height:0;" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+            <div class="sdm-footer">
+              <button class="btn ghost" id="sdmCancelBtn">Cancel</button>
+              <button class="btn" id="sdmDoneBtn" style="background:var(--accent);border-color:var(--accent);color:#000;">Done</button>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+
+        const svg = modal.querySelector('#sdmSvg');
+        const statusEl = modal.querySelector('#sdmStatus');
+        const toolGrid = modal.querySelector('#sdmToolGrid');
+        const toolSnap = modal.querySelector('#sdmToolSnap');
+
+        function svgCoords(e) {
+          const r = svg.getBoundingClientRect();
+          return {
+            x: (e.clientX - r.left) / r.width * 800,
+            y: (e.clientY - r.top) / r.height * 380
+          };
         }
-        // Orientation labels
-        const lblStyle = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
-        html += `<text x="400" y="18" text-anchor="middle" style="${lblStyle}">&#x2191; AUDIENCE</text>`;
-        html += `<text x="16" y="195" text-anchor="start" style="${lblStyle}">SL &#x2192;</text>`;
-        html += `<text x="784" y="195" text-anchor="end" style="${lblStyle}">&#x2190; SR</text>`;
-        html += `<text x="400" y="370" text-anchor="middle" style="${lblStyle}">BACK &#x2193;</text>`;
-        // Shape
-        if (pts.length >= 3) {
-          if (wdSmooth) {
-            const d = wdCatmullRomToBezier(pts, true);
-            html += `<path d="${d}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
-          } else {
-            html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+
+        function snapPt(x, y) {
+          x = Math.max(0, Math.min(800, x));
+          y = Math.max(0, Math.min(380, y));
+          if (!wdSnapEnabled) return { x: Math.round(x), y: Math.round(y) };
+          const gx = 80, gy = 38;
+          return { x: Math.round(x / gx) * gx, y: Math.round(y / gy) * gy };
+        }
+
+        function pushHistory() {
+          wdHistory.push({ pts: JSON.parse(JSON.stringify(wdPoints)), closed: wdClosed });
+          if (wdHistory.length > 50) wdHistory.shift();
+        }
+
+        function buildPath() {
+          const pts = wdPoints;
+          if (pts.length === 0) return '';
+          if (pts.length === 1) return '';
+          let d = `M ${pts[0].x} ${pts[0].y}`;
+          const count = wdClosed ? pts.length : pts.length - 1;
+          for (let i = 0; i < count; i++) {
+            const p1 = pts[i];
+            const p2 = pts[(i + 1) % pts.length];
+            d += ` C ${p1.cp2x} ${p1.cp2y} ${p2.cp1x} ${p2.cp1y} ${p2.x} ${p2.y}`;
           }
-        } else if (pts.length >= 2) {
-          html += `<polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="rgba(212,161,71,0.6)" stroke-width="2" stroke-dasharray="6 3"/>`;
+          if (wdClosed) d += ' Z';
+          return d;
         }
-        if (pts.length >= 2 && pts.length < 3) {
-          const last = pts[pts.length-1], first = pts[0];
-          html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
-        }
-        // Points
-        pts.forEach((p, i) => {
-          html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:${wdCurrentTool==='erase'?'cell':'grab'};" data-wpt="${i}"/>`;
-          html += `<text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="9" font-family="'JetBrains Mono'" fill="rgba(212,161,71,0.6)">${i+1}</text>`;
-        });
-        drawSvg.innerHTML = html;
-        // Re-wire point drag/erase
-        drawSvg.querySelectorAll('circle[data-wpt]').forEach(circ => {
-          const idx = parseInt(circ.dataset.wpt, 10);
-          if (wdCurrentTool === 'erase') {
-            circ.addEventListener('pointerenter', () => { circ.setAttribute('fill', 'rgba(220,60,60,0.9)'); });
-            circ.addEventListener('pointerleave', () => { circ.setAttribute('fill', 'var(--accent)'); });
-            circ.addEventListener('click', e => {
-              e.stopPropagation();
-              wizDrawPoints.splice(idx, 1);
-              wizardData.customStagePoints = wizDrawPoints.length >= 3 ? wizDrawPoints.slice() : null;
-              renderWizDraw();
-            });
-          } else {
-            circ.addEventListener('pointerdown', e => {
-              e.stopPropagation(); e.preventDefault();
-              draggingPtIdx = idx; dragStarted = false;
-              circ.setPointerCapture(e.pointerId);
-            });
-            circ.addEventListener('pointermove', e => {
-              if (draggingPtIdx !== idx) return;
-              dragStarted = true;
-              const {x, y} = wizSvgCoords(e, drawSvg);
-              const snapped = wdSnapPoint(Math.max(0,Math.min(800,x)), Math.max(0,Math.min(380,y)));
-              wizDrawPoints[idx] = snapped;
-              renderWizDraw();
-            });
-            circ.addEventListener('pointerup', () => {
-              if (draggingPtIdx !== idx) return;
-              draggingPtIdx = -1;
-              if (dragStarted && wizDrawPoints.length >= 3) {
-                wizardData.customStagePoints = wizDrawPoints.slice();
+
+        function renderSvg(previewX, previewY) {
+          let html = '';
+          // Grid
+          if (wdGridEnabled) {
+            html += '<g>';
+            for (let x = 0; x <= 800; x += 80) html += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+            for (let y = 0; y <= 380; y += 38) html += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+            html += '</g>';
+          }
+          // Orientation labels
+          const lbl = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
+          html += `<text x="400" y="18" text-anchor="middle" style="${lbl}">&#x2191; AUDIENCE</text>`;
+          html += `<text x="16" y="195" text-anchor="start" style="${lbl}">SL &#x2192;</text>`;
+          html += `<text x="784" y="195" text-anchor="end" style="${lbl}">&#x2190; SR</text>`;
+          html += `<text x="400" y="370" text-anchor="middle" style="${lbl}">BACK &#x2193;</text>`;
+
+          const pts = wdPoints;
+
+          // Shape fill + stroke
+          if (pts.length >= 2) {
+            const d = buildPath();
+            if (pts.length >= 3 && wdClosed) {
+              html += `<path d="${d}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2"/>`;
+            } else if (pts.length >= 2) {
+              html += `<path d="${d}" fill="none" stroke="rgba(212,161,71,0.6)" stroke-width="2" stroke-dasharray="6 3"/>`;
+            }
+          }
+
+          // Preview line from last point to cursor (Add mode, not closed)
+          if (wdCurrentTool === 'add' && !wdClosed && pts.length >= 1 && previewX !== undefined) {
+            const last = pts[pts.length - 1];
+            html += `<line x1="${last.x}" y1="${last.y}" x2="${previewX}" y2="${previewY}" stroke="rgba(212,161,71,0.35)" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+          }
+
+          // Control handles (show in move mode or always when not too many points)
+          if (wdCurrentTool === 'move' || pts.length <= 20) {
+            pts.forEach((p, i) => {
+              const showHandles = (p.cp1x !== p.x || p.cp1y !== p.y || p.cp2x !== p.x || p.cp2y !== p.y);
+              if (showHandles) {
+                // Incoming handle cp1
+                if (i > 0 || wdClosed) {
+                  html += `<line x1="${p.x}" y1="${p.y}" x2="${p.cp1x}" y2="${p.cp1y}" stroke="rgba(212,161,71,0.3)" stroke-width="1" stroke-dasharray="3 2"/>`;
+                  html += `<circle cx="${p.cp1x}" cy="${p.cp1y}" r="5" fill="rgba(212,161,71,0.5)" stroke="rgba(212,161,71,0.8)" stroke-width="1" style="cursor:move;" data-wdcp1="${i}"/>`;
+                }
+                // Outgoing handle cp2
+                if (i < pts.length - 1 || wdClosed) {
+                  html += `<line x1="${p.x}" y1="${p.y}" x2="${p.cp2x}" y2="${p.cp2y}" stroke="rgba(212,161,71,0.3)" stroke-width="1" stroke-dasharray="3 2"/>`;
+                  html += `<circle cx="${p.cp2x}" cy="${p.cp2y}" r="5" fill="rgba(212,161,71,0.5)" stroke="rgba(212,161,71,0.8)" stroke-width="1" style="cursor:move;" data-wdcp2="${i}"/>`;
+                }
               }
             });
           }
-        });
-        const statusEl = body.querySelector('#wizDrawStatus');
-        if (statusEl) statusEl.textContent = wizDrawPoints.length > 0 ? `${wizDrawPoints.length} point${wizDrawPoints.length>1?'s':''}` : '';
-        wdUpdateToolbar();
-      }
 
-      // Toolbar wiring
-      body.querySelectorAll('[data-wdtool]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const t = btn.dataset.wdtool;
-          if (t === 'smooth') { wdSmooth = !wdSmooth; }
-          else { wdCurrentTool = t; }
-          renderWizDraw();
-        });
-      });
-      if (wdToolGrid) wdToolGrid.addEventListener('click', () => { wdGridEnabled = !wdGridEnabled; renderWizDraw(); });
-      if (wdToolSnap) wdToolSnap.addEventListener('click', () => { wdSnapEnabled = !wdSnapEnabled; wdUpdateToolbar(); });
+          // Anchor points
+          pts.forEach((p, i) => {
+            const isFirst = i === 0;
+            const canClose = isFirst && pts.length >= 2 && !wdClosed && wdCurrentTool === 'add';
+            const size = isFirst ? 5 : 4; // half-size of rect
+            const fill = wdCurrentTool === 'erase' ? 'rgba(220,60,60,0.85)' : 'white';
+            const stroke = wdCurrentTool === 'erase' ? 'rgba(200,40,40,1)' : (canClose ? 'var(--accent)' : 'rgba(0,0,0,0.5)');
+            const strokeW = canClose ? 2.5 : 1.5;
+            const cursor = wdCurrentTool === 'erase' ? 'cell' : (wdCurrentTool === 'move' ? 'grab' : (canClose ? 'pointer' : 'default'));
+            html += `<rect x="${p.x - size}" y="${p.y - size}" width="${size*2}" height="${size*2}" rx="1" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}" style="cursor:${cursor};" data-wdpt="${i}"/>`;
+            html += `<text x="${p.x}" y="${p.y - size - 4}" text-anchor="middle" font-size="9" font-family="monospace" fill="rgba(212,161,71,0.55)">${i+1}</text>`;
+          });
 
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-          if (!drawWrap) return;
-          const isOpen = drawWrap.style.display !== 'none';
-          drawWrap.style.display = isOpen ? 'none' : 'block';
-          toggleBtn.classList.toggle('active', !isOpen);
-          if (!isOpen) renderWizDraw();
-        });
-      }
+          svg.innerHTML = html;
 
-      if (drawSvg) {
-        drawSvg.addEventListener('click', e => {
-          if (e.detail !== 1) return;
-          if (wdCurrentTool === 'erase') return;
-          if (draggingPtIdx !== -1 || dragStarted) { dragStarted = false; return; }
-          if (e.target.hasAttribute('data-wpt')) return;
-          if (wdCurrentTool !== 'add') return;
-          const {x, y} = wizSvgCoords(e, drawSvg);
-          const snapped = wdSnapPoint(x, y);
-          wizDrawPoints.push(snapped);
-          if (wizDrawPoints.length >= 3) wizardData.customStagePoints = wizDrawPoints.slice();
-          renderWizDraw();
-        });
-        drawSvg.addEventListener('dblclick', e => {
-          if (wizDrawPoints.length >= 3) {
-            wizardData.customStagePoints = wizDrawPoints.slice();
-            if (toggleBtn) { toggleBtn.textContent = '✏️ Custom shape active — click to edit'; toggleBtn.classList.add('active'); }
-            const statusEl = body.querySelector('#wizDrawStatus');
-            if (statusEl) { statusEl.textContent = '✓ Custom shape saved'; statusEl.style.color = 'var(--accent)'; }
+          // Wire anchor interactions
+          svg.querySelectorAll('[data-wdpt]').forEach(el => {
+            const idx = parseInt(el.dataset.wdpt, 10);
+            if (wdCurrentTool === 'erase') {
+              el.addEventListener('click', e => {
+                e.stopPropagation();
+                pushHistory();
+                wdPoints.splice(idx, 1);
+                if (wdPoints.length < 3) wdClosed = false;
+                renderSvg();
+              });
+            } else if (wdCurrentTool === 'add' && idx === 0 && wdPoints.length >= 2 && !wdClosed) {
+              // Click first point to close
+              el.addEventListener('click', e => {
+                e.stopPropagation();
+                pushHistory();
+                wdClosed = true;
+                renderSvg();
+              });
+            } else if (wdCurrentTool === 'move') {
+              let localDragging = false;
+              el.addEventListener('pointerdown', e => {
+                e.stopPropagation(); e.preventDefault();
+                localDragging = true; wdDragMoved = false;
+                wdDragging = { type: 'anchor', idx };
+                el.setPointerCapture(e.pointerId);
+              });
+              el.addEventListener('pointermove', e => {
+                if (!localDragging) return;
+                wdDragMoved = true;
+                const { x, y } = svgCoords(e);
+                const s = snapPt(x, y);
+                const dx = s.x - wdPoints[idx].x, dy = s.y - wdPoints[idx].y;
+                wdPoints[idx].x = s.x; wdPoints[idx].y = s.y;
+                wdPoints[idx].cp1x += dx; wdPoints[idx].cp1y += dy;
+                wdPoints[idx].cp2x += dx; wdPoints[idx].cp2y += dy;
+                renderSvg();
+              });
+              el.addEventListener('pointerup', e => {
+                localDragging = false; wdDragging = null;
+              });
+            }
+          });
+
+          // Wire control handle interactions
+          svg.querySelectorAll('[data-wdcp1]').forEach(el => {
+            const idx = parseInt(el.dataset.wdcp1, 10);
+            let ld = false;
+            el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); ld = true; el.setPointerCapture(e.pointerId); });
+            el.addEventListener('pointermove', e => {
+              if (!ld) return;
+              const { x, y } = svgCoords(e);
+              wdPoints[idx].cp1x = Math.round(x); wdPoints[idx].cp1y = Math.round(y);
+              // Mirror cp2 symmetrically
+              wdPoints[idx].cp2x = Math.round(2 * wdPoints[idx].x - x);
+              wdPoints[idx].cp2y = Math.round(2 * wdPoints[idx].y - y);
+              renderSvg();
+            });
+            el.addEventListener('pointerup', () => { ld = false; });
+          });
+          svg.querySelectorAll('[data-wdcp2]').forEach(el => {
+            const idx = parseInt(el.dataset.wdcp2, 10);
+            let ld = false;
+            el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); ld = true; el.setPointerCapture(e.pointerId); });
+            el.addEventListener('pointermove', e => {
+              if (!ld) return;
+              const { x, y } = svgCoords(e);
+              wdPoints[idx].cp2x = Math.round(x); wdPoints[idx].cp2y = Math.round(y);
+              // Mirror cp1 symmetrically
+              wdPoints[idx].cp1x = Math.round(2 * wdPoints[idx].x - x);
+              wdPoints[idx].cp1y = Math.round(2 * wdPoints[idx].y - y);
+              renderSvg();
+            });
+            el.addEventListener('pointerup', () => { ld = false; });
+          });
+
+          // Update status
+          if (statusEl) {
+            const n = wdPoints.length;
+            statusEl.textContent = n === 0 ? '' : `${n} point${n !== 1 ? 's' : ''}${wdClosed ? ' · closed' : ''}`;
           }
-        });
-      }
+          // Update toolbar state
+          const cursors = { move: 'default', add: 'crosshair', erase: 'cell' };
+          svg.style.cursor = cursors[wdCurrentTool] || 'default';
+          modal.querySelectorAll('[data-wdtool]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.wdtool === wdCurrentTool);
+          });
+          if (toolGrid) toolGrid.classList.toggle('active', wdGridEnabled);
+          if (toolSnap) toolSnap.classList.toggle('active', wdSnapEnabled);
+        }
 
-      if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-          wizDrawPoints = [];
-          wizardData.customStagePoints = null;
-          if (toggleBtn) { toggleBtn.textContent = '✏️ Draw custom stage shape'; toggleBtn.classList.remove('active'); }
-          renderWizDraw();
+        // SVG mouse move for preview
+        svg.addEventListener('pointermove', e => {
+          if (wdCurrentTool !== 'add' || wdClosed) return;
+          const { x, y } = svgCoords(e);
+          wdMouseX = x; wdMouseY = y;
+          renderSvg(x, y);
         });
-      }
 
-      if (undoBtn) {
-        undoBtn.addEventListener('click', () => {
-          if (wizDrawPoints.length > 0) {
-            wizDrawPoints.pop();
-            wizardData.customStagePoints = wizDrawPoints.length >= 3 ? wizDrawPoints.slice() : null;
-            renderWizDraw();
+        // SVG click for adding points (pen-tool)
+        let svgPointerDown = null;
+        svg.addEventListener('pointerdown', e => {
+          if (e.target !== svg) return; // only blank space
+          if (wdCurrentTool !== 'add' || wdClosed) return;
+          svgPointerDown = { x: e.clientX, y: e.clientY, svgPt: svgCoords(e) };
+        });
+
+        svg.addEventListener('pointerup', e => {
+          if (!svgPointerDown) return;
+          const dx = e.clientX - svgPointerDown.x, dy = e.clientY - svgPointerDown.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const { x, y } = svgPointerDown.svgPt;
+          const s = snapPt(x, y);
+          pushHistory();
+          if (dist < 5) {
+            // Simple click → sharp corner point
+            wdPoints.push({ x: s.x, y: s.y, cp1x: s.x, cp1y: s.y, cp2x: s.x, cp2y: s.y });
+          } else {
+            // Drag → point with Bezier handles
+            const { x: ex, y: ey } = svgCoords(e);
+            const hdx = Math.round(ex - x), hdy = Math.round(ey - y);
+            wdPoints.push({
+              x: s.x, y: s.y,
+              cp1x: Math.round(s.x - hdx), cp1y: Math.round(s.y - hdy),
+              cp2x: Math.round(s.x + hdx), cp2y: Math.round(s.y + hdy)
+            });
           }
+          svgPointerDown = null;
+          renderSvg(wdMouseX, wdMouseY);
         });
+
+        // Toolbar wiring
+        modal.querySelectorAll('[data-wdtool]').forEach(btn => {
+          btn.addEventListener('click', () => { wdCurrentTool = btn.dataset.wdtool; renderSvg(); });
+        });
+        if (toolGrid) toolGrid.addEventListener('click', () => { wdGridEnabled = !wdGridEnabled; renderSvg(); });
+        if (toolSnap) toolSnap.addEventListener('click', () => { wdSnapEnabled = !wdSnapEnabled; renderSvg(); });
+        modal.querySelector('#sdmUndo').addEventListener('click', () => {
+          if (wdHistory.length > 0) {
+            const prev = wdHistory.pop();
+            wdPoints = prev.pts; wdClosed = prev.closed;
+          } else if (wdPoints.length > 0) {
+            wdPoints.pop();
+            if (wdPoints.length < 3) wdClosed = false;
+          }
+          renderSvg();
+        });
+        modal.querySelector('#sdmClear').addEventListener('click', () => {
+          pushHistory();
+          wdPoints = []; wdClosed = false;
+          wdCurrentTool = 'add';
+          renderSvg();
+        });
+
+        function saveAndClose() {
+          if (wdPoints.length >= 3) {
+            wizardData.customStagePoints = JSON.parse(JSON.stringify(wdPoints));
+          }
+          modal.remove();
+          renderWizardStep();
+        }
+
+        function justClose() {
+          modal.remove();
+        }
+
+        modal.querySelector('#sdmDoneBtn').addEventListener('click', saveAndClose);
+        modal.querySelector('#sdmCancelBtn').addEventListener('click', justClose);
+        modal.querySelector('#sdmClose').addEventListener('click', () => {
+          // On X close, save if we have points
+          if (wdPoints.length >= 3) wizardData.customStagePoints = JSON.parse(JSON.stringify(wdPoints));
+          modal.remove();
+          renderWizardStep();
+        });
+
+        // Click on backdrop closes
+        modal.addEventListener('click', e => { if (e.target === modal) { if (wdPoints.length >= 3) wizardData.customStagePoints = JSON.parse(JSON.stringify(wdPoints)); modal.remove(); renderWizardStep(); } });
+
+        // Escape key closes
+        function onKeydown(e) {
+          if (e.key === 'Escape') { document.removeEventListener('keydown', onKeydown); if (wdPoints.length >= 3) wizardData.customStagePoints = JSON.parse(JSON.stringify(wdPoints)); modal.remove(); renderWizardStep(); }
+        }
+        document.addEventListener('keydown', onKeydown);
+
+        renderSvg();
       }
 
-      // Initial render if draw wrap is visible (e.g., navigated back)
-      if (drawWrap && drawWrap.style.display !== 'none') renderWizDraw();
+      if (openBtn) openBtn.addEventListener('click', openStageDrawModal);
     })();
   }
   if (step === 'stage-layout') {
@@ -9243,6 +10185,84 @@ function wireWizardStep(step) {
         renderWizardStep();
       });
     });
+
+    // Setup items preset chips + item list wiring
+    if (wizardData.useSetupChecklist !== false) {
+      if (!wizardData.setupItems) wizardData.setupItems = [];
+      const setupItems = wizardData.setupItems;
+
+      function renderSetupItemsList() {
+        const list = document.getElementById('setupItemsList');
+        if (!list) return;
+        list.innerHTML = setupItems.map((item, idx) =>
+          `<li class="setup-item-row"><span class="setup-item-text">${esc(item)}</span><button class="setup-item-del" data-del-idx="${idx}" title="Remove">✕</button></li>`
+        ).join('');
+        list.querySelectorAll('[data-del-idx]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.dataset.delIdx, 10);
+            setupItems.splice(i, 1);
+            wizardData.setupItems = setupItems;
+            renderSetupItemsList();
+            updateChipStates();
+          });
+        });
+      }
+
+      function updateChipStates() {
+        document.querySelectorAll('#setupPresetChips .setup-preset-chip').forEach(chip => {
+          chip.classList.toggle('selected', setupItems.includes(chip.dataset.chip));
+        });
+      }
+
+      function addSetupItem(item) {
+        const trimmed = item.trim();
+        if (!trimmed || setupItems.includes(trimmed)) return;
+        setupItems.push(trimmed);
+        wizardData.setupItems = setupItems;
+        renderSetupItemsList();
+        updateChipStates();
+      }
+
+      function removeSetupItem(item) {
+        const idx = setupItems.indexOf(item);
+        if (idx !== -1) {
+          setupItems.splice(idx, 1);
+          wizardData.setupItems = setupItems;
+          renderSetupItemsList();
+          updateChipStates();
+        }
+      }
+
+      document.querySelectorAll('#setupPresetChips .setup-preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const chipText = chip.dataset.chip;
+          if (setupItems.includes(chipText)) {
+            removeSetupItem(chipText);
+          } else {
+            addSetupItem(chipText);
+          }
+        });
+      });
+
+      const customInput = document.getElementById('setupCustomInput');
+      const customAddBtn = document.getElementById('setupCustomAddBtn');
+      if (customAddBtn && customInput) {
+        customAddBtn.addEventListener('click', () => {
+          addSetupItem(customInput.value);
+          customInput.value = '';
+        });
+        customInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            addSetupItem(customInput.value);
+            customInput.value = '';
+          }
+        });
+      }
+
+      renderSetupItemsList();
+      updateChipStates();
+    }
   }
 }
 
@@ -9380,36 +10400,7 @@ function applyWizardChoices() {
     }
     if (dl.vocCardSize) state.config.display.vocCardSize = dl.vocCardSize;
     if (dl.runSheetPosition) state.config.display.runSheetPosition = dl.runSheetPosition;
-    // Apply sectionLayout from display-design step
-    if (wizardData.displayLayout && wizardData.displayLayout.sectionLayout) {
-      const sl = wizardData.displayLayout.sectionLayout;
-      const find = id => sl.find(s => s.id === id);
-      if (find('stage'))    state.config.display.showStage    = find('stage').visible;
-      if (find('sidebar')) {
-        const sv = find('sidebar').visible;
-        state.config.display.showBand    = sv;
-        state.config.display.showHosts   = sv;
-        state.config.display.showShadows = sv;
-      }
-      if (find('runsheet')) state.config.display.showServiceOrder = find('runsheet').visible;
-      // Determine run sheet position from layout order
-      const visibleIds = sl.filter(s => s.visible).map(s => s.id);
-      const rsIdx    = visibleIds.indexOf('runsheet');
-      const stageIdx = visibleIds.indexOf('stage');
-      if (rsIdx > -1 && stageIdx > -1 && rsIdx > stageIdx) {
-        state.config.display.runSheetPosition = 'bottom';
-      } else if (rsIdx > -1) {
-        state.config.display.runSheetPosition = 'right';
-      }
-      // Store relative section heights (h values) for display rendering
-      const totalH = sl.filter(s => s.visible && s.h).reduce((sum, s) => sum + (s.h || 0), 0);
-      if (totalH > 0) {
-        if (!state.config.display.sectionHeights) state.config.display.sectionHeights = {};
-        sl.forEach(s => {
-          if (s.h) state.config.display.sectionHeights[s.id] = s.h / totalH;
-        });
-      }
-    }
+
   }
   // 7. Branding
   if (wizardData.accentColor) {
@@ -9425,6 +10416,16 @@ function applyWizardChoices() {
   // 8. Setup Items opt-in (from setup-intro step)
   if (typeof wizardData.useSetupChecklist === 'boolean') {
     state.config.enableSetupItems = wizardData.useSetupChecklist;
+  }
+  // 8b. Setup items presets from setup-intro step
+  if (wizardData.useSetupChecklist && Array.isArray(wizardData.setupItems) && wizardData.setupItems.length > 0) {
+    // Store as template items in wizardData for user reference; setupItems per musician will be set in setup view
+    // Also set setupNotes for backward compat on the first instrument
+    const notesStr = wizardData.setupItems.join('; ');
+    state.instruments.forEach(inst => {
+      if (!inst.setupItems) inst.setupItems = wizardData.setupItems.slice();
+      if (!inst.setupNotes) inst.setupNotes = notesStr;
+    });
   }
   saveState();
 }
@@ -9515,13 +10516,11 @@ function init() {
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);
   document.getElementById('displayBtn').addEventListener('click', () => {
-    // Soft warning if Block Display Until Setup Complete is on AND setup is incomplete
-    if (state.config.blockDisplayUntilSetup) {
-      const overall = setupOverallStats();
-      if (overall.total > 0 && !overall.complete) {
-        const remaining = overall.total - overall.done;
-        toast(`Setup incomplete — ${remaining} item${remaining===1?'':'s'} remaining. Switching anyway.`, 'warn');
-      }
+    // Hard lock: if setup items exist and are not all done, show lock screen (unless bypassed this session)
+    if (!sessionSetupBypass && !isSetupComplete()) {
+      enterDisplayMode();
+      showSetupLockScreen();
+      return;
     }
     enterDisplayMode();
   });
@@ -9555,8 +10554,8 @@ function init() {
 
   // Display-view stage position scale slider — wired in renderDisplayView() so it survives re-renders
 
-  document.getElementById('setupItemsBtn').addEventListener('click', enterSetupItemsView);
-  // Hide ✓ Items button if user opted out
+  document.getElementById('setupItemsBtn').addEventListener('click', openSetupChecklistView);
+  // Hide Set Up button if user opted out
   const itemsBtn = document.getElementById('setupItemsBtn');
   if (itemsBtn) itemsBtn.style.display = state.config.enableSetupItems === false ? 'none' : '';
   document.getElementById('siBackBtn').addEventListener('click', exitSetupItemsView);
@@ -9691,6 +10690,7 @@ function init() {
   wireAllDvDividers();
   applyDvDividers();
   renderAll();
+  updateSetupProgressBadge();
   if (state.assignments.every(a => a === null) && state.vocalists.length > 0) autoAssign();
   // Restore display mode if it was active
   if (state.viewMode === 'display') {
@@ -9699,6 +10699,9 @@ function init() {
   } else if (state.viewMode === 'setup-items') {
     document.body.classList.add('setup-items-mode');
     renderSetupItemsView();
+  } else if (state.viewMode === 'setup-checklist') {
+    // Restore checklist view
+    openSetupChecklistView();
   }
   // Load any custom font
   if (state.brand && state.brand.font) ensureFontLoaded(state.brand.font);
