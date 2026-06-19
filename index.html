@@ -79,6 +79,7 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pco-bar .pco-status{color:var(--text-faint);font-size:11px}
 .pco-bar .pco-status.ok{color:var(--success)}
 .pco-bar .pco-status.err{color:var(--danger)}
+.pco-file-notice{font-size:12px;color:var(--text-faint);background:rgba(212,161,71,.08);border:1px solid rgba(212,161,71,.2);border-radius:7px;padding:8px 12px;margin-top:8px;line-height:1.5}
 .workspace{height:calc(100vh - 54px);display:grid;grid-template-rows:minmax(0,1.4fr) minmax(0,1fr);grid-template-columns:1fr;overflow:hidden}
 .workspace.has-order{grid-template-rows:minmax(0,1.4fr) minmax(0,1fr);grid-template-columns:1fr minmax(320px, 33%);grid-template-areas:"hero rail" "bottom rail"}
 .workspace.has-order > .hero{grid-area:hero;min-width:0}
@@ -339,6 +340,9 @@ background-size:5% 10%}
 .curvature-ticks{display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
 .stage-draw-wrap{margin-top:8px}
 .stage-draw-hint{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;margin-bottom:8px}
+.wiz-draw-toggle{width:100%;padding:10px;border-radius:8px;border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all .15s;text-align:center}
+.wiz-draw-toggle:hover,.wiz-draw-toggle.active{border-color:var(--accent);color:var(--accent);background:rgba(212,161,71,.06)}
+.wiz-draw-status{transition:color .2s}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .12s}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-sm{font-size:11px;padding:4px 10px}
@@ -554,6 +558,28 @@ background-size:5% 10%}
 .wiz-pco-check{font-size:20px;color:var(--accent);font-weight:700}
 .wiz-pco-conn-title{font-family:var(--ff-display);font-size:15px;font-weight:500;color:var(--text)}
 .wiz-pco-conn-sub{font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);letter-spacing:.04em;margin-top:2px}
+.dd-layout-editor{display:flex;flex-direction:column;gap:8px;margin:16px 0 8px;min-height:60px;border:2px dashed var(--border);border-radius:10px;padding:10px}
+.dd-layout-editor.drag-active{border-color:var(--accent)}
+.dd-section-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;cursor:grab;user-select:none;transition:all .15s}
+.dd-section-card:hover{border-color:var(--border-2)}
+.dd-section-card.dragging{opacity:.4;cursor:grabbing}
+.dd-section-card.drag-target{border-color:var(--accent);background:rgba(212,161,71,.06)}
+.dd-section-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.dd-section-info{flex:1}
+.dd-section-name{font-size:13px;font-weight:600}
+.dd-section-sub{font-size:11px;color:var(--text-faint);margin-top:2px}
+.dd-drag-handle{color:var(--text-faint);font-size:18px;margin-right:4px;cursor:grab}
+.dd-remove-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.dd-remove-btn:hover{border-color:#e55;color:#e55}
+.dd-hidden-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:16px;margin-bottom:16px}
+.dd-add-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .12s}
+.dd-add-chip:hover{border-color:var(--accent);color:var(--accent)}
+.dd-preview-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px}
+.dd-preview{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-elev);padding:8px;display:flex;flex-direction:column;gap:4px}
+.dd-prev-block{border-radius:5px;padding:6px 10px;font-size:11px;font-weight:500;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);text-align:center}
+.dd-prev-row{display:flex;gap:4px}
+.dd-prev-block.accent{border-color:rgba(212,161,71,.4);color:var(--accent)}
+/* Display design drag-drop wizard step */
 /* Setup intro card */
 .wiz-setup-intro-card{margin-top:14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
 .wiz-setup-intro-card.muted{background:var(--bg-inset);border-color:var(--border)}
@@ -621,7 +647,9 @@ background-size:5% 10%}
 .wiz-display-sections{display:flex;flex-direction:column;gap:6px}
 .wiz-display-section-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
 .wiz-ds-emoji{font-size:18px;width:26px;text-align:center}
-.wiz-ds-label{flex:1;font-size:13px;font-weight:500}
+.wiz-ds-text{flex:1;display:flex;flex-direction:column;gap:2px}
+.wiz-ds-label{font-size:13px;font-weight:500}
+.wiz-ds-desc{font-size:11px;color:var(--text-faint);line-height:1.4}
 .wiz-ds-toggle{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
 .wiz-ds-toggle input{opacity:0;width:0;height:0}
 .wiz-ds-track{position:absolute;inset:0;background:var(--border-2);border-radius:11px;cursor:pointer;transition:.2s}
@@ -2884,9 +2912,6 @@ function wireSlotForPositionDrag(el, customKey) {
     const pointerVB = clientToViewBox(peopleLayer, e.clientX, e.clientY);
     let newX = pointerVB.x + dragOffset.x;
     let newY = pointerVB.y + dragOffset.y;
-    // Snap to grid
-    const snapped = snapToGrid(newX, newY);
-    newX = snapped.x; newY = snapped.y;
     // Clamp to stage outline
     const clamped = clampStagePosition(newX, newY);
     newX = clamped.x; newY = clamped.y;
@@ -4915,7 +4940,7 @@ async function pcoHandleRedirect() {
     if (resume) {
       clearWizardResume();
       wizardData = resume.data;
-      wizardStepIdx = Math.max(0, resume.stepIdx || 0);
+      wizardStepIdx = Math.min(WIZARD_STEPS.length - 1, Math.max(resume.stepIdx || 0, 0));
       document.getElementById('wizardOverlay').classList.add('show');
       renderWizardStep();
     }
@@ -5547,6 +5572,9 @@ function renderPCOSettings() {
       <input type="password" class="field-input" id="pcoClientSecretInput" value="${esc(state.pcoConfig.clientSecret)}" placeholder="paste your Client Secret here…" />
       <div class="field-help">Both stored locally in your browser only. Redirect URI registered in PCO must exactly match: <code>${esc(getRedirectUri())}</code></div>
     </div>
+    <div class="pco-file-notice" id="pcoFileNotice" style="${onFile ? '' : 'display:none'}">
+      ⚠ Hosting this file locally — PCO OAuth requires a web server. <a href="https://github.com" target="_blank" style="color:var(--accent)">Deploy to GitHub Pages</a> to connect.
+    </div>
     <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;">
       <button class="btn primary" id="pcoConnectFromSettings" ${onFile?'disabled title="Cannot connect from file://"':''}>Connect to Planning Center</button>
       <button class="btn" id="pcoDemoBtn">▶ Try Demo Mode</button>
@@ -5573,8 +5601,8 @@ function renderPCOSettings() {
       </div>
     </div>
   `;
-  document.getElementById('pcoClientIdInput').addEventListener('change', e => { state.pcoConfig.clientId = e.target.value.trim(); saveState(); });
-  document.getElementById('pcoClientSecretInput').addEventListener('change', e => { state.pcoConfig.clientSecret = e.target.value.trim(); saveState(); });
+  document.getElementById('pcoClientIdInput').addEventListener('input', e => { state.pcoConfig.clientId = e.target.value.trim(); saveState(); });
+  document.getElementById('pcoClientSecretInput').addEventListener('input', e => { state.pcoConfig.clientSecret = e.target.value.trim(); saveState(); });
   document.getElementById('pcoConnectFromSettings').addEventListener('click', () => {
     state.pcoConfig.clientId = document.getElementById('pcoClientIdInput').value.trim();
     state.pcoConfig.clientSecret = document.getElementById('pcoClientSecretInput').value.trim();
@@ -7081,7 +7109,7 @@ function exitSetupItemsView() {
 }
 
 /* ===================== FIRST-RUN WIZARD ===================== */
-const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'setup-intro'];
+const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'display-design', 'setup-intro'];
 let wizardData = null;
 let wizardStepIdx = 0;
 let wizardBrandSnapshot = null;
@@ -8079,6 +8107,19 @@ function renderWizardStepBody(step) {
               <div class="wiz-shape-sub">Inverted layout</div>
             </button>
           </div>
+
+          <div style="margin-top:18px">
+            <button class="wiz-draw-toggle${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? ' active' : ''}" id="wizDrawToggle">✏️ ${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'Custom shape active — click to edit' : 'Draw custom stage shape'}</button>
+          </div>
+          <div id="wizDrawWrap" style="display:${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'block' : 'none'};margin-top:12px">
+            <div class="stage-draw-hint">Click to place corners · Double-click to finish · Drag to adjust</div>
+            <svg id="wizStageDraw" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);cursor:crosshair;touch-action:none;display:block;"></svg>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <button class="btn-ghost btn-sm" id="wizDrawClear">Clear</button>
+              <button class="btn-ghost btn-sm" id="wizDrawUndo">Undo last point</button>
+              <span class="wiz-draw-status" id="wizDrawStatus" style="font-size:11px;color:var(--text-faint);margin-left:auto"></span>
+            </div>
+          </div>
         </div>`;
     }
     case 'stage-layout': {
@@ -8169,11 +8210,11 @@ function renderWizardStepBody(step) {
     case 'display-layout': {
       const dl = wizardData.displayLayout || {};
       const sections = [
-        { key: 'showStage',    label: 'Stage diagram',    emoji: '🎸' },
-        { key: 'showBand',     label: 'Band list',        emoji: '🥁' },
-        { key: 'showHosts',    label: 'Hosts / Handhelds',emoji: '🎤' },
-        { key: 'showShadows',  label: 'Shadows',          emoji: '👁' },
-        { key: 'showRunSheet', label: 'Service order',    emoji: '📋' },
+        { key: 'showStage',    label: 'Stage diagram',    emoji: '🎸', desc: 'Visual map of where each person stands on stage' },
+        { key: 'showBand',     label: 'Band list',        emoji: '🥁', desc: 'Names and instruments for each band position' },
+        { key: 'showHosts',    label: 'Hosts / Handhelds',emoji: '🎤', desc: 'Who has a handheld mic — pastors, hosts, speakers' },
+        { key: 'showShadows',  label: 'Shadows',          emoji: '👁', desc: 'Background vocalists with IEMs but no mic on stage' },
+        { key: 'showRunSheet', label: 'Service order',    emoji: '📋', desc: 'Song list and service flow with keys and notes' },
       ];
       return `
         <div>
@@ -8185,7 +8226,10 @@ function renderWizardStepBody(step) {
             ${sections.map(s => `
               <div class="wiz-display-section-row">
                 <span class="wiz-ds-emoji">${s.emoji}</span>
-                <span class="wiz-ds-label">${s.label}</span>
+                <div class="wiz-ds-text">
+                  <span class="wiz-ds-label">${s.label}</span>
+                  <span class="wiz-ds-desc">${s.desc}</span>
+                </div>
                 <label class="wiz-ds-toggle">
                   <input type="checkbox" data-dl-key="${s.key}" ${dl[s.key] !== false ? 'checked' : ''} />
                   <span class="wiz-ds-track"></span>
@@ -8229,24 +8273,26 @@ function renderWizardStepBody(step) {
             </button>
             <button class="wiz-stage-shape${(dl.vocCardSize||'medium')==='large'?' selected':''}" data-dl-cardsize="large">
               <div class="wiz-shape-label">Large</div>
-              <div class="wiz-shape-sub">Bigger text, TV-friendly</div>
+              <div class="wiz-shape-sub">Bigger text, easier to read</div>
             </button>
           </div>
 
-          <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Run sheet position</div>
-          <div class="wiz-stage-shapes" style="grid-template-columns:repeat(3,1fr);margin-top:0;">
-            <button class="wiz-stage-shape${(dl.runSheetPosition||'right')==='right'?' selected':''}" data-dl-rspos="right">
-              <div class="wiz-shape-label">Right column</div>
-              <div class="wiz-shape-sub">Side by side with stage</div>
-            </button>
-            <button class="wiz-stage-shape${(dl.runSheetPosition||'right')==='bottom'?' selected':''}" data-dl-rspos="bottom">
-              <div class="wiz-shape-label">Below stage</div>
-              <div class="wiz-shape-sub">Full width underneath</div>
-            </button>
-            <button class="wiz-stage-shape${(dl.runSheetPosition||'right')==='hidden'?' selected':''}" data-dl-rspos="hidden">
-              <div class="wiz-shape-label">Hidden</div>
-              <div class="wiz-shape-sub">Don't show run sheet</div>
-            </button>
+        </div>`;
+    }
+    case 'display-design': {
+      return `
+        <div>
+          <div class="wiz-q-title">Design your display view</div>
+          <div class="wiz-q-help">Drag sections into the order you want. Tap ✕ to hide a section, or tap + to add it back.</div>
+
+          <div class="dd-layout-editor" id="ddLayoutEditor">
+          </div>
+
+          <div class="dd-hidden-pool" id="ddHiddenPool">
+          </div>
+
+          <div class="dd-preview-label">Preview</div>
+          <div class="dd-preview" id="ddPreview">
           </div>
         </div>`;
     }
@@ -8501,6 +8547,128 @@ function wireWizardStep(step) {
       wizardData.vocalDirection = b.dataset.wdir;
       renderWizardStep();
     }));
+
+    // Custom stage drawing tool
+    (function() {
+      let wizDrawPoints = (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3)
+        ? wizardData.customStagePoints.slice().map(p => ({x: p.x, y: p.y}))
+        : [];
+      const toggleBtn = body.querySelector('#wizDrawToggle');
+      const drawWrap = body.querySelector('#wizDrawWrap');
+      const drawSvg = body.querySelector('#wizStageDraw');
+      const clearBtn = body.querySelector('#wizDrawClear');
+      const undoBtn = body.querySelector('#wizDrawUndo');
+      let draggingPtIdx = -1;
+      let dragStarted = false;
+
+      function wizSvgCoords(e, svg) {
+        const r = svg.getBoundingClientRect();
+        return {
+          x: Math.round((e.clientX - r.left) / r.width * 800),
+          y: Math.round((e.clientY - r.top) / r.height * 380)
+        };
+      }
+
+      function renderWizDraw() {
+        if (!drawSvg) return;
+        const pts = wizDrawPoints;
+        let html = '';
+        if (pts.length >= 3) {
+          html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+        } else if (pts.length >= 2) {
+          html += `<polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="rgba(212,161,71,0.6)" stroke-width="2" stroke-dasharray="6 3"/>`;
+        }
+        if (pts.length >= 2) {
+          const last = pts[pts.length-1];
+          const first = pts[0];
+          if (pts.length < 3) html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+        }
+        pts.forEach((p, i) => {
+          html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:grab;" data-wpt="${i}"/>`;
+          html += `<text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="9" font-family="'JetBrains Mono'" fill="rgba(212,161,71,0.6)">${i+1}</text>`;
+        });
+        drawSvg.innerHTML = html;
+        // Re-wire point drag
+        drawSvg.querySelectorAll('circle[data-wpt]').forEach(circ => {
+          const idx = parseInt(circ.dataset.wpt, 10);
+          circ.addEventListener('pointerdown', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            draggingPtIdx = idx;
+            dragStarted = false;
+            circ.setPointerCapture(e.pointerId);
+          });
+          circ.addEventListener('pointermove', e => {
+            if (draggingPtIdx !== idx) return;
+            dragStarted = true;
+            const {x, y} = wizSvgCoords(e, drawSvg);
+            wizDrawPoints[idx] = { x: Math.max(0,Math.min(800,x)), y: Math.max(0,Math.min(380,y)) };
+            renderWizDraw();
+          });
+          circ.addEventListener('pointerup', () => {
+            if (draggingPtIdx !== idx) return;
+            draggingPtIdx = -1;
+            if (dragStarted && wizDrawPoints.length >= 3) {
+              wizardData.customStagePoints = wizDrawPoints.slice();
+            }
+          });
+        });
+        const statusEl = body.querySelector('#wizDrawStatus');
+        if (statusEl) statusEl.textContent = wizDrawPoints.length > 0 ? `${wizDrawPoints.length} point${wizDrawPoints.length>1?'s':''}` : '';
+      }
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          if (!drawWrap) return;
+          const isOpen = drawWrap.style.display !== 'none';
+          drawWrap.style.display = isOpen ? 'none' : 'block';
+          toggleBtn.classList.toggle('active', !isOpen);
+          if (!isOpen) renderWizDraw();
+        });
+      }
+
+      if (drawSvg) {
+        drawSvg.addEventListener('click', e => {
+          if (e.detail !== 1) return;
+          if (draggingPtIdx !== -1 || dragStarted) { dragStarted = false; return; }
+          if (e.target.hasAttribute('data-wpt')) return;
+          const {x, y} = wizSvgCoords(e, drawSvg);
+          wizDrawPoints.push({ x, y });
+          if (wizDrawPoints.length >= 3) wizardData.customStagePoints = wizDrawPoints.slice();
+          renderWizDraw();
+        });
+        drawSvg.addEventListener('dblclick', e => {
+          if (wizDrawPoints.length >= 3) {
+            wizardData.customStagePoints = wizDrawPoints.slice();
+            if (toggleBtn) { toggleBtn.textContent = '✏️ Custom shape active — click to edit'; toggleBtn.classList.add('active'); }
+            const statusEl = body.querySelector('#wizDrawStatus');
+            if (statusEl) { statusEl.textContent = '✓ Custom shape saved'; statusEl.style.color = 'var(--accent)'; }
+          }
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          wizDrawPoints = [];
+          wizardData.customStagePoints = null;
+          if (toggleBtn) { toggleBtn.textContent = '✏️ Draw custom stage shape'; toggleBtn.classList.remove('active'); }
+          renderWizDraw();
+        });
+      }
+
+      if (undoBtn) {
+        undoBtn.addEventListener('click', () => {
+          if (wizDrawPoints.length > 0) {
+            wizDrawPoints.pop();
+            wizardData.customStagePoints = wizDrawPoints.length >= 3 ? wizDrawPoints.slice() : null;
+            renderWizDraw();
+          }
+        });
+      }
+
+      // Initial render if draw wrap is visible (e.g., navigated back)
+      if (drawWrap && drawWrap.style.display !== 'none') renderWizDraw();
+    })();
   }
   if (step === 'stage-layout') {
     const pathEl = body.querySelector('#wizStagePath');
@@ -8573,8 +8741,6 @@ function wireWizardStep(step) {
         const r = peopleEl.getBoundingClientRect();
         let nx = (e.clientX - r.left) / r.width * 800 + dragOff.x;
         let ny = (e.clientY - r.top) / r.height * 380 + dragOff.y;
-        nx = Math.round(nx / STAGE_GRID_X) * STAGE_GRID_X;
-        ny = Math.round(ny / STAGE_GRID_Y) * STAGE_GRID_Y;
         // Clamp using wizard curvature/depth
         const sc = state.config.stageCurvature, sd = state.config.stageDepth;
         if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
@@ -8726,13 +8892,121 @@ function wireWizardStep(step) {
         body.querySelectorAll('[data-dl-cardsize]').forEach(b => b.classList.toggle('selected', b === btn));
       });
     });
-    // Run sheet position
-    body.querySelectorAll('[data-dl-rspos]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        dl.runSheetPosition = btn.dataset.dlRspos;
-        body.querySelectorAll('[data-dl-rspos]').forEach(b => b.classList.toggle('selected', b === btn));
+  }
+  if (step === 'display-design') {
+    if (!wizardData.displayLayout) wizardData.displayLayout = {};
+    const defaultLayout = [
+      { id: 'vocalists', visible: true },
+      { id: 'stage',     visible: true },
+      { id: 'sidebar',   visible: true },
+      { id: 'runsheet',  visible: wizardData.displayLayout.showRunSheet !== false },
+    ];
+    if (!wizardData.displayLayout.sectionLayout) {
+      wizardData.displayLayout.sectionLayout = defaultLayout;
+    }
+    const layout = wizardData.displayLayout.sectionLayout;
+
+    const SECTIONS = {
+      vocalists: { name: 'Vocalist cards',         icon: '🎤', sub: 'Names, mics, and IEM packs' },
+      stage:     { name: 'Stage diagram',          icon: '🎸', sub: 'Visual stage position map' },
+      sidebar:   { name: 'Band / Hosts / Shadows', icon: '🥁', sub: 'Assignment lists' },
+      runsheet:  { name: 'Run sheet',              icon: '📋', sub: 'Song order and service flow' },
+    };
+
+    function renderDDPreview() {
+      const preview = document.getElementById('ddPreview');
+      if (!preview) return;
+      const visible = layout.filter(s => s.visible).map(s => s.id);
+      if (!visible.length) { preview.innerHTML = '<div class="dd-prev-block" style="color:var(--text-faint);font-style:italic;">No sections visible</div>'; return; }
+      let html = '';
+      const hasVoc     = visible.includes('vocalists');
+      const hasStage   = visible.includes('stage');
+      const hasSidebar = visible.includes('sidebar');
+      const hasRS      = visible.includes('runsheet');
+      if (hasVoc) html += '<div class="dd-prev-block accent">🎤 Vocalist cards</div>';
+      if (hasStage && hasSidebar) {
+        html += '<div class="dd-prev-row"><div class="dd-prev-block accent" style="flex:2">🎸 Stage</div><div class="dd-prev-block accent" style="flex:1">🥁 Band / Hosts</div></div>';
+      } else if (hasStage) {
+        html += '<div class="dd-prev-block accent">🎸 Stage diagram</div>';
+      } else if (hasSidebar) {
+        html += '<div class="dd-prev-block accent">🥁 Band / Hosts / Shadows</div>';
+      }
+      if (hasRS) html += '<div class="dd-prev-block accent">📋 Run sheet</div>';
+      preview.innerHTML = html;
+    }
+
+    function renderDDEditor() {
+      const editor = document.getElementById('ddLayoutEditor');
+      const pool   = document.getElementById('ddHiddenPool');
+      if (!editor || !pool) return;
+      editor.innerHTML = '';
+      pool.innerHTML = '';
+      let dragSrcId = null;
+
+      layout.filter(s => s.visible).forEach(item => {
+        const sec = SECTIONS[item.id];
+        const card = document.createElement('div');
+        card.className = 'dd-section-card';
+        card.draggable = true;
+        card.dataset.id = item.id;
+        card.innerHTML = `<span class="dd-drag-handle">⠿</span><span class="dd-section-icon">${sec.icon}</span><div class="dd-section-info"><div class="dd-section-name">${sec.name}</div><div class="dd-section-sub">${sec.sub}</div></div><button class="dd-remove-btn" title="Hide section">✕</button>`;
+
+        card.querySelector('.dd-remove-btn').addEventListener('click', () => {
+          item.visible = false;
+          renderDDEditor();
+        });
+
+        card.addEventListener('dragstart', e => {
+          dragSrcId = item.id;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', item.id);
+          setTimeout(() => card.classList.add('dragging'), 0);
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          editor.querySelectorAll('.dd-section-card').forEach(c => c.classList.remove('drag-target'));
+        });
+        card.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (item.id !== dragSrcId) card.classList.add('drag-target');
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-target'));
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-target');
+          if (!dragSrcId || dragSrcId === item.id) return;
+          const fromIdx = layout.findIndex(s => s.id === dragSrcId);
+          const toIdx   = layout.findIndex(s => s.id === item.id);
+          if (fromIdx < 0 || toIdx < 0) return;
+          const [moved] = layout.splice(fromIdx, 1);
+          layout.splice(toIdx, 0, moved);
+          renderDDEditor();
+        });
+
+        editor.appendChild(card);
       });
-    });
+
+      editor.addEventListener('dragover', e => { e.preventDefault(); editor.classList.add('drag-active'); });
+      editor.addEventListener('dragleave', () => editor.classList.remove('drag-active'));
+      editor.addEventListener('drop',     () => editor.classList.remove('drag-active'));
+
+      layout.filter(s => !s.visible).forEach(item => {
+        const sec = SECTIONS[item.id];
+        const chip = document.createElement('button');
+        chip.className = 'dd-add-chip';
+        chip.textContent = `+ ${sec.name}`;
+        chip.addEventListener('click', () => {
+          item.visible = true;
+          renderDDEditor();
+        });
+        pool.appendChild(chip);
+      });
+
+      renderDDPreview();
+    }
+
+    renderDDEditor();
   }
   if (step === 'setup-intro') {
     body.querySelectorAll('[data-wsetup]').forEach(b => {
@@ -8851,6 +9125,11 @@ function applyWizardChoices() {
   if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
   if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
   if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
+  // Stage layout — custom stage shape from wizard draw tool
+  if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
+    state.config.customStagePoints = wizardData.customStagePoints.slice();
+    state.config.stageShape = 'custom';
+  }
   // Stage layout — custom positions from drag step
   if (wizardData.customStagePositions && Object.keys(wizardData.customStagePositions).length > 0) {
     state.config.customStagePositions = Object.assign({}, wizardData.customStagePositions);
@@ -8873,6 +9152,28 @@ function applyWizardChoices() {
     }
     if (dl.vocCardSize) state.config.display.vocCardSize = dl.vocCardSize;
     if (dl.runSheetPosition) state.config.display.runSheetPosition = dl.runSheetPosition;
+    // Apply sectionLayout from display-design step
+    if (wizardData.displayLayout && wizardData.displayLayout.sectionLayout) {
+      const sl = wizardData.displayLayout.sectionLayout;
+      const find = id => sl.find(s => s.id === id);
+      if (find('stage'))    state.config.display.showStage    = find('stage').visible;
+      if (find('sidebar')) {
+        const sv = find('sidebar').visible;
+        state.config.display.showBand    = sv;
+        state.config.display.showHosts   = sv;
+        state.config.display.showShadows = sv;
+      }
+      if (find('runsheet')) state.config.display.showServiceOrder = find('runsheet').visible;
+      // Determine run sheet position from layout order
+      const visibleIds = sl.filter(s => s.visible).map(s => s.id);
+      const rsIdx    = visibleIds.indexOf('runsheet');
+      const stageIdx = visibleIds.indexOf('stage');
+      if (rsIdx > -1 && stageIdx > -1 && rsIdx > stageIdx) {
+        state.config.display.runSheetPosition = 'bottom';
+      } else if (rsIdx > -1) {
+        state.config.display.runSheetPosition = 'right';
+      }
+    }
   }
   // 7. Branding
   if (wizardData.accentColor) {
@@ -9042,10 +9343,7 @@ function init() {
     saveState(); renderInvEditor();
   });
   document.getElementById('pcoBtn').addEventListener('click', () => {
-    if (pcoTokens) {
-      const bar = document.getElementById('pcoBar');
-      if (bar.style.display === 'none') showPCOBar();
-    } else { openSettings('pco'); }
+    openSettings('pco');
   });
   document.getElementById('pcoServiceTypeSelect').addEventListener('change', e => { if (e.target.value) pcoLoadPlans(e.target.value); });
   document.getElementById('pcoPlanSelect').addEventListener('change', e => { document.getElementById('pcoPullBtn').disabled = !e.target.value; });
