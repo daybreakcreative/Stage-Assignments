@@ -7114,12 +7114,7 @@ function startWizard() {
       { ...WIZ_INSTRUMENT_TEMPLATES.find(t => t.key==='keys'),  count:1, selected:true }
     ],
     customInstrumentDraft: '',
-    // mics: blank rows. Placeholders rotate through common mic models.
-    mics: [
-      { name:'', total:0 },
-      { name:'', total:0 },
-      { name:'', total:0 }
-    ],
+    mics: [],
     iemAssignments: null,
     // PCO step: store client id/secret in wizardData; only commit to state on Connect or wizard finish
     pco: {
@@ -7975,7 +7970,7 @@ function renderWizardStepBody(step) {
 
           <div class="section-label" style="margin-top:18px;margin-bottom:8px;">Add custom mic</div>
           <div class="wiz-mic-custom-row">
-            <input type="text" id="wiz_mic_custom_name" placeholder="Mic name (e.g. SM7B)" />
+            <input type="text" id="wiz_mic_custom_name" placeholder="Mic name (e.g. KSM11)" />
             <button class="btn primary" id="wiz_mic_custom_add">+ Add</button>
           </div>
         </div>`;
