@@ -346,6 +346,11 @@ background-size:5% 10%}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .12s}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-sm{font-size:11px;padding:4px 10px}
+.draw-toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+.draw-tool-btn{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.draw-tool-btn:hover{border-color:var(--border-2);color:var(--text)}
+.draw-tool-btn.active{border-color:var(--accent);background:rgba(212,161,71,.12);color:var(--accent)}
+.draw-tool-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
 /* Stage orientation indicator */
 .stage-orient-card{background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:6px;display:flex;flex-direction:column;gap:10px}
 .stage-orient-svg-wrap{max-width:380px;margin:0 auto;width:100%}
@@ -580,6 +585,30 @@ background-size:5% 10%}
 .dd-prev-row{display:flex;gap:4px}
 .dd-prev-block.accent{border-color:rgba(212,161,71,.4);color:var(--accent)}
 /* Display design drag-drop wizard step */
+.ddv-editor{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-inset);margin:14px 0 8px;position:relative;min-height:320px}
+.ddv-section{position:relative;background:var(--surface);border-bottom:1px solid var(--border);transition:background .15s}
+.ddv-section:last-child{border-bottom:none}
+.ddv-section-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-elev);border-bottom:1px solid var(--border)}
+.ddv-section-icon{font-size:14px}
+.ddv-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex:1}
+.ddv-hide-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
+.ddv-hide-btn:hover{border-color:#e55;color:#e55}
+.ddv-section-body{padding:10px 12px;min-height:30px}
+.ddv-drag-handle{height:6px;background:transparent;cursor:row-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;position:relative}
+.ddv-drag-handle:hover,.ddv-drag-handle.dragging{background:rgba(212,161,71,.2)}
+.ddv-drag-handle::before{content:'';display:block;width:32px;height:2px;border-radius:1px;background:var(--border);transition:background .12s}
+.ddv-drag-handle:hover::before,.ddv-drag-handle.dragging::before{background:var(--accent)}
+.ddv-hidden-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.ddv-hidden-label{font-size:11px;color:var(--text-faint);font-family:var(--ff-mono)}
+.ddv-restore-chip{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:14px;border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;transition:all .12s}
+.ddv-restore-chip:hover{border-color:var(--accent);color:var(--accent)}
+.ddv-voc-mock{display:flex;gap:6px;flex-wrap:wrap}
+.ddv-voc-pill{height:36px;border-radius:6px;background:var(--bg-elev);border:1px solid var(--border);flex:1;min-width:60px;max-width:90px}
+.ddv-stage-mock{background:var(--bg-elev);border-radius:6px;border:1px solid var(--border);height:80px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-faint);font-family:var(--ff-mono)}
+.ddv-list-mock{display:flex;flex-direction:column;gap:4px}
+.ddv-list-row{height:16px;border-radius:3px;background:var(--bg-elev);border:1px solid var(--border)}
+.ddv-rs-mock{display:flex;flex-direction:column;gap:4px}
+.ddv-rs-row{height:18px;border-radius:4px;background:var(--bg-elev);border:1px solid var(--border)}
 /* Setup intro card */
 .wiz-setup-intro-card{margin-top:14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
 .wiz-setup-intro-card.muted{background:var(--bg-inset);border-color:var(--border)}
@@ -3456,12 +3485,20 @@ function renderLayoutEditor() {
       ${(c.customStagePoints&&c.customStagePoints.length>=3) ? '<button class="btn ghost" id="layoutCustomStageClear" style="font-size:11px;">Clear custom shape</button>' : ''}
     </div>
     <div class="stage-draw-wrap" id="stageDrawWrap" style="display:${(c.customStagePoints&&c.customStagePoints.length>=3)?'block':'none'}">
-      <div class="stage-draw-hint">Click to place corners · Double-click to finish · Drag to adjust</div>
-      <svg id="stageDrawSvg" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);cursor:crosshair;display:block;"></svg>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn ghost" id="stageDrawClear" style="font-size:11px;">Clear</button>
-        <button class="btn ghost" id="stageDrawUndo" style="font-size:11px;">Undo last point</button>
+      <div class="stage-draw-hint">Add: click empty space · Move: drag a point · Erase: select erase tool then click a point · Double-click to save shape</div>
+      <div class="draw-toolbar" id="stageDrawToolbar">
+        <button class="draw-tool-btn active" data-sdtool="move" id="sdToolMove">↖ Move</button>
+        <button class="draw-tool-btn" data-sdtool="add" id="sdToolAdd">✚ Add</button>
+        <button class="draw-tool-btn" data-sdtool="erase" id="sdToolErase">✕ Erase</button>
+        <button class="draw-tool-btn" data-sdtool="smooth" id="sdToolSmooth">◡ Smooth</button>
+        <div class="draw-tool-sep"></div>
+        <button class="draw-tool-btn active" id="sdToolGrid">⊞ Grid</button>
+        <button class="draw-tool-btn" id="sdToolSnap">⊡ Snap</button>
+        <div class="draw-tool-sep"></div>
+        <button class="draw-tool-btn" id="stageDrawUndo">↩ Undo</button>
+        <button class="draw-tool-btn" id="stageDrawClear">⊗ Clear</button>
       </div>
+      <svg id="stageDrawSvg" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);display:block;"></svg>
     </div>
     <div style="height:18px;"></div>
 
@@ -3616,9 +3653,9 @@ function renderLayoutEditor() {
       ${((c.display.sideOrder && Array.isArray(c.display.sideOrder)) ? c.display.sideOrder : ['band','hosts','shadows']).map(sec => {
         const labels = { band: 'Band list', hosts: 'Handhelds list', shadows: 'Shadows list' };
         const sectionHidden = {
-          band: d.showBand === false,
-          hosts: d.showHosts === false,
-          shadows: d.showShadows === false
+          band: c.display.showBand === false,
+          hosts: c.display.showHosts === false,
+          shadows: c.display.showShadows === false
         };
         const hiddenClass = sectionHidden[sec] ? ' reorder-item-hidden' : '';
         const hiddenTag = sectionHidden[sec] ? '<span class="reorder-hidden-tag">(hidden)</span>' : '';
@@ -3725,59 +3762,134 @@ function renderLayoutEditor() {
     const drawSvg = el.querySelector('#stageDrawSvg');
     const drawClearBtn = el.querySelector('#stageDrawClear');
     const drawUndoBtn = el.querySelector('#stageDrawUndo');
+    const sdToolGrid = el.querySelector('#sdToolGrid');
+    const sdToolSnap = el.querySelector('#sdToolSnap');
     let currentDrawPoints = (c.customStagePoints && c.customStagePoints.length >= 3) ? structuredClone(c.customStagePoints) : [];
     let draggingPtIdx = -1;
     let dragStarted = false;
+    let sdCurrentTool = 'move';
+    let sdGridEnabled = true;
+    let sdSnapEnabled = false;
+    let sdSmooth = false;
+
+    function sdSnapPoint(x, y) {
+      if (!sdSnapEnabled) return { x: Math.round(x), y: Math.round(y) };
+      const gx = 80, gy = 38;
+      return { x: Math.round(x / gx) * gx, y: Math.round(y / gy) * gy };
+    }
+
+    function sdCatmullRomToBezier(pts, closed) {
+      if (pts.length < 2) return '';
+      const tension = 0.4;
+      const n = pts.length;
+      const get = i => pts[((i % n) + n) % n];
+      let d = `M ${pts[0].x} ${pts[0].y}`;
+      const count = closed ? n : n - 1;
+      for (let i = 0; i < count; i++) {
+        const p0 = get(i - 1);
+        const p1 = get(i);
+        const p2 = get(i + 1);
+        const p3 = get(i + 2);
+        const cp1x = p1.x + (p2.x - p0.x) * tension;
+        const cp1y = p1.y + (p2.y - p0.y) * tension;
+        const cp2x = p2.x - (p3.x - p1.x) * tension;
+        const cp2y = p2.y - (p3.y - p1.y) * tension;
+        d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+      }
+      if (closed) d += ' Z';
+      return d;
+    }
+
+    function sdUpdateToolbar() {
+      if (!drawSvg) return;
+      const cursors = { move: 'default', add: 'crosshair', erase: 'cell' };
+      drawSvg.style.cursor = cursors[sdCurrentTool] || 'default';
+      el.querySelectorAll('[data-sdtool]').forEach(btn => {
+        const t = btn.dataset.sdtool;
+        if (t === 'smooth') btn.classList.toggle('active', sdSmooth);
+        else btn.classList.toggle('active', t === sdCurrentTool);
+      });
+      if (sdToolGrid) sdToolGrid.classList.toggle('active', sdGridEnabled);
+      if (sdToolSnap) sdToolSnap.classList.toggle('active', sdSnapEnabled);
+    }
 
     function renderDrawSvg() {
       if (!drawSvg) return;
       const pts = currentDrawPoints;
       let html = '';
-      // Polygon fill
+      // Grid
+      if (sdGridEnabled) {
+        html += '<g class="draw-grid">';
+        for (let x = 0; x <= 800; x += 80) html += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+        for (let y = 0; y <= 380; y += 38) html += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+        html += '</g>';
+      }
+      // Orientation labels
+      const lblStyle = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
+      html += `<text x="400" y="18" text-anchor="middle" style="${lblStyle}">&#x2191; AUDIENCE</text>`;
+      html += `<text x="16" y="195" text-anchor="start" style="${lblStyle}">SL &#x2192;</text>`;
+      html += `<text x="784" y="195" text-anchor="end" style="${lblStyle}">&#x2190; SR</text>`;
+      html += `<text x="400" y="370" text-anchor="middle" style="${lblStyle}">BACK &#x2193;</text>`;
+      // Shape
       if (pts.length >= 3) {
-        html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+        if (sdSmooth) {
+          const d = sdCatmullRomToBezier(pts, true);
+          html += `<path d="${d}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+        } else {
+          html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+        }
       } else if (pts.length >= 2) {
-        // Polyline while building
         html += `<polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="rgba(212,161,71,0.6)" stroke-width="2" stroke-dasharray="6 3"/>`;
       }
-      // Line from last to first (closing preview)
-      if (pts.length >= 2) {
-        const last = pts[pts.length-1];
-        const first = pts[0];
-        if (pts.length < 3) html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+      if (pts.length >= 2 && pts.length < 3) {
+        const last = pts[pts.length-1], first = pts[0];
+        html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
       }
       // Points
       pts.forEach((p, i) => {
-        html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:grab;" data-pt="${i}"/>`;
+        const eraseHover = sdCurrentTool === 'erase' ? ' class="sd-erase-pt"' : '';
+        html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:${sdCurrentTool==='erase'?'cell':'grab'};"${eraseHover} data-pt="${i}"/>`;
         html += `<text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="9" font-family="'JetBrains Mono'" fill="rgba(212,161,71,0.6)">${i+1}</text>`;
       });
       drawSvg.innerHTML = html;
-      // Re-wire point drag
+      // Re-wire point drag/erase
       drawSvg.querySelectorAll('circle[data-pt]').forEach(circ => {
         const idx = parseInt(circ.dataset.pt, 10);
-        circ.addEventListener('pointerdown', e => {
-          e.stopPropagation();
-          e.preventDefault();
-          draggingPtIdx = idx;
-          dragStarted = false;
-          circ.setPointerCapture(e.pointerId);
-        });
-        circ.addEventListener('pointermove', e => {
-          if (draggingPtIdx !== idx) return;
-          dragStarted = true;
-          const {x, y} = svgPoint(drawSvg, e.clientX, e.clientY);
-          currentDrawPoints[idx] = { x: Math.round(x), y: Math.round(y) };
-          renderDrawSvg();
-        });
-        circ.addEventListener('pointerup', e => {
-          if (draggingPtIdx !== idx) return;
-          draggingPtIdx = -1;
-          if (dragStarted && currentDrawPoints.length >= 3) {
-            c.customStagePoints = structuredClone(currentDrawPoints);
-            saveState(); renderStage();
-          }
-        });
+        if (sdCurrentTool === 'erase') {
+          circ.addEventListener('pointerenter', () => { circ.setAttribute('fill', 'rgba(220,60,60,0.9)'); });
+          circ.addEventListener('pointerleave', () => { circ.setAttribute('fill', 'var(--accent)'); });
+          circ.addEventListener('click', e => {
+            e.stopPropagation();
+            currentDrawPoints.splice(idx, 1);
+            if (currentDrawPoints.length >= 3) { c.customStagePoints = structuredClone(currentDrawPoints); saveState(); renderStage(); }
+            else { c.customStagePoints = null; }
+            renderDrawSvg();
+          });
+        } else {
+          circ.addEventListener('pointerdown', e => {
+            e.stopPropagation(); e.preventDefault();
+            draggingPtIdx = idx; dragStarted = false;
+            circ.setPointerCapture(e.pointerId);
+          });
+          circ.addEventListener('pointermove', e => {
+            if (draggingPtIdx !== idx) return;
+            dragStarted = true;
+            const {x, y} = svgPoint(drawSvg, e.clientX, e.clientY);
+            const snapped = sdSnapPoint(x, y);
+            currentDrawPoints[idx] = snapped;
+            renderDrawSvg();
+          });
+          circ.addEventListener('pointerup', e => {
+            if (draggingPtIdx !== idx) return;
+            draggingPtIdx = -1;
+            if (dragStarted && currentDrawPoints.length >= 3) {
+              c.customStagePoints = structuredClone(currentDrawPoints);
+              saveState(); renderStage();
+            }
+          });
+        }
       });
+      sdUpdateToolbar();
     }
 
     function svgPoint(svgEl, clientX, clientY) {
@@ -3788,6 +3900,18 @@ function renderLayoutEditor() {
         y: (clientY - r.top) / r.height * vb.height
       };
     }
+
+    // Toolbar wiring
+    el.querySelectorAll('[data-sdtool]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.sdtool;
+        if (t === 'smooth') { sdSmooth = !sdSmooth; }
+        else { sdCurrentTool = t; }
+        renderDrawSvg();
+      });
+    });
+    if (sdToolGrid) sdToolGrid.addEventListener('click', () => { sdGridEnabled = !sdGridEnabled; renderDrawSvg(); });
+    if (sdToolSnap) sdToolSnap.addEventListener('click', () => { sdSnapEnabled = !sdSnapEnabled; sdUpdateToolbar(); });
 
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
@@ -3806,10 +3930,14 @@ function renderLayoutEditor() {
     if (drawSvg) {
       drawSvg.addEventListener('click', e => {
         if (e.detail !== 1) return;
+        if (sdCurrentTool === 'erase') return;
         if (draggingPtIdx !== -1 || dragStarted) return;
-        if (e.target.tagName === 'circle' || (e.target.dataset && e.target.dataset.pt !== undefined)) return;
+        if (e.target.hasAttribute('data-pt')) return;
+        if (sdCurrentTool !== 'add' && sdCurrentTool !== 'move') return;
+        if (sdCurrentTool === 'move') return;
         const {x, y} = svgPoint(drawSvg, e.clientX, e.clientY);
-        currentDrawPoints.push({ x: Math.round(x), y: Math.round(y) });
+        const snapped = sdSnapPoint(x, y);
+        currentDrawPoints.push(snapped);
         renderDrawSvg();
         if (currentDrawPoints.length >= 3) {
           c.customStagePoints = structuredClone(currentDrawPoints);
@@ -4547,7 +4675,7 @@ function renderDataEditor() {
     if (!confirm('Are you absolutely sure? There is no undo.')) return;
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(PCO_TOKEN_KEY);
-    localStorage.removeItem('stageAssign.v3.pcoPKCE');
+    sessionStorage.removeItem(PCO_PKCE_KEY);
     toast('Wiped — reloading...', 'success');
     setTimeout(() => location.reload(), 600);
   });
@@ -4829,7 +4957,7 @@ function renderPrefEditor() {
   el.querySelectorAll('[data-action="remove-pref"]').forEach(btn => btn.addEventListener('click', e => { delete state.preferences[btn.dataset.name]; saveState(); renderPrefEditor(); }));
 }
 
-/* ===================== PCO OAUTH PKCE ===================== */
+/* ===================== PCO OAUTH ===================== */
 const PCO_AUTH_URL = 'https://api.planningcenteronline.com/oauth/authorize';
 const PCO_TOKEN_URL = 'https://api.planningcenteronline.com/oauth/token';
 const PCO_API_BASE = 'https://api.planningcenteronline.com';
@@ -4862,18 +4990,17 @@ async function pcoStartAuth() {
     alert('Planning Center cannot redirect to a file:// URL. Host this file (GitHub Pages, etc.) first, or use Demo Mode in Settings.');
     return;
   }
-  const verifier = randomString(64);
-  const challenge = await pcoSha256(verifier);
+  // PCO OAuth 2.0 uses the standard Authorization Code Grant with client_secret.
+  // PKCE is not needed/supported for web app clients with a client_secret.
+  // We keep a state nonce for CSRF protection only.
   const stateNonce = randomString(16);
-  sessionStorage.setItem(PCO_PKCE_KEY, JSON.stringify({ verifier, stateNonce }));
+  sessionStorage.setItem(PCO_PKCE_KEY, JSON.stringify({ stateNonce }));
   const params = new URLSearchParams({
     client_id: state.pcoConfig.clientId,
     redirect_uri: getRedirectUri(),
     response_type: 'code',
     scope: PCO_SCOPES,
-    state: stateNonce,
-    code_challenge: challenge,
-    code_challenge_method: 'S256'
+    state: stateNonce
   });
   window.location.href = `${PCO_AUTH_URL}?${params.toString()}`;
 }
@@ -4890,9 +5017,9 @@ async function pcoHandleRedirect() {
   }
   if (!code) return;
   const pkceRaw = sessionStorage.getItem(PCO_PKCE_KEY);
-  if (!pkceRaw) { toast('PKCE state missing — please retry','error'); history.replaceState({}, '', window.location.pathname); return; }
-  const { verifier, stateNonce } = JSON.parse(pkceRaw);
-  if (returnedState !== stateNonce) { toast('PCO state mismatch — possible CSRF','error'); return; }
+  if (!pkceRaw) { toast('OAuth state missing — please retry','error'); history.replaceState({}, '', window.location.pathname); return; }
+  const { stateNonce } = JSON.parse(pkceRaw);
+  if (returnedState !== stateNonce) { toast('PCO state mismatch — possible CSRF','error'); history.replaceState({}, '', window.location.pathname); return; }
   sessionStorage.removeItem(PCO_PKCE_KEY);
   setPCOStatus('Exchanging code…');
   try {
@@ -4901,8 +5028,7 @@ async function pcoHandleRedirect() {
       code: code,
       client_id: state.pcoConfig.clientId,
       client_secret: state.pcoConfig.clientSecret,
-      redirect_uri: getRedirectUri(),
-      code_verifier: verifier
+      redirect_uri: getRedirectUri()
     });
     const res = await fetch(PCO_TOKEN_URL, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString() });
     if (!res.ok) {
@@ -5576,7 +5702,10 @@ function renderPCOSettings() {
       ⚠ Hosting this file locally — PCO OAuth requires a web server. <a href="https://github.com" target="_blank" style="color:var(--accent)">Deploy to GitHub Pages</a> to connect.
     </div>
     <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;">
-      <button class="btn primary" id="pcoConnectFromSettings" ${onFile?'disabled title="Cannot connect from file://"':''}>Connect to Planning Center</button>
+      ${isConnected
+        ? `<button class="btn" id="pcoConnectFromSettings" ${onFile?'disabled title="Cannot connect from file://"':''}>Re-authorize</button>`
+        : `<button class="btn primary" id="pcoConnectFromSettings" ${onFile?'disabled title="Cannot connect from file://"':''}>Connect to Planning Center</button>`
+      }
       <button class="btn" id="pcoDemoBtn">▶ Try Demo Mode</button>
     </div>
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
@@ -8095,6 +8224,27 @@ function renderWizardStepBody(step) {
             </div>
           </div>
 
+          <div style="margin-top:18px">
+            <button class="wiz-draw-toggle${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? ' active' : ''}" id="wizDrawToggle">✏️ ${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'Custom shape active — click to edit' : 'Draw custom stage shape'}</button>
+          </div>
+          <div id="wizDrawWrap" style="display:${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'block' : 'none'};margin-top:12px">
+            <div class="stage-draw-hint">Add: click empty space · Move: drag a point · Erase: select erase tool then click a point · Double-click to save shape</div>
+            <div class="draw-toolbar" id="wizDrawToolbar">
+              <button class="draw-tool-btn active" data-wdtool="move" id="wdToolMove">↖ Move</button>
+              <button class="draw-tool-btn" data-wdtool="add" id="wdToolAdd">✚ Add</button>
+              <button class="draw-tool-btn" data-wdtool="erase" id="wdToolErase">✕ Erase</button>
+              <button class="draw-tool-btn" data-wdtool="smooth" id="wdToolSmooth">◡ Smooth</button>
+              <div class="draw-tool-sep"></div>
+              <button class="draw-tool-btn active" id="wdToolGrid">⊞ Grid</button>
+              <button class="draw-tool-btn" id="wdToolSnap">⊡ Snap</button>
+              <div class="draw-tool-sep"></div>
+              <button class="draw-tool-btn" id="wizDrawUndo">↩ Undo</button>
+              <button class="draw-tool-btn" id="wizDrawClear">⊗ Clear</button>
+              <span class="wiz-draw-status" id="wizDrawStatus" style="font-size:11px;color:var(--text-faint);margin-left:auto"></span>
+            </div>
+            <svg id="wizStageDraw" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);touch-action:none;display:block;"></svg>
+          </div>
+
           <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Vocal arrangement</div>
           <div class="wiz-q-help" style="margin-bottom:10px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Check the SR/SL labels on the preview above — stage right is from the performer's perspective looking at the audience.</em></div>
           <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
@@ -8106,19 +8256,6 @@ function renderWizardStepBody(step) {
               <div class="wiz-shape-label">Vocal 1 - Stage Left</div>
               <div class="wiz-shape-sub">Inverted layout</div>
             </button>
-          </div>
-
-          <div style="margin-top:18px">
-            <button class="wiz-draw-toggle${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? ' active' : ''}" id="wizDrawToggle">✏️ ${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'Custom shape active — click to edit' : 'Draw custom stage shape'}</button>
-          </div>
-          <div id="wizDrawWrap" style="display:${wizardData.customStagePoints && wizardData.customStagePoints.length >= 3 ? 'block' : 'none'};margin-top:12px">
-            <div class="stage-draw-hint">Click to place corners · Double-click to finish · Drag to adjust</div>
-            <svg id="wizStageDraw" viewBox="0 0 800 380" style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);cursor:crosshair;touch-action:none;display:block;"></svg>
-            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-              <button class="btn-ghost btn-sm" id="wizDrawClear">Clear</button>
-              <button class="btn-ghost btn-sm" id="wizDrawUndo">Undo last point</button>
-              <span class="wiz-draw-status" id="wizDrawStatus" style="font-size:11px;color:var(--text-faint);margin-left:auto"></span>
-            </div>
           </div>
         </div>`;
     }
@@ -8283,16 +8420,15 @@ function renderWizardStepBody(step) {
       return `
         <div>
           <div class="wiz-q-title">Design your display view</div>
-          <div class="wiz-q-help">Drag sections into the order you want. Tap ✕ to hide a section, or tap + to add it back.</div>
+          <div class="wiz-q-help">Drag the borders to resize sections. Tap ✕ to hide a section. Tap the + buttons to restore hidden sections. This becomes your default layout.</div>
 
-          <div class="dd-layout-editor" id="ddLayoutEditor">
+          <div class="ddv-editor" id="ddvEditor">
+            <!-- Built by JS in wireWizardStep -->
           </div>
 
-          <div class="dd-hidden-pool" id="ddHiddenPool">
-          </div>
-
-          <div class="dd-preview-label">Preview</div>
-          <div class="dd-preview" id="ddPreview">
+          <div class="ddv-hidden-row" id="ddvHiddenRow" style="display:none">
+            <span class="ddv-hidden-label">Hidden:</span>
+            <div class="ddv-hidden-chips" id="ddvHiddenChips"></div>
           </div>
         </div>`;
     }
@@ -8558,14 +8694,61 @@ function wireWizardStep(step) {
       const drawSvg = body.querySelector('#wizStageDraw');
       const clearBtn = body.querySelector('#wizDrawClear');
       const undoBtn = body.querySelector('#wizDrawUndo');
+      const wdToolGrid = body.querySelector('#wdToolGrid');
+      const wdToolSnap = body.querySelector('#wdToolSnap');
       let draggingPtIdx = -1;
       let dragStarted = false;
+      let wdCurrentTool = 'move';
+      let wdGridEnabled = true;
+      let wdSnapEnabled = false;
+      let wdSmooth = false;
+
+      function wdSnapPoint(x, y) {
+        if (!wdSnapEnabled) return { x: Math.round(x), y: Math.round(y) };
+        const gx = 80, gy = 38;
+        return { x: Math.round(x / gx) * gx, y: Math.round(y / gy) * gy };
+      }
+
+      function wdCatmullRomToBezier(pts, closed) {
+        if (pts.length < 2) return '';
+        const tension = 0.4;
+        const n = pts.length;
+        const get = i => pts[((i % n) + n) % n];
+        let d = `M ${pts[0].x} ${pts[0].y}`;
+        const count = closed ? n : n - 1;
+        for (let i = 0; i < count; i++) {
+          const p0 = get(i - 1);
+          const p1 = get(i);
+          const p2 = get(i + 1);
+          const p3 = get(i + 2);
+          const cp1x = p1.x + (p2.x - p0.x) * tension;
+          const cp1y = p1.y + (p2.y - p0.y) * tension;
+          const cp2x = p2.x - (p3.x - p1.x) * tension;
+          const cp2y = p2.y - (p3.y - p1.y) * tension;
+          d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+        }
+        if (closed) d += ' Z';
+        return d;
+      }
+
+      function wdUpdateToolbar() {
+        if (!drawSvg) return;
+        const cursors = { move: 'default', add: 'crosshair', erase: 'cell' };
+        drawSvg.style.cursor = cursors[wdCurrentTool] || 'default';
+        body.querySelectorAll('[data-wdtool]').forEach(btn => {
+          const t = btn.dataset.wdtool;
+          if (t === 'smooth') btn.classList.toggle('active', wdSmooth);
+          else btn.classList.toggle('active', t === wdCurrentTool);
+        });
+        if (wdToolGrid) wdToolGrid.classList.toggle('active', wdGridEnabled);
+        if (wdToolSnap) wdToolSnap.classList.toggle('active', wdSnapEnabled);
+      }
 
       function wizSvgCoords(e, svg) {
         const r = svg.getBoundingClientRect();
         return {
-          x: Math.round((e.clientX - r.left) / r.width * 800),
-          y: Math.round((e.clientY - r.top) / r.height * 380)
+          x: (e.clientX - r.left) / r.width * 800,
+          y: (e.clientY - r.top) / r.height * 380
         };
       }
 
@@ -8573,49 +8756,91 @@ function wireWizardStep(step) {
         if (!drawSvg) return;
         const pts = wizDrawPoints;
         let html = '';
+        // Grid
+        if (wdGridEnabled) {
+          html += '<g class="draw-grid">';
+          for (let x = 0; x <= 800; x += 80) html += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+          for (let y = 0; y <= 380; y += 38) html += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>`;
+          html += '</g>';
+        }
+        // Orientation labels
+        const lblStyle = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
+        html += `<text x="400" y="18" text-anchor="middle" style="${lblStyle}">&#x2191; AUDIENCE</text>`;
+        html += `<text x="16" y="195" text-anchor="start" style="${lblStyle}">SL &#x2192;</text>`;
+        html += `<text x="784" y="195" text-anchor="end" style="${lblStyle}">&#x2190; SR</text>`;
+        html += `<text x="400" y="370" text-anchor="middle" style="${lblStyle}">BACK &#x2193;</text>`;
+        // Shape
         if (pts.length >= 3) {
-          html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+          if (wdSmooth) {
+            const d = wdCatmullRomToBezier(pts, true);
+            html += `<path d="${d}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+          } else {
+            html += `<polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.8)" stroke-width="2" stroke-linejoin="round"/>`;
+          }
         } else if (pts.length >= 2) {
           html += `<polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="rgba(212,161,71,0.6)" stroke-width="2" stroke-dasharray="6 3"/>`;
         }
-        if (pts.length >= 2) {
-          const last = pts[pts.length-1];
-          const first = pts[0];
-          if (pts.length < 3) html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+        if (pts.length >= 2 && pts.length < 3) {
+          const last = pts[pts.length-1], first = pts[0];
+          html += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="rgba(212,161,71,0.2)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
         }
+        // Points
         pts.forEach((p, i) => {
-          html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:grab;" data-wpt="${i}"/>`;
+          html += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="var(--accent)" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" style="cursor:${wdCurrentTool==='erase'?'cell':'grab'};" data-wpt="${i}"/>`;
           html += `<text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="9" font-family="'JetBrains Mono'" fill="rgba(212,161,71,0.6)">${i+1}</text>`;
         });
         drawSvg.innerHTML = html;
-        // Re-wire point drag
+        // Re-wire point drag/erase
         drawSvg.querySelectorAll('circle[data-wpt]').forEach(circ => {
           const idx = parseInt(circ.dataset.wpt, 10);
-          circ.addEventListener('pointerdown', e => {
-            e.stopPropagation();
-            e.preventDefault();
-            draggingPtIdx = idx;
-            dragStarted = false;
-            circ.setPointerCapture(e.pointerId);
-          });
-          circ.addEventListener('pointermove', e => {
-            if (draggingPtIdx !== idx) return;
-            dragStarted = true;
-            const {x, y} = wizSvgCoords(e, drawSvg);
-            wizDrawPoints[idx] = { x: Math.max(0,Math.min(800,x)), y: Math.max(0,Math.min(380,y)) };
-            renderWizDraw();
-          });
-          circ.addEventListener('pointerup', () => {
-            if (draggingPtIdx !== idx) return;
-            draggingPtIdx = -1;
-            if (dragStarted && wizDrawPoints.length >= 3) {
-              wizardData.customStagePoints = wizDrawPoints.slice();
-            }
-          });
+          if (wdCurrentTool === 'erase') {
+            circ.addEventListener('pointerenter', () => { circ.setAttribute('fill', 'rgba(220,60,60,0.9)'); });
+            circ.addEventListener('pointerleave', () => { circ.setAttribute('fill', 'var(--accent)'); });
+            circ.addEventListener('click', e => {
+              e.stopPropagation();
+              wizDrawPoints.splice(idx, 1);
+              wizardData.customStagePoints = wizDrawPoints.length >= 3 ? wizDrawPoints.slice() : null;
+              renderWizDraw();
+            });
+          } else {
+            circ.addEventListener('pointerdown', e => {
+              e.stopPropagation(); e.preventDefault();
+              draggingPtIdx = idx; dragStarted = false;
+              circ.setPointerCapture(e.pointerId);
+            });
+            circ.addEventListener('pointermove', e => {
+              if (draggingPtIdx !== idx) return;
+              dragStarted = true;
+              const {x, y} = wizSvgCoords(e, drawSvg);
+              const snapped = wdSnapPoint(Math.max(0,Math.min(800,x)), Math.max(0,Math.min(380,y)));
+              wizDrawPoints[idx] = snapped;
+              renderWizDraw();
+            });
+            circ.addEventListener('pointerup', () => {
+              if (draggingPtIdx !== idx) return;
+              draggingPtIdx = -1;
+              if (dragStarted && wizDrawPoints.length >= 3) {
+                wizardData.customStagePoints = wizDrawPoints.slice();
+              }
+            });
+          }
         });
         const statusEl = body.querySelector('#wizDrawStatus');
         if (statusEl) statusEl.textContent = wizDrawPoints.length > 0 ? `${wizDrawPoints.length} point${wizDrawPoints.length>1?'s':''}` : '';
+        wdUpdateToolbar();
       }
+
+      // Toolbar wiring
+      body.querySelectorAll('[data-wdtool]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const t = btn.dataset.wdtool;
+          if (t === 'smooth') { wdSmooth = !wdSmooth; }
+          else { wdCurrentTool = t; }
+          renderWizDraw();
+        });
+      });
+      if (wdToolGrid) wdToolGrid.addEventListener('click', () => { wdGridEnabled = !wdGridEnabled; renderWizDraw(); });
+      if (wdToolSnap) wdToolSnap.addEventListener('click', () => { wdSnapEnabled = !wdSnapEnabled; wdUpdateToolbar(); });
 
       if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
@@ -8630,10 +8855,13 @@ function wireWizardStep(step) {
       if (drawSvg) {
         drawSvg.addEventListener('click', e => {
           if (e.detail !== 1) return;
+          if (wdCurrentTool === 'erase') return;
           if (draggingPtIdx !== -1 || dragStarted) { dragStarted = false; return; }
           if (e.target.hasAttribute('data-wpt')) return;
+          if (wdCurrentTool !== 'add') return;
           const {x, y} = wizSvgCoords(e, drawSvg);
-          wizDrawPoints.push({ x, y });
+          const snapped = wdSnapPoint(x, y);
+          wizDrawPoints.push(snapped);
           if (wizDrawPoints.length >= 3) wizardData.customStagePoints = wizDrawPoints.slice();
           renderWizDraw();
         });
@@ -8741,12 +8969,8 @@ function wireWizardStep(step) {
         const r = peopleEl.getBoundingClientRect();
         let nx = (e.clientX - r.left) / r.width * 800 + dragOff.x;
         let ny = (e.clientY - r.top) / r.height * 380 + dragOff.y;
-        // Clamp using wizard curvature/depth
-        const sc = state.config.stageCurvature, sd = state.config.stageDepth;
-        if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
-        if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
+        // Only clamp to stage bounds, no snapping
         const clamped = clampStagePosition(nx, ny);
-        state.config.stageCurvature = sc; state.config.stageDepth = sd;
         customs[key] = clamped;
         applySlotPos(el, clamped.x, clamped.y);
         e.preventDefault();
@@ -8895,118 +9119,122 @@ function wireWizardStep(step) {
   }
   if (step === 'display-design') {
     if (!wizardData.displayLayout) wizardData.displayLayout = {};
-    const defaultLayout = [
-      { id: 'vocalists', visible: true },
-      { id: 'stage',     visible: true },
-      { id: 'sidebar',   visible: true },
-      { id: 'runsheet',  visible: wizardData.displayLayout.showRunSheet !== false },
+    const dl = wizardData.displayLayout;
+
+    // Section definitions
+    const SECTIONS = [
+      { id: 'vocalists', label: 'Vocalist Cards', icon: '🎤', defaultH: 80,
+        mockHtml: `<div class="ddv-voc-mock">${Array(4).fill('<div class="ddv-voc-pill"></div>').join('')}</div>` },
+      { id: 'stage',     label: 'Stage Diagram',  icon: '🎸', defaultH: 110,
+        mockHtml: `<div class="ddv-stage-mock">STAGE DIAGRAM</div>` },
+      { id: 'sidebar',   label: 'Band / Hosts / Shadows', icon: '🥁', defaultH: 80,
+        mockHtml: `<div class="ddv-list-mock">${Array(3).fill('<div class="ddv-list-row"></div>').join('')}</div>` },
+      { id: 'runsheet',  label: 'Run Sheet',       icon: '📋', defaultH: 90,
+        mockHtml: `<div class="ddv-rs-mock">${Array(4).fill('<div class="ddv-rs-row"></div>').join('')}</div>` },
     ];
-    if (!wizardData.displayLayout.sectionLayout) {
-      wizardData.displayLayout.sectionLayout = defaultLayout;
+
+    // Initialize layout state
+    if (!dl.sectionLayout) {
+      dl.sectionLayout = SECTIONS.map(s => ({ id: s.id, visible: true, h: s.defaultH }));
     }
-    const layout = wizardData.displayLayout.sectionLayout;
+    // Ensure h property exists on all items
+    dl.sectionLayout.forEach(item => {
+      const def = SECTIONS.find(s => s.id === item.id);
+      if (!item.h && def) item.h = def.defaultH;
+    });
 
-    const SECTIONS = {
-      vocalists: { name: 'Vocalist cards',         icon: '🎤', sub: 'Names, mics, and IEM packs' },
-      stage:     { name: 'Stage diagram',          icon: '🎸', sub: 'Visual stage position map' },
-      sidebar:   { name: 'Band / Hosts / Shadows', icon: '🥁', sub: 'Assignment lists' },
-      runsheet:  { name: 'Run sheet',              icon: '📋', sub: 'Song order and service flow' },
-    };
+    const editor = body.querySelector('#ddvEditor');
+    const hiddenRow = body.querySelector('#ddvHiddenRow');
+    const hiddenChips = body.querySelector('#ddvHiddenChips');
 
-    function renderDDPreview() {
-      const preview = document.getElementById('ddPreview');
-      if (!preview) return;
-      const visible = layout.filter(s => s.visible).map(s => s.id);
-      if (!visible.length) { preview.innerHTML = '<div class="dd-prev-block" style="color:var(--text-faint);font-style:italic;">No sections visible</div>'; return; }
-      let html = '';
-      const hasVoc     = visible.includes('vocalists');
-      const hasStage   = visible.includes('stage');
-      const hasSidebar = visible.includes('sidebar');
-      const hasRS      = visible.includes('runsheet');
-      if (hasVoc) html += '<div class="dd-prev-block accent">🎤 Vocalist cards</div>';
-      if (hasStage && hasSidebar) {
-        html += '<div class="dd-prev-row"><div class="dd-prev-block accent" style="flex:2">🎸 Stage</div><div class="dd-prev-block accent" style="flex:1">🥁 Band / Hosts</div></div>';
-      } else if (hasStage) {
-        html += '<div class="dd-prev-block accent">🎸 Stage diagram</div>';
-      } else if (hasSidebar) {
-        html += '<div class="dd-prev-block accent">🥁 Band / Hosts / Shadows</div>';
-      }
-      if (hasRS) html += '<div class="dd-prev-block accent">📋 Run sheet</div>';
-      preview.innerHTML = html;
-    }
-
-    function renderDDEditor() {
-      const editor = document.getElementById('ddLayoutEditor');
-      const pool   = document.getElementById('ddHiddenPool');
-      if (!editor || !pool) return;
+    function renderDDV() {
       editor.innerHTML = '';
-      pool.innerHTML = '';
-      let dragSrcId = null;
+      hiddenChips.innerHTML = '';
 
-      layout.filter(s => s.visible).forEach(item => {
-        const sec = SECTIONS[item.id];
-        const card = document.createElement('div');
-        card.className = 'dd-section-card';
-        card.draggable = true;
-        card.dataset.id = item.id;
-        card.innerHTML = `<span class="dd-drag-handle">⠿</span><span class="dd-section-icon">${sec.icon}</span><div class="dd-section-info"><div class="dd-section-name">${sec.name}</div><div class="dd-section-sub">${sec.sub}</div></div><button class="dd-remove-btn" title="Hide section">✕</button>`;
+      const visible = dl.sectionLayout.filter(s => s.visible);
+      const hidden = dl.sectionLayout.filter(s => !s.visible);
 
-        card.querySelector('.dd-remove-btn').addEventListener('click', () => {
-          item.visible = false;
-          renderDDEditor();
-        });
+      visible.forEach((item, idx) => {
+        const def = SECTIONS.find(s => s.id === item.id);
+        if (!def) return;
 
-        card.addEventListener('dragstart', e => {
-          dragSrcId = item.id;
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', item.id);
-          setTimeout(() => card.classList.add('dragging'), 0);
-        });
-        card.addEventListener('dragend', () => {
-          card.classList.remove('dragging');
-          editor.querySelectorAll('.dd-section-card').forEach(c => c.classList.remove('drag-target'));
-        });
-        card.addEventListener('dragover', e => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          if (item.id !== dragSrcId) card.classList.add('drag-target');
-        });
-        card.addEventListener('dragleave', () => card.classList.remove('drag-target'));
-        card.addEventListener('drop', e => {
-          e.preventDefault();
-          card.classList.remove('drag-target');
-          if (!dragSrcId || dragSrcId === item.id) return;
-          const fromIdx = layout.findIndex(s => s.id === dragSrcId);
-          const toIdx   = layout.findIndex(s => s.id === item.id);
-          if (fromIdx < 0 || toIdx < 0) return;
-          const [moved] = layout.splice(fromIdx, 1);
-          layout.splice(toIdx, 0, moved);
-          renderDDEditor();
-        });
+        // Section card
+        const sec = document.createElement('div');
+        sec.className = 'ddv-section';
+        sec.dataset.id = item.id;
+        sec.innerHTML = `
+          <div class="ddv-section-header">
+            <span class="ddv-section-icon">${def.icon}</span>
+            <span class="ddv-section-title">${def.label}</span>
+            <button class="ddv-hide-btn" data-hide="${item.id}" title="Hide section">✕</button>
+          </div>
+          <div class="ddv-section-body" style="height:${item.h}px;overflow:hidden">${def.mockHtml}</div>
+        `;
+        editor.appendChild(sec);
 
-        editor.appendChild(card);
+        // Resize handle between sections (not after last)
+        if (idx < visible.length - 1) {
+          const handle = document.createElement('div');
+          handle.className = 'ddv-drag-handle';
+          handle.dataset.idx = idx;
+          editor.appendChild(handle);
+
+          // Wire resize drag
+          handle.addEventListener('pointerdown', e => {
+            handle.classList.add('dragging');
+            handle.setPointerCapture(e.pointerId);
+            const startY = e.clientY;
+            const startH = item.h;
+            const nextItem = visible[idx + 1];
+            const startNextH = nextItem.h;
+
+            const onMove = mv => {
+              const delta = mv.clientY - startY;
+              item.h = Math.max(40, startH + delta);
+              nextItem.h = Math.max(40, startNextH - delta);
+              // Update DOM directly without full re-render
+              const bodies = editor.querySelectorAll('.ddv-section-body');
+              if (bodies[idx]) bodies[idx].style.height = item.h + 'px';
+              if (bodies[idx + 1]) bodies[idx + 1].style.height = nextItem.h + 'px';
+            };
+            const onUp = () => {
+              handle.classList.remove('dragging');
+              handle.removeEventListener('pointermove', onMove);
+              handle.removeEventListener('pointerup', onUp);
+            };
+            handle.addEventListener('pointermove', onMove);
+            handle.addEventListener('pointerup', onUp);
+            e.preventDefault();
+          });
+        }
       });
 
-      editor.addEventListener('dragover', e => { e.preventDefault(); editor.classList.add('drag-active'); });
-      editor.addEventListener('dragleave', () => editor.classList.remove('drag-active'));
-      editor.addEventListener('drop',     () => editor.classList.remove('drag-active'));
-
-      layout.filter(s => !s.visible).forEach(item => {
-        const sec = SECTIONS[item.id];
-        const chip = document.createElement('button');
-        chip.className = 'dd-add-chip';
-        chip.textContent = `+ ${sec.name}`;
-        chip.addEventListener('click', () => {
-          item.visible = true;
-          renderDDEditor();
+      // Hide buttons
+      editor.querySelectorAll('[data-hide]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = dl.sectionLayout.find(s => s.id === btn.dataset.hide);
+          if (item) { item.visible = false; renderDDV(); }
         });
-        pool.appendChild(chip);
       });
 
-      renderDDPreview();
+      // Hidden row
+      if (hidden.length > 0) {
+        hiddenRow.style.display = 'flex';
+        hidden.forEach(item => {
+          const def = SECTIONS.find(s => s.id === item.id);
+          if (!def) return;
+          const chip = document.createElement('button');
+          chip.className = 'ddv-restore-chip';
+          chip.innerHTML = `${def.icon} + ${def.label}`;
+          chip.addEventListener('click', () => { item.visible = true; renderDDV(); });
+          hiddenChips.appendChild(chip);
+        });
+      } else {
+        hiddenRow.style.display = 'none';
+      }
     }
 
-    renderDDEditor();
+    renderDDV();
   }
   if (step === 'setup-intro') {
     body.querySelectorAll('[data-wsetup]').forEach(b => {
@@ -9172,6 +9400,14 @@ function applyWizardChoices() {
         state.config.display.runSheetPosition = 'bottom';
       } else if (rsIdx > -1) {
         state.config.display.runSheetPosition = 'right';
+      }
+      // Store relative section heights (h values) for display rendering
+      const totalH = sl.filter(s => s.visible && s.h).reduce((sum, s) => sum + (s.h || 0), 0);
+      if (totalH > 0) {
+        if (!state.config.display.sectionHeights) state.config.display.sectionHeights = {};
+        sl.forEach(s => {
+          if (s.h) state.config.display.sectionHeights[s.id] = s.h / totalH;
+        });
       }
     }
   }
