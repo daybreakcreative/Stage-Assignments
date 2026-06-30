@@ -11160,9 +11160,14 @@ function renderWizardStepBody(step) {
 }
 function wireWizardStep(step) {
   const body = document.getElementById('wizardBody');
+  // Enter in a single-field wizard step should advance, same as clicking Next.
+  const wizEnterAdvances = inp => inp && inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('wizardNextBtn').click(); }
+  });
   if (step === 'identity') {
     const inp = body.querySelector('#wiz_church');
     inp && inp.addEventListener('input', e => { wizardData.churchName = e.target.value; });
+    wizEnterAdvances(inp);
     setTimeout(() => inp && inp.focus(), 30);
   }
   if (step === 'vocalists') {
@@ -11174,6 +11179,7 @@ function wireWizardStep(step) {
         syncSm58ToVocalistCount();
       }
     });
+    wizEnterAdvances(inp);
     setTimeout(() => inp && inp.focus(), 30);
   }
   // 'shadows' step removed from WIZARD_STEPS — shadows configured via post-pull dialogs (M2)
