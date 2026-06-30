@@ -7295,6 +7295,155 @@ function diffPcoModel(baseline, next) {
   return out;
 }
 
+// ---- live-state apply helpers (locate live entities by the baseline-recorded name) ----
+
+// Find first empty vocal slot index (or grow capacity). Returns an index in state.assignments.
+function pcoFirstFreeVocalSlot() {
+  ensureVocalCapacity();
+  for (let i = 0; i < state.assignments.length; i++) if (!state.assignments[i]) return i;
+  state.assignments.push(null);
+  return state.assignments.length - 1;
+}
+
+// Pick a mic not currently assigned to anyone (vocalist or instrument). Returns name or ''.
+function pcoFreeMic() {
+  const used = new Set();
+  state.vocalists.forEach(v => { if (v.micAssigned) used.add(v.micAssigned); });
+  state.instruments.forEach(i => { if (i.micAssigned) used.add(i.micAssigned); });
+  const pool = getMicPool();
+  const free = pool.find(m => !used.has(m.name));
+  return free ? free.name : '';
+}
+
+// position-type for an instrument (label-based, with legacy id fallback) — local copy for merge use
+function instPositionTypeForMerge(inst) {
+  const cls = classifyPosition(inst.label || '');
+  if (cls.kind === 'band') return cls.position;
+  if (inst.id === 'inst_drums') return 'drums';
+  if (inst.id === 'inst_bass') return 'bass';
+  if (inst.id === 'inst_keys') return 'keys';
+  if (inst.id === 'inst_eg1' || inst.id === 'inst_eg2') return 'eg';
+  if (inst.id === 'inst_ag') return 'ag';
+  return null;
+}
+
+function pcoAddVocalist(p) {
+  if (state.vocalists.some(v => normFullName(v.name) === normFullName(p.name))) return;
+  const v = { id: uid(), name: p.name, isWL: false, leadsSongs: !!p.leadsSongs, micAssigned: '' };
+  state.vocalists.push(v);
+  ensureVocalCapacity();
+  const slot = pcoFirstFreeVocalSlot();
+  state.assignments[slot] = v.id;
+  v.micAssigned = pcoFreeMic();   // "" if none free; the ⚠ notice still flags it
+}
+
+function pcoAddBand(p) {
+  const empty = state.instruments.find(i => instPositionTypeForMerge(i) === p.position && !i.assignedTo && !i.vocalistPlayer);
+  if (empty) { empty.assignedTo = p.name; return true; }
+  const ALLOW = { keys:['Keys','Keys Pack','Keys'], eg:['Electric','EG Pack','EG'], ag:['Acoustic','Acoustic Pack','AG'] };
+  if (ALLOW[p.position] && state.instruments.length < MAX_INSTRUMENTS) {
+    const [base, pack, ph] = ALLOW[p.position];
+    const count = state.instruments.filter(i => instPositionTypeForMerge(i) === p.position).length + 1;
+    state.instruments.push({ id: instUid(), label: `${base} ${count}`, pack, placeholder: `${ph} ${count}`, tag: base, assignedTo: p.name, vocalistPlayer: null, optional: true });
+    return true;
+  }
+  return false;
+}
+
+function pcoAddHost(p) {
+  const h = state.hosts;
+  if (p.host === 'speaker') { if (!h.speaker) h.speaker = p.name; }
+  else if (p.host === 'baptismal') { if (!h.hh3) { h.hh3 = p.name; h.hh3IsBaptismal = true; } }
+  else {
+    if (!h.welcomeHost1) h.welcomeHost1 = p.name;
+    else if (!h.welcomeHost2) h.welcomeHost2 = p.name;
+    else if (!h.hh3) h.hh3 = p.name;
+  }
+}
+
+function pcoAddShadow(p) {
+  if (!state.config.enableShadows) return;
+  if (state.shadows.length >= (typeof MAX_SHADOWS !== 'undefined' ? MAX_SHADOWS : 6)) return;
+  if (state.shadows.some(s => normFullName(s.name) === normFullName(p.name))) return;
+  state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, pack: state.config.shadowPack || 'Misc 2 Pack' });
+}
+
+function pcoAddPerson(p) {
+  if (p.kind === 'vocalist') pcoAddVocalist(p);
+  else if (p.kind === 'band') pcoAddBand(p);
+  else if (p.kind === 'host') pcoAddHost(p);
+  else if (p.kind === 'shadow') pcoAddShadow(p);
+  else if (p.kind === 'md') { const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name)); if (inst) state.musicDirectorId = inst.id; }
+}
+
+function pcoRemovePerson(p) {
+  if (p.kind === 'vocalist') {
+    const idx = state.vocalists.findIndex(v => normFullName(v.name) === normFullName(p.name));
+    if (idx === -1) return;
+    const vid = state.vocalists[idx].id;
+    state.vocalists.splice(idx, 1);
+    // null the slot in place (do NOT compact — keeps everyone else's slot index + custom position)
+    state.assignments = state.assignments.map(id => id === vid ? null : id);
+    state.instruments.forEach(i => { if (i.vocalistPlayer === vid) i.vocalistPlayer = null; });
+  } else if (p.kind === 'band') {
+    const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name));
+    if (inst) { inst.assignedTo = ''; if (state.musicDirectorId === inst.id) state.musicDirectorId = null; }
+  } else if (p.kind === 'host') {
+    const h = state.hosts;
+    ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(k => { if (normFullName(h[k]) === normFullName(p.name)) { h[k] = ''; if (k === 'hh3') h.hh3IsBaptismal = false; } });
+  } else if (p.kind === 'shadow') {
+    state.shadows = state.shadows.filter(s => normFullName(s.name) !== normFullName(p.name));
+  } else if (p.kind === 'md') {
+    const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name));
+    if (inst && state.musicDirectorId === inst.id) state.musicDirectorId = null;
+  }
+}
+
+function pcoRenamePerson(from, to) {
+  if (from.kind === 'vocalist') {
+    const v = state.vocalists.find(x => normFullName(x.name) === normFullName(from.name));
+    if (v) v.name = to.name;
+  } else if (from.kind === 'band' || from.kind === 'md') {
+    const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(from.name));
+    if (inst) inst.assignedTo = to.name;
+  } else if (from.kind === 'host') {
+    const h = state.hosts;
+    ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(k => { if (normFullName(h[k]) === normFullName(from.name)) h[k] = to.name; });
+  } else if (from.kind === 'shadow') {
+    const s = state.shadows.find(x => normFullName(x.name) === normFullName(from.name));
+    if (s) s.name = to.name;
+  }
+}
+
+// Role change = remove from old role, add to new role, then carry any custom stage XY across.
+function pcoReslotPerson(from, to) {
+  const oldInst = (from.kind === 'band' || from.kind === 'md') ? state.instruments.find(i => normFullName(i.assignedTo) === normFullName(from.name)) : null;
+  const oldKey = oldInst ? oldInst.id : null;
+  const oldCustom = (oldKey && state.config.customStagePositions) ? state.config.customStagePositions[oldKey] : null;
+  pcoRemovePerson(from);
+  pcoAddPerson(to);
+  if (oldCustom) {
+    const newInst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(to.name));
+    if (newInst) { state.config.customStagePositions = state.config.customStagePositions || {}; state.config.customStagePositions[newInst.id] = oldCustom; }
+  }
+}
+
+// applyPcoMerge: apply the change-list to live state. `next` is the fresh derivePcoModel (for service order/meta).
+function applyPcoMerge(changeList, next) {
+  if (changeList.metaChanged && next && next.meta) {
+    if (next.meta.title) state.service.name = next.meta.title;
+    if (next.meta.date) state.service.date = next.meta.date;
+  }
+  if (changeList.serviceOrderChanged && next) {
+    state.serviceOrder = (next.serviceOrder || []).map(s => ({ id:s.id, kind:s.kind, title:s.title, length:s.length, key:s.key, leader:s.leader, notes:s.notes }));
+  }
+  changeList.hardRemoved.forEach(pcoRemovePerson);
+  changeList.declined.forEach(pcoRemovePerson);
+  changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
+  changeList.roleChanged.forEach(c => pcoReslotPerson(c.from, c.to));
+  changeList.added.forEach(pcoAddPerson);
+}
+
 function pcoLoadDemo() {
   const demoTM = {
     data: [
