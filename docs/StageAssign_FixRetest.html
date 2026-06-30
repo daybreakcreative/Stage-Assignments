@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage·Assign — Fix Retest</title>
+<style>
+  :root{
+    --bg:#14150f; --panel:#1c1d16; --panel-2:#23241c; --border:#34352a; --border-2:#45463a;
+    --text:#ece8dc; --muted:#a8a596; --faint:#76746a;
+    --gold:#d4a147; --gold-dim:rgba(212,161,71,.16);
+    --pass:#7ba968; --pass-dim:rgba(123,169,104,.18);
+    --fail:#d2685f; --fail-dim:rgba(210,104,95,.16);
+    --todo:#6f6d63;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.5;padding:0 0 80px}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px}
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,var(--bg) 70%,rgba(20,21,15,.85));backdrop-filter:blur(6px);padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+  .h-top{max-width:760px;margin:0 auto}
+  h1{font-size:18px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:12.5px;margin:3px 0 0}
+  .counts{display:flex;gap:8px;margin:12px 0 0;font-family:var(--mono);font-size:11px}
+  .pill{padding:4px 9px;border-radius:20px;border:1px solid var(--border);background:var(--panel)}
+  .pill b{font-weight:700}
+  .pill.p{color:var(--pass);border-color:var(--pass-dim);background:var(--pass-dim)}
+  .pill.f{color:var(--fail);border-color:var(--fail-dim);background:var(--fail-dim)}
+  .pill.t{color:var(--muted)}
+  .bar{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .seg button{background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:7px 12px;cursor:pointer}
+  .seg button.on{background:var(--gold-dim);color:var(--gold)}
+  .spacer{flex:1}
+  .btn{background:var(--gold);color:#1a1407;border:none;border-radius:8px;font-weight:700;font-size:12.5px;padding:9px 14px;cursor:pointer;font-family:var(--body)}
+  .btn.ghost{background:var(--panel);color:var(--text);border:1px solid var(--border-2);font-weight:600}
+  section{margin:22px 0 0}
+  .sec-h{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;font-weight:600}
+  .sec-sub{color:var(--faint);font-size:11.5px;margin:0 0 10px}
+  .item{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:12px;margin:8px 0}
+  .item.pass{border-color:var(--pass-dim);background:linear-gradient(0deg,var(--pass-dim),var(--panel))}
+  .item.fail{border-color:var(--fail-dim);background:linear-gradient(0deg,var(--fail-dim),var(--panel))}
+  .chip{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border-2);background:var(--panel-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--todo);transition:.12s;margin-top:1px}
+  .item.pass .chip{border-color:var(--pass);background:var(--pass-dim);color:var(--pass)}
+  .item.fail .chip{border-color:var(--fail);background:var(--fail-dim);color:var(--fail)}
+  .it-main{flex:1;min-width:0}
+  .it-text{font-size:14px}
+  .it-expect{font-size:12px;color:var(--muted);margin-top:3px}
+  .it-expect b{color:var(--text);font-weight:600}
+  .note-btn{background:none;border:none;color:var(--faint);font-family:var(--mono);font-size:10.5px;cursor:pointer;padding:5px 0 0;letter-spacing:.03em}
+  .note-btn.has{color:var(--gold)}
+  .note-wrap{display:none;margin-top:7px}
+  .note-wrap.open{display:block}
+  textarea{width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--body);outline:none;resize:vertical;min-height:48px}
+  textarea:focus{border-color:var(--gold)}
+  .hidden{display:none!important}
+  /* export modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+  .modal.show{display:flex}
+  .modal-box{background:var(--panel);border:1px solid var(--border-2);border-radius:14px;max-width:640px;width:100%;padding:18px}
+  .modal-box h2{font-size:15px;margin:0 0 4px}
+  .modal-box p{color:var(--muted);font-size:12px;margin:0 0 10px}
+  .modal-box textarea{min-height:240px;font-family:var(--mono);font-size:11.5px}
+  .modal-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+  .tiny{color:var(--faint);font-size:11px;text-align:center;margin-top:26px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <h1>Stage·Assign — Fix Retest</h1>
+    <p class="sub">Just this round's fixes. Test on the booth tablet (landscape + portrait). Tap the box to cycle <b>To-do → Pass → Fail</b>; add a note on anything that fails, then Export.</p>
+    <div class="counts" id="counts"></div>
+    <div class="bar">
+      <div class="seg" id="filter">
+        <button data-f="all" class="on">All</button>
+        <button data-f="todo">To-do</button>
+        <button data-f="fail">Fails</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <button class="btn" id="exportBtn">Export findings</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="list"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h2>Findings</h2>
+    <p>Copied to your clipboard — paste it back into the chat. (Or download as a file.)</p>
+    <textarea id="report" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" id="copyBtn">Copy again</button>
+      <button class="btn ghost" id="dlBtn">Download .txt</button>
+      <button class="btn" id="closeBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  ["A","Quick smoke (do first)","",[
+    ["a1","Open the deployed site (not a file:// copy).","Loads to your normal workspace; your data is still there; no obvious errors."],
+    ["a2","Reload the page.","Everything persists — roster, assignments, settings."],
+  ]],
+  ["B","Display view — the big fix","Should render again now.",[
+    ["b1","Tap ▶ Display.","Fills the screen AND the stage diagram renders with people on it."],
+    ["b2","Look at the side/edge of the Display.","Service Order / run-sheet shows (if your plan has an order)."],
+    ["b3","Rotate the tablet — view Display in landscape and portrait.","Names + mics stay legible both ways; nothing collapsed."],
+    ["b4","Change an assignment, then reopen Display.","Display reflects the change."],
+  ]],
+  ["C","Dragging people on the stage","",[
+    ["c1","Main stage: drag a vocalist into the front curve / apron.","They move into the curve and stay — no snapping back to a flat line."],
+    ["c2","Drag someone toward the very front-center.","Reaches into the front bulge of the apron."],
+    ["c3","Reload after moving people.","Custom positions persist."],
+    ["c4","Reopen setup → Stage layout step → drag a position → tap “Reset to auto.”","Button is clickable and clears your custom positions."],
+  ]],
+  ["D","Worship Leader label","",[
+    ["d1","Look at a vocalist card's WL control, and toggle it.","Reads “WL” (not a star) and toggling still works."],
+    ["d2","Check the Display badge and the ✓ Items list for the worship leader.","Both show “WL.”"],
+  ]],
+  ["E","Add vocalist","",[
+    ["e1","Look for ways to add a vocalist.","Only the dashed “+ Add vocalist” tile — no “+ Vocal” link in the header."],
+  ]],
+  ["F","New-person prefs wizard","Trigger it by pulling a plan with a new name.",[
+    ["f1","On a new vocalist step, read the Notes placeholder.","Says “needs to borrow IEMs, prefers Mons Mix at higher volume, etc.”"],
+    ["f2","On a new-on-instrument step (e.g. new on Drums).","You get an add/remove list of setup items — not a free-text box."],
+    ["f3","Add a couple items (e.g. “Run MIDI cable for Nord”), finish, open ✓ Items for that person.","Those items appear as their checklist items on that instrument."],
+  ]],
+  ["G","Print Summary","",[
+    ["g1","Open Print Summary.","Black & white only — no gold/cream; stage diagram white with black outline; WL shows “(WL).”"],
+    ["g2","Browser Print → preview.","Fits the page, nothing clipped, reads clean in B&W."],
+  ]],
+  ["H","Direction buttons","",[
+    ["h1","Settings → Display → Vocal Arrangement (and the wizard's stage step).","Stage Left is the LEFT button; Stage Right is the RIGHT button."],
+  ]],
+  ["I","Mic priority — drag to reorder (new)","Touch test — best on the tablet.",[
+    ["i1","Wizard “What vocal mics do you have?” step: drag a mic card by its ⋮⋮ handle up/down.","It reorders; a hint says top = first-choice mic."],
+    ["i2","Advanced Settings → Mic Inventory: drag a mic row by its ⋮⋮ handle, then reload.","It reorders and the new order sticks (this sets Auto-Assign priority)."],
+  ]],
+];
+
+const KEY = "sa_fixretest_v1";
+let state = {};
+try { const r = localStorage.getItem(KEY); if (r) state = JSON.parse(r) || {}; } catch(_) { state = {}; }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(_){} }
+function rec(id){ return state[id] || (state[id] = { st:"", note:"" }); }
+let filter = "all";
+
+const TOTAL = DATA.reduce((a,s)=>a+s[3].length,0);
+function counts(){ let p=0,f=0; for(const s of DATA) for(const it of s[3]){ const r=state[it[0]]; if(r&&r.st==="pass")p++; else if(r&&r.st==="fail")f++; } return {p,f,t:TOTAL-p-f}; }
+
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function render(){
+  const c = counts();
+  document.getElementById("counts").innerHTML =
+    `<span class="pill p"><b>${c.p}</b> Pass</span><span class="pill f"><b>${c.f}</b> Fail</span><span class="pill t"><b>${c.t}</b> To-do</span>`;
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  for(const [sid,title,sub,items] of DATA){
+    const visItems = items.filter(it=>{ const r=rec(it[0]); if(filter==="todo") return r.st!=="pass"&&r.st!=="fail"; if(filter==="fail") return r.st==="fail"; return true; });
+    if(!visItems.length) continue;
+    const sec = document.createElement("section");
+    sec.innerHTML = `<div class="sec-h">${esc(sid)} · ${esc(title)}</div>${sub?`<div class="sec-sub">${esc(sub)}</div>`:""}`;
+    for(const it of visItems){
+      const [id,text,expect] = it; const r = rec(id);
+      const cls = r.st==="pass"?"pass":r.st==="fail"?"fail":"";
+      const mark = r.st==="pass"?"✓":r.st==="fail"?"✕":"";
+      const row = document.createElement("div");
+      row.className = "item "+cls;
+      row.innerHTML =
+        `<button class="chip" data-id="${id}">${mark}</button>
+         <div class="it-main">
+           <div class="it-text">${esc(text)}</div>
+           <div class="it-expect"><b>Expect:</b> ${esc(expect)}</div>
+           <button class="note-btn ${r.note?"has":""}" data-note="${id}">${r.note?"✎ note":"＋ note"}</button>
+           <div class="note-wrap ${r.note?"open":""}" data-wrap="${id}">
+             <textarea data-ta="${id}" placeholder="What happened? device + steps if it failed…">${esc(r.note||"")}</textarea>
+           </div>
+         </div>`;
+      sec.appendChild(row);
+    }
+    list.appendChild(sec);
+  }
+}
+
+document.addEventListener("click",e=>{
+  const chip = e.target.closest(".chip");
+  if(chip){ const r=rec(chip.dataset.id); r.st = r.st==="pass"?"fail":r.st==="fail"?"":"pass"; save(); render(); return; }
+  const nb = e.target.closest(".note-btn");
+  if(nb){ const w=document.querySelector(`[data-wrap="${nb.dataset.note}"]`); if(w){ w.classList.toggle("open"); const ta=w.querySelector("textarea"); if(ta&&w.classList.contains("open")) ta.focus(); } return; }
+});
+document.addEventListener("input",e=>{
+  const ta = e.target.closest("[data-ta]");
+  if(ta){ rec(ta.dataset.ta).note = ta.value; save(); const nb=document.querySelector(`[data-note="${ta.dataset.ta}"]`); if(nb) nb.classList.toggle("has",!!ta.value.trim()); }
+});
+document.getElementById("filter").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  filter=b.dataset.f;
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Clear all marks and notes for this retest?")){ state={}; save(); render(); }
+});
+
+function buildReport(){
+  const c=counts(); const d=new Date();
+  const lines=[];
+  lines.push(`Stage·Assign — Fix Retest — ${d.toLocaleString()}`);
+  lines.push(`Pass ${c.p} · Fail ${c.f} · To-do ${c.t}  (of ${TOTAL})`);
+  lines.push("================================================");
+  for(const [sid,title,,items] of DATA){
+    const marked = items.filter(it=>{ const r=state[it[0]]; return r&&(r.st||r.note); });
+    if(!marked.length) continue;
+    lines.push(`§${sid} ${title}`);
+    for(const it of marked){
+      const r=state[it[0]]; const m=r.st==="pass"?"✓":r.st==="fail"?"✕":"·";
+      lines.push(`  ${m} ${it[1]}`);
+      if(r.note&&r.note.trim()) lines.push(`      note: ${r.note.trim()}`);
+    }
+  }
+  const todo=TOTAL-c.p-c.f;
+  if(todo>0) lines.push(`(${todo} item${todo>1?"s":""} still untested.)`);
+  return lines.join("\n");
+}
+function copyText(t){ try{ navigator.clipboard.writeText(t); }catch(_){ const ta=document.getElementById("report"); ta.focus(); ta.select(); try{document.execCommand("copy");}catch(__){} } }
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  const t=buildReport(); document.getElementById("report").value=t; copyText(t);
+  document.getElementById("modal").classList.add("show");
+});
+document.getElementById("copyBtn").addEventListener("click",()=>copyText(document.getElementById("report").value));
+document.getElementById("dlBtn").addEventListener("click",()=>{
+  const blob=new Blob([document.getElementById("report").value],{type:"text/plain"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="StageAssign-FixRetest.txt"; a.click();
+});
+document.getElementById("closeBtn").addEventListener("click",()=>document.getElementById("modal").classList.remove("show"));
+document.getElementById("modal").addEventListener("click",e=>{ if(e.target.id==="modal") e.currentTarget.classList.remove("show"); });
+
+render();
+</script>
+</body>
+</html>

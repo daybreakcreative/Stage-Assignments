@@ -1,0 +1,13 @@
+{
+  "name": "stage-assign",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stage·Assign — single-file worship-team stage / mic / setup-checklist tool (Daybreak Church).",
+  "scripts": {
+    "test": "node tests/run-all.js",
+    "check": "node -e \"const fs=require('fs');const h=fs.readFileSync('index.html','utf8');const s=h.indexOf('<script>');const e=h.indexOf('</script>');fs.writeFileSync('/tmp/_sa.js',h.slice(s+8,e));require('child_process').execSync('node --check /tmp/_sa.js',{stdio:'inherit'});const css=h.match(/<style>([\\s\\S]*?)<\\/style>/)[1];const open=(css.match(/{/g)||[]).length,close=(css.match(/}/g)||[]).length;if(open!==close){console.error('CSS brace mismatch',open,close);process.exit(1)}console.log('JS syntax OK; CSS balanced ('+open+' rules)')\""
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

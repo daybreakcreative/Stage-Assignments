@@ -84,6 +84,8 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .btn.pco{border-color:rgba(74,144,194,.5);color:var(--pco)}
 .btn.pco:hover{background:rgba(74,144,194,.1)}
 .btn.pco.connected{background:rgba(74,144,194,.15);border-color:var(--pco)}
+.btn.pco:not(.connected){border-color:var(--danger);color:var(--danger)}
+.btn.pco:not(.connected) .dot{background:var(--danger)}
 .btn.ghost{background:transparent}
 .btn .kbd{font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);padding:1px 4px;background:var(--bg-inset);border-radius:3px}
 .btn.primary .kbd{background:rgba(0,0,0,.15);color:var(--btn-primary-text,#3a2d10);opacity:.75}
@@ -158,6 +160,11 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .rs-del{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:11px;padding:2px 6px;border-radius:4px;transition:all .12s;align-self:baseline;opacity:.4}
 .rs-item:hover .rs-del{opacity:1}
 .rs-del:hover{color:var(--danger);background:var(--accent-dim)}
+.rs-move{display:inline-flex;flex-direction:column;gap:1px;align-self:center;margin-right:2px}
+.rs-move-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:9px;line-height:1;padding:1px 4px;border-radius:3px;opacity:.4;transition:all .12s}
+.rs-item:hover .rs-move-btn{opacity:.8}
+.rs-move-btn:hover:not(:disabled){color:var(--accent);background:var(--accent-dim);opacity:1}
+.rs-move-btn:disabled{opacity:.12;cursor:default}
 .rs-add-row{display:flex;gap:6px;margin-top:8px;padding-top:10px;border-top:1px dashed var(--border)}
 .rs-add-btn{flex:1;background:transparent;border:1px dashed var(--border);color:var(--text-muted);padding:6px 8px;border-radius:6px;font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .12s}
 .rs-add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
@@ -280,7 +287,7 @@ body.stage-editing .stage-edit-btn{display:none}
 .stage-edit-actions .btn{font-size:11px;padding:6px 12px}
 /* Grid overlay — drawn over the stage SVG while user is mid-drag (rule defined later, after .stage-svg-wrap) */
 /* In edit mode, slots show different cursor + outline */
-body.stage-editing .sp{cursor:grab;outline:1.5px dashed rgba(212,161,71,.4);outline-offset:2px}
+body.stage-editing .sp{cursor:grab;outline:1.5px dashed rgba(212,161,71,.4);outline-offset:2px;touch-action:none}
 body.stage-editing .sp:hover{transform:translate(-50%,-50%) scale(1.05);outline-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 body.stage-editing .sp.is-dragging{cursor:grabbing;outline:2px solid var(--accent);z-index:10;opacity:.92;box-shadow:0 8px 24px rgba(212,161,71,.45)}
 body.stage-editing.dragging-slot{user-select:none}
@@ -471,7 +478,11 @@ background-size:5% 10%}
 .iem-preset-row{display:grid;grid-template-columns:1fr 28px;gap:6px;align-items:center}
 .iem-preset-row input{font-size:11.5px;padding:6px 9px}
 .inv-edit-row,.pref-row{display:grid;gap:8px;align-items:center;padding:5px 0}
-.inv-edit-row{grid-template-columns:1fr 70px 56px 30px}
+.inv-edit-row{grid-template-columns:18px 1fr 70px 56px 30px}
+.inv-grip{color:var(--text-faint);font-size:13px;cursor:grab;user-select:none;text-align:center;font-family:var(--ff-mono);line-height:1}
+.inv-grip:hover{color:var(--accent)}
+.inv-edit-row.dragging{opacity:.4}
+.inv-edit-row.drop-target{background:var(--accent-dim);box-shadow:inset 0 0 0 1px var(--accent);border-radius:6px}
 .inv-wl-toggle{background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em;padding:4px 6px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:all .15s;height:28px}
 .inv-wl-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .inv-wl-toggle.is-wireless{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
@@ -588,6 +599,21 @@ background-size:5% 10%}
 .wiz-mic-chip .wmc-check{font-size:11px;line-height:1;font-weight:700}
 /* Selected mic cards */
 .wiz-mic-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-bottom:8px}
+.wmic-grip{color:var(--text-faint);font-size:13px;cursor:grab;user-select:none;flex-shrink:0;font-family:var(--ff-mono);line-height:1}
+.wmic-grip:hover{color:var(--accent)}
+.wiz-mic-card.dragging{opacity:.4}
+.wiz-mic-card.drop-target{border-color:var(--accent);background:var(--accent-dim)}
+.saved-stage-saverow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.saved-stage-name{flex:1;min-width:0;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font-size:13px;outline:none;font-family:var(--ff-body)}
+.saved-stage-name:focus{border-color:var(--accent)}
+.saved-stage-list{display:flex;flex-direction:column;gap:6px}
+.saved-stage-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.saved-stage-item .ss-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
+.saved-stage-item .ss-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-stage-item .ss-apply{font-size:11px;padding:4px 12px;flex-shrink:0}
+.ss-icon{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:4px;flex-shrink:0}
+.ss-icon:hover{color:var(--accent);background:var(--bg-inset)}
+.saved-stage-empty{font-size:12px;color:var(--text-faint);font-style:italic;padding:4px 0}
 .wmic-name-input{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;padding:4px 4px;outline:none;border-bottom:1px solid transparent;transition:border-color .12s}
 .wmic-name-input:hover{border-bottom-color:var(--border)}
 .wmic-name-input:focus{border-bottom-color:var(--accent)}
@@ -1457,13 +1483,8 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
     <input type="text" id="serviceName" placeholder="Event title (e.g. Sunday Morning, Christmas Eve)" style="min-width:240px;" />
   </div>
   <div class="actions">
-    <button class="btn pco" id="pcoBtn"><span class="dot"></span> Planning Center</button>
+    <button class="btn pco" id="pcoBtn" title="PCO: Not Connected"><span class="dot"></span> Planning Center</button>
     <button class="btn ghost" id="themeBtn" title="Toggle light/dark mode">☾</button>
-    <button class="pco-reminder-pill" id="pcoReminderPill" style="display:none;" title="Connect to Planning Center">
-      <span class="prp-dot"></span>
-      <span>PCO: Not connected</span>
-      <span class="prp-menu-trigger">⌄</span>
-    </button>
     <button class="btn ghost" id="settingsBtn" title="Advanced Settings" aria-label="Advanced Settings">Advanced Settings</button>
     <button class="btn ghost" id="resetBtn">Reset</button>
     <button class="btn" id="summaryBtn">Print Summary</button>
@@ -1501,9 +1522,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <div class="corner-head">
         <div class="title">Stage</div>
         <div class="stage-edit-group">
-          <button class="stage-edit-btn" id="stageOutlineBtn" title="Edit the stage outline / footprint shape">&#9998; Outline</button>
-          <button class="stage-edit-btn" id="stageFeaturesBtn" title="Add stairs, doors, risers, monitor wedges">&#9783; Features</button>
-          <button class="stage-edit-btn" id="stageEditBtn" title="Drag performers to reposition them on the stage">&#10530; Move people</button>
+          <button class="stage-edit-btn" id="stageEditBtn" title="Edit the stage layout — drag people, edit the outline &amp; add features">&#9998; Edit Layout</button>
         </div>
       </div>
       <!-- Edit mode toolbar — appears when in edit mode -->
@@ -1511,10 +1530,12 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
         <div class="stage-edit-status">
           <span class="stage-edit-dot"></span>
           <span>Edit Layout Mode</span>
-          <span class="stage-edit-hint">Drag any slot to reposition. Changes save automatically.</span>
+          <span class="stage-edit-hint">Drag people to reposition. Use Outline &amp; Features to edit the stage. Changes save automatically.</span>
         </div>
         <div class="stage-edit-actions">
-          <button class="btn ghost" id="stageEditResetBtn" title="Reset all slots to auto layout">Reset to Auto</button>
+          <button class="btn ghost" id="stageEditOutlineBtn" title="Edit the stage outline / footprint shape">&#9998; Outline</button>
+          <button class="btn ghost" id="stageEditFeaturesBtn" title="Add stairs, doors, risers, monitor wedges">&#9783; Features</button>
+          <button class="btn ghost" id="stageEditResetBtn" title="Reset all people to auto layout">Reset to Auto</button>
           <button class="btn primary" id="stageEditDoneBtn">Done</button>
         </div>
       </div>
@@ -1608,11 +1629,11 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <button class="tab" data-tab="pco">Planning Center</button>
       <button class="tab" data-tab="templates">Templates</button>
       <button class="tab" data-tab="setups">Setup Items</button>
-      <button class="tab" data-tab="venues">Venues</button>
+      <button class="tab" data-tab="venues" style="display:none;">Venues</button>
       <button class="tab" data-tab="data">Data</button>
     </div>
     <div class="tab-panel active" id="tab-inventory">
-      <p class="subtitle" style="margin-bottom:12px;">Mics ranked best → worst. Auto-assign hands the best mics out to worship leaders first.</p>
+      <p class="subtitle" style="margin-bottom:12px;">Mics ranked best → worst — <strong>drag the ⋮⋮ handles to reorder</strong> (top is your first-choice mic). Auto-assign hands the best mics out to worship leaders first.</p>
       <div id="invEdit"></div>
       <button class="add-row-btn" id="addMicBtn">+ Add mic type</button>
     </div>
@@ -2035,6 +2056,7 @@ const DEFAULT_STATE = {
   // Per-shadow preferences: keyed by normFullName → last selected option
   // value = { role: 'vocalist'|'band', choice: 'on-stage-mic'|'on-stage-iem'|'off-stage-iem'|'off-stage'|'observer', mic?:..., updatedAt: ISO }
   shadowPreferences: {},
+  savedStages: [],
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark'
@@ -2043,45 +2065,108 @@ const DEFAULT_STATE = {
 const SETUP_ITEM_PRESETS = {
   drums: {
     label: 'Drums',
-    defaults: ['House snare', 'House cymbals'],
+    defaults: [],
     presets: [
-      { name: 'No snare (drummer bringing own)', items: ['No snare — drummer bringing own'] },
-      { name: 'No cymbals (drummer bringing own)', items: ['No cymbals — drummer bringing own'] },
-      { name: 'Full house kit', items: ['House snare', 'House cymbals', 'House kick pedal'] },
+      { name: 'Remove snare (bringing own)', items: ['Remove snare (bringing own snare)'] },
+      { name: 'Remove cymbals (bringing own)', items: ['Remove cymbals (bringing own cymbals)'] },
+      { name: 'Bringing side snare', items: ['Bringing side snare'] },
+      { name: 'Bringing tom 3', items: ['Bringing tom 3'] },
+      { name: 'Needs music stand', items: ['Needs music stand'] },
+      { name: 'Needs drum sticks', items: ['Needs drum sticks'] },
     ]
   },
   bass: {
     label: 'Bass',
-    defaults: ['RNDI', "10' 1/4\" cable"],
+    defaults: ['Guitar stand'],
     presets: [
-      { name: 'House bass rig', items: ['House bass rig', 'DI from amp'] },
-      { name: 'XLR only', items: ['XLR cable only — no DI needed'] },
-      { name: 'Wireless pack', items: ['Wireless bass pack', 'RNDI'] },
-    ]
-  },
-  eg: {
-    label: 'Electric Guitar',
-    defaults: ['XLR (guitarist bringing own rig)'],
-    presets: [
-      { name: 'House pedal board + modeler', items: ['House pedal board', 'Modeler', 'XLR out'] },
-      { name: 'House amp setup', items: ['House amp', 'SM57 on cab', "10' 1/4\" cable"] },
-      { name: 'Own pedal board', items: ['Own pedal board', 'XLR out'] },
+      { name: 'XLR for player bass rig', items: ['XLR for player bass rig'] },
+      { name: 'House bass rig', items: ['House bass rig'] },
+      { name: 'Needs DI', items: ['Needs DI'] },
+      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
+      { name: 'Music stand', items: ['Music stand'] },
+      { name: 'Clean & dirty (2 inputs)', items: ['Clean & dirty setup (2 inputs)'] },
+      { name: 'Synth bass (2 inputs)', items: ['Synth bass (2 inputs)'] },
+      { name: 'Needs talkback mic', items: ['Needs talkback mic'] },
     ]
   },
   ag: {
     label: 'Acoustic Guitar',
-    defaults: ['Wireless pack'],
+    defaults: ['Wireless AG rig', 'Guitar stand'],
     presets: [
-      { name: 'Acoustic DI', items: ['Acoustic DI', 'Tuner', "20' 1/4\" cable"] },
-      { name: 'Wireless + DI', items: ['Wireless pack', 'Backup DI'] },
+      { name: 'Needs house acoustic guitar', items: ['Needs house acoustic guitar'] },
+      { name: 'House AG tuner/DI', items: ['House AG tuner/DI'] },
+      { name: 'XLR for player AG rig', items: ['XLR for player AG rig'] },
+      { name: 'Wireless AG rig (default)', items: ['Wireless AG rig'] },
+      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
+      { name: 'Music stand', items: ['Music stand'] },
+      { name: 'Boom mic stand (if also vocalist)', items: ['Boom mic stand'] },
+      { name: 'Power needed', items: ['Power needed'] },
+    ]
+  },
+  eg: {
+    label: 'Electric Guitar',
+    defaults: ['Stereo DI box', 'Amp & mic setup (stereo)', '2 XLRs for player EG rig', 'Single guitar stand'],
+    presets: [
+      { name: 'House EG rig', items: ['House EG rig'] },
+      { name: 'Mono guitar rig', items: ['Mono DI box', 'Amp & mic setup (mono)', 'XLR for player EG rig (mono)'] },
+      { name: 'Stereo guitar rig (default)', items: ['Stereo DI box', 'Amp & mic setup (stereo)', '2 XLRs for player EG rig'] },
+      { name: 'Multi guitar stand (multiple EGs)', items: ['Multi guitar stand'] },
+      { name: 'Single guitar stand', items: ['Single guitar stand'] },
+      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
+      { name: 'Needs talkback mic', items: ['Needs talkback mic'] },
     ]
   },
   keys: {
     label: 'Keys',
-    defaults: ['House Nord', 'Nord sounds loaded'],
+    defaults: ['House keys rig'],
     presets: [
-      { name: 'Nord + user sounds (Dante)', items: ['House Nord', 'User sounds via keyboard output', 'Dante virtual sound card', 'Dante run', 'Network adaptor needed'] },
-      { name: 'Own keyboard', items: ['Own keyboard', 'Stereo DI or XLR'] },
+      { name: 'House keys rig', items: ['House keys rig'] },
+      { name: 'Remove keyboard (bringing own)', items: ['Remove keyboard (bringing own keyboard)'] },
+      { name: 'Sounds from keyboard (analog)', items: ['Sounds from keyboard — analog'] },
+      { name: 'Sounds from computer (interface)', items: ['Sounds from computer — interface', 'Needs interface'] },
+      { name: 'Sounds from computer (Dante)', items: ['Sounds from computer — Dante', 'Needs network — thunderbolt adapter'] },
+      { name: 'Bringing interface', items: ['Bringing interface'] },
+      { name: '1 stereo input', items: ['1 stereo input'] },
+      { name: '2 stereo inputs', items: ['2 stereo inputs'] },
+      { name: '3 stereo inputs', items: ['3 stereo inputs'] },
+      { name: 'Stereo DI/DIs & 1/4" cables', items: ['Stereo DI/DIs & 1/4" cables'] },
+      { name: 'XLR out of keyboard', items: ['XLR out of keyboard'] },
+      { name: 'XLR out of interface', items: ['XLR out of interface'] },
+      { name: '1/4" out of interface', items: ['1/4" out of interface'] },
+      { name: 'Laptop stand', items: ['Laptop stand'] },
+      { name: '2nd keys stand (2 keyboards)', items: ['2nd keys stand'] },
+      { name: 'Music stand', items: ['Music stand'] },
+    ]
+  },
+  md: {
+    label: 'Music Director / Tracks',
+    defaults: ['House tracks computer', 'House Dante tracks rig', 'Computer stand', 'Talkback mic & opto gate'],
+    presets: [
+      { name: 'House tracks computer', items: ['House tracks computer'] },
+      { name: 'House Dante tracks rig', items: ['House Dante tracks rig'] },
+      { name: 'Computer stand', items: ['Computer stand'] },
+      { name: 'Talkback mic & opto gate', items: ['Talkback mic & opto gate'] },
+      { name: 'Music stand', items: ['Music stand'] },
+    ]
+  },
+  strings: {
+    label: 'Violin / Cello',
+    defaults: [],
+    presets: [
+      { name: 'House clip & mic', items: ['House clip & mic'] },
+      { name: 'Player pickup — wireless pack', items: ['Player mic & clip / instrument pickup', 'Needs wireless pack'] },
+      { name: 'Player pickup — DI box & 1/4"', items: ['Player mic & clip / instrument pickup', 'Needs DI box & 1/4"'] },
+      { name: 'Player pickup — XLR only', items: ['Player mic & clip / instrument pickup', 'XLR only'] },
+      { name: 'Power needed', items: ['Power needed'] },
+      { name: 'Music stand', items: ['Music stand'] },
+      { name: 'Needs instrument stand', items: ['Needs instrument stand'] },
+    ]
+  },
+  vocals: {
+    label: 'Vocals',
+    defaults: ['Straight mic stand on stage'],
+    presets: [
+      { name: 'Straight mic stand on stage', items: ['Straight mic stand on stage'] },
     ]
   }
 };
@@ -2100,6 +2185,8 @@ function detectPresetKey(inst) {
   if (/eg|electric/.test(tag) || /electric/.test(label)) return 'eg';
   if (/ag|acoustic/.test(tag) || /acoustic/.test(label)) return 'ag';
   if (/key/.test(tag) || /key/.test(label)) return 'keys';
+  if (/\bmd\b|music ?director|tracks|playback|ableton/.test(tag) || /\bmd\b|music ?director|tracks|playback|ableton/.test(label)) return 'md';
+  if (/violin|cello|viola|fiddle|string/.test(tag) || /violin|cello|viola|fiddle|string/.test(label)) return 'strings';
   return null;
 }
 
@@ -2227,7 +2314,8 @@ function loadState() {
           : { lastServiceDate: null, lastCompletionByKey: {} },
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
         shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
-        checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {}
+        checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {},
+        savedStages: Array.isArray(p.savedStages) ? p.savedStages : []
       };
     }
   } catch(e) { console.warn('State load failed:', e); }
@@ -2324,8 +2412,8 @@ function syncPcoServiceTypeUI() {
 function updateSettingsVenueTag() {
   const tag = document.getElementById('settingsVenueTag');
   if (!tag) return;
-  if (venuesList().length > 1 && activeVenue()) { tag.textContent = activeVenue().name; tag.style.display = ''; }
-  else { tag.textContent = ''; tag.style.display = 'none'; }
+  // Multi-venue is not part of this release — never show the venue tag.
+  tag.textContent = ''; tag.style.display = 'none';
 }
 // One-time migration: wrap a single-config state into one "Carlsbad" venue.
 function ensureVenues(st) {
@@ -2390,6 +2478,10 @@ function addVenue(name, fromId) {
 function renderVenueSwitcher() {
   const el = document.getElementById('venueSwitch');
   if (!el) return;
+  // Multi-venue is not part of this release — keep the switcher hidden.
+  el.style.display = 'none';
+  el.innerHTML = '';
+  return;
   const vs = venuesList();
   const activeId = state.activeVenueId;
   let html = '<span class="venue-switch-cap">Venue</span>';
@@ -3038,10 +3130,7 @@ function renderVocalists() {
           const lockTitle = locked
             ? `Always put ${esc(v.name || 'this person')} on ${esc(mpref.lock)} — tap to remove the lock`
             : `Lock ${esc(v.name || 'this person')} to their selected mic (always use it)`;
-          return `<div class="voc-mic-lock-row">
-            <button class="voc-mic-lock${locked ? ' on' : ''}" data-id="${v.id}" title="${lockTitle}">${lockLabel}</button>
-            <button class="voc-nomic-toggle${noMic ? ' on' : ''}" data-id="${v.id}" title="Silent vocalist — never assign a mic">${noMic ? '∅ No mic' : 'no mic'}</button>
-          </div>`;
+          return '';
         })()}` : `
         <div class="mic-pick" style="border-top:none;padding-top:6px;">
           ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
@@ -3245,23 +3334,16 @@ function vocalistByName(name) {
   return null;
 }
 
-// Scan all instruments — if a band slot has a typed name that matches a current vocalist,
-// auto-promote it to a vocalistPlayer link. Also clears any vocalistPlayer that points to a deleted vocalist.
+// Maintenance only: clear any vocalistPlayer link that points to a deleted vocalist.
+// We do NOT auto-link by name anymore — a band member and a vocalist who happen to share
+// a (first) name are treated as separate people unless the user explicitly links them
+// via the "★ link" / "also a vocalist" control.
 function autoLinkBandToVocalists() {
   let changed = false;
   state.instruments.forEach(inst => {
     // Drop stale links to deleted vocalists
     if (inst.vocalistPlayer && !state.vocalists.some(v => v.id === inst.vocalistPlayer)) {
       inst.vocalistPlayer = null; changed = true;
-    }
-    // Auto-link typed names that match a vocalist
-    if (!inst.vocalistPlayer && inst.assignedTo) {
-      const v = vocalistByName(inst.assignedTo);
-      if (v) {
-        inst.vocalistPlayer = v.id;
-        inst.assignedTo = ''; // collapse the typed name into the link
-        changed = true;
-      }
     }
   });
   return changed;
@@ -3925,10 +4007,122 @@ function seedPolygonPoints() {
   return [fl, { x: 400, y: midY }, fr, br, bl];
 }
 
+// A true four-corner rectangle (flat front + flat back), used by "Reset to rectangle".
+// Depth is respected for the back edge; the front is flat (ignores curvature).
+function rectangleStagePoints() {
+  const td = getStageDepth() / 100;
+  const backY = Math.round(180 + 180 * td);
+  return [{ x: 20, y: 40 }, { x: 780, y: 40 }, { x: 780, y: backY }, { x: 20, y: backY }];
+}
+
 // ---------------------------------------------------------------------------
 // POLYGON STAGE OUTLINE EDITOR — drag corners, tap + on an edge to add, tap a corner to remove.
 // No Bezier handles, no modes, always a closed shape. opts: { getInitial, onSave, onClear }
 // ---------------------------------------------------------------------------
+// ============================================================================
+// SAVED STAGE LAYOUTS — a named library of reusable stage shapes (+ fixtures + vocal arc).
+// Stored globally (state.savedStages); apply to whichever venue you're currently on.
+// ============================================================================
+function captureStageSnapshot(source) {
+  if (source === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
+    return {
+      points: (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? structuredClone(wizardData.customStagePoints) : null,
+      curvature: (typeof wizardData.stageCurvature === 'number') ? wizardData.stageCurvature : DEFAULT_STAGE_CURVATURE,
+      depth: (typeof wizardData.stageDepth === 'number') ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH,
+      vocalDirection: wizardData.vocalDirection || DEFAULT_VOCAL_DIRECTION,
+      features: structuredClone(state.config.stageFeatures || [])
+    };
+  }
+  const c = state.config;
+  return {
+    points: (Array.isArray(c.customStagePoints) && c.customStagePoints.length >= 3) ? structuredClone(c.customStagePoints) : null,
+    curvature: (typeof c.stageCurvature === 'number') ? c.stageCurvature : DEFAULT_STAGE_CURVATURE,
+    depth: (typeof c.stageDepth === 'number') ? c.stageDepth : DEFAULT_STAGE_DEPTH,
+    vocalDirection: c.vocalDirection || DEFAULT_VOCAL_DIRECTION,
+    features: structuredClone(c.stageFeatures || [])
+  };
+}
+function saveStageToLibrary(name, source) {
+  if (!Array.isArray(state.savedStages)) state.savedStages = [];
+  const snap = captureStageSnapshot(source);
+  const entry = Object.assign({ id: 'stage_' + Math.random().toString(36).slice(2, 9), name: (name || '').trim() || 'Untitled stage', savedAt: Date.now() }, snap);
+  state.savedStages.push(entry);
+  saveState();
+  return entry;
+}
+function applySavedStage(id, target) {
+  const s = (state.savedStages || []).find(x => x.id === id);
+  if (!s) return false;
+  if (target === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
+    wizardData.customStagePoints = s.points ? structuredClone(s.points) : null;
+    wizardData.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
+    wizardData.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
+    if (s.vocalDirection) wizardData.vocalDirection = s.vocalDirection;
+  } else {
+    state.config.customStagePoints = s.points ? structuredClone(s.points) : null;
+    state.config.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
+    state.config.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
+    if (s.vocalDirection) state.config.vocalDirection = s.vocalDirection;
+  }
+  // Fixtures are per-venue config — applying replaces the current venue's fixtures with the saved set.
+  state.config.stageFeatures = structuredClone(s.features || []);
+  saveState();
+  return true;
+}
+function renameSavedStage(id, name) {
+  const s = (state.savedStages || []).find(x => x.id === id);
+  if (s) { s.name = (name || '').trim() || s.name; saveState(); }
+}
+function deleteSavedStage(id) {
+  state.savedStages = (state.savedStages || []).filter(x => x.id !== id);
+  saveState();
+}
+function renderSavedStagesPanel(container, opts) {
+  opts = opts || {};
+  const source = opts.source || 'config';
+  const el = (typeof container === 'string') ? document.querySelector(container) : container;
+  if (!el) return;
+  const list = state.savedStages || [];
+  el.innerHTML = `
+    <div class="saved-stage-saverow">
+      <input type="text" class="saved-stage-name" placeholder="Name this stage (e.g. Carlsbad Main)" />
+      <button class="btn ghost" data-ss-save>Save current stage</button>
+    </div>
+    ${list.length ? `<div class="saved-stage-list">${list.map(s => `
+      <div class="saved-stage-item" data-ss-id="${esc(s.id)}">
+        <span class="ss-name">${esc(s.name)}</span>
+        <span class="ss-meta">${s.points ? (s.points.length + ' corners') : ('curve ' + (s.curvature || 0) + '%')}${(s.features && s.features.length) ? ' · ' + s.features.length + ' fixture' + (s.features.length > 1 ? 's' : '') : ''}</span>
+        <button class="btn ghost ss-apply" data-ss-apply="${esc(s.id)}">Apply</button>
+        <button class="ss-icon" data-ss-rename="${esc(s.id)}" title="Rename">&#9998;</button>
+        <button class="ss-icon" data-ss-del="${esc(s.id)}" title="Delete">&#10005;</button>
+      </div>`).join('')}</div>`
+      : '<div class="saved-stage-empty">No saved stages yet. Save your current stage to reuse it in another venue or service.</div>'}
+  `;
+  const nameInput = el.querySelector('.saved-stage-name');
+  const reRender = () => renderSavedStagesPanel(el, opts);
+  el.querySelector('[data-ss-save]').addEventListener('click', () => {
+    const nm = (nameInput && nameInput.value || '').trim();
+    if (!nm) { if (nameInput) nameInput.focus(); toast('Give the stage a name first', 'warn'); return; }
+    saveStageToLibrary(nm, source);
+    if (nameInput) nameInput.value = '';
+    reRender();
+    toast('Stage saved ✓', 'success');
+  });
+  el.querySelectorAll('[data-ss-apply]').forEach(b => b.addEventListener('click', () => {
+    applySavedStage(b.dataset.ssApply, source === 'wizard' ? 'wizard' : 'config');
+    toast('Stage applied ✓', 'success');
+    if (opts.onChange) opts.onChange();
+  }));
+  el.querySelectorAll('[data-ss-rename]').forEach(b => b.addEventListener('click', () => {
+    const s = (state.savedStages || []).find(x => x.id === b.dataset.ssRename); if (!s) return;
+    const nm = prompt('Rename stage:', s.name); if (nm !== null) { renameSavedStage(s.id, nm); reRender(); }
+  }));
+  el.querySelectorAll('[data-ss-del]').forEach(b => b.addEventListener('click', () => {
+    const s = (state.savedStages || []).find(x => x.id === b.dataset.ssDel); if (!s) return;
+    if (confirm('Delete saved stage "' + s.name + '"?')) { deleteSavedStage(s.id); reRender(); }
+  }));
+}
+
 function openPolygonStageEditor(opts) {
   opts = opts || {};
   const existing = document.getElementById('saPolyModal'); if (existing) existing.remove();
@@ -4075,7 +4269,7 @@ function openPolygonStageEditor(opts) {
   });
 
   modal.querySelector('#saPolySnap').addEventListener('click', () => { snap = !snap; render(); });
-  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = seedFn(); selIdx = -1; render(); });
+  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; render(); });
   const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
   const commit = () => {
     if (pts.length >= 3 && opts.onSave) opts.onSave(pts.map(roundStagePoint));
@@ -4271,13 +4465,9 @@ function enterStageEditMode() {
   }
   // Snapshot current positions for undo
   saveState();
+  // Edit happens INLINE on the main stage — its slots are wired for drag and styled in edit mode.
+  // (The old full-screen modal is no longer used; its drag was unreliable.)
   renderStage();
-  // Open the full-screen modal
-  const modal = document.getElementById('stageEditModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    renderModalStage();
-  }
 }
 
 function exitStageEditMode() {
@@ -4363,9 +4553,10 @@ function wireSlotForPositionDrag(el, customKey) {
   let startClient = null;     // {x,y} - where pointer was first pressed
   let dragOffset = null;      // (slotPos in viewBox) - (pointerPos in viewBox) at drag start
   let pointerId = null;
-  // Use the people layer (the slot's parent) as the coordinate reference — its bounding rect
-  // matches the SVG's rendered (letterboxed) area exactly.
-  const peopleLayer = el.parentElement;
+  // Coordinate reference = the people layer (the slot's parent); its bounding rect matches the
+  // SVG's rendered (letterboxed) area exactly. Read it LIVE at drag time — renderStage wires slots
+  // BEFORE appending them, so el.parentElement is null at wire time (this was the dead-drag bug).
+  const refLayer = () => el.parentElement || el.closest('#stagePeople, .sem-people');
   const grid = document.getElementById('stageGridOverlay');
 
   function startPositionDrag(clientX, clientY) {
@@ -4383,14 +4574,14 @@ function wireSlotForPositionDrag(el, customKey) {
       const topPct  = parseFloat(el.style.top)  || 50;
       return { x: (leftPct/100) * 800, y: (topPct/100) * 380 };
     })();
-    const pointerVB = clientToViewBox(peopleLayer, clientX, clientY);
+    const pointerVB = clientToViewBox(refLayer(), clientX, clientY);
     dragOffset = { x: slotPos.x - pointerVB.x, y: slotPos.y - pointerVB.y };
   }
 
   function onPointerMove(e) {
     if (!dragging) return;
     e.preventDefault();
-    const pointerVB = clientToViewBox(peopleLayer, e.clientX, e.clientY);
+    const pointerVB = clientToViewBox(refLayer(), e.clientX, e.clientY);
     let newX = pointerVB.x + dragOffset.x;
     let newY = pointerVB.y + dragOffset.y;
     // Clamp to stage outline
@@ -4503,10 +4694,11 @@ function wireStageEditControls() {
   const editBtn = document.getElementById('stageEditBtn');
   const doneBtn = document.getElementById('stageEditDoneBtn');
   const resetBtn = document.getElementById('stageEditResetBtn');
-  const semDoneBtn = document.getElementById('semDoneBtn');
   if (editBtn) editBtn.addEventListener('click', enterStageEditMode);
-  // Outline + Features editors, surfaced directly on the main stage (also in Advanced Settings → Display)
-  const outlineBtn = document.getElementById('stageOutlineBtn');
+  if (doneBtn) doneBtn.addEventListener('click', exitStageEditMode);
+  if (resetBtn) resetBtn.addEventListener('click', resetStageLayoutToAuto);
+  // Outline + Features editors, available from the Edit-Layout toolbar (also in Advanced Settings → Display)
+  const outlineBtn = document.getElementById('stageEditOutlineBtn');
   if (outlineBtn) outlineBtn.addEventListener('click', () => {
     openPolygonStageEditor({
       getInitial: () => state.config.customStagePoints,
@@ -4517,25 +4709,16 @@ function wireStageEditControls() {
       }
     });
   });
-  const featuresBtn = document.getElementById('stageFeaturesBtn');
+  const featuresBtn = document.getElementById('stageEditFeaturesBtn');
   if (featuresBtn) featuresBtn.addEventListener('click', () => {
     openStageFeaturesEditor(() => {
+      renderStage();
       if (document.getElementById('settingsOverlay')?.classList.contains('show')) renderLayoutEditor();
     });
   });
-  // doneBtn (stageEditDoneBtn) inline button removed — enterStageEditMode now opens a modal (M6)
-  if (resetBtn) resetBtn.addEventListener('click', resetStageLayoutToAuto);
-  if (semDoneBtn) semDoneBtn.addEventListener('click', exitStageEditMode);
-  const semCloseBtn = document.getElementById('semCloseBtn');
-  if (semCloseBtn) semCloseBtn.addEventListener('click', exitStageEditMode);
-  document.querySelector('#stageEditModal .sem-backdrop')
-    ?.addEventListener('click', () => exitStageEditMode());
-  // Escape key closes the stage edit modal
+  // Escape exits Edit-Layout mode
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      const modal = document.getElementById('stageEditModal');
-      if (modal && modal.style.display !== 'none') exitStageEditMode();
-    }
+    if (e.key === 'Escape' && isStageEditing()) exitStageEditMode();
   });
 }
 
@@ -4932,10 +5115,10 @@ function renderLayoutEditor() {
     <p class="subtitle" style="margin-bottom:18px;">Configure stage shape, vocal direction, instruments &amp; IEM packs, and display options.</p>
 
     <div class="section-label" style="margin-bottom:10px;">Stage Shape</div>
-    ${hasCustomOutline ? `<div class="subtitle" style="font-size:11.5px;color:var(--accent);margin:-2px 0 10px;line-height:1.5;">&#9873; A custom outline is active. The preview shows that outline, and these sliders now only set where the band &amp; singers stand &mdash; not the floor shape. Edit or remove the outline under &ldquo;Stage outline &amp; features&rdquo; below.</div>` : ''}
+    ${hasCustomOutline ? `<div class="subtitle" style="font-size:11.5px;color:var(--accent);margin:-2px 0 10px;line-height:1.5;">&#9873; A custom outline is active &mdash; the preview shows your shape. The shape sliders are hidden while a custom outline is in use. Edit it or reset to the default shape under &ldquo;Stage outline &amp; features&rdquo; below.</div>` : ''}
     <div class="curvature-row">
       <div class="curvature-preview" id="layoutCurvaturePreview">${previewSvg}</div>
-      <div class="curvature-controls">
+      ${hasCustomOutline ? '' : `<div class="curvature-controls">
         <div class="curvature-header">
           <span class="curvature-label">Curve depth</span>
           <span class="curvature-value" id="layoutCurvatureValue">${curCurvature}%</span>
@@ -4951,7 +5134,7 @@ function renderLayoutEditor() {
         <div class="curvature-ticks"><span>Shallow</span><span></span><span></span><span>Deep</span></div>
 
         <button class="btn ghost" id="layoutCurvatureReset" style="margin-top:10px;font-size:11px;">Reset shape to defaults</button>
-      </div>
+      </div>`}
     </div>
     <div style="height:12px;"></div>
 
@@ -4960,9 +5143,14 @@ function renderLayoutEditor() {
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
       <button class="btn" id="layoutEditOutline">&#9998; Edit stage outline</button>
       <button class="btn" id="layoutEditFeatures">&#9783; Stage features${(c.stageFeatures&&c.stageFeatures.length)?(' &middot; '+c.stageFeatures.length):''}</button>
-      ${(c.customStagePoints&&c.customStagePoints.length>=3) ? '<button class="btn ghost" id="layoutResetOutline" style="font-size:11px;">Reset outline to sliders</button>' : ''}
+      ${(c.customStagePoints&&c.customStagePoints.length>=3) ? '<button class="btn ghost" id="layoutResetOutline" style="font-size:11px;">Reset outline to defaults</button>' : ''}
     </div>
     ${(c.customStagePoints&&c.customStagePoints.length>=3) ? '<div class="subtitle" style="font-size:11px;color:var(--accent);margin-bottom:4px;">Custom outline active (' + c.customStagePoints.length + ' corners)</div>' : ''}
+    <div style="height:18px;"></div>
+
+    <div class="section-label" style="margin-bottom:10px;">Saved stage layouts</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Save the current stage (shape, fixtures &amp; vocal arc) to a named library, then apply it to any venue. <em style="color:var(--text-faint);">Applying replaces this venue's shape and fixtures.</em></p>
+    <div id="asSavedStages"></div>
     <div style="height:18px;"></div>
 
     <div class="section-label" style="margin-bottom:10px;">Vocal Arrangement</div>
@@ -5238,9 +5426,13 @@ function renderLayoutEditor() {
       openStageFeaturesEditor(() => renderLayoutEditor());
     });
     if (resetOutlineBtn) resetOutlineBtn.addEventListener('click', () => {
-      if (!confirm('Reset the stage outline back to the slider shape?')) return;
-      c.customStagePoints = null; saveState(); refresh();
+      if (!confirm('Remove the custom outline and reset the stage shape to the default sliders?')) return;
+      c.customStagePoints = null;
+      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
+      c.stageDepth = DEFAULT_STAGE_DEPTH;
+      saveState(); refresh();
     });
+    renderSavedStagesPanel('#asSavedStages', { source: 'config', onChange: refresh });
   })();
 
   // Vocal direction
@@ -6172,7 +6364,10 @@ function renderInvEditor() {
   state.inventory.forEach((m, idx) => {
     const row = document.createElement('div');
     row.className = 'inv-edit-row';
+    row.draggable = true;
+    row.dataset.idx = idx;
     row.innerHTML = `
+      <div class="inv-grip" title="Drag to reorder — top = first-choice mic">⋮⋮</div>
       <input type="text" value="${esc(m.name)}" data-idx="${idx}" data-field="name" />
       <input type="number" value="${m.total}" min="0" max="20" data-idx="${idx}" data-field="total" />
       <button class="inv-wl-toggle ${m.wireless?'is-wireless':'is-wired'}" data-idx="${idx}" data-action="toggle-wireless" title="${m.wireless?'Wireless mic — click to switch to wired':'Wired mic — click to switch to wireless'}">
@@ -6204,6 +6399,29 @@ function renderInvEditor() {
       const idx = parseInt(e.currentTarget.dataset.idx,10);
       state.inventory.splice(idx,1);
       state.inventory.forEach((m,i) => m.rank = i+1);
+      saveState(); renderInvEditor();
+    });
+  });
+  // Drag-reorder mics → priority/rank (top = first-choice / best mic). Auto-assign uses this order.
+  let invDragFrom = null;
+  el.querySelectorAll('.inv-edit-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      if (e.target.matches('input, select, button, textarea')) { e.preventDefault(); return; }
+      invDragFrom = parseInt(row.dataset.idx, 10);
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', () => { row.classList.remove('dragging'); el.querySelectorAll('.inv-edit-row').forEach(r => r.classList.remove('drop-target')); });
+    row.addEventListener('dragover', e => { e.preventDefault(); if (invDragFrom === null || parseInt(row.dataset.idx, 10) === invDragFrom) return; row.classList.add('drop-target'); });
+    row.addEventListener('dragleave', e => { if (!row.contains(e.relatedTarget)) row.classList.remove('drop-target'); });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const to = parseInt(row.dataset.idx, 10);
+      if (invDragFrom === null || to === invDragFrom) return;
+      const [moved] = state.inventory.splice(invDragFrom, 1);
+      state.inventory.splice(to, 0, moved);
+      state.inventory.forEach((m, i) => m.rank = i + 1);
+      invDragFrom = null;
       saveState(); renderInvEditor();
     });
   });
@@ -6473,11 +6691,13 @@ function showPCOBar() {
   document.getElementById('pcoBar').style.display = 'flex';
   document.getElementById('workspace').classList.add('with-pco');
   document.getElementById('pcoBtn').classList.add('connected');
+  document.getElementById('pcoBtn').title = 'Planning Center — connected';
 }
 function hidePCOBar() {
   document.getElementById('pcoBar').style.display = 'none';
   document.getElementById('workspace').classList.remove('with-pco');
   document.getElementById('pcoBtn').classList.remove('connected');
+  document.getElementById('pcoBtn').title = 'PCO: Not Connected';
 }
 function setPCOStatus(text, kind='') {
   const el = document.getElementById('pcoStatusText');
@@ -7545,7 +7765,7 @@ function renderDisplayView() {
 
   // Band list
   const bandList = document.getElementById('dvBandList');
-  bandList.innerHTML = '';
+  if (bandList) bandList.innerHTML = '';
   state.instruments.forEach(inst => {
     if (inst.vocalistPlayer) return;
     const name = inst.assignedTo || '';
@@ -7554,12 +7774,12 @@ function renderDisplayView() {
     const li = document.createElement('li');
     li.className = 'dv-list-item' + (name ? '' : ' empty');
     li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}</span><span class="name ${isMD?'is-md':''}">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(iemPackFor(inst))}</span>`;
-    bandList.appendChild(li);
+    if (bandList) bandList.appendChild(li);
   });
 
   // Hosts list
   const hostsList = document.getElementById('dvHostsList');
-  hostsList.innerHTML = '';
+  if (hostsList) hostsList.innerHTML = '';
   const hosts = [
     { pos:'Pastor', name:state.hosts.speaker },
     { pos:'HH 1',   name:state.hosts.welcomeHost1 },
@@ -7574,12 +7794,12 @@ function renderDisplayView() {
     li.className = 'dv-list-item';
     const detail = h.baptism ? '<span class="baptism-tag">💧 Baptism</span>' : '';
     li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(formatDisplayName(h.name))}</span><span class="detail">${detail}</span>`;
-    hostsList.appendChild(li);
+    if (hostsList) hostsList.appendChild(li);
   });
-  if (!anyHost) {
+  if (!anyHost && hostsList) {
     hostsList.innerHTML = '<li class="dv-list-item empty"><span class="pos">—</span><span class="name">No hosts assigned</span><span class="detail"></span></li>';
   }
-  if (bandList.innerHTML === '') {
+  if (bandList && bandList.innerHTML === '') {
     bandList.innerHTML = '<li class="dv-list-item empty"><span class="pos">—</span><span class="name">No band assigned</span><span class="detail"></span></li>';
   }
 
@@ -7781,11 +8001,14 @@ function renderRunSheet() {
   grid.innerHTML = '';
   visibleItems.forEach((it) => {
     const trueIdx = items.indexOf(it);
+    const isFirst = trueIdx === 0, isLast = trueIdx === items.length - 1;
+    const moveCtrl = `<div class="rs-move"><button class="rs-move-btn" data-move-idx="${trueIdx}" data-move-dir="up" title="Move up"${isFirst?' disabled':''}>▲</button><button class="rs-move-btn" data-move-idx="${trueIdx}" data-move-dir="down" title="Move down"${isLast?' disabled':''}>▼</button></div>`;
     if (it.kind === 'header') {
       const el = document.createElement('div');
       el.className = 'rs-item header';
       el.innerHTML = `
         <input type="text" class="rs-edit rs-edit-header" data-idx="${trueIdx}" data-field="title" value="${esc(it.title || '')}" placeholder="Section header" />
+        ${moveCtrl}
         <button class="rs-del" data-idx="${trueIdx}" title="Delete">✕</button>
       `;
       grid.appendChild(el);
@@ -7815,6 +8038,7 @@ function renderRunSheet() {
         ${metaParts.length ? `<div class="rs-meta-edit">${metaParts.join('')}</div>` : ''}
       </div>
       ${rsCfg.showDuration ? `<input type="text" class="rs-edit rs-edit-dur" data-idx="${trueIdx}" data-field="length" value="${esc(fmtDuration(it.length))}" placeholder="0m" />` : ''}
+      ${moveCtrl}
       <button class="rs-del" data-idx="${trueIdx}" title="Delete">✕</button>
     `;
     grid.appendChild(el);
@@ -7852,6 +8076,20 @@ function renderRunSheet() {
     btn.addEventListener('click', e => {
       const idx = parseInt(btn.dataset.idx, 10);
       state.serviceOrder.splice(idx, 1);
+      saveState();
+      renderRunSheet();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+  // Reorder up/down
+  grid.querySelectorAll('.rs-move-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      const idx = parseInt(btn.dataset.moveIdx, 10);
+      const swap = btn.dataset.moveDir === 'up' ? idx - 1 : idx + 1;
+      const list = state.serviceOrder;
+      if (swap < 0 || swap >= list.length) return;
+      const tmp = list[idx]; list[idx] = list[swap]; list[swap] = tmp;
       saveState();
       renderRunSheet();
       if (state.viewMode === 'display') renderDisplayView();
@@ -8030,7 +8268,8 @@ function getStageAreas() {
       name: v.name.trim(),
       key: setupKeyForVocal(v.name.trim()),
       role: 'vocalist',
-      isWL: v.isWL
+      isWL: v.isWL,
+      vocId: v.id
     }));
   if (vocPeople.length > 0) {
     areas.push({
@@ -8204,23 +8443,23 @@ function renderPersonCard(p) {
   const stats = setupCompletionStats(p.key);
   const items = bucket.items;
   const status = stats.status === 'empty' ? 'empty' : stats.status;
-  const presetKey = (p.role === 'band') ? detectPresetKey(p.inst) : null;
+  const presetKey = (p.role === 'band') ? detectPresetKey(p.inst) : (p.role === 'vocalist' ? 'vocals' : null);
   // Feature 2: use editable presets
   const activePresets = getSetupPresets();
   const presetDef = presetKey ? activePresets[presetKey] : null;
 
-  // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players
-  if (p.role === 'band' && p.inst) {
-    const assignedPersonId = p.inst.vocalistPlayer || null;
-    // Check if person's name matches any vocalist
-    const personNorm = normFullName(p.name);
-    const isAlsoVocalist = state.vocalists.some(v => v.name && normFullName(v.name) === personNorm);
-    const isMD = state.musicDirectorId && state.musicDirectorId === p.inst.id;
-    if (isAlsoVocalist || isMD) {
-      const BOOM = 'Boom mic stand';
+  // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players.
+  // The dual-role signal is an EXPLICIT vocalist link (inst.vocalistPlayer) — never a name match —
+  // so a guitarist and a vocalist who merely share a first name don't trigger it.
+  // A linked instrument has no separate band row (it's "covered by" the vocalist), so the boom
+  // lands on the VOCALIST's bucket. A typed-name MD (a real band row) gets it on the band bucket.
+  {
+    const BOOM = 'Boom mic stand';
+    const bandNeedsBoom = (p.role === 'band' && p.inst && state.musicDirectorId && state.musicDirectorId === p.inst.id);
+    const vocalistNeedsBoom = (p.role === 'vocalist' && p.vocId && state.instruments.some(i => i.vocalistPlayer === p.vocId));
+    if (bandNeedsBoom || vocalistNeedsBoom) {
       const bucket = ensureSetupBucket(p.key);
-      const alreadyHasBoom = bucket.items.some(it => it.text === BOOM);
-      if (!alreadyHasBoom) {
+      if (!bucket.items.some(it => it.text === BOOM)) {
         bucket.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2,9), text: BOOM, doneThisService: false, scopeOneTime: false, autoAdded: true });
       }
     }
@@ -9271,15 +9510,14 @@ function exitSetupItemsView() {
 /* ===================== FIRST-RUN WIZARD ===================== */
 const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'setup-intro'];
 
-const SETUP_PRESETS = {
-  'drums':   ['Needs drum tech', 'Brings own kit', 'Kick click needed', 'Needs DI for kick', 'In-ear monitor only', 'Needs headphone amp'],
-  'bass':    ['Brings own pedalboard', 'Runs DI direct', 'Needs amp', 'Runs stereo', 'Brings own bass', 'Needs tuner DI'],
-  'eg':      ['Brings own pedalboard', 'Needs amp', 'Runs stereo L/R', 'Brings own guitar', 'Needs tuner', 'Needs MIDI'],
-  'ag':      ['Needs DI box', 'Brings own guitar', 'Runs stereo', 'Needs capo', 'Needs direct box'],
-  'keys':    ['Brings own keyboard', 'Needs MIDI cable', 'Runs stereo', 'Needs sustain pedal', 'Needs DI box', 'Uses Nord', 'Uses Ableton'],
-  'vocals':  ['Needs lyric stand', 'Uses in-ear only', 'Needs wedge monitor', 'Needs confidence monitor'],
-  'default': ['Needs DI box', 'Runs stereo', 'Brings own gear', 'Needs cable snake', 'Needs power strip'],
-};
+// Wizard quick-add chips, derived from SETUP_ITEM_PRESETS so they stay in sync with the
+// per-instrument setup library. Each chip = a preset name for that instrument.
+const SETUP_PRESETS = (function () {
+  const out = {};
+  for (const k in SETUP_ITEM_PRESETS) out[k] = SETUP_ITEM_PRESETS[k].presets.map(p => p.name);
+  out['default'] = ['Needs DI', 'Music stand', 'Power needed', 'XLR only', 'Needs cable'];
+  return out;
+})();
 let wizardData = null;
 let wizardStepIdx = 0;
 let wizardBrandSnapshot = null;
@@ -10168,10 +10406,12 @@ function renderWizardStepBody(step) {
           </div>
 
           ${selected.length > 0 ? `
-            <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Your inventory</div>
+            <div class="section-label" style="margin-top:18px;margin-bottom:4px;">Your inventory</div>
+            <div class="wiz-q-help" style="margin-bottom:10px;">Drag the <span style="font-family:var(--ff-mono);">⋮⋮</span> handles to set priority — the mic at the top is your first choice, the bottom is last. Auto-Assign gives the best mics to worship leaders first. <em style="color:var(--text-faint);">(You can change this anytime in Advanced Settings → Mic Inventory.)</em></div>
             <div id="wiz_mics_list">
               ${selected.map((m, i) => `
-                <div class="wiz-mic-card" data-wmic-idx="${i}">
+                <div class="wiz-mic-card" data-wmic-idx="${i}" draggable="true">
+                  <span class="wmic-grip" title="Drag to reorder — top = first-choice mic">⋮⋮</span>
                   <input type="text" class="wmic-name-input" value="${esc(m.name||'')}" data-wmic-name="${i}" placeholder="Mic name" />
                   <div class="wmic-controls">
                     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;">
@@ -10271,8 +10511,9 @@ function renderWizardStepBody(step) {
           <div class="wiz-q-title">Stage shape</div>
           <div class="wiz-q-help">Drag the sliders to match your stage. The vocal arc follows the curve. You can fine-tune this any time in Advanced Settings → Display.</div>
           <div class="curvature-row" style="background:var(--bg-inset);">
-            <div class="curvature-preview" id="wiz_curv_preview">${buildStagePreviewSvg(curVal, depthVal)}</div>
+            <div class="curvature-preview" id="wiz_curv_preview">${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? buildCustomOutlinePreviewSvg(wizardData.customStagePoints) : buildStagePreviewSvg(curVal, depthVal)}</div>
             <div class="curvature-controls">
+              ${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? '<div style="font-size:11px;color:var(--accent);margin-bottom:10px;line-height:1.4;">Showing your custom shape. These sliders are paused — use <b>Remove custom shape</b> below to switch back to them.</div>' : ''}
               <div class="curvature-header">
                 <span class="curvature-label">Curve depth</span>
                 <span class="curvature-value" id="wiz_curv_value">${curVal}%</span>
@@ -10300,6 +10541,11 @@ function renderWizardStepBody(step) {
             })()}
           </div>
 
+          <div style="margin-top:10px">
+            <button class="wiz-draw-toggle" id="wizFeaturesBtn">&#9783; Add stairs, doors &amp; risers</button>
+            ${(state.config.stageFeatures && state.config.stageFeatures.length) ? '<span style="font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);margin-left:10px;">' + state.config.stageFeatures.length + ' item' + (state.config.stageFeatures.length > 1 ? 's' : '') + ' placed</span>' : ''}
+          </div>
+
           <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Vocal arrangement</div>
           <div class="wiz-q-help" style="margin-bottom:10px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Check the SR/SL labels on the preview above — stage right is from the performer's perspective looking at the audience.</em></div>
           <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
@@ -10312,6 +10558,10 @@ function renderWizardStepBody(step) {
               <div class="wiz-shape-sub">Standard layout</div>
             </button>
           </div>
+
+          <div class="section-label" style="margin-top:20px;margin-bottom:8px;">Saved stages</div>
+          <div class="wiz-q-help" style="margin-bottom:10px;">Save this stage to reuse it in another venue or service — or apply one you've already saved (replaces the current shape and fixtures).</div>
+          <div id="wizSavedStages"></div>
         </div>`;
     }
     case 'stage-layout': {
@@ -10692,6 +10942,30 @@ function wireWizardStep(step) {
       wizardData.mics.splice(i, 1);
       renderWizardStep();
     }));
+    // Drag-reorder mics → sets priority order (top = first-choice / best mic)
+    (function(){
+      let dragFrom = null;
+      body.querySelectorAll('.wiz-mic-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
+          if (e.target.matches('input, select, button, textarea')) { e.preventDefault(); return; }
+          dragFrom = parseInt(card.dataset.wmicIdx, 10);
+          e.dataTransfer.effectAllowed = 'move';
+          card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => { card.classList.remove('dragging'); body.querySelectorAll('.wiz-mic-card').forEach(c => c.classList.remove('drop-target')); });
+        card.addEventListener('dragover', e => { e.preventDefault(); if (dragFrom === null || parseInt(card.dataset.wmicIdx, 10) === dragFrom) return; card.classList.add('drop-target'); });
+        card.addEventListener('dragleave', e => { if (!card.contains(e.relatedTarget)) card.classList.remove('drop-target'); });
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          const to = parseInt(card.dataset.wmicIdx, 10);
+          if (dragFrom === null || to === dragFrom || !Array.isArray(wizardData.mics)) return;
+          const [moved] = wizardData.mics.splice(dragFrom, 1);
+          wizardData.mics.splice(to, 0, moved);
+          dragFrom = null;
+          renderWizardStep();
+        });
+      });
+    })();
     // Custom add
     const customInp = body.querySelector('#wiz_mic_custom_name');
     const customBtn = body.querySelector('#wiz_mic_custom_add');
@@ -10722,6 +10996,10 @@ function wireWizardStep(step) {
     const preview = body.querySelector('#wiz_curv_preview');
     function refreshWizPreview() {
       if (!preview) return;
+      if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
+        preview.innerHTML = buildCustomOutlinePreviewSvg(wizardData.customStagePoints);
+        return;
+      }
       const cv = slider ? parseInt(slider.value, 10) : wizardData.stageCurvature;
       const dv = depthSlider ? parseInt(depthSlider.value, 10) : wizardData.stageDepth;
       preview.innerHTML = buildStagePreviewSvg(isNaN(cv) ? DEFAULT_STAGE_CURVATURE : cv, isNaN(dv) ? DEFAULT_STAGE_DEPTH : dv);
@@ -10785,6 +11063,24 @@ function wireWizardStep(step) {
         });
       });
     })();
+
+    // Stairs / doors / risers — full-screen fixtures editor (reuses the Advanced Settings one),
+    // showing the wizard's in-progress shape as the backdrop while placing fixtures.
+    const wizFeatBtn = body.querySelector('#wizFeaturesBtn');
+    if (wizFeatBtn) wizFeatBtn.addEventListener('click', () => {
+      const saved = { curv: state.config.stageCurvature, depth: state.config.stageDepth, pts: state.config.customStagePoints, dir: state.config.vocalDirection };
+      if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
+      if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
+      state.config.customStagePoints = wizardData.customStagePoints || null;
+      if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
+      openStageFeaturesEditor(() => {
+        state.config.stageCurvature = saved.curv; state.config.stageDepth = saved.depth;
+        state.config.customStagePoints = saved.pts; state.config.vocalDirection = saved.dir;
+        saveState(); renderWizardStep();
+      });
+    });
+
+    renderSavedStagesPanel('#wizSavedStages', { source: 'wizard', onChange: renderWizardStep });
   }
   if (step === 'stage-layout') {
     const pathEl = body.querySelector('#wizStagePath');
@@ -10793,16 +11089,15 @@ function wireWizardStep(step) {
     if (!pathEl || !peopleEl) return;
 
     // Temporarily apply wizard stage config so getStageShape / getBandStagePositions use the right values
-    const savedCurv = state.config.stageCurvature;
-    const savedDepth = state.config.stageDepth;
-    const savedDir = state.config.vocalDirection;
+    // Mirror the wizard's stage choices into state.config so getStageShape() — used for BOTH the
+    // preview paths AND drag-time clampStagePosition() on this step — derives the right floor + front
+    // edge. These stay applied for the step; applyWizardChoices() commits the same values on finish.
     const savedInsts = state.instruments;
-    const savedCustomEnabled = state.config.customStageEnabled;
-
     if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
     if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
     if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
     state.config.customStageEnabled = false;
+    state.config.customStagePoints = (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? wizardData.customStagePoints.slice() : null;
 
     // Update SVG paths
     const shape = getStageShape();
@@ -10822,12 +11117,9 @@ function wireWizardStep(step) {
     const voxCount = Math.max(0, wizardData.vocalistCount || 0);
     const voxPositions = voxCount > 0 ? getVoxPositions(voxCount) : [];
 
-    // Restore state
+    // Restore only the temp placeholder instruments. The stage-shape values above stay applied for
+    // this step so dragging clamps to the same outline that's drawn.
     state.instruments = savedInsts;
-    state.config.stageCurvature = savedCurv;
-    state.config.stageDepth = savedDepth;
-    state.config.vocalDirection = savedDir;
-    state.config.customStageEnabled = savedCustomEnabled;
 
     if (!wizardData.customStagePositions) wizardData.customStagePositions = {};
     const customs = wizardData.customStagePositions;
