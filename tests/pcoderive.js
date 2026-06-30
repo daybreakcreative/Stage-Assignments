@@ -4,7 +4,7 @@ const html = fs.readFileSync((process.env.SA_HTML||require('path').join(__dirnam
 const errors = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', e => errors.push('jsdomError: ' + ((e.detail&&e.detail.message)||e.message)));
-const dom = new JSDOM(html, { runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc,
+const dom = new JSDOM(html, { runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc, url:'http://localhost/',
   beforeParse(window){
     window.structuredClone = window.structuredClone || (v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)));
     window.matchMedia = window.matchMedia || (()=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}}));
@@ -49,6 +49,26 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if (m.meta.title!=='Grace' || m.meta.date!=='2026-07-05') throw new Error('meta wrong: '+JSON.stringify(m.meta));
     if (m.serviceOrder.map(s=>s.title).join(',')!=='Song A,Song B') throw new Error('order wrong');
     if (m.serviceOrder[0].key!=='C') throw new Error('key not parsed');
+  });
+
+  check('derivePcoModel parses leader + description notes on a service item', ()=>{
+    const items = JSON.stringify({ data:[
+      { id:'i1', attributes:{ sequence:1, item_type:'song', title:'Song A', length:240, key_name:'C', description:'Capo 2' } }
+    ], included:[
+      { type:'ItemNote', attributes:{ category_name:'Song Leader', content:'Jake' }, relationships:{ item:{ data:{ id:'i1' } } } },
+      { type:'ItemNote', attributes:{ category_name:'General', content:'Pad swell' }, relationships:{ item:{ data:{ id:'i1' } } } }
+    ]});
+    const m = ev(`derivePcoModel(${PLAN}, ${TM}, ${items})`);
+    const s = m.serviceOrder[0];
+    if (s.leader!=='Jake') throw new Error('leader not parsed: '+s.leader);
+    if (!/Capo 2/.test(s.notes) || !/Pad swell/.test(s.notes)) throw new Error('notes not combined: '+s.notes);
+  });
+  check('a destructive pull writes state.pcoBaseline with planId + people', ()=>{
+    ev(`state.pcoConfig.selectedPlanId='p9';`);
+    ev(`applyPCOPlanData(${PLAN}, ${TM}, ${ITEMS})`);
+    if (!ev('state.pcoBaseline')) throw new Error('baseline not written');
+    if (ev('state.pcoBaseline.planId')!=='p9') throw new Error('planId missing');
+    if (ev('state.pcoBaseline.people.length') < 1) throw new Error('no people in baseline');
   });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');

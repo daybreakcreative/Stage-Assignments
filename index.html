@@ -1981,6 +1981,7 @@ const DEFAULT_STATE = {
   inventory: structuredClone(DEFAULT_INVENTORY),
   preferences: structuredClone(DEFAULT_PREFERENCES),
   pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'' },
+  pcoBaseline: null,
   brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Inter' },
   config: {
     showMicCapsules: true,
@@ -2262,6 +2263,7 @@ function loadState() {
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: { ...DEFAULT_STATE.hosts, ...(p.hosts||{}) },
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
+        pcoBaseline: (p.pcoBaseline && typeof p.pcoBaseline === 'object') ? p.pcoBaseline : null,
         brand: { ...DEFAULT_STATE.brand, ...(p.brand||{}) },
         config: {
           ...DEFAULT_STATE.config,
@@ -7181,6 +7183,10 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists();
   autoLinkBandToVocalists(); // catch any band positions that match a vocalist's name
+  saveState();
+  // Record PCO's side of the truth so the next merge-refresh can diff against it.
+  state.pcoBaseline = derivePcoModel(planData, tmRes, itemsRes);
+  state.pcoBaseline.planId = state.pcoConfig.selectedPlanId || '';
   saveState();
   renderAll();
 }
