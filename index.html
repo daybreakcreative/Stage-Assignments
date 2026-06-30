@@ -92,6 +92,11 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .btn .dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint)}
 .btn.connected .dot{background:var(--success)}
 .pco-bar{background:linear-gradient(90deg,rgba(74,144,194,.08),transparent);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:12px;font-family:var(--ff-mono);font-size:11.5px;color:var(--text-muted);flex-wrap:wrap}
+.pco-merge-banner{display:flex;flex-wrap:wrap;gap:8px;padding:8px 20px;background:var(--bg-elev);border-bottom:1px solid var(--border);font-size:12.5px}
+.pmn-item{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;border:1px solid var(--border)}
+.pmn-item.warn{border-color:var(--accent);background:var(--accent-dim)}
+.pmn-item.fyi{color:var(--text-muted)}
+.pmn-x{cursor:pointer;border:none;background:transparent;color:inherit;font-family:var(--ff-mono);font-size:13px;line-height:1;padding:0 2px}
 .pco-bar .pco-label{color:var(--pco);font-weight:500;text-transform:uppercase;letter-spacing:.1em;font-size:10px}
 .pco-bar select{background:var(--bg-elev);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:11.5px;padding:4px 8px;border-radius:5px;outline:none;min-width:140px;max-width:260px}
 .pco-bar select:hover{border-color:var(--border-2)}
@@ -1503,6 +1508,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
   <span class="pco-spacer"></span>
   <span class="pco-status" id="pcoStatusText"></span>
 </div>
+<div class="pco-merge-banner" id="pcoMergeBanner" style="display:none;"></div>
 
 <div class="workspace" id="workspace">
   <section class="hero">
@@ -7492,7 +7498,47 @@ async function pcoMergeRefresh() {
   }
 }
 
-function pcoMergeNotify(changeList) { /* implemented in Task 6 */ }
+let pcoMergeNotices = { needs: [], fyi: [] };   // {id, text} entries; ephemeral
+
+function pcoMergeNotify(changeList) {
+  // Sticky ⚠ needs-you: adds (assign mic/position) + declines (find a sub)
+  changeList.added.forEach(p => pcoMergeNotices.needs.push({ id:'n_'+p.pcoId, text:`⚠ ${p.name} added — assign mic/position` }));
+  changeList.declined.forEach(p => pcoMergeNotices.needs.push({ id:'d_'+p.pcoId, text:`⚠ ${p.name} declined — find a sub` }));
+  // ℹ FYI (dismissable): hard removals, role changes, renames
+  changeList.hardRemoved.forEach(p => pcoMergeNotices.fyi.push({ id:'r_'+p.pcoId, text:`ℹ ${p.name} removed from plan` }));
+  changeList.roleChanged.forEach(c => pcoMergeNotices.fyi.push({ id:'rc_'+c.to.pcoId, text:`ℹ ${c.to.name} role changed → ${c.to.position||c.to.kind}` }));
+  changeList.renamed.forEach(c => pcoMergeNotices.fyi.push({ id:'rn_'+c.to.pcoId, text:`ℹ renamed → ${c.to.name}` }));
+  // de-dupe by id (a re-fire shouldn't stack)
+  const dedupe = arr => { const seen=new Set(); return arr.filter(n=>!seen.has(n.id)&&seen.add(n.id)); };
+  pcoMergeNotices.needs = dedupe(pcoMergeNotices.needs);
+  pcoMergeNotices.fyi = dedupe(pcoMergeNotices.fyi);
+  // transient toast summary
+  const bits = [];
+  if (changeList.added.length) bits.push(`+${changeList.added.length} person`);
+  if (changeList.declined.length) bits.push(`${changeList.declined.length} declined`);
+  if (changeList.hardRemoved.length) bits.push(`-${changeList.hardRemoved.length} removed`);
+  if (changeList.serviceOrderChanged) bits.push('service order');
+  if (bits.length) toast('Synced: ' + bits.join(', '), 'success');
+  renderPcoMergeBanner();
+}
+
+function renderPcoMergeBanner() {
+  const el = document.getElementById('pcoMergeBanner');
+  if (!el) return;
+  const all = [
+    ...pcoMergeNotices.needs.map(n => ({ ...n, cls:'warn' })),
+    ...pcoMergeNotices.fyi.map(n => ({ ...n, cls:'fyi' }))
+  ];
+  if (!all.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  el.innerHTML = all.map(n => `<span class="pmn-item ${n.cls}"><span>${n.text}</span><button class="pmn-x" data-notice="${n.id}" title="Dismiss">×</button></span>`).join('');
+  el.querySelectorAll('.pmn-x').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.notice;
+    pcoMergeNotices.needs = pcoMergeNotices.needs.filter(n => n.id !== id);
+    pcoMergeNotices.fyi = pcoMergeNotices.fyi.filter(n => n.id !== id);
+    renderPcoMergeBanner();
+  }));
+}
 
 function pcoLoadDemo() {
   const demoTM = {

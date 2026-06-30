@@ -74,6 +74,21 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     if (ev('state.pcoBaseline.people.length')!==1) throw new Error('baseline not updated');
   });
 
+  await check('notify renders sticky ⚠ for adds and dismissable ℹ for removals', async()=>{
+    ev(`pcoMergeNotices={needs:[],fyi:[]};`);
+    ev(`pcoMergeNotify({added:[{pcoId:'tmA',name:'Mia'}], declined:[], hardRemoved:[{pcoId:'tmB',name:'Sam'}], roleChanged:[], renamed:[], serviceOrderChanged:false, metaChanged:false, hasChanges:true})`);
+    const b = doc.getElementById('pcoMergeBanner');
+    if (b.style.display==='none') throw new Error('banner hidden');
+    if (!/Mia added/.test(b.textContent)) throw new Error('missing add notice');
+    if (!/Sam removed/.test(b.textContent)) throw new Error('missing fyi notice');
+    if (b.querySelectorAll('.pmn-item.warn').length!==1) throw new Error('warn count wrong');
+  });
+  await check('dismiss removes a notice', async()=>{
+    const b = doc.getElementById('pcoMergeBanner');
+    b.querySelector('.pmn-item.fyi .pmn-x').click();
+    if (/Sam removed/.test(b.textContent)) throw new Error('fyi notice not dismissed');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;
