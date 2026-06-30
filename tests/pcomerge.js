@@ -33,6 +33,7 @@ window.addEventListener('load', ()=>setTimeout(()=>{
       state.assignments = new Array(MAX_VOCALISTS).fill(null);
       state.assignments[2]='vJ'; state.assignments[3]='vS'; state.assignments[4]='vZ';
       state.config.customStagePositions = { vocal_2:{x:400,y:120}, vocal_3:{x:300,y:140} };
+      state.instruments.forEach(i => { i.assignedTo=''; });
       var dr = instById('inst_drums'); if(dr){ dr.assignedTo='Sam'; }
       var eg = state.instruments.find(i=>i.label && /electric/i.test(i.label)); if(eg){ eg.assignedTo='Carl'; eg.id='inst_eg1'; }
       state.hosts = {speaker:'',welcomeHost1:'',welcomeHost2:'',hh3:'',hh3IsBaptismal:false};
@@ -98,6 +99,21 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     ev(`applyPcoMerge(${JSON.stringify(cl)}, ${JSON.stringify(next)})`);
     if (ev('state.serviceOrder[0].title')!=='Song A') throw new Error('service order not replaced');
     if (ev('state.service.name')!=='New Series' || ev('state.service.date')!=='2026-07-05') throw new Error('meta not applied');
+  });
+
+  check('a person renamed AND role-changed in one pass is moved once, not duplicated', ()=>{
+    seed();
+    const cl = { added:[], declined:[], hardRemoved:[],
+      roleChanged:[{ from:{pcoId:'tm4',name:'Carl',kind:'band',position:'eg'},
+                     to:{pcoId:'tm4',name:'Carl Jensen',kind:'band',position:'keys'} }],
+      renamed:[{ from:{pcoId:'tm4',name:'Carl',kind:'band',position:'eg'},
+                 to:{pcoId:'tm4',name:'Carl Jensen',kind:'band',position:'keys'} }],
+      serviceOrderChanged:false, metaChanged:false, hasChanges:true };
+    ev(`applyPcoMerge(${JSON.stringify(cl)}, {meta:{},people:[],serviceOrder:[]})`);
+    const onKeys = ev(`state.instruments.filter(i=>i.assignedTo==='Carl Jensen').length`);
+    if (onKeys !== 1) throw new Error('expected exactly one Carl Jensen slot, got '+onKeys);
+    if (ev(`state.instruments.some(i=>i.assignedTo==='Carl')`)) throw new Error('old name "Carl" still present (duplicate)');
+    if (ev("instById('inst_eg1').assignedTo")==='Carl Jensen') throw new Error('still on EG');
   });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');

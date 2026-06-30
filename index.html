@@ -7439,8 +7439,9 @@ function applyPcoMerge(changeList, next) {
   }
   changeList.hardRemoved.forEach(pcoRemovePerson);
   changeList.declined.forEach(pcoRemovePerson);
-  changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
+  // roleChanged before renamed: reslot looks up by old name, so apply it before the rename mutates the name
   changeList.roleChanged.forEach(c => pcoReslotPerson(c.from, c.to));
+  changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
   changeList.added.forEach(pcoAddPerson);
 }
 
