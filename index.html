@@ -7246,6 +7246,49 @@ function derivePcoModel(planData, tmRes, itemsRes) {
   return { meta, people, serviceOrder };
 }
 
+// diffPcoModel: three-way diff by pcoId. baseline = PCO's last-known truth; next = fresh pull.
+// Returns a change-list. A person is "active" when status !== 'D'.
+function diffPcoModel(baseline, next) {
+  const out = { added:[], declined:[], hardRemoved:[], roleChanged:[], renamed:[], serviceOrderChanged:false, metaChanged:false, hasChanges:false };
+  const basePeople = (baseline && baseline.people) || [];
+  const nextPeople = (next && next.people) || [];
+  const baseById = {}; basePeople.forEach(p => { baseById[p.pcoId] = p; });
+  const nextById = {}; nextPeople.forEach(p => { nextById[p.pcoId] = p; });
+  const active = p => p && p.status !== 'D';
+
+  nextPeople.forEach(np => {
+    const bp = baseById[np.pcoId];
+    if (active(np)) {
+      if (!bp || !active(bp)) { out.added.push(np); return; }   // new, or came back from declined
+      // both active & known: detect role/name changes
+      if (np.kind !== bp.kind || np.position !== bp.position || np.host !== bp.host) {
+        out.roleChanged.push({ from:bp, to:np });
+      }
+      if (normFullName(np.name) !== normFullName(bp.name)) {
+        out.renamed.push({ from:bp, to:np });
+      }
+    } else { // np declined
+      if (bp && active(bp)) out.declined.push(np);   // newly declined
+      // (declined->declined, or first-seen-as-declined: nothing to do)
+    }
+  });
+  // hard-removed: was active in baseline, absent entirely from next
+  basePeople.forEach(bp => {
+    if (active(bp) && !nextById[bp.pcoId]) out.hardRemoved.push(bp);
+  });
+  // service order + meta: shallow JSON compare
+  const baseSO = JSON.stringify((baseline && baseline.serviceOrder) || []);
+  const nextSO = JSON.stringify((next && next.serviceOrder) || []);
+  out.serviceOrderChanged = baseSO !== nextSO;
+  const baseMeta = JSON.stringify((baseline && baseline.meta) || {});
+  const nextMeta = JSON.stringify((next && next.meta) || {});
+  out.metaChanged = baseMeta !== nextMeta;
+
+  out.hasChanges = !!(out.added.length || out.declined.length || out.hardRemoved.length ||
+    out.roleChanged.length || out.renamed.length || out.serviceOrderChanged || out.metaChanged);
+  return out;
+}
+
 function pcoLoadDemo() {
   const demoTM = {
     data: [
