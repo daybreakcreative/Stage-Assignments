@@ -7185,6 +7185,67 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   renderAll();
 }
 
+// ===== PCO MERGE REFRESH (auto-refresh that preserves manual edits) =====
+// derivePcoModel: pure parser. Raw PCO responses -> normalized {meta, people, serviceOrder}.
+// Includes ALL team members (any status) so a later C->D decline is detectable. No state mutation.
+function derivePcoModel(planData, tmRes, itemsRes) {
+  const meta = { title:'', date:'' };
+  const planAttrs = (planData && planData.data && planData.data.attributes) || (planData && planData.attributes) || null;
+  if (planAttrs) {
+    meta.title = planAttrs.series_title || planAttrs.title || planAttrs.plan_title || '';
+    if (planAttrs.sort_date) meta.date = planAttrs.sort_date.slice(0,10);
+  }
+  const people = [];
+  ((tmRes && tmRes.data) || []).forEach(tm => {
+    const a = tm.attributes || {};
+    const name = a.name || '';
+    if (!name) return;
+    const cls = classifyPosition(a.team_position_name || '');
+    if (cls.kind === 'ignore' || cls.kind === 'unknown') return;
+    people.push({
+      pcoId: tm.id,
+      name,
+      kind: cls.kind === 'md_flag' ? 'md' : cls.kind,   // vocalist|band|host|shadow|md
+      position: cls.position || '',
+      host: cls.host || '',
+      isWL: !!cls.isWL,
+      leadsSongs: !!cls.leadsSongs,
+      status: a.status || ''
+    });
+  });
+  // Service order — mirror of applyPCOPlanData's parse, but pure.
+  const serviceOrder = [];
+  if (itemsRes && itemsRes.data) {
+    const noteByItemId = {};
+    (itemsRes.included || []).forEach(inc => {
+      if (inc.type === 'ItemNote') {
+        const itemId = inc.relationships && inc.relationships.item && inc.relationships.item.data && inc.relationships.item.data.id;
+        if (itemId) { (noteByItemId[itemId] = noteByItemId[itemId] || []).push(inc.attributes); }
+      }
+    });
+    const sorted = [...itemsRes.data].sort((a,b)=>(a.attributes.sequence||0)-(b.attributes.sequence||0));
+    sorted.forEach(item => {
+      const a = item.attributes || {};
+      const notes = noteByItemId[item.id] || [];
+      let leader = null; const other = [];
+      notes.forEach(n => {
+        const cat = (n.category_name||'').toLowerCase(); const content = (n.content||'').trim();
+        if (!content) return;
+        if (!leader && cat.includes('leader')) leader = content; else other.push(content);
+      });
+      const descPieces = [];
+      if (a.description && a.description.trim()) descPieces.push(a.description.trim());
+      if (other.length) descPieces.push(...other);
+      serviceOrder.push({
+        id: item.id, kind: a.item_type || 'item', title: a.title || '',
+        length: a.length || 0, key: a.key_name || null, leader,
+        notes: descPieces.join('\n').trim(), seq: a.sequence || 0
+      });
+    });
+  }
+  return { meta, people, serviceOrder };
+}
+
 function pcoLoadDemo() {
   const demoTM = {
     data: [
