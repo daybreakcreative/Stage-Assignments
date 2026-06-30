@@ -7190,10 +7190,10 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
 // Includes ALL team members (any status) so a later C->D decline is detectable. No state mutation.
 function derivePcoModel(planData, tmRes, itemsRes) {
   const meta = { title:'', date:'' };
-  const planAttrs = (planData && planData.data && planData.data.attributes) || (planData && planData.attributes) || null;
-  if (planAttrs) {
-    meta.title = planAttrs.series_title || planAttrs.title || planAttrs.plan_title || '';
-    if (planAttrs.sort_date) meta.date = planAttrs.sort_date.slice(0,10);
+  if (planData && planData.attributes) {
+    const a = planData.attributes;
+    meta.title = a.series_title || a.title || a.plan_title || '';
+    if (a.sort_date) meta.date = a.sort_date.slice(0,10);
   }
   const people = [];
   ((tmRes && tmRes.data) || []).forEach(tm => {

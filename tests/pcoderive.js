@@ -29,7 +29,7 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     { id:'tm4', attributes:{ name:'Carlos Brown',   team_position_name:'Keys',           status:'C' } },
     { id:'tm5', attributes:{ name:'Pat Usher',      team_position_name:'Usher',          status:'C' } }
   ]});
-  const PLAN = JSON.stringify({ data:{ attributes:{ series_title:'Grace', sort_date:'2026-07-05T10:00:00Z' } } });
+  const PLAN = JSON.stringify({ attributes:{ series_title:'Grace', sort_date:'2026-07-05T10:00:00Z' } });
   const ITEMS = JSON.stringify({ data:[
     { id:'i1', attributes:{ sequence:2, item_type:'song', title:'Song B', length:300, key_name:'G' } },
     { id:'i2', attributes:{ sequence:1, item_type:'song', title:'Song A', length:240, key_name:'C' } }
