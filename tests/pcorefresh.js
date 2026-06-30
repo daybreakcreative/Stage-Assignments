@@ -57,6 +57,14 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     ev(`state.config.autoRefreshPaused=false;`);
     if (ev('window.__fetchCount')!==0) throw new Error('fetched while paused');
   });
+  await check('skips while a modal overlay is open', async()=>{
+    const ov = doc.querySelector('.overlay');
+    if (!ov) throw new Error('no .overlay element found in DOM to test with');
+    ov.classList.add('show'); window.__fetchCount=0;
+    await ev('pcoMergeRefresh()');
+    ov.classList.remove('show');
+    if (ev('window.__fetchCount')!==0) throw new Error('fetched while a modal was open');
+  });
   await check('a real refresh fetches, merges, and updates the baseline', async()=>{
     ev(`state.pcoBaseline = { planId:'p1', meta:{title:'T',date:'2026-07-05'}, serviceOrder:[], people:[] };
         state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); window.__fetchCount=0;`);

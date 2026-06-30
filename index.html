@@ -7455,7 +7455,7 @@ function pcoCanRefresh() {
   if (!state.pcoConfig.selectedPlanId) return false;             // no plan
   if (state.config.autoRefreshPaused) return false;              // user paused
   if (isStageEditing()) return false;                            // mid-edit
-  if (document.querySelector('.overlay[style*="display: block"], .overlay[style*="display:block"]')) return false; // a sheet/modal open
+  if (document.querySelector('.overlay.show')) return false;     // a sheet/modal is open
   return true;
 }
 
