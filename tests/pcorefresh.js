@@ -89,6 +89,14 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     if (/Sam removed/.test(b.textContent)) throw new Error('fyi notice not dismissed');
   });
 
+  await check('banner HTML-escapes person names (no markup injection)', async()=>{
+    ev(`pcoMergeNotices={needs:[],fyi:[]};`);
+    ev(`pcoMergeNotify({added:[{pcoId:'tmX',name:'A & B <img>'}], declined:[], hardRemoved:[], roleChanged:[], renamed:[], serviceOrderChanged:false, metaChanged:false, hasChanges:true})`);
+    const b = doc.getElementById('pcoMergeBanner');
+    if (b.querySelector('img')) throw new Error('name was not escaped — markup injected');
+    if (!/A & B <img>/.test(b.textContent)) throw new Error('escaped name should still read literally in textContent: '+b.textContent);
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;

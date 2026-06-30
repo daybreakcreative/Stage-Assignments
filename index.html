@@ -7501,7 +7501,7 @@ async function pcoMergeRefresh() {
 let pcoMergeNotices = { needs: [], fyi: [] };   // {id, text} entries; ephemeral
 
 function pcoMergeNotify(changeList) {
-  // Sticky ⚠ needs-you: adds (assign mic/position) + declines (find a sub)
+  // ⚠ needs-you (adds: assign mic/position · declines: find a sub) — stays until you dismiss it
   changeList.added.forEach(p => pcoMergeNotices.needs.push({ id:'n_'+p.pcoId, text:`⚠ ${p.name} added — assign mic/position` }));
   changeList.declined.forEach(p => pcoMergeNotices.needs.push({ id:'d_'+p.pcoId, text:`⚠ ${p.name} declined — find a sub` }));
   // ℹ FYI (dismissable): hard removals, role changes, renames
@@ -7531,7 +7531,7 @@ function renderPcoMergeBanner() {
   ];
   if (!all.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = 'flex';
-  el.innerHTML = all.map(n => `<span class="pmn-item ${n.cls}"><span>${n.text}</span><button class="pmn-x" data-notice="${n.id}" title="Dismiss">×</button></span>`).join('');
+  el.innerHTML = all.map(n => `<span class="pmn-item ${n.cls}"><span>${esc(n.text)}</span><button class="pmn-x" data-notice="${n.id}" title="Dismiss">×</button></span>`).join('');
   el.querySelectorAll('.pmn-x').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.notice;
     pcoMergeNotices.needs = pcoMergeNotices.needs.filter(n => n.id !== id);
