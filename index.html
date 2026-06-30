@@ -1505,6 +1505,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
   <select id="pcoPlanSelect" disabled><option>— Plan —</option></select>
   <button class="btn" id="pcoPullBtn" disabled>Pull Plan</button>
   <button class="btn ghost" id="pcoRefreshBtn" disabled title="Re-fetch current plan">↻ Refresh</button>
+  <label class="pco-pause" title="Pause auto-refresh"><input type="checkbox" id="pcoAutoPause"> Pause auto-refresh</label>
   <span class="pco-spacer"></span>
   <span class="pco-status" id="pcoStatusText"></span>
 </div>
@@ -6701,6 +6702,7 @@ function showPCOBar() {
   document.getElementById('workspace').classList.add('with-pco');
   document.getElementById('pcoBtn').classList.add('connected');
   document.getElementById('pcoBtn').title = 'Planning Center — connected';
+  startPcoAutoRefresh();
 }
 function hidePCOBar() {
   document.getElementById('pcoBar').style.display = 'none';
@@ -7538,6 +7540,13 @@ function renderPcoMergeBanner() {
     pcoMergeNotices.fyi = pcoMergeNotices.fyi.filter(n => n.id !== id);
     renderPcoMergeBanner();
   }));
+}
+
+const AUTO_REFRESH_MS = 180000;   // 3 minutes
+let pcoAutoRefreshTimer = null;
+function startPcoAutoRefresh() {
+  if (pcoAutoRefreshTimer) return;
+  pcoAutoRefreshTimer = setInterval(() => { pcoMergeRefresh(); }, AUTO_REFRESH_MS);
 }
 
 function pcoLoadDemo() {
@@ -12205,7 +12214,12 @@ function init() {
     const planId = document.getElementById('pcoPlanSelect').value;
     if (planId) pcoPullPlan(planId);
   });
-  document.getElementById('pcoRefreshBtn').addEventListener('click', () => { if (state.pcoConfig.selectedPlanId) pcoPullPlan(state.pcoConfig.selectedPlanId); });
+  document.getElementById('pcoRefreshBtn').addEventListener('click', () => { pcoMergeRefresh(); });
+  const autoPause = document.getElementById('pcoAutoPause');
+  if (autoPause) {
+    autoPause.checked = !!state.config.autoRefreshPaused;
+    autoPause.addEventListener('change', e => { state.config.autoRefreshPaused = e.target.checked; saveState(); });
+  }
   // pcoDisconnectBtn was removed from the main PCO bar — Disconnect is now only inside Settings → Planning Center.
   const oldDisconnect = document.getElementById('pcoDisconnectBtn');
   if (oldDisconnect) oldDisconnect.addEventListener('click', pcoDisconnect);

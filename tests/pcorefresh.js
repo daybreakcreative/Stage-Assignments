@@ -97,6 +97,19 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     if (!/A & B <img>/.test(b.textContent)) throw new Error('escaped name should still read literally in textContent: '+b.textContent);
   });
 
+  await check('↻ Refresh button wired to pcoMergeRefresh (not destructive pull)', async()=>{
+    if (/pcoRefreshBtn'\)\.addEventListener\('click', \(\) => \{ if \(state\.pcoConfig\.selectedPlanId\) pcoPullPlan/.test(html))
+      throw new Error('refresh button still calls destructive pcoPullPlan');
+    if (!/pcoRefreshBtn'\)\.addEventListener\('click', \(\) => \{ pcoMergeRefresh\(\)/.test(html))
+      throw new Error('refresh button not wired to pcoMergeRefresh');
+  });
+  await check('pause checkbox reflects + persists state.config.autoRefreshPaused', async()=>{
+    const cb = doc.getElementById('pcoAutoPause');
+    if (!cb) throw new Error('no pause checkbox');
+    cb.checked = true; cb.dispatchEvent(new window.Event('change'));
+    if (!ev('state.config.autoRefreshPaused')) throw new Error('pause not persisted');
+    cb.checked = false; cb.dispatchEvent(new window.Event('change'));
+  });
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;

@@ -89,3 +89,17 @@ Behaviors that must keep working. **The executable version of this list is `test
       state without dropping fields. → `persist`
 - [ ] Export / Import JSON (Advanced Settings → Data → Download JSON). → `persist`
 - [ ] Labels/formatting helpers render names correctly. → `label2`
+
+### PCO auto-refresh & merging refresh
+- [ ] **↻ Refresh** performs a MERGING refresh (preserves manual edits) via
+      `pcoMergeRefresh()`, NOT a destructive re-pull. **Pull Plan** remains the
+      destructive fresh start. → `pcorefresh`
+- [ ] A 3-minute auto-refresh timer runs while connected; it merges upstream PCO
+      changes preserving stage positions, mics, hand-added people, and host/MD
+      overrides. Timer starts from `showPCOBar()` (NOT `init()`), so tests never start
+      it. → `pcorefresh`
+- [ ] Refresh guards: no refresh while editing layout, while a modal (`.overlay.show`)
+      is open, when disconnected/no plan, when paused, or when a refresh is already in
+      flight. → `pcorefresh`
+- [ ] **Pause auto-refresh** checkbox reflects + persists `state.config.autoRefreshPaused`. →
+      `pcorefresh`
