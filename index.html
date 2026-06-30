@@ -1984,6 +1984,7 @@ const DEFAULT_STATE = {
   pcoBaseline: null,
   brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Inter' },
   config: {
+    autoRefreshPaused: false,
     showMicCapsules: true,
     vocalDirection: DEFAULT_VOCAL_DIRECTION,
     stageShape: 'curved', // 'curved' | 'light-curve' | 'flat' (legacy; superseded by stageCurvature)
@@ -7444,6 +7445,54 @@ function applyPcoMerge(changeList, next) {
   changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
   changeList.added.forEach(pcoAddPerson);
 }
+
+let pcoMergeInFlight = false;
+
+// Returns true if a refresh is allowed to run right now.
+function pcoCanRefresh() {
+  if (pcoMergeInFlight) return false;
+  if (!pcoTokens) return false;                                  // not connected
+  if (!state.pcoConfig.selectedPlanId) return false;             // no plan
+  if (state.config.autoRefreshPaused) return false;              // user paused
+  if (isStageEditing()) return false;                            // mid-edit
+  if (document.querySelector('.overlay[style*="display: block"], .overlay[style*="display:block"]')) return false; // a sheet/modal open
+  return true;
+}
+
+// Pull latest plan, merge into live state preserving edits, update baseline, notify.
+async function pcoMergeRefresh() {
+  if (!pcoCanRefresh()) return;
+  pcoMergeInFlight = true;
+  try {
+    const stId = state.pcoConfig.selectedServiceTypeId;
+    const planId = state.pcoConfig.selectedPlanId;
+    const tmRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
+    const planRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}`);
+    let itemsRes = { data:[], included:[] };
+    try { itemsRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`); } catch(e){ console.warn('items fetch failed', e); }
+
+    const next = derivePcoModel(planRes.data, tmRes, itemsRes);
+    next.planId = planId;
+    // If the stored baseline is for a different plan, treat as no baseline (everything is "add").
+    const baseline = (state.pcoBaseline && state.pcoBaseline.planId === planId) ? state.pcoBaseline : null;
+    const changeList = diffPcoModel(baseline, next);
+
+    if (changeList.hasChanges) {
+      applyPcoMerge(changeList, next);
+    }
+    state.pcoBaseline = next;
+    saveState();
+    if (changeList.hasChanges) { renderAll(); pcoMergeNotify(changeList); }
+    setPCOStatus('Synced ✓','ok');
+  } catch (e) {
+    console.warn('merge refresh failed', e);
+    setPCOStatus('Auto-refresh failed','err');
+  } finally {
+    pcoMergeInFlight = false;
+  }
+}
+
+function pcoMergeNotify(changeList) { /* implemented in Task 6 */ }
 
 function pcoLoadDemo() {
   const demoTM = {
