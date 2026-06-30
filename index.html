@@ -220,7 +220,7 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .x-btn{background:transparent;border:none;color:var(--text-faint);cursor:pointer;padding:2px 5px;font-size:14px;line-height:1;transition:color .15s;border-radius:4px}
 .x-btn:hover{color:var(--danger);background:rgba(184,97,74,.1)}
 .toggles{display:flex;gap:4px;flex-wrap:wrap}
-.wl-star{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;width:24px;height:24px;border-radius:50%;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0}
+.wl-star{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;min-width:30px;height:24px;padding:0 7px;border-radius:12px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.06em;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .wl-star:hover{color:var(--wl);border-color:var(--wl)}
 .wl-star.active{background:rgba(232,184,87,.18);border-color:var(--wl);color:var(--wl);box-shadow:0 0 8px rgba(232,184,87,.3)}
 .ag-badge{font-family:var(--ff-mono);font-size:9.5px;color:var(--success);background:rgba(122,149,104,.15);border:1px solid rgba(122,149,104,.5);padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.1em;font-weight:500}
@@ -720,6 +720,11 @@ background-size:5% 10%}
 .pp-row select,.pp-row input[type="text"],.pp-row textarea{width:100%;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:6px;font-size:13.5px;font-family:var(--ff-body);outline:none}
 .pp-row select:focus,.pp-row input:focus,.pp-row textarea:focus{border-color:var(--accent)}
 .pp-row textarea{min-height:60px;resize:vertical;font-family:var(--ff-body)}
+.pp-setup-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+.pp-setup-row{display:flex;align-items:center;gap:6px}
+.pp-setup-row input[type="text"]{flex:1;width:auto}
+.pp-setup-rm{background:transparent;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;padding:4px 8px;border-radius:4px;flex-shrink:0;line-height:1}
+.pp-setup-rm:hover{color:#c8554d;background:rgba(200,85,77,.1)}
 .pp-options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
 .pp-option-card{background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:12px;text-align:left;cursor:pointer;transition:all .15s;font-family:inherit;color:var(--text)}
 .pp-option-card:hover{border-color:var(--accent)}
@@ -817,6 +822,32 @@ background-size:5% 10%}
 .s-stage-frame .dv-sp.is-wl .dv-sp-role{color:#ffdf9e}
 .s-stage-frame .stage-feature{color:#a8966a}
 .s-stage-frame .sf-label{color:#7a6838;text-shadow:none;font-size:8px}
+/* ---- Print Summary: unbranded, high-contrast black & white (easy to read + clean to print) ---- */
+.summary-sheet{background:#fff!important;color:#000!important;font-family:Georgia,'Times New Roman',serif!important}
+.summary-sheet::before{display:none!important}
+.s-ornament,.s-ornament::before{display:none!important}
+.s-eyebrow,.s-date,.s-item .pos,.s-item .detail,.s-footer,.s-stage-tags{color:#444!important}
+.s-header{border-bottom-color:#ccc!important}
+.s-header h1{color:#000!important;font-style:normal!important}
+.s-block h3{color:#000!important;border-bottom-color:#ccc!important}
+.s-item .name,.s-item .name.is-wl{color:#000!important}
+.s-item .name.is-wl::after{content:' (WL)'!important;color:#000!important;font-family:var(--ff-mono);font-size:11px;letter-spacing:.04em}
+.s-item.empty .name,.s-item.empty .detail{color:#999!important}
+.s-footer{border-top-color:#ccc!important}
+.summary-close{color:#000!important;border-color:#bbb!important}
+.summary-actions .btn{color:#000!important;background:#f2f2f2!important;border-color:#bbb!important}
+.s-stage-frame{background:#fff!important;border-color:#999!important;color:#000!important}
+.s-stage-frame .dv-stage-svg path{stroke:#000!important}
+.s-stage-frame .dv-stage-svg path:not([fill="none"]){fill:#fff!important}
+.s-stage-frame .dv-stage-svg path[fill="none"]{fill:none!important}
+.s-stage-frame .dv-stage-svg text{fill:#000!important;opacity:1!important}
+.s-stage-frame .dv-sp{background:#fff!important;border-color:#000!important;color:#000!important}
+.s-stage-frame .dv-sp-role{color:#555!important}
+.s-stage-frame .dv-sp-name{color:#000!important}
+.s-stage-frame .dv-sp.is-wl{background:#000!important;border-color:#000!important}
+.s-stage-frame .dv-sp.is-wl .dv-sp-role,.s-stage-frame .dv-sp.is-wl .dv-sp-name{color:#fff!important}
+.s-stage-frame .stage-feature{color:#000!important}
+.s-stage-frame .sf-label{color:#000!important}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;border:1px solid var(--bg)}
@@ -873,7 +904,7 @@ body.setup-items-mode .container{display:none}
 .si-person.status-empty{opacity:.7}
 .si-person-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-left:8px}
 .si-person-name{font-family:var(--ff-display);font-size:15.5px;font-weight:500;color:var(--text);flex:1}
-.si-person-name .wl-star{color:var(--wl-color);margin-right:4px;font-size:13px}
+.si-person-name .wl-star{border:none;background:transparent;padding:0;min-width:0;height:auto;color:var(--wl-color);margin-right:4px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em}
 .si-person-role{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;color:var(--text-faint);font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg-inset);border:1px solid var(--border)}
 .si-person-count{font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:5px;background:var(--bg-inset);color:var(--text-muted)}
 .si-person-count.green{color:#7ba968;background:rgba(123,169,104,.1)}
@@ -1108,7 +1139,7 @@ body.tv-mode .dv-list-item .detail{font-size:9px}
 .dv-voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-content:start;align-items:start}
 .dv-voc-card{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden}
 .dv-voc-card.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 14px var(--accent-dim)}
-.dv-voc-card.is-wl::after{content:'★';position:absolute;top:8px;right:10px;color:var(--accent);font-size:14px}
+.dv-voc-card.is-wl::after{content:'WL';position:absolute;top:8px;right:10px;color:var(--accent);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.06em}
 .dv-voc-pos{font-family:var(--ff-mono);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px;line-height:1}
 .dv-voc-name{font-family:var(--ff-display);font-weight:600;font-size:20px;letter-spacing:-.01em;line-height:1.05;color:var(--text);margin-bottom:8px;padding-right:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dv-voc-meta{display:flex;flex-direction:column;gap:3px;padding-top:8px;border-top:1px solid var(--border);min-height:0;overflow:hidden}
@@ -1458,7 +1489,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <div class="title">Vocalists</div>
       <div class="meta">
         <span class="count" id="vocCount">0/8</span>
-        <span class="add-link" id="addVocLink">+ Vocal</span>
+        <span class="add-link" id="addVocLink" style="display:none;">+ Vocal</span>
         <span class="add-link" id="addShadowLink">+ Shadow</span>
       </div>
     </div>
@@ -1739,7 +1770,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
 </div>
 
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
-<div class="display-view" id="displayView" style="position:relative;">
+<div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
     <div class="lock-icon">🔒</div>
     <div class="lock-title">Setup not complete</div>
@@ -2983,7 +3014,7 @@ function renderVocalists() {
     card.innerHTML = `
       <div class="voc-pos-bar">
         <span class="voc-pos">${esc(positionLabel)}</span>
-        <button class="wl-star${v.isWL?' active':''}" data-id="${v.id}" data-action="toggleWL" title="Worship Leader" aria-label="Worship Leader" aria-pressed="${v.isWL}">★</button>
+        <button class="wl-star${v.isWL?' active':''}" data-id="${v.id}" data-action="toggleWL" title="Worship Leader" aria-label="Worship Leader" aria-pressed="${v.isWL}">WL</button>
         <button class="x-btn" data-id="${v.id}" data-action="remove" title="Remove">✕</button>
       </div>
       <div class="voc-body" draggable="true" title="Drag to swap with another vocal">
@@ -4194,13 +4225,33 @@ function snapToGrid(x, y) {
 // Clamp custom position to the stage outline (use the current shape's bounds with a small inset)
 function clampStagePosition(x, y) {
   const shape = getStageShape();
-  // Roughly: x in [40, 760], y in [edgeY+15, backY-15]
-  const edgeY = shape.edgeY != null ? shape.edgeY : 30;
   const backY = shape.backY != null ? shape.backY : 360;
   const minX = 40, maxX = 760;
-  const minY = edgeY - 5, maxY = backY - 12;
+  const maxY = backY - 12;
+  const cx = Math.max(minX, Math.min(maxX, x));
+  // The front boundary follows the curved front edge (a quadratic Bézier), not a flat line —
+  // so people can be placed into the apron's curve/bulge, not just along the shallow side edge.
+  let frontY;
+  const { P0, P1, P2 } = shape;
+  if (P0 && P1 && P2 && Math.abs(P0.x - P2.x) > 1) {
+    // Solve x(t) = cx for t along the front Bézier, then evaluate y(t).
+    const A = P0.x - 2 * P1.x + P2.x, B = 2 * (P1.x - P0.x), C = P0.x - cx;
+    let t;
+    if (Math.abs(A) < 1e-6) { t = B !== 0 ? -C / B : 0.5; }
+    else {
+      const disc = Math.max(0, B * B - 4 * A * C), sq = Math.sqrt(disc);
+      const t1 = (-B + sq) / (2 * A), t2 = (-B - sq) / (2 * A);
+      t = (t1 >= -0.001 && t1 <= 1.001) ? t1 : t2;
+    }
+    t = Math.max(0, Math.min(1, t));
+    const mt = 1 - t;
+    frontY = mt * mt * P0.y + 2 * mt * t * P1.y + t * t * P2.y;
+  } else {
+    frontY = (shape.edgeY != null ? shape.edgeY : 30);
+  }
+  const minY = frontY - 5;
   return {
-    x: Math.max(minX, Math.min(maxX, x)),
+    x: cx,
     y: Math.max(minY, Math.min(maxY, y))
   };
 }
@@ -4917,13 +4968,13 @@ function renderLayoutEditor() {
     <div class="section-label" style="margin-bottom:10px;">Vocal Arrangement</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Stage right and left are from the performer's perspective looking at the audience.</em></p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 24px;">
-      <button class="shape-pick ${c.vocalDirection==='rtl'?'active':''}" data-voc-dir="rtl">
-        <div style="font-family:var(--ff-display);font-size:13px;">Vocal 1 - Stage Right</div>
-        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Standard layout</div>
-      </button>
       <button class="shape-pick ${c.vocalDirection==='ltr'?'active':''}" data-voc-dir="ltr">
         <div style="font-family:var(--ff-display);font-size:13px;">Vocal 1 - Stage Left</div>
         <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Inverted layout</div>
+      </button>
+      <button class="shape-pick ${c.vocalDirection==='rtl'?'active':''}" data-voc-dir="rtl">
+        <div style="font-family:var(--ff-display);font-size:13px;">Vocal 1 - Stage Right</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Standard layout</div>
       </button>
     </div>
 
@@ -8208,7 +8259,7 @@ function renderPersonCard(p) {
   return `
     <div class="si-person status-${status}" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-person-role="${esc(p.role||'')}" ${p.inst ? `data-person-inst-id="${esc(p.inst.id)}"` : ''} ${p.inst && p.inst.tag ? `data-person-inst-tag="${esc(p.inst.tag)}"` : ''}>
       <div class="si-person-header">
-        <span class="si-person-name">${p.isWL ? '<span class="wl-star">★</span>' : ''}${esc(p.name)}</span>
+        <span class="si-person-name">${p.isWL ? '<span class="wl-star">WL</span>' : ''}${esc(p.name)}</span>
         ${roleLabel ? `<span class="si-person-role">${esc(roleLabel)}</span>` : ''}
         ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
         <div class="si-actions">
@@ -9458,19 +9509,41 @@ function renderPostPullStep() {
       </div>
       <div class="pp-row">
         <div class="pp-row-label">Notes (optional)</div>
-        <textarea id="pp_notes" placeholder="e.g. Prefers in-ears at higher volume, allergic to handhelds, etc."></textarea>
+        <textarea id="pp_notes" placeholder="e.g. needs to borrow IEMs, prefers Mons Mix at higher volume, etc."></textarea>
       </div>
     `;
   } else if (step.kind === 'pref-band') {
     content.innerHTML = `
       <div class="pp-step-person-tag">New on ${esc(step.instLabel)}</div>
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
-      <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Capture their setup needs so we remember.</p>
+      <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. What needs to be set up for them on ${esc(step.instLabel)}? These become checklist items on the ✓ Items page.</p>
       <div class="pp-row">
-        <div class="pp-row-label">Setup notes</div>
-        <textarea id="pp_notes" placeholder="e.g. Needs MIDI cable for Nord, brings own pedalboard, runs in stereo, etc."></textarea>
+        <div class="pp-row-label">Setup items for ${esc(step.instLabel)}</div>
+        <ul class="pp-setup-list" id="pp_setup_list">
+          ${['','',''].map(() => `<li class="pp-setup-row"><input type="text" class="pp-setup-item" placeholder="e.g. Run MIDI cable for Nord" /><button type="button" class="pp-setup-rm" title="Remove item" aria-label="Remove item">✕</button></li>`).join('')}
+        </ul>
+        <button type="button" class="btn ghost" id="pp_setup_add" style="font-size:11px;padding:4px 10px;">+ Add item</button>
       </div>
     `;
+    (function wirePpSetup(){
+      const list = content.querySelector('#pp_setup_list');
+      if (!list) return;
+      const addRow = (val) => {
+        const li = document.createElement('li');
+        li.className = 'pp-setup-row';
+        li.innerHTML = '<input type="text" class="pp-setup-item" placeholder="e.g. Run MIDI cable for Nord" /><button type="button" class="pp-setup-rm" title="Remove item" aria-label="Remove item">✕</button>';
+        if (val) li.querySelector('input').value = val;
+        li.querySelector('.pp-setup-rm').addEventListener('click', () => { li.remove(); if (!list.querySelector('.pp-setup-row')) addRow(''); });
+        list.appendChild(li);
+        return li;
+      };
+      list.querySelectorAll('.pp-setup-rm').forEach(btn => btn.addEventListener('click', () => {
+        const li = btn.closest('.pp-setup-row'); if (li) li.remove();
+        if (!list.querySelector('.pp-setup-row')) addRow('');
+      }));
+      const addBtn = content.querySelector('#pp_setup_add');
+      if (addBtn) addBtn.addEventListener('click', () => { const li = addRow(''); const inp = li.querySelector('input'); if (inp) inp.focus(); });
+    })();
   } else if (step.kind === 'shadow') {
     const prev = state.shadowPreferences[normFullName(step.personName)];
     const isVocalist = step.shadowKind === 'vocalist';
@@ -9544,11 +9617,19 @@ function savePostPullStep() {
       setMicRemembered(step.personName, micName);
     }
   } else if (step.kind === 'pref-band') {
-    const notes = content.querySelector('#pp_notes');
+    const inputs = content.querySelectorAll('.pp-setup-item');
+    const texts = Array.from(inputs).map(i => (i.value || '').trim()).filter(Boolean);
     state.musicianPreferences[step.prefKey] = {
       askedAt: new Date().toISOString(),
-      setupNotes: (notes && notes.value || '').trim()
+      setupItemsAdded: texts.length
     };
+    // Turn the entries into real per-person/per-instrument checklist items on the ✓ Items page.
+    if (step.instId && texts.length) {
+      const key = setupKeyForBand(step.personName, step.instId);
+      const bucket = ensureSetupBucket(key);
+      const existing = new Set(bucket.items.map(it => (it.text || '').trim().toLowerCase()));
+      texts.forEach(t => { if (!existing.has(t.toLowerCase())) bucket.items.push(newSetupItem(t)); });
+    }
   } else if (step.kind === 'shadow') {
     const selOpt = content.querySelector('[data-shadow-opt].selected');
     const choice = selOpt ? selOpt.dataset.shadowOpt : null;
@@ -10222,13 +10303,13 @@ function renderWizardStepBody(step) {
           <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Vocal arrangement</div>
           <div class="wiz-q-help" style="margin-bottom:10px;">Where Vocal 1 stands when looking out from the stage. Most teams put Vocal 1 on stage right. <em style="color:var(--text-faint);">Check the SR/SL labels on the preview above — stage right is from the performer's perspective looking at the audience.</em></div>
           <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
-            <button class="wiz-stage-shape${wizardData.vocalDirection === 'rtl' ? ' selected' : ''}" data-wdir="rtl">
-              <div class="wiz-shape-label">Vocal 1 - Stage Right</div>
-              <div class="wiz-shape-sub">Standard layout</div>
-            </button>
             <button class="wiz-stage-shape${wizardData.vocalDirection === 'ltr' ? ' selected' : ''}" data-wdir="ltr">
               <div class="wiz-shape-label">Vocal 1 - Stage Left</div>
               <div class="wiz-shape-sub">Inverted layout</div>
+            </button>
+            <button class="wiz-stage-shape${wizardData.vocalDirection === 'rtl' ? ' selected' : ''}" data-wdir="rtl">
+              <div class="wiz-shape-label">Vocal 1 - Stage Right</div>
+              <div class="wiz-shape-sub">Standard layout</div>
             </button>
           </div>
         </div>`;
@@ -10782,7 +10863,7 @@ function wireWizardStep(step) {
         applySlotPos(el, clamped.x, clamped.y);
         e.preventDefault();
       });
-      const endDrag = () => { dragging = false; el.style.cursor = 'grab'; };
+      const endDrag = () => { dragging = false; el.style.cursor = 'grab'; const ab = body.querySelector('#wizStageAutoBtn'); if (ab) { ab.style.opacity = ''; ab.style.pointerEvents = ''; } };
       el.addEventListener('pointerup', endDrag);
       el.addEventListener('pointercancel', endDrag);
 
