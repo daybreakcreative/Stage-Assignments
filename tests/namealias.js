@@ -127,6 +127,26 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if (ev(`state.nameAliases['catherine smith']`) !== 'Cat') throw new Error('alias not recorded via popup: '+JSON.stringify(ev('state.nameAliases')));
   });
 
+  check('after setting a go-by name in the popup, the person is not re-prompted next pull', ()=>{
+    ev(`state.nameAliases={}; state.musicianPreferences={}; state.setupItems={};
+        state.config.setupDefaults={vocals:{selections:{options:['v_stand']},customOptions:[]}};
+        state.vocalists=[{id:'vv',name:'Stephen Jones',isWL:false,leadsSongs:false,micAssigned:''}];
+        state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.instruments=[];`);
+    ev(`openPostPullPopup({})`);
+    const nameInp = doc.getElementById('pp_name');
+    if (!nameInp) throw new Error('no #pp_name field in popup');
+    nameInp.value = 'Steph';
+    // advance/save the step
+    doc.getElementById('postPullNext').click();
+    // alias recorded + renamed
+    if (ev(`state.vocalists[0].name`) !== 'Steph') throw new Error('not renamed to Steph');
+    if (ev(`applyNameAlias('Stephen Jones')`) !== 'Steph') throw new Error('alias not applied on future pull');
+    // simulate the next pull deduping: the person now arrives aliased as "Steph"; buildPostPullSteps must NOT re-ask
+    ev(`state.vocalists=[{id:'vv',name:'Steph',isWL:false,leadsSongs:false,micAssigned:''}]; state.shadows=[]; state.instruments=[];`);
+    const steps = ev(`buildPostPullSteps({}).map(s=>s.personName)`);
+    if (steps.indexOf('Steph') !== -1) throw new Error('re-prompted an already-configured person: '+JSON.stringify(steps));
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;

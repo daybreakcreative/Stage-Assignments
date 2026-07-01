@@ -10040,16 +10040,22 @@ function savePostPullStep() {
   const step = postPullState.steps[postPullState.idx];
   if (!step) return;
   const content = document.getElementById('postPullContent');
-  const nName = normFullName(step.personName);
-  if (step.kind === 'pref-vocal') {
-    // Preferred / "goes by" name. Re-key BEFORE any name-based save so the setup bucket
-    // (already saved live under the old key) and the mic preference carry to the new name.
+  // Preferred / "goes by" name (pref-vocal and pref-band both carry a #pp_name field).
+  // Re-key BEFORE any name-based save so the setup bucket (already saved live under the old
+  // key) and the mic preference carry to the new name. Also recompute step.prefKey to the new
+  // name's normalized form so the "asked" marker is written under the SAME key a future pull
+  // will look up — on the next pull PCO's official name is auto-aliased to this go-by name.
+  if (step.kind === 'pref-vocal' || step.kind === 'pref-band') {
     const nameInp = content.querySelector('#pp_name');
     const newName = nameInp ? (nameInp.value || '').trim() : '';
     if (newName && newName !== step.personName) {
       setPreferredName(step.personName, newName);
       step.personName = newName;
+      step.prefKey = normFullName(newName) + '|' + step.prefKey.split('|').slice(1).join('|');
     }
+  }
+  const nName = normFullName(step.personName);
+  if (step.kind === 'pref-vocal') {
     const sel = content.querySelector('#pp_mic_select');
     const notes = content.querySelector('#pp_notes');
     const micVal = sel ? sel.value : '';
@@ -10065,14 +10071,6 @@ function savePostPullStep() {
     if (micName) setMicRemembered(step.personName, micName);
     // Setup selections are saved live by the grouped editor into the person's stable bucket.
   } else if (step.kind === 'pref-band') {
-    // Preferred / "goes by" name. Re-key BEFORE recording the pref so the setup bucket
-    // (already saved live under the old key) carries to the new name.
-    const nameInp = content.querySelector('#pp_name');
-    const newName = nameInp ? (nameInp.value || '').trim() : '';
-    if (newName && newName !== step.personName) {
-      setPreferredName(step.personName, newName);
-      step.personName = newName;
-    }
     // Setup selections are saved live by the grouped editor into the person's stable bucket;
     // just record that we've asked so this person isn't prompted again.
     state.musicianPreferences[step.prefKey] = {
