@@ -711,6 +711,10 @@ background-size:5% 10%}
 .wiz-setup-intro-icon{font-size:22px;line-height:1;flex-shrink:0}
 .wiz-setup-intro-text{font-size:13px;color:var(--text);line-height:1.5}
 .wiz-setup-intro-text strong{color:var(--text);font-weight:600}
+.wiz-setup-insts{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.wiz-setup-inst{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
+.wiz-setup-inst-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
+.wiz-setup-inst-groups{display:flex;flex-direction:column;gap:10px}
 /* PCO reminder pill in header */
 .pco-reminder-pill{background:rgba(74,144,194,0.1);border:1px solid rgba(74,144,194,0.4);color:#7ab3d8;padding:6px 10px 6px 12px;border-radius:14px;font-family:var(--ff-mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;line-height:1;white-space:nowrap}
 .pco-reminder-pill:hover{background:rgba(74,144,194,0.18);border-color:rgba(74,144,194,0.7);color:#9bcae9}
@@ -11545,12 +11549,26 @@ function renderWizardStepBody(step) {
     }
     case 'setup-intro': {
       const useSetup = wizardData.useSetupChecklist !== false;
-      // Determine instrument key for presets (use first selected instrument, fallback to 'default')
-      const firstInst = wizardData.instruments && wizardData.instruments.find(i => i.selected !== false);
-      const instKey = firstInst ? (firstInst.key || 'default').toLowerCase() : 'default';
-      const presetKey = SETUP_PRESETS[instKey] ? instKey : 'default';
-      const chips = SETUP_PRESETS[presetKey] || SETUP_PRESETS['default'];
-      const setupItems = wizardData.setupItems || [];
+      // Build the list of catalog keys to show a default-config card for, from the
+      // instruments the user added. Direct catalog key wins; else derive via detectPresetKey.
+      const CATALOG_KEYS = ['drums','bass','ag','eg','keys','md','strings','vocals'];
+      const cards = [];
+      const seen = {};
+      (wizardData.instruments || []).forEach(inst => {
+        if (inst.selected === false) return;
+        const raw = (inst.key || '').toLowerCase();
+        let key = CATALOG_KEYS.indexOf(raw) !== -1 ? raw
+                : detectPresetKey({ tag: inst.label, label: inst.label });
+        if (!key || seen[key]) return;
+        seen[key] = true;
+        const cat = setupCatalogFor(key);
+        cards.push({ key, title: (cat && cat.label) || inst.label || key });
+      });
+      // Offer a Vocals card if there are vocalists and it isn't already present.
+      if (!seen['vocals'] && (wizardData.vocalistCount || 0) > 0) {
+        const cat = setupCatalogFor('vocals');
+        if (cat) cards.push({ key: 'vocals', title: cat.label || 'Vocals' });
+      }
       return `
         <div>
           <div class="wiz-q-title">Setup checklist</div>
@@ -11571,22 +11589,16 @@ function renderWizardStepBody(step) {
             <div class="wiz-setup-intro-card">
               <div class="wiz-setup-intro-icon">📋</div>
               <div class="wiz-setup-intro-text">
-                <strong>Great choice.</strong> After the wizard, click <strong>✓ Items</strong> in the header to start adding setup needs. Items auto-save per person + instrument and are remembered every week.
+                <strong>Great choice.</strong> Set your church's usual defaults per instrument below — leave everything unticked to start blank. These become the starting point for each musician's checklist. You can fine-tune per person later via <strong>✓ Items</strong> in the header.
               </div>
             </div>
-            <div class="setup-presets-wrap" id="wizSetupPresetsWrap">
-              <div class="setup-preset-label">QUICK ADD</div>
-              <div class="setup-preset-chips" id="setupPresetChips">
-                ${chips.map(chip => `<button class="setup-preset-chip${setupItems.includes(chip) ? ' selected' : ''}" data-chip="${chip.replace(/"/g,'&quot;')}">${chip}</button>`).join('')}
-              </div>
-              <div class="setup-items-label">SETUP ITEMS</div>
-              <ul class="setup-items-list" id="setupItemsList">
-                ${setupItems.map((item, idx) => `<li class="setup-item-row"><span class="setup-item-text">${item}</span><button class="setup-item-del" data-del-idx="${idx}" title="Remove">✕</button></li>`).join('')}
-              </ul>
-              <div class="setup-add-custom">
-                <input type="text" id="setupCustomInput" placeholder="Add custom item..." class="setup-custom-input">
-                <button class="setup-custom-add-btn" id="setupCustomAddBtn">+ Add</button>
-              </div>
+            <div class="wiz-setup-insts" id="wizSetupInsts">
+              ${cards.length ? cards.map(c => `
+                <div class="wiz-setup-inst" data-inst-key="${c.key}">
+                  <div class="wiz-setup-inst-title">${esc(c.title)}</div>
+                  <div class="wiz-setup-inst-groups"></div>
+                </div>`).join('') : `
+                <div class="wiz-setup-intro-text" style="opacity:.7;">No instruments added yet — go back to the Instruments step to add some, or skip this for now.</div>`}
             </div>
           ` : `
             <div class="wiz-setup-intro-card muted">
@@ -12236,82 +12248,22 @@ function wireWizardStep(step) {
       });
     });
 
-    // Setup items preset chips + item list wiring
+    // Per-instrument church-default cards: mount catalog groups (nothing pre-checked)
+    // and persist ticks to state.config.setupDefaults[key].selections.
     if (wizardData.useSetupChecklist !== false) {
-      if (!wizardData.setupItems) wizardData.setupItems = [];
-      const setupItems = wizardData.setupItems;
-
-      function renderSetupItemsList() {
-        const list = document.getElementById('setupItemsList');
-        if (!list) return;
-        list.innerHTML = setupItems.map((item, idx) =>
-          `<li class="setup-item-row"><span class="setup-item-text">${esc(item)}</span><button class="setup-item-del" data-del-idx="${idx}" title="Remove">✕</button></li>`
-        ).join('');
-        list.querySelectorAll('[data-del-idx]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const i = parseInt(btn.dataset.delIdx, 10);
-            setupItems.splice(i, 1);
-            wizardData.setupItems = setupItems;
-            renderSetupItemsList();
-            updateChipStates();
-          });
-        });
-      }
-
-      function updateChipStates() {
-        document.querySelectorAll('#setupPresetChips .setup-preset-chip').forEach(chip => {
-          chip.classList.toggle('selected', setupItems.includes(chip.dataset.chip));
-        });
-      }
-
-      function addSetupItem(item) {
-        const trimmed = item.trim();
-        if (!trimmed || setupItems.includes(trimmed)) return;
-        setupItems.push(trimmed);
-        wizardData.setupItems = setupItems;
-        renderSetupItemsList();
-        updateChipStates();
-      }
-
-      function removeSetupItem(item) {
-        const idx = setupItems.indexOf(item);
-        if (idx !== -1) {
-          setupItems.splice(idx, 1);
-          wizardData.setupItems = setupItems;
-          renderSetupItemsList();
-          updateChipStates();
+      if (!state.config.setupDefaults) state.config.setupDefaults = {};
+      body.querySelectorAll('.wiz-setup-inst').forEach(card => {
+        const key = card.dataset.instKey;
+        const groupsEl = card.querySelector('.wiz-setup-inst-groups');
+        if (!key || !groupsEl) return;
+        if (!state.config.setupDefaults[key]) {
+          state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
         }
-      }
-
-      document.querySelectorAll('#setupPresetChips .setup-preset-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-          const chipText = chip.dataset.chip;
-          if (setupItems.includes(chipText)) {
-            removeSetupItem(chipText);
-          } else {
-            addSetupItem(chipText);
-          }
+        renderSetupGroups(groupsEl, key, state.config.setupDefaults[key].selections, newSel => {
+          state.config.setupDefaults[key].selections = newSel;
+          saveState();
         });
       });
-
-      const customInput = document.getElementById('setupCustomInput');
-      const customAddBtn = document.getElementById('setupCustomAddBtn');
-      if (customAddBtn && customInput) {
-        customAddBtn.addEventListener('click', () => {
-          addSetupItem(customInput.value);
-          customInput.value = '';
-        });
-        customInput.addEventListener('keydown', e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            addSetupItem(customInput.value);
-            customInput.value = '';
-          }
-        });
-      }
-
-      renderSetupItemsList();
-      updateChipStates();
     }
   }
 }
