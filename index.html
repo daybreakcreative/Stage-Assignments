@@ -743,6 +743,18 @@ background-size:5% 10%}
 /* Post-pull preferences / shadow popup */
 .post-pull-overlay{position:fixed;inset:0;background:rgba(5,5,7,.88);backdrop-filter:blur(10px);z-index:212;display:none;align-items:center;justify-content:center;padding:20px}
 .post-pull-overlay.show{display:flex}
+.setup-review-modal{position:fixed;inset:0;background:rgba(5,5,7,.88);backdrop-filter:blur(10px);z-index:214;display:none;align-items:center;justify-content:center;padding:20px}
+.setup-review-modal.show{display:flex}
+.setup-review-sheet{background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:24px 28px;max-width:620px;width:100%;box-shadow:0 30px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow:hidden}
+.setup-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.setup-review-title{font-size:17px;font-weight:700}
+.setup-review-x{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px}
+.setup-review-x:hover{color:var(--fg)}
+.setup-review-sub{margin:0;font-size:12.5px;color:var(--muted)}
+.setup-review-body{overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding-right:4px}
+.setup-review-person{border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.setup-review-name{font-size:14px;font-weight:600}
+.setup-review-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:6px;border-top:1px solid var(--border)}
 .post-pull-sheet{background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:560px;width:100%;box-shadow:0 30px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px;max-height:90vh}
 .post-pull-progress{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.18em;color:var(--accent);font-weight:600;text-transform:uppercase;text-align:center}
 .post-pull-content{flex:1;overflow-y:auto;min-height:200px}
@@ -10526,6 +10538,99 @@ function openPostPullPopup(planContext) {
 function closePostPullPopup() {
   document.getElementById('postPullOverlay').classList.remove('show');
   postPullState = null;
+}
+
+// Consolidated review dialog for newly-added people.
+// entries = [{ name, role, typeKey, stableKey }]. For each, ensure the bucket is
+// seeded (so church defaults show pre-checked), render its catalog groups bound to
+// the bucket's selections, and let the user adjust before committing. "Save"
+// rebuilds items for every entry and clears needsReview; ✕/"Later" just closes.
+function openSetupReviewDialog(entries) {
+  entries = Array.isArray(entries) ? entries : [];
+  // Overlay + sheet (dynamic; removed on close).
+  const overlay = document.createElement('div');
+  overlay.className = 'setup-review-modal show';
+  const sheet = document.createElement('div');
+  sheet.className = 'setup-review-sheet';
+  overlay.appendChild(sheet);
+
+  const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+
+  const head = document.createElement('div');
+  head.className = 'setup-review-head';
+  const title = document.createElement('div');
+  title.className = 'setup-review-title';
+  title.textContent = entries.length === 1 ? 'Review setup' : `Review setup · ${entries.length} people`;
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'setup-review-x';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', close);
+  head.appendChild(title);
+  head.appendChild(closeBtn);
+  sheet.appendChild(head);
+
+  const sub = document.createElement('p');
+  sub.className = 'setup-review-sub';
+  sub.textContent = 'These start from your church defaults. Adjust anything, or save to accept.';
+  sheet.appendChild(sub);
+
+  const body = document.createElement('div');
+  body.className = 'setup-review-body';
+  sheet.appendChild(body);
+
+  entries.forEach(en => {
+    if (!en) return;
+    if (!state.setupItems[en.stableKey]) seedPersonSetup(en.stableKey, en.typeKey);
+    else if (!state.setupItems[en.stableKey].seeded) seedPersonSetup(en.stableKey, en.typeKey);
+    const bucket = state.setupItems[en.stableKey];
+    bucket.selections = bucket.selections || {};
+
+    const sect = document.createElement('div');
+    sect.className = 'setup-review-person';
+    const nm = document.createElement('div');
+    nm.className = 'setup-review-name';
+    nm.textContent = en.name || '';
+    sect.appendChild(nm);
+
+    const groupsWrap = document.createElement('div');
+    groupsWrap.className = 'setup-review-groups';
+    sect.appendChild(groupsWrap);
+    renderSetupGroups(groupsWrap, en.typeKey, bucket.selections, next => {
+      bucket.selections = next;
+    });
+    body.appendChild(sect);
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'setup-review-actions';
+  const later = document.createElement('button');
+  later.type = 'button';
+  later.className = 'btn ghost srv-later';
+  later.textContent = 'Later';
+  later.addEventListener('click', close);
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.className = 'btn primary srv-save';
+  save.textContent = 'Save';
+  save.addEventListener('click', () => {
+    entries.forEach(en => {
+      if (!en) return;
+      const bucket = state.setupItems[en.stableKey];
+      if (!bucket) return;
+      rebuildPersonItems(en.stableKey, en.typeKey);
+      bucket.needsReview = false;
+    });
+    saveState();
+    close();
+  });
+  actions.appendChild(later);
+  actions.appendChild(save);
+  sheet.appendChild(actions);
+
+  document.body.appendChild(overlay);
+  return overlay;
 }
 
 function renderPostPullStep() {
