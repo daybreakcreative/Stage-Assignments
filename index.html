@@ -2180,6 +2180,126 @@ const SETUP_ITEM_PRESETS = {
   }
 };
 
+// Grouped option catalog per instrument. NO built-in defaults — the church selects its
+// defaults per instrument in the wizard (state.config.setupDefaults). type:'radio'=pick one,
+// type:'check'=pick any. addItems = extra checklist lines an option implies when selected.
+const SETUP_TEMPLATES = {
+  drums: { label:'Drums', groups:[
+    { id:'options', name:'Options', type:'check', options:[
+      { id:'d_rmsnare', text:'Remove snare (bringing own snare)' },
+      { id:'d_rmcym',   text:'Remove cymbals (bringing own cymbals)' },
+      { id:'d_side',    text:'Bringing side snare' },
+      { id:'d_tom3',    text:'Bringing tom 3' },
+      { id:'d_music',   text:'Needs music stand' },
+      { id:'d_sticks',  text:'Needs drum sticks' },
+    ]},
+  ]},
+  bass: { label:'Bass', groups:[
+    { id:'rig', name:'Rig', type:'radio', options:[
+      { id:'b_house',  text:'House bass rig' },
+      { id:'b_player', text:'XLR for player bass rig' },
+    ]},
+    { id:'inputs', name:'Inputs', type:'check', options:[
+      { id:'b_clean', text:'Clean & dirty setup (2 inputs)' },
+      { id:'b_synth', text:'Synth bass (2 inputs)' },
+    ]},
+    { id:'extras', name:'Cabling & extras', type:'check', options:[
+      { id:'b_di',    text:'Needs DI' },
+      { id:'b_10',    text:"Needs 10' 1/4\" cable" },
+      { id:'b_talk',  text:'Needs talkback mic' },
+      { id:'b_music', text:'Music stand' },
+      { id:'b_stand', text:'Guitar stand' },
+    ]},
+  ]},
+  ag: { label:'Acoustic Guitar', groups:[
+    { id:'rig', name:'Rig / signal', type:'radio', options:[
+      { id:'ag_wireless', text:'Wireless AG rig' },
+      { id:'ag_tunerdi',  text:'House AG tuner/DI' },
+      { id:'ag_xlr',      text:'XLR for player AG rig' },
+    ]},
+    { id:'extras', name:'Extras', type:'check', options:[
+      { id:'ag_house', text:'Needs house acoustic guitar' },
+      { id:'ag_10',    text:"Needs 10' 1/4\" cable" },
+      { id:'ag_music', text:'Music stand' },
+      { id:'ag_power', text:'Power needed' },
+      { id:'ag_stand', text:'Guitar stand' },
+    ]},
+  ]},
+  eg: { label:'Electric Guitar', groups:[
+    { id:'rig', name:'Rig', type:'radio', options:[
+      { id:'eg_house',  text:'House EG rig' },
+      { id:'eg_mono',   text:'Mono guitar rig', addItems:['Mono DI box','Amp & mic setup (mono)','XLR for player EG rig (mono)'] },
+      { id:'eg_stereo', text:'Stereo guitar rig', addItems:['Stereo DI box','Amp & mic setup (stereo)','2 XLRs for player EG rig'] },
+    ]},
+    { id:'stand', name:'Guitar stand', type:'radio', options:[
+      { id:'eg_single', text:'Single guitar stand' },
+      { id:'eg_multi',  text:'Multi guitar stand (bringing multiple EGs)' },
+    ]},
+    { id:'extras', name:'Extras', type:'check', options:[
+      { id:'eg_10',   text:"Needs 10' 1/4\" cable" },
+      { id:'eg_talk', text:'Needs talkback mic' },
+    ]},
+  ]},
+  keys: { label:'Keys', groups:[
+    { id:'source', name:'Signal source', type:'radio', options:[
+      { id:'k_house',  text:'House keys rig' },
+      { id:'k_analog', text:'Sounds from keyboard — analog' },
+      { id:'k_iface',  text:'Sounds from computer — interface', addItems:['Needs interface'] },
+      { id:'k_dante',  text:'Sounds from computer — Dante', addItems:['Needs network — thunderbolt adapter'] },
+    ]},
+    { id:'inputs', name:'Stereo inputs', type:'radio', options:[
+      { id:'k_in1', text:'1 stereo input' },
+      { id:'k_in2', text:'2 stereo inputs' },
+      { id:'k_in3', text:'3 stereo inputs' },
+    ]},
+    { id:'cabling', name:'Cabling / interface', type:'check', options:[
+      { id:'k_di',   text:'Stereo DI/DIs & 1/4" cables' },
+      { id:'k_xlrk', text:'XLR out of keyboard' },
+      { id:'k_xlri', text:'XLR out of interface' },
+      { id:'k_qi',   text:'1/4" out of interface' },
+      { id:'k_bi',   text:'Bringing interface' },
+    ]},
+    { id:'extras', name:'Extras', type:'check', options:[
+      { id:'k_remove', text:'Remove keyboard (bringing own keyboard)' },
+      { id:'k_laptop', text:'Laptop stand' },
+      { id:'k_2nd',    text:'2nd keys stand (2 keyboards)' },
+      { id:'k_music',  text:'Music stand' },
+    ]},
+  ]},
+  md: { label:'Music Director / Tracks', groups:[
+    { id:'rig', name:'Rig', type:'check', options:[
+      { id:'md_tracks', text:'House tracks computer' },
+      { id:'md_dante',  text:'House Dante tracks rig' },
+      { id:'md_stand',  text:'Computer stand' },
+      { id:'md_talk',   text:'Talkback mic & opto gate' },
+    ]},
+    { id:'extras', name:'Extras', type:'check', options:[
+      { id:'md_music', text:'Music stand' },
+    ]},
+  ]},
+  strings: { label:'Violin / Cello', groups:[
+    { id:'pickup', name:'Pickup', type:'radio', options:[
+      { id:'s_house',  text:'House clip & mic' },
+      { id:'s_player', text:'Player mic & clip / instrument pickup' },
+    ]},
+    { id:'conn', name:'Connection', type:'radio', options:[
+      { id:'s_wireless', text:'Needs wireless pack' },
+      { id:'s_di',       text:'Needs DI box & 1/4"' },
+      { id:'s_xlr',      text:'XLR only' },
+    ]},
+    { id:'extras', name:'Extras', type:'check', options:[
+      { id:'s_power', text:'Power needed' },
+      { id:'s_music', text:'Music stand' },
+      { id:'s_stand', text:'Needs instrument stand' },
+    ]},
+  ]},
+  vocals: { label:'Vocals', groups:[
+    { id:'options', name:'Options', type:'check', options:[
+      { id:'v_stand', text:'Straight mic stand on stage' },
+    ]},
+  ]},
+};
+
 // Feature 2: resolve active presets (custom or built-in)
 function getSetupPresets() {
   return state.config.setupPresets || SETUP_ITEM_PRESETS;
