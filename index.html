@@ -995,66 +995,10 @@ body.setup-items-mode .container{display:none}
 .si-add-row{display:flex;gap:6px;margin-left:8px;margin-top:6px;padding-top:8px;border-top:1px dashed var(--border)}
 .si-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;font-family:var(--ff-body);outline:none}
 .si-add-input:focus{border-color:var(--accent)}
-.si-add-onetime{display:flex;align-items:center;gap:6px;font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0 8px;white-space:nowrap}
-.si-add-onetime input{accent-color:var(--accent);cursor:pointer}
 .si-add-btn{background:var(--accent);color:#1a1408;border:none;padding:6px 13px;border-radius:6px;font-family:var(--ff-mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase}
 .si-add-btn:hover{opacity:.9}
 .si-add-btn:disabled{opacity:.4;cursor:not-allowed}
-.si-presets{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 10px;border-top:1px solid var(--border)}
-.si-preset-label{font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;margin-right:4px;display:flex;align-items:center;gap:6px}
-.si-preset-btn{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:all .12s}
-.si-preset-btn:hover{border-color:var(--accent);color:var(--accent)}
-.si-preset-default{border-color:rgba(212,161,71,.4);color:var(--accent)}
-.si-preset-edit-link{background:none;border:none;cursor:pointer;color:var(--text-faint);font-family:var(--ff-mono);font-size:9px;text-transform:none;letter-spacing:0;text-decoration:underline;padding:0;transition:color .12s}
-.si-preset-edit-link:hover{color:var(--accent)}
 .si-item-flag.auto-added{background:rgba(212,161,71,.15);color:var(--accent);border:1px solid rgba(212,161,71,.3);padding:1px 5px;border-radius:4px;font-size:9px;font-family:var(--ff-mono)}
-.preset-editor-popup{background:var(--bg-elev);border:1px solid var(--border-2);border-radius:8px;padding:10px 12px;margin-top:6px;display:flex;flex-direction:column;gap:6px;width:100%}
-.preset-editor-popup .pe-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.preset-editor-popup .pe-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--bg-inset);border:1px solid var(--border);font-size:12px}
-.preset-editor-popup .pe-chip button{background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:11px;padding:0}
-.preset-editor-popup .pe-chip button:hover{color:var(--danger)}
-.preset-editor-popup .pe-add-row{display:flex;gap:6px;margin-top:4px}
-.preset-editor-popup .pe-input{flex:1;background:var(--bg-inset);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 8px;font-size:12px;outline:none}
-.preset-editor-popup .pe-input:focus{border-color:var(--accent)}
-.preset-editor-popup .pe-add-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer}
-.preset-editor-popup .pe-reset{font-size:11px;color:var(--text-faint);cursor:pointer;text-decoration:underline;text-align:right;background:none;border:none;font-family:var(--ff-mono)}
-.si-save-menu{position:fixed;z-index:500;background:var(--bg-elev);border:1px solid var(--border-2);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);min-width:260px;overflow:hidden}
-.si-save-menu-option{display:block;width:100%;padding:10px 14px;background:transparent;border:none;color:var(--text);font-family:var(--ff-body);font-size:12.5px;text-align:left;cursor:pointer;transition:background .12s;line-height:1.4}
-.si-save-menu-option:hover{background:var(--surface)}
-.si-save-menu-option .opt-title{font-weight:600;display:block}
-.si-save-menu-option .opt-sub{color:var(--text-muted);font-size:11px;font-family:var(--ff-mono);display:block;margin-top:2px}
-.si-save-menu-sep{height:1px;background:var(--border);margin:2px 0}
-/* Templates */
-.si-template-menu{position:absolute;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.5);padding:6px;z-index:200;min-width:240px;max-width:340px}
-.si-template-menu-header{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:8px 10px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
-.si-template-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;cursor:pointer;transition:background .1s}
-.si-template-option:hover{background:var(--surface)}
-.si-template-option-info{flex:1;min-width:0}
-.si-template-option-name{font-family:var(--ff-display);font-size:13.5px;color:var(--text);font-weight:500;line-height:1.2}
-.si-template-option-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em;margin-top:1px}
-.si-template-option-suggested{font-family:var(--ff-mono);font-size:8.5px;color:var(--accent);letter-spacing:.1em;background:rgba(212,161,71,.13);padding:2px 6px;border-radius:3px;font-weight:600;text-transform:uppercase}
-.si-template-empty{padding:14px 12px;text-align:center;color:var(--text-muted);font-size:12px;font-style:italic}
-/* Templates settings editor */
-.tpl-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:10px}
-.tpl-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.tpl-name-input{flex:1;background:transparent;border:1px solid transparent;color:var(--text);font-family:var(--ff-display);font-size:15px;font-weight:500;padding:5px 8px;border-radius:5px;outline:none;transition:all .12s}
-.tpl-name-input:hover{background:var(--bg-inset);border-color:var(--border)}
-.tpl-name-input:focus{background:var(--bg-elev);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
-.tpl-card-meta{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;flex-shrink:0}
-.tpl-remove-btn{padding:4px 9px;font-size:12px;color:var(--text-faint)}
-.tpl-remove-btn:hover{color:#c8554d;border-color:#c8554d}
-.tpl-items-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
-.tpl-item-row{display:flex;align-items:center;gap:8px;padding:2px 0}
-.tpl-item-bullet{color:var(--accent);font-size:14px;flex-shrink:0;width:10px;text-align:center}
-.tpl-item-input{flex:1;background:transparent;border:1px solid transparent;color:var(--text);font-size:13px;padding:5px 8px;border-radius:5px;outline:none;font-family:var(--ff-body);transition:all .12s}
-.tpl-item-input:hover{background:var(--bg-inset);border-color:var(--border)}
-.tpl-item-input:focus{background:var(--bg-elev);border-color:var(--accent)}
-.tpl-item-rm{background:transparent;border:none;color:var(--text-faint);font-size:12px;cursor:pointer;padding:3px 7px;border-radius:4px;opacity:.5;transition:all .12s}
-.tpl-item-row:hover .tpl-item-rm{opacity:1}
-.tpl-item-rm:hover{color:#c8554d;background:rgba(200,85,77,.1)}
-.tpl-add-row{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
-.tpl-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:5px;font-size:12.5px;outline:none}
-.tpl-add-input:focus{border-color:var(--accent)}
 /* Stage Areas editor */
 .sa-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px}
 .sa-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -1070,10 +1014,6 @@ body.setup-items-mode .container{display:none}
 .sa-chip-rm:hover{opacity:1;background:rgba(200,85,77,.2);color:#c8554d}
 .sa-add-inst{margin-top:4px}
 .sa-add-select{font-size:12px;padding:6px 10px;cursor:pointer}
-.tpl-add-input:focus{border-color:var(--accent)}
-.si-template-save-form{padding:10px;display:flex;flex-direction:column;gap:8px}
-.si-template-save-form input{background:var(--bg-inset);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;outline:none}
-.si-template-save-form input:focus{border-color:var(--accent)}
 /* Setup manager (Settings → Setups) */
 .setup-person{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px}
 .setup-person.orphan{opacity:.82;border-style:dashed}
@@ -1105,7 +1045,6 @@ body.setup-items-mode .container{display:none}
   .si-title{font-size:18px}
   .si-summary-value{font-size:17px}
   .si-add-row{flex-wrap:wrap}
-  .si-add-onetime{padding:6px 0}
 }
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
@@ -1655,7 +1594,6 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <button class="tab" data-tab="layout">Display</button>
       <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="pco">Planning Center</button>
-      <button class="tab" data-tab="templates">Templates</button>
       <button class="tab" data-tab="setups">Setup Items</button>
       <button class="tab" data-tab="venues" style="display:none;">Venues</button>
       <button class="tab" data-tab="data">Data</button>
@@ -1676,9 +1614,6 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
     </div>
     <div class="tab-panel" id="tab-pco">
       <div id="pcoSettingsContent"></div>
-    </div>
-    <div class="tab-panel" id="tab-templates">
-      <div id="templatesEdit"></div>
     </div>
     <div class="tab-panel" id="tab-setups">
       <div id="setupsEdit"></div>
@@ -2049,7 +1984,6 @@ const DEFAULT_STATE = {
     // Custom stage area mapping. Empty array means "each instrument is its own area".
     // Each entry: { id, name, instrumentIds: [array of inst ids], includesVocalists: false }
     stageAreas: [],
-    setupPresets: null,       // null = use built-in SETUP_ITEM_PRESETS; object = custom overrides per instKey
     personMicPrefs: {},        // DEPRECATED (migrated into micPrefs.people[].remembered)
     // Unified mic-assignment model. See assignMicsToVocalists() for the priority order.
     //   leaderMics: ordered list of mic names reserved for song leaders (drawn first).
@@ -2058,7 +1992,6 @@ const DEFAULT_STATE = {
     //     remembered = soft memory: reuse this mic next time if it's free (seeded automatically)
     //     noMic      = leave this person mic-less
     micPrefs: { leaderMics: [], people: {} },
-    personSetupDefaults: {},  // personSetupDefaults[personName][instKey] = ['item1', 'item2']
     display: {
       showStage:true, showServiceOrder:true, showBand:true, showHosts:true, showShadows:true,
       vocalistRows: 'auto',
@@ -2074,8 +2007,6 @@ const DEFAULT_STATE = {
   },
   // Setup Items state — keyed by 'fullname|instId' or 'fullname|vocal'
   setupItems: {},
-  // Template library — universal templates with usage stats for smart sorting
-  setupTemplates: [],
   // Metadata: last service date + last completion state for "done last week" indicators
   setupServiceMeta: {
     lastServiceDate: null,
@@ -2091,115 +2022,6 @@ const DEFAULT_STATE = {
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark'
-};
-
-const SETUP_ITEM_PRESETS = {
-  drums: {
-    label: 'Drums',
-    defaults: [],
-    presets: [
-      { name: 'Remove snare (bringing own)', items: ['Remove snare (bringing own snare)'] },
-      { name: 'Remove cymbals (bringing own)', items: ['Remove cymbals (bringing own cymbals)'] },
-      { name: 'Bringing side snare', items: ['Bringing side snare'] },
-      { name: 'Bringing tom 3', items: ['Bringing tom 3'] },
-      { name: 'Needs music stand', items: ['Needs music stand'] },
-      { name: 'Needs drum sticks', items: ['Needs drum sticks'] },
-    ]
-  },
-  bass: {
-    label: 'Bass',
-    defaults: ['Guitar stand'],
-    presets: [
-      { name: 'XLR for player bass rig', items: ['XLR for player bass rig'] },
-      { name: 'House bass rig', items: ['House bass rig'] },
-      { name: 'Needs DI', items: ['Needs DI'] },
-      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
-      { name: 'Music stand', items: ['Music stand'] },
-      { name: 'Clean & dirty (2 inputs)', items: ['Clean & dirty setup (2 inputs)'] },
-      { name: 'Synth bass (2 inputs)', items: ['Synth bass (2 inputs)'] },
-      { name: 'Needs talkback mic', items: ['Needs talkback mic'] },
-    ]
-  },
-  ag: {
-    label: 'Acoustic Guitar',
-    defaults: ['Wireless AG rig', 'Guitar stand'],
-    presets: [
-      { name: 'Needs house acoustic guitar', items: ['Needs house acoustic guitar'] },
-      { name: 'House AG tuner/DI', items: ['House AG tuner/DI'] },
-      { name: 'XLR for player AG rig', items: ['XLR for player AG rig'] },
-      { name: 'Wireless AG rig (default)', items: ['Wireless AG rig'] },
-      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
-      { name: 'Music stand', items: ['Music stand'] },
-      { name: 'Boom mic stand (if also vocalist)', items: ['Boom mic stand'] },
-      { name: 'Power needed', items: ['Power needed'] },
-    ]
-  },
-  eg: {
-    label: 'Electric Guitar',
-    defaults: ['Stereo DI box', 'Amp & mic setup (stereo)', '2 XLRs for player EG rig', 'Single guitar stand'],
-    presets: [
-      { name: 'House EG rig', items: ['House EG rig'] },
-      { name: 'Mono guitar rig', items: ['Mono DI box', 'Amp & mic setup (mono)', 'XLR for player EG rig (mono)'] },
-      { name: 'Stereo guitar rig (default)', items: ['Stereo DI box', 'Amp & mic setup (stereo)', '2 XLRs for player EG rig'] },
-      { name: 'Multi guitar stand (multiple EGs)', items: ['Multi guitar stand'] },
-      { name: 'Single guitar stand', items: ['Single guitar stand'] },
-      { name: "Needs 10' 1/4\"", items: ["Needs 10' 1/4\" cable"] },
-      { name: 'Needs talkback mic', items: ['Needs talkback mic'] },
-    ]
-  },
-  keys: {
-    label: 'Keys',
-    defaults: ['House keys rig'],
-    presets: [
-      { name: 'House keys rig', items: ['House keys rig'] },
-      { name: 'Remove keyboard (bringing own)', items: ['Remove keyboard (bringing own keyboard)'] },
-      { name: 'Sounds from keyboard (analog)', items: ['Sounds from keyboard — analog'] },
-      { name: 'Sounds from computer (interface)', items: ['Sounds from computer — interface', 'Needs interface'] },
-      { name: 'Sounds from computer (Dante)', items: ['Sounds from computer — Dante', 'Needs network — thunderbolt adapter'] },
-      { name: 'Bringing interface', items: ['Bringing interface'] },
-      { name: '1 stereo input', items: ['1 stereo input'] },
-      { name: '2 stereo inputs', items: ['2 stereo inputs'] },
-      { name: '3 stereo inputs', items: ['3 stereo inputs'] },
-      { name: 'Stereo DI/DIs & 1/4" cables', items: ['Stereo DI/DIs & 1/4" cables'] },
-      { name: 'XLR out of keyboard', items: ['XLR out of keyboard'] },
-      { name: 'XLR out of interface', items: ['XLR out of interface'] },
-      { name: '1/4" out of interface', items: ['1/4" out of interface'] },
-      { name: 'Laptop stand', items: ['Laptop stand'] },
-      { name: '2nd keys stand (2 keyboards)', items: ['2nd keys stand'] },
-      { name: 'Music stand', items: ['Music stand'] },
-    ]
-  },
-  md: {
-    label: 'Music Director / Tracks',
-    defaults: ['House tracks computer', 'House Dante tracks rig', 'Computer stand', 'Talkback mic & opto gate'],
-    presets: [
-      { name: 'House tracks computer', items: ['House tracks computer'] },
-      { name: 'House Dante tracks rig', items: ['House Dante tracks rig'] },
-      { name: 'Computer stand', items: ['Computer stand'] },
-      { name: 'Talkback mic & opto gate', items: ['Talkback mic & opto gate'] },
-      { name: 'Music stand', items: ['Music stand'] },
-    ]
-  },
-  strings: {
-    label: 'Violin / Cello',
-    defaults: [],
-    presets: [
-      { name: 'House clip & mic', items: ['House clip & mic'] },
-      { name: 'Player pickup — wireless pack', items: ['Player mic & clip / instrument pickup', 'Needs wireless pack'] },
-      { name: 'Player pickup — DI box & 1/4"', items: ['Player mic & clip / instrument pickup', 'Needs DI box & 1/4"'] },
-      { name: 'Player pickup — XLR only', items: ['Player mic & clip / instrument pickup', 'XLR only'] },
-      { name: 'Power needed', items: ['Power needed'] },
-      { name: 'Music stand', items: ['Music stand'] },
-      { name: 'Needs instrument stand', items: ['Needs instrument stand'] },
-    ]
-  },
-  vocals: {
-    label: 'Vocals',
-    defaults: ['Straight mic stand on stage'],
-    presets: [
-      { name: 'Straight mic stand on stage', items: ['Straight mic stand on stage'] },
-    ]
-  }
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -2350,11 +2172,6 @@ function resolveSetupItems(key, selections, customItems) {
   return out;
 }
 
-// Feature 2: resolve active presets (custom or built-in)
-function getSetupPresets() {
-  return state.config.setupPresets || SETUP_ITEM_PRESETS;
-}
-
 function detectPresetKey(inst) {
   if (!inst) return null;
   const tag = (inst.tag || '').toLowerCase();
@@ -2465,8 +2282,6 @@ function loadState() {
             : null,
           stageFeatures: Array.isArray(loadedConfig.stageFeatures) ? loadedConfig.stageFeatures : [],
           tvMode: !!loadedConfig.tvMode,
-          setupPresets: (loadedConfig.setupPresets && typeof loadedConfig.setupPresets === 'object') ? loadedConfig.setupPresets : null,
-          personSetupDefaults: (loadedConfig.personSetupDefaults && typeof loadedConfig.personSetupDefaults === 'object') ? loadedConfig.personSetupDefaults : {},
           personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           micPrefs: normalizeMicPrefs(loadedConfig, p),
           display: {
@@ -2488,7 +2303,6 @@ function loadState() {
         preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES),
         // Setup Items state
         setupItems: (p.setupItems && typeof p.setupItems === 'object') ? p.setupItems : {},
-        setupTemplates: Array.isArray(p.setupTemplates) ? p.setupTemplates : [],
         setupServiceMeta: (p.setupServiceMeta && typeof p.setupServiceMeta === 'object')
           ? { lastServiceDate: p.setupServiceMeta.lastServiceDate || null, lastCompletionByKey: p.setupServiceMeta.lastCompletionByKey || {} }
           : { lastServiceDate: null, lastCompletionByKey: {} },
@@ -5164,7 +4978,6 @@ function openSettings(tab='inventory') {
   renderLayoutEditor();
   renderBrandEditor();
   renderPCOSettings();
-  renderTemplatesEditor();
   renderSetupManager();
   renderVenuesEditor();
   renderDataEditor();
@@ -6106,130 +5919,6 @@ function renderBrandEditor() {
     applyBrand();
     toast('Reset to defaults', 'success');
   });
-}
-
-/* ===================== DATA EDITOR (export/import) ===================== */
-/* ===================== TEMPLATES EDITOR (Settings → Templates) ===================== */
-function renderTemplatesEditor() {
-  const el = document.getElementById('templatesEdit');
-  if (!el) return;
-  const templates = state.setupTemplates || [];
-
-  el.innerHTML = `
-    <p class="subtitle" style="margin-bottom:18px;">
-      Reusable setup item bundles. Apply any template to a musician in <strong>✓ Items</strong> to drop a stack of setup tasks into their card at once.
-      Templates remember which roles they're used for and surface as <em>Suggested</em> next time.
-    </p>
-
-    <div class="section-label" style="margin-bottom:10px;">Your templates ${templates.length > 0 ? `(${templates.length})` : ''}</div>
-
-    <div id="templatesList">
-      ${templates.length === 0 ? `
-        <div style="background:var(--bg-inset);border:1px dashed var(--border);border-radius:9px;padding:24px 18px;text-align:center;color:var(--text-muted);font-size:13px;">
-          No templates yet. Open <strong>✓ Items</strong>, add some setup items to a musician, then click <strong>Save…</strong> on their card to create your first template.
-        </div>
-      ` : templates.map((t, idx) => `
-        <div class="tpl-card" data-tpl-idx="${idx}">
-          <div class="tpl-card-header">
-            <input type="text" class="tpl-name-input" data-tpl-name="${idx}" value="${esc(t.name)}" />
-            <div class="tpl-card-meta">${t.items.length} item${t.items.length===1?'':'s'}${Object.keys(t.usage||{}).length > 0 ? ` · used for ${Object.entries(t.usage).map(([k,v]) => `${esc(k)} ${v}×`).join(', ')}` : ''}</div>
-            <button class="btn ghost tpl-remove-btn" data-tpl-rm="${idx}" title="Delete template">✕</button>
-          </div>
-          <ul class="tpl-items-list">
-            ${t.items.map((text, itemIdx) => `
-              <li class="tpl-item-row">
-                <span class="tpl-item-bullet">•</span>
-                <input type="text" class="tpl-item-input" data-tpl-item="${idx}:${itemIdx}" value="${esc(text)}" />
-                <button class="tpl-item-rm" data-tpl-item-rm="${idx}:${itemIdx}" title="Remove">✕</button>
-              </li>
-            `).join('')}
-          </ul>
-          <div class="tpl-add-row">
-            <input type="text" class="tpl-add-input" data-tpl-add="${idx}" placeholder="Add new item to this template..." />
-            <button class="si-add-btn" data-tpl-add-btn="${idx}">Add</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-
-    <button class="add-row-btn" id="tplCreateBtn" style="margin-top:14px;">+ Create blank template</button>
-  `;
-
-  // Wire interactions
-  el.querySelectorAll('[data-tpl-name]').forEach(inp => {
-    inp.addEventListener('change', e => {
-      const idx = parseInt(e.target.dataset.tplName, 10);
-      if (state.setupTemplates[idx]) {
-        state.setupTemplates[idx].name = e.target.value.trim() || 'Untitled template';
-        saveState();
-      }
-    });
-  });
-  el.querySelectorAll('[data-tpl-rm]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const idx = parseInt(e.target.dataset.tplRm, 10);
-      const t = state.setupTemplates[idx];
-      if (!t) return;
-      if (!confirm(`Delete template "${t.name}"?`)) return;
-      state.setupTemplates.splice(idx, 1);
-      saveState();
-      renderTemplatesEditor();
-    });
-  });
-  el.querySelectorAll('[data-tpl-item]').forEach(inp => {
-    inp.addEventListener('change', e => {
-      const [tplIdx, itemIdx] = e.target.dataset.tplItem.split(':').map(Number);
-      if (state.setupTemplates[tplIdx]) {
-        state.setupTemplates[tplIdx].items[itemIdx] = e.target.value;
-        saveState();
-      }
-    });
-  });
-  el.querySelectorAll('[data-tpl-item-rm]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const [tplIdx, itemIdx] = e.target.dataset.tplItemRm.split(':').map(Number);
-      if (state.setupTemplates[tplIdx]) {
-        state.setupTemplates[tplIdx].items.splice(itemIdx, 1);
-        saveState();
-        renderTemplatesEditor();
-      }
-    });
-  });
-  el.querySelectorAll('[data-tpl-add-btn]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const idx = parseInt(e.target.dataset.tplAddBtn, 10);
-      const inp = el.querySelector(`[data-tpl-add="${idx}"]`);
-      if (!inp) return;
-      const text = inp.value.trim();
-      if (!text) return;
-      state.setupTemplates[idx].items.push(text);
-      saveState();
-      renderTemplatesEditor();
-    });
-  });
-  el.querySelectorAll('[data-tpl-add]').forEach(inp => {
-    inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        const idx = parseInt(e.target.dataset.tplAdd, 10);
-        const btn = el.querySelector(`[data-tpl-add-btn="${idx}"]`);
-        if (btn) btn.click();
-      }
-    });
-  });
-  const createBtn = el.querySelector('#tplCreateBtn');
-  if (createBtn) {
-    createBtn.addEventListener('click', () => {
-      if (!Array.isArray(state.setupTemplates)) state.setupTemplates = [];
-      state.setupTemplates.push({
-        id: 'tpl_' + Math.random().toString(36).slice(2,9),
-        name: 'Untitled template',
-        items: [],
-        usage: {}
-      });
-      saveState();
-      renderTemplatesEditor();
-    });
-  }
 }
 
 function renderSetupManager() {
@@ -9142,9 +8831,6 @@ function renderAreaCard(area) {
 }
 
 function renderPersonCard(p) {
-  // Feature 3: auto-load person defaults if bucket is empty
-  maybeAutoLoadPersonDefaults(p);
-
   const bucket = ensureSetupBucket(p.key);
   const stats = setupCompletionStats(p.key);
   const items = bucket.items;
@@ -9157,9 +8843,6 @@ function renderPersonCard(p) {
   // editor and the visible check-off list write the same bucket. (null typeKey => no editor)
   const spTypeKey = presetKey;
   const spStableKey = spTypeKey ? p.key : null;
-  // Feature 2: use editable presets
-  const activePresets = getSetupPresets();
-  const presetDef = presetKey ? activePresets[presetKey] : null;
 
   // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players.
   // The dual-role signal is an EXPLICIT vocalist link (inst.vocalistPlayer) — never a name match —
@@ -9178,15 +8861,6 @@ function renderPersonCard(p) {
     }
   }
 
-  const presetBlock = presetDef ? `
-  <div class="si-presets" data-person-key="${esc(p.key)}" data-preset-key="${esc(presetKey || '')}">
-    <div class="si-preset-label">Quick add: <button class="si-preset-edit-link" data-action="edit-presets" data-person-key="${esc(p.key)}" data-preset-key="${esc(presetKey || '')}" title="Edit presets for this instrument">Edit presets</button></div>
-    ${presetDef.presets.map((pr, idx) => `<button class="si-preset-btn" data-preset-key="${esc(presetKey)}" data-preset-idx="${idx}" data-person-key="${esc(p.key)}">${esc(pr.name)}</button>`).join('')}
-    ${items.length === 0 ? `<button class="si-preset-btn si-preset-default" data-preset-defaults="${esc(presetKey)}" data-person-key="${esc(p.key)}">+ Default setup</button>` : ''}
-    <div class="si-preset-editor-wrap" id="pe_wrap_${esc(p.key)}" style="display:none"></div>
-  </div>` : '';
-
-
   // Roles label
   let roleLabel = '';
   if (p.role === 'band' && p.instLabel) roleLabel = p.instLabel;
@@ -9201,22 +8875,15 @@ function renderPersonCard(p) {
         ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
         <div class="si-actions">
           ${spStableKey ? `<button class="si-action-btn" data-action="edit-setup" data-sp-key="${esc(spStableKey)}" data-sp-type="${esc(spTypeKey)}" data-person-key="${esc(p.key)}" title="Edit grouped setup options">⚙ Edit setup</button>` : ''}
-          <button class="si-action-btn" data-action="apply-template" data-person-key="${esc(p.key)}" title="Apply template">+ Template</button>
-          ${items.length > 0 ? `<button class="si-action-btn" data-action="save-options" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-inst-label="${esc(p.instLabel||'')}" data-preset-key="${esc(presetKey||'')}" title="Save options">Save…</button>` : ''}
         </div>
       </div>
       ${spStableKey ? `<div class="sp-editor-wrap" id="sp_wrap_${esc(p.key)}" style="display:none"></div>` : ''}
       <div class="si-items">
         ${items.map(it => renderItemRow(p.key, it)).join('')}
       </div>
-      ${presetBlock}
       <div class="si-add-row">
         <input type="text" class="si-add-input" placeholder="Add a setup item…" data-add-input="${esc(p.key)}" />
-        <label class="si-add-onetime" title="If checked, this item is only for today's service and won't be saved as a recurring need.">
-          <input type="checkbox" data-add-onetime="${esc(p.key)}" />
-          <span>One-time</span>
-        </label>
-        <button class="si-add-btn" data-action="add-item" data-person-key="${esc(p.key)}">Add</button>
+        <button class="si-add-btn" data-action="add-item" data-person-key="${esc(p.key)}" data-sp-type="${esc(presetKey || '')}">Add</button>
       </div>
     </div>`;
 }
@@ -9451,98 +9118,40 @@ function wireSetupItemsContent() {
     });
   });
 
-  // Add a new item
+  // Add a new item (grouped model: writes to customItems, then rebuilds)
   root.querySelectorAll('[data-action="add-item"]').forEach(btn => {
-    btn.addEventListener('click', () => addItemForPerson(btn.dataset.personKey));
+    btn.addEventListener('click', () => addItemForPerson(btn.dataset.personKey, btn.dataset.spType));
   });
   root.querySelectorAll('[data-add-input]').forEach(inp => {
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') addItemForPerson(inp.dataset.addInput);
-    });
-  });
-
-  // Feature 2: Edit presets inline popup
-  root.querySelectorAll('[data-action="edit-presets"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const pKey = btn.dataset.presetKey;
-      const personKey = btn.dataset.personKey;
-      const wrapId = 'pe_wrap_' + personKey;
-      const wrap = document.getElementById(wrapId);
-      if (!wrap) return;
-      if (wrap.style.display !== 'none') { wrap.style.display = 'none'; return; }
-      wrap.style.display = 'block';
-      renderPresetEditor(wrap, pKey);
-    });
-  });
-
-  // Feature 3: Save options menu
-  root.querySelectorAll('[data-action="save-options"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openSaveOptionsMenu(btn);
-    });
-  });
-
-  // Apply template menu
-  root.querySelectorAll('[data-action="apply-template"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openTemplateMenu(btn, 'apply');
-    });
-  });
-
-  // Save as template
-  root.querySelectorAll('[data-action="save-template"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openTemplateMenu(btn, 'save');
-    });
-  });
-
-  // Preset bundles
-  root.querySelectorAll('.si-preset-btn[data-preset-idx]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const pKey = btn.dataset.presetKey;
-      const idx = parseInt(btn.dataset.presetIdx, 10);
-      const personKey = btn.dataset.personKey;
-      const def = SETUP_ITEM_PRESETS[pKey];
-      if (!def || !def.presets[idx]) return;
-      const bucket = ensureSetupBucket(personKey);
-      def.presets[idx].items.forEach(text => {
-        bucket.items.push(newSetupItem(text));
-      });
-      saveState();
-      renderSetupItemsView();
-      toast('Preset added', 'success');
-    });
-  });
-  root.querySelectorAll('.si-preset-btn[data-preset-defaults]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const pKey = btn.dataset.presetDefaults;
-      const personKey = btn.dataset.personKey;
-      const def = SETUP_ITEM_PRESETS[pKey];
-      if (!def) return;
-      const bucket = ensureSetupBucket(personKey);
-      def.defaults.forEach(text => {
-        bucket.items.push(newSetupItem(text));
-      });
-      saveState();
-      renderSetupItemsView();
-      toast('Default setup added', 'success');
+      if (e.key === 'Enter') {
+        const btn = root.querySelector(`[data-action="add-item"][data-person-key="${cssEscape(inp.dataset.addInput)}"]`);
+        addItemForPerson(inp.dataset.addInput, btn ? btn.dataset.spType : '');
+      }
     });
   });
 }
 
-function addItemForPerson(personKey) {
+// Add a custom setup item for a person via the grouped model.
+// Pushes to bucket.customItems (survives group edits / rebuilds), then rebuilds
+// the resolved items from selections + customItems. typeKey may come from the
+// card's data-sp-type; if absent, derive it so migrated/legacy cards still work.
+function addItemForPerson(personKey, typeKey) {
   const input = document.querySelector(`[data-add-input="${cssEscape(personKey)}"]`);
-  const onetimeCb = document.querySelector(`[data-add-onetime="${cssEscape(personKey)}"]`);
   if (!input) return;
   const text = input.value.trim();
   if (!text) return;
-  const isOneTime = !!(onetimeCb && onetimeCb.checked);
-  const bucket = ensureSetupBucket(personKey);
-  bucket.items.push(newSetupItem(text, isOneTime));
+  let tKey = typeKey || null;
+  if (!tKey) {
+    // Derive from the stable key tail (name|role|typeKey) as a fallback.
+    const parts = (personKey || '').split('|');
+    tKey = parts.length >= 3 ? parts[2] : null;
+  }
+  if (!state.setupItems[personKey]) seedPersonSetup(personKey, tKey);
+  const bucket = state.setupItems[personKey];
+  bucket.customItems = bucket.customItems || [];
+  bucket.customItems.push({ id: newSetupItem('').id, text });
+  rebuildPersonItems(personKey, tKey);
   saveState();
   renderSetupItemsView();
 }
@@ -9609,393 +9218,6 @@ function refreshSetupItemsUI() {
     progressFillEl.style.width = pct + '%';
     progressFillEl.classList.toggle('complete', overall.complete);
   }
-}
-
-// ===== Templates =====
-
-function openTemplateMenu(anchorBtn, mode) {
-  // Close any existing menus
-  document.querySelectorAll('.si-template-menu').forEach(m => m.remove());
-
-  const personKey = anchorBtn.dataset.personKey;
-  const personCard = anchorBtn.closest('.si-person');
-  if (!personCard) return;
-  const instTag = personCard.dataset.personInstTag || '';
-  const personRole = personCard.dataset.personRole || '';
-
-  const menu = document.createElement('div');
-  menu.className = 'si-template-menu';
-
-  if (mode === 'apply') {
-    // Show available templates, sorted with smart suggestions first
-    let templates = [...(state.setupTemplates || [])];
-    if (templates.length === 0) {
-      menu.innerHTML = `
-        <div class="si-template-menu-header">Apply template</div>
-        <div class="si-template-empty">No templates yet. Build items here, then click "Save…" to create your first template.</div>`;
-    } else {
-      // Sort: templates that have been applied to this tag/role most often come first
-      const matchTag = instTag.toLowerCase();
-      templates.sort((a, b) => {
-        const aMatches = (a.usage && (a.usage[matchTag] || a.usage[personRole])) || 0;
-        const bMatches = (b.usage && (b.usage[matchTag] || b.usage[personRole])) || 0;
-        if (aMatches !== bMatches) return bMatches - aMatches;
-        return (a.name || '').localeCompare(b.name || '');
-      });
-      const topMatchCount = templates[0] && templates[0].usage
-        ? (templates[0].usage[matchTag] || templates[0].usage[personRole] || 0)
-        : 0;
-      menu.innerHTML = `
-        <div class="si-template-menu-header">Apply template</div>
-        ${templates.map(t => {
-          const usageHere = (t.usage && (t.usage[matchTag] || t.usage[personRole])) || 0;
-          const isSuggested = usageHere > 0 && usageHere === topMatchCount;
-          return `
-            <div class="si-template-option" data-template-id="${esc(t.id)}">
-              <div class="si-template-option-info">
-                <div class="si-template-option-name">${esc(t.name)}</div>
-                <div class="si-template-option-meta">${t.items.length} item${t.items.length===1?'':'s'}${usageHere > 0 ? ` · used ${usageHere}× for ${esc(matchTag || personRole)}` : ''}</div>
-              </div>
-              ${isSuggested ? '<span class="si-template-option-suggested">Suggested</span>' : ''}
-            </div>
-          `;
-        }).join('')}`;
-    }
-    document.body.appendChild(menu);
-    positionMenu(menu, anchorBtn);
-    menu.querySelectorAll('[data-template-id]').forEach(opt => {
-      opt.addEventListener('click', () => {
-        applyTemplateToPerson(opt.dataset.templateId, personKey, instTag || personRole);
-        menu.remove();
-      });
-    });
-  } else if (mode === 'save') {
-    // Save current items as template
-    const bucket = state.setupItems[personKey];
-    if (!bucket || !bucket.items.length) {
-      menu.innerHTML = `
-        <div class="si-template-menu-header">Save as template</div>
-        <div class="si-template-empty">Add some items first, then you can save them as a template.</div>`;
-      document.body.appendChild(menu);
-      positionMenu(menu, anchorBtn);
-    } else {
-      const defaultName = personCard.dataset.personName ? `${personCard.dataset.personName} default` : 'Untitled template';
-      menu.innerHTML = `
-        <div class="si-template-menu-header">Save ${bucket.items.length} item${bucket.items.length===1?'':'s'} as template</div>
-        <div class="si-template-save-form">
-          <input type="text" id="si_template_name_input" placeholder="Template name" value="${esc(defaultName)}" />
-          <button class="si-add-btn" id="si_template_save_btn">Save template</button>
-        </div>`;
-      document.body.appendChild(menu);
-      positionMenu(menu, anchorBtn);
-      const nameInput = menu.querySelector('#si_template_name_input');
-      nameInput.focus();
-      nameInput.select();
-      const submit = () => {
-        const name = nameInput.value.trim();
-        if (!name) return;
-        saveCurrentItemsAsTemplate(personKey, name, instTag || personRole);
-        menu.remove();
-      };
-      menu.querySelector('#si_template_save_btn').addEventListener('click', submit);
-      nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-    }
-  }
-
-  // Click-outside closes
-  setTimeout(() => {
-    const onDoc = (ev) => {
-      if (!menu.contains(ev.target)) {
-        menu.remove();
-        document.removeEventListener('click', onDoc);
-      }
-    };
-    document.addEventListener('click', onDoc);
-  }, 50);
-}
-
-function positionMenu(menu, anchorBtn) {
-  const r = anchorBtn.getBoundingClientRect();
-  menu.style.position = 'fixed';
-  // Position below the button, right-aligned to it
-  const menuWidth = 280;
-  let left = r.right - menuWidth;
-  if (left < 8) left = 8;
-  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
-  menu.style.left = left + 'px';
-  menu.style.top = (r.bottom + 6) + 'px';
-  menu.style.minWidth = menuWidth + 'px';
-}
-
-function applyTemplateToPerson(templateId, personKey, contextTag) {
-  const tpl = (state.setupTemplates || []).find(t => t.id === templateId);
-  if (!tpl) return;
-  const bucket = ensureSetupBucket(personKey);
-  // Don't stack duplicates: skip any item whose text is already on the card (case-insensitive).
-  const existing = new Set(bucket.items.map(it => (it.text || '').trim().toLowerCase()));
-  let added = 0;
-  tpl.items.forEach(text => {
-    const norm = (text || '').trim().toLowerCase();
-    if (!norm || existing.has(norm)) return;
-    bucket.items.push(newSetupItem(text, false));
-    existing.add(norm);
-    added++;
-  });
-  // Bump usage stats
-  if (!tpl.usage) tpl.usage = {};
-  const k = (contextTag || '').toLowerCase();
-  if (k) tpl.usage[k] = (tpl.usage[k] || 0) + 1;
-  saveState();
-  const skipped = tpl.items.length - added;
-  if (added) {
-    toast(`Applied "${tpl.name}" — ${added} item${added === 1 ? '' : 's'} added${skipped ? ` (${skipped} already there)` : ''} ✓`, 'success');
-  } else {
-    toast(`"${tpl.name}" — everything was already on the card`, 'warn');
-  }
-  renderSetupItemsView();
-}
-
-function saveCurrentItemsAsTemplate(personKey, name, contextTag) {
-  const bucket = state.setupItems[personKey];
-  if (!bucket || !bucket.items.length) return;
-  // Capture clean item text only — drop blanks and case-insensitive duplicates.
-  const seen = new Set();
-  const items = [];
-  bucket.items.forEach(it => {
-    const text = (it.text || '').trim();
-    const norm = text.toLowerCase();
-    if (!text || seen.has(norm)) return;
-    seen.add(norm);
-    items.push(text);
-  });
-  if (!items.length) { toast('Nothing to save — items are empty', 'warn'); return; }
-  const tpl = {
-    id: 'tpl_' + Math.random().toString(36).slice(2,9),
-    name: name,
-    items,
-    usage: {}
-  };
-  const k = (contextTag || '').toLowerCase();
-  if (k) tpl.usage[k] = 1;
-  if (!Array.isArray(state.setupTemplates)) state.setupTemplates = [];
-  state.setupTemplates.push(tpl);
-  saveState();
-  toast(`Saved "${name}" as template ✓`, 'success');
-}
-
-// =====================================================================
-// Feature 2: Preset editor popup renderer
-// =====================================================================
-function renderPresetEditor(wrap, pKey) {
-  const activePresets = getSetupPresets();
-  const presetDef = pKey ? activePresets[pKey] : null;
-  const builtinDef = pKey ? SETUP_ITEM_PRESETS[pKey] : null;
-  const presetNames = presetDef ? presetDef.presets.map(p => p.name) : [];
-
-  wrap.innerHTML = `
-    <div class="preset-editor-popup">
-      <div class="pe-row" id="pe_chips_${esc(pKey)}">
-        ${presetNames.map((name, idx) => `
-          <span class="pe-chip">
-            ${esc(name)}
-            <button data-pe-remove="${idx}" title="Remove">✕</button>
-          </span>`).join('')}
-        ${presetNames.length === 0 ? '<span style="font-size:11px;color:var(--text-faint)">No presets yet</span>' : ''}
-      </div>
-      <div class="pe-add-row">
-        <input class="pe-input" id="pe_input_${esc(pKey)}" placeholder="Preset name…" />
-        <button class="pe-add-btn" id="pe_add_${esc(pKey)}">Add</button>
-      </div>
-      <button class="pe-reset" id="pe_reset_${esc(pKey)}">Reset to defaults</button>
-    </div>`;
-
-  // Remove preset
-  wrap.querySelectorAll('[data-pe-remove]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.peRemove, 10);
-      const current = getSetupPresets();
-      const def = current[pKey];
-      if (!def) return;
-      if (!state.config.setupPresets) {
-        // Clone from built-in first
-        state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
-      }
-      state.config.setupPresets[pKey].presets.splice(idx, 1);
-      saveState();
-      renderPresetEditor(wrap, pKey);
-    });
-  });
-
-  // Add preset
-  const addBtn = wrap.querySelector(`#pe_add_${CSS.escape(pKey)}`);
-  const input = wrap.querySelector(`#pe_input_${CSS.escape(pKey)}`);
-  const doAdd = () => {
-    const val = input ? input.value.trim() : '';
-    if (!val) return;
-    if (!state.config.setupPresets) {
-      state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
-    }
-    if (!state.config.setupPresets[pKey]) {
-      const bdef = SETUP_ITEM_PRESETS[pKey];
-      state.config.setupPresets[pKey] = bdef ? JSON.parse(JSON.stringify(bdef)) : { label: pKey, defaults: [], presets: [] };
-    }
-    state.config.setupPresets[pKey].presets.push({ name: val, items: [val] });
-    saveState();
-    if (input) input.value = '';
-    renderPresetEditor(wrap, pKey);
-  };
-  if (addBtn) addBtn.addEventListener('click', doAdd);
-  if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
-
-  // Reset
-  const resetBtn = wrap.querySelector(`#pe_reset_${CSS.escape(pKey)}`);
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (!state.config.setupPresets) return;
-      delete state.config.setupPresets[pKey];
-      if (Object.keys(state.config.setupPresets).length === 0) state.config.setupPresets = null;
-      saveState();
-      renderPresetEditor(wrap, pKey);
-      toast('Presets reset to defaults', 'success');
-    });
-  }
-}
-
-// =====================================================================
-// Feature 3: Save options menu (Save as default for person / for instrument)
-// =====================================================================
-function openSaveOptionsMenu(btn) {
-  // Remove any existing menu
-  document.querySelectorAll('.si-save-menu').forEach(m => m.remove());
-
-  const personKey = btn.dataset.personKey;
-  const personName = btn.dataset.personName || '';
-  const instLabel = btn.dataset.instLabel || '';
-  const presetKey = btn.dataset.presetKey || '';
-  const personCard = btn.closest('.si-person');
-  const instTag = personCard ? (personCard.dataset.personInstTag || '') : '';
-  const personRole = personCard ? (personCard.dataset.personRole || '') : '';
-
-  const bucket = state.setupItems[personKey];
-  if (!bucket || !bucket.items.length) {
-    toast('Add some items first', 'warn');
-    return;
-  }
-
-  const menu = document.createElement('div');
-  menu.className = 'si-save-menu';
-
-  const showPersonSave = personName && instLabel;
-  const showInstSave = presetKey;
-  const showTemplateSave = true;
-
-  menu.innerHTML = `
-    ${showPersonSave ? `
-      <button class="si-save-menu-option" data-save-action="person">
-        <span class="opt-title">Save as default for ${esc(personName)} on ${esc(instLabel)}</span>
-        <span class="opt-sub">Auto-loads next time ${esc(personName)} plays ${esc(instLabel)}</span>
-      </button>
-      <div class="si-save-menu-sep"></div>` : ''}
-    ${showInstSave ? `
-      <button class="si-save-menu-option" data-save-action="instrument">
-        <span class="opt-title">Save as default for ${esc(instLabel || presetKey)}</span>
-        <span class="opt-sub">Replaces quick-add preset list for this instrument</span>
-      </button>
-      <div class="si-save-menu-sep"></div>` : ''}
-    <button class="si-save-menu-option" data-save-action="template">
-      <span class="opt-title">Save as reusable template</span>
-      <span class="opt-sub">Available for any musician via + Template</span>
-    </button>`;
-
-  document.body.appendChild(menu);
-  // Position like the template menu
-  const r = btn.getBoundingClientRect();
-  const menuWidth = 280;
-  let left = r.right - menuWidth;
-  if (left < 8) left = 8;
-  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
-  menu.style.left = left + 'px';
-  menu.style.top = (r.bottom + 6) + 'px';
-  menu.style.minWidth = menuWidth + 'px';
-
-  // Handlers
-  menu.querySelectorAll('[data-save-action]').forEach(opt => {
-    opt.addEventListener('click', () => {
-      const action = opt.dataset.saveAction;
-      menu.remove();
-      if (action === 'person') {
-        // Feature 3: save person defaults
-        const instKey = presetKey || instLabel.toLowerCase().replace(/\s+/g,'_');
-        if (!state.config.personSetupDefaults) state.config.personSetupDefaults = {};
-        const nameKey = normFullName(personName);
-        if (!state.config.personSetupDefaults[nameKey]) state.config.personSetupDefaults[nameKey] = {};
-        state.config.personSetupDefaults[nameKey][instKey] = bucket.items.map(it => it.text);
-        saveState();
-        toast(`Saved defaults for ${personName} on ${instLabel} ✓`, 'success');
-      } else if (action === 'instrument') {
-        // Feature 2: save as instrument default (updates setupPresets)
-        if (!state.config.setupPresets) {
-          state.config.setupPresets = JSON.parse(JSON.stringify(SETUP_ITEM_PRESETS));
-        }
-        if (!state.config.setupPresets[presetKey]) {
-          const bdef = SETUP_ITEM_PRESETS[presetKey];
-          state.config.setupPresets[presetKey] = bdef ? JSON.parse(JSON.stringify(bdef)) : { label: presetKey, defaults: [], presets: [] };
-        }
-        state.config.setupPresets[presetKey].defaults = bucket.items.map(it => it.text);
-        state.config.setupPresets[presetKey].presets = [{ name: 'Saved default', items: bucket.items.map(it => it.text) }];
-        saveState();
-        toast(`Saved as default for ${instLabel || presetKey} ✓`, 'success');
-      } else if (action === 'template') {
-        // Existing template save — open template name input
-        const defaultName = personName ? `${personName} default` : 'Untitled template';
-        const name = window.prompt('Template name:', defaultName);
-        if (name && name.trim()) {
-          saveCurrentItemsAsTemplate(personKey, name.trim(), instTag || personRole);
-          toast(`Saved "${name.trim()}" as template ✓`, 'success');
-        }
-      }
-    });
-  });
-
-  // Click-outside closes
-  setTimeout(() => {
-    const onDoc = (ev) => {
-      if (!menu.contains(ev.target)) {
-        menu.remove();
-        document.removeEventListener('click', onDoc);
-      }
-    };
-    document.addEventListener('click', onDoc);
-  }, 50);
-}
-
-// =====================================================================
-// Feature 3: Auto-load person defaults when rendering
-// This is called during renderPersonCard — the bucket is populated from
-// personSetupDefaults if the person has no items yet.
-// =====================================================================
-function maybeAutoLoadPersonDefaults(p) {
-  if (!p || !p.name || p.role !== 'band' || !p.inst) return;
-  const bucket = state.setupItems[p.key];
-  // Only auto-load if bucket is empty (no items set yet)
-  if (bucket && bucket.items && bucket.items.length > 0) return;
-  const pDefs = state.config.personSetupDefaults;
-  if (!pDefs) return;
-  const nameKey = normFullName(p.name);
-  const personDefs = pDefs[nameKey];
-  if (!personDefs) return;
-  // Find matching instKey
-  const presetKey = detectPresetKey(p.inst);
-  const instKey = presetKey || (p.inst.label || '').toLowerCase().replace(/\s+/g,'_');
-  const defaults = personDefs[instKey];
-  if (!defaults || !defaults.length) return;
-  // Auto-populate
-  const target = ensureSetupBucket(p.key);
-  if (target.items.length > 0) return; // check again after ensure
-  defaults.forEach(text => {
-    target.items.push(newSetupItem(text, false));
-  });
-  // Don't saveState here to avoid re-render loop; caller saves after render
 }
 
 // ===== View mode switching =====

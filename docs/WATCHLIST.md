@@ -66,6 +66,21 @@ Behaviors that must keep working. **The executable version of this list is `test
       surfaces them, and the ⚠ notice/badge mentions setup. → `setupreview`
     - **Auto-refresh pauses while the review dialog is open** (same guard family as edit
       mode / open modals). → `setupreview`, `pcorefresh`
+    - **Flat setup UI is RETIRED (grouped-only person card).** The old flat setup UI is
+      gone: no "Quick add" preset chips, no "Edit presets" link, no "+ Default setup"
+      button, no "+ Template" / "Save…" buttons on the person card; the Settings →
+      **Templates** tab and its editor are removed; `SETUP_ITEM_PRESETS`,
+      `getSetupPresets`, `renderPresetEditor`, `openSaveOptionsMenu`, `openTemplateMenu`,
+      `applyTemplateToPerson`, `saveCurrentItemsAsTemplate`, `renderTemplatesEditor`,
+      `maybeAutoLoadPersonDefaults`, `state.setupTemplates`, `state.config.setupPresets`,
+      and `state.config.personSetupDefaults` no longer exist. The person card keeps ONLY
+      the grouped **⚙ Edit setup** editor, the check-off item rows, and a manual
+      **Add item** row. → `setupretire`
+    - **"Add item" writes a custom item — no data loss.** The card's Add item pushes
+      `{id,text}` to `bucket.customItems` and calls `rebuildPersonItems`; editing the
+      grouped selections (which also rebuilds items from `selections`+`customItems`) must
+      NOT wipe manually-added items. This was the confirmed data-loss bug the retirement
+      fixes. → `setupretire`, `setupeditor`
 
 ---
 
@@ -84,9 +99,12 @@ Behaviors that must keep working. **The executable version of this list is `test
 - [ ] Adding/removing/reordering instruments works; optional instruments behave. →
       `newinst`
 - [ ] Shadows (understudies) render and keep their own setup. → `shadows`
-- [ ] Per-instrument setup presets + "+ Default setup" add the right items;
-      `detectPresetKey` maps tags (incl. md, strings). → `setuppresets`, `setupmgr`
-- [ ] Setup templates save/apply. → `templates`
+- [ ] `detectPresetKey` maps tags to grouped-catalog keys (incl. md, strings); the
+      grouped `SETUP_TEMPLATES` catalog exposes per-instrument options. → `setuppresets`,
+      `setupmgr`
+- [ ] Flat setup UI + Settings "Templates" tab + old Template feature are RETIRED; the
+      person card is grouped-only and "Add item" writes a custom item without data loss. →
+      `setupretire`
 
 ### Stage & layout
 - [ ] Stage renders D-shape; curve/depth sliders reshape it; custom outline overrides. →
