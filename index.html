@@ -8674,6 +8674,70 @@ function setupTagKey(name, tag) {
   return `${normFullName(name)}|tag:${(tag||'').toLowerCase()}`;
 }
 
+// ---- Stable per-person setup keys + seed-once / rebuild / legacy migration ----
+// Stable format: `${normFullName(name)}|${role}|${typeKey||'none'}`
+// role is one of band|vocalist|shadow; typeKey is a SETUP_TEMPLATES key (or 'none').
+function stableSetupKey(name, role, typeKey) {
+  return `${normFullName(name)}|${role}|${typeKey || 'none'}`;
+}
+function seedPersonSetup(stableKey, typeKey) {
+  const b = state.setupItems[stableKey];
+  if (b && b.seeded) return b;
+  const selections = defaultSelectionsFor(typeKey);
+  const bucket = state.setupItems[stableKey] || {};
+  bucket.selections = selections;
+  bucket.customItems = bucket.customItems || [];
+  bucket.seeded = true;
+  if (!('needsReview' in bucket)) bucket.needsReview = false;
+  bucket.items = resolveSetupItems(typeKey, selections, bucket.customItems).map(l => newSetupItem(l.text, false));
+  state.setupItems[stableKey] = bucket;
+  return bucket;
+}
+function rebuildPersonItems(stableKey, typeKey) {
+  const b = state.setupItems[stableKey];
+  if (!b) return;
+  const doneByText = {};
+  (b.items || []).forEach(it => { if (it.doneThisService) doneByText[it.text] = true; });
+  b.items = resolveSetupItems(typeKey, b.selections || {}, b.customItems || []).map(l => {
+    const it = newSetupItem(l.text, false);
+    if (doneByText[l.text]) it.doneThisService = true;
+    return it;
+  });
+}
+// One-time migration from OLD volatile buckets to stable keys.
+// Legacy formats (see setupKeyForBand/Vocal/Shadow/setupTagKey):
+//   band   -> `${name}|${instId}`
+//   vocal  -> `${name}|vocal`
+//   shadow -> `${name}|shadow`
+//   tag    -> `${name}|tag:<tag>`
+function migrateLegacySetupBuckets() {
+  const store = state.setupItems || {};
+  const ROLES = { band:1, vocalist:1, shadow:1 };
+  Object.keys(store).forEach(key => {
+    const parts = key.split('|');
+    if (parts.length < 2) return;
+    if (ROLES[parts[1]]) return; // already a stable key
+    const name = parts[0];
+    const tail = parts.slice(1).join('|');
+    let typeKey = null, role = 'band';
+    if (tail === 'vocal') { role = 'vocalist'; typeKey = 'vocals'; }
+    else if (tail === 'shadow') { role = 'shadow'; typeKey = null; }
+    else if (tail.startsWith('tag:')) { typeKey = detectPresetKey({ tag: tail.slice(4) }); }
+    else { const inst = (state.instruments || []).find(i => i.id === tail); typeKey = inst ? detectPresetKey(inst) : null; }
+    const stable = stableSetupKey(name, role, typeKey);
+    if (stable === key) return;
+    const dst = store[stable] || { selections:{}, customItems:[], items:[], seeded:true, needsReview:false };
+    (store[key].items || []).forEach(it => {
+      const existing = dst.items.find(x => (x.text||'').toLowerCase() === (it.text||'').toLowerCase());
+      if (existing) { if (it.doneThisService) existing.doneThisService = true; }
+      else dst.items.push(it);
+    });
+    dst.seeded = true;
+    store[stable] = dst;
+    delete store[key];
+  });
+}
+
 // Find existing items for this person+instrument; fall back to tag/sibling if not found.
 // Returns { items, fallbackFrom } — fallbackFrom is the key items came from if it wasn't the exact match
 function getSetupItemsForBand(name, inst) {
@@ -12271,6 +12335,7 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
 /* ===================== INIT ===================== */
 function init() {
   ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
+  migrateLegacySetupBuckets(); // one-time: fold OLD volatile setup buckets into stable per-person keys
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
   renderVenueSwitcher();
   applyRunSheetScale();
