@@ -715,6 +715,12 @@ background-size:5% 10%}
 .wiz-setup-inst{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
 .wiz-setup-inst-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
 .wiz-setup-inst-groups{display:flex;flex-direction:column;gap:10px}
+.wiz-setup-inst-custom{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.wiz-setup-custom-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px}
+.wiz-setup-custom-del{background:transparent;border:none;color:var(--text-faint);cursor:pointer;font-size:11px;line-height:1;padding:0}
+.wiz-setup-custom-del:hover{color:var(--danger)}
+.wiz-setup-inst-addrow{display:flex;gap:6px;margin-top:8px}
+.wiz-setup-custom-input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text);font-size:12px;font-family:var(--ff-body)}
 /* PCO reminder pill in header */
 .pco-reminder-pill{background:rgba(74,144,194,0.1);border:1px solid rgba(74,144,194,0.4);color:#7ab3d8;padding:6px 10px 6px 12px;border-radius:14px;font-family:var(--ff-mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;line-height:1;white-space:nowrap}
 .pco-reminder-pill:hover{background:rgba(74,144,194,0.18);border-color:rgba(74,144,194,0.7);color:#9bcae9}
@@ -4412,34 +4418,12 @@ function snapToGrid(x, y) {
 
 // Clamp custom position to the stage outline (use the current shape's bounds with a small inset)
 function clampStagePosition(x, y) {
-  const shape = getStageShape();
-  const backY = shape.backY != null ? shape.backY : 360;
-  const minX = 40, maxX = 760;
-  const maxY = backY - 12;
-  const cx = Math.max(minX, Math.min(maxX, x));
-  // The front boundary follows the curved front edge (a quadratic Bézier), not a flat line —
-  // so people can be placed into the apron's curve/bulge, not just along the shallow side edge.
-  let frontY;
-  const { P0, P1, P2 } = shape;
-  if (P0 && P1 && P2 && Math.abs(P0.x - P2.x) > 1) {
-    // Solve x(t) = cx for t along the front Bézier, then evaluate y(t).
-    const A = P0.x - 2 * P1.x + P2.x, B = 2 * (P1.x - P0.x), C = P0.x - cx;
-    let t;
-    if (Math.abs(A) < 1e-6) { t = B !== 0 ? -C / B : 0.5; }
-    else {
-      const disc = Math.max(0, B * B - 4 * A * C), sq = Math.sqrt(disc);
-      const t1 = (-B + sq) / (2 * A), t2 = (-B - sq) / (2 * A);
-      t = (t1 >= -0.001 && t1 <= 1.001) ? t1 : t2;
-    }
-    t = Math.max(0, Math.min(1, t));
-    const mt = 1 - t;
-    frontY = mt * mt * P0.y + 2 * mt * t * P1.y + t * t * P2.y;
-  } else {
-    frontY = (shape.edgeY != null ? shape.edgeY : 30);
-  }
-  const minY = frontY - 5;
+  // Positions are no longer clamped to the stage outline — a person can be placed
+  // anywhere, including off the stage. We only keep them inside the visible canvas
+  // (the 800×380 viewBox) with a small margin so their card can't disappear off-screen.
+  const minX = 40, maxX = 760, minY = 12, maxY = 368;
   return {
-    x: cx,
+    x: Math.max(minX, Math.min(maxX, x)),
     y: Math.max(minY, Math.min(maxY, y))
   };
 }
@@ -5397,6 +5381,8 @@ function renderLayoutEditor() {
     curvReset.addEventListener('click', () => {
       c.stageCurvature = DEFAULT_STAGE_CURVATURE;
       c.stageDepth = DEFAULT_STAGE_DEPTH;
+      // Reset to defaults also clears any custom outline, in one click.
+      c.customStagePoints = null;
       saveState();
       renderLayoutEditor();
       renderStage();
@@ -8473,7 +8459,13 @@ function seedPersonSetup(stableKey, typeKey) {
   const selections = defaultSelectionsFor(typeKey);
   const bucket = state.setupItems[stableKey] || {};
   bucket.selections = selections;
-  bucket.customItems = bucket.customItems || [];
+  // Seed the church's custom setup items (added per instrument in the wizard) onto this player.
+  if (bucket.customItems && bucket.customItems.length) {
+    // keep any already present
+  } else {
+    const churchCustom = churchSetupDefaults(typeKey).customOptions || [];
+    bucket.customItems = churchCustom.map(o => ({ id: 'sc_' + Math.random().toString(36).slice(2, 8), text: o.text }));
+  }
   bucket.seeded = true;
   if (!('needsReview' in bucket)) bucket.needsReview = false;
   bucket.items = resolveSetupItems(typeKey, selections, bucket.customItems).map(l => newSetupItem(l.text, false));
@@ -10654,7 +10646,7 @@ function renderWizardStepBody(step) {
           <div class="curvature-row" style="background:var(--bg-inset);">
             <div class="curvature-preview" id="wiz_curv_preview">${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? buildCustomOutlinePreviewSvg(wizardData.customStagePoints) : buildStagePreviewSvg(curVal, depthVal)}</div>
             <div class="curvature-controls">
-              ${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? '<div style="font-size:11px;color:var(--accent);margin-bottom:10px;line-height:1.4;">Showing your custom shape. These sliders are paused — use <b>Remove custom shape</b> below to switch back to them.</div>' : ''}
+              ${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? '<div style="font-size:11px;color:var(--accent);margin-bottom:10px;line-height:1.4;">Showing your custom shape. These sliders are paused — use <b>Reset shape to defaults</b> below to clear it and switch back to them.</div>' : ''}
               <div class="curvature-header">
                 <span class="curvature-label">Curve depth</span>
                 <span class="curvature-value" id="wiz_curv_value">${curVal}%</span>
@@ -10676,7 +10668,7 @@ function renderWizardStepBody(step) {
           <div style="margin-top:18px" id="wizDrawBtnWrap">
             ${(function(){
               if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
-                return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button class="wiz-draw-toggle active" id="wizDrawOpenBtn">&#9997; Custom shape active (' + wizardData.customStagePoints.length + ' points) &middot; click to edit</button><button class="btn ghost" id="wizDrawClearSaved" style="font-size:11px;padding:3px 9px;">Remove custom shape</button></div>';
+                return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><button class="wiz-draw-toggle active" id="wizDrawOpenBtn">&#9997; Custom shape active (' + wizardData.customStagePoints.length + ' points) &middot; click to edit</button></div>';
               }
               return '<button class="wiz-draw-toggle" id="wizDrawOpenBtn">&#9997; Draw custom stage shape</button>';
             })()}
@@ -10920,7 +10912,7 @@ function renderWizardStepBody(step) {
             <div class="wiz-setup-intro-card">
               <div class="wiz-setup-intro-icon">📋</div>
               <div class="wiz-setup-intro-text">
-                <strong>Great choice.</strong> Set your church's usual defaults per instrument below — leave everything unticked to start blank. These become the starting point for each musician's checklist. You can fine-tune per person later via <strong>✓ Items</strong> in the header.
+                <strong>Great choice.</strong> For each instrument, select the default setup each <strong>player</strong> of that instrument should start with — leave everything unticked to start blank. You can also add your own custom items per instrument. These seed every musician's checklist; fine-tune per person later via <strong>✓ Items</strong> in the header.
               </div>
             </div>
             <div class="wiz-setup-insts" id="wizSetupInsts">
@@ -10928,6 +10920,11 @@ function renderWizardStepBody(step) {
                 <div class="wiz-setup-inst" data-inst-key="${c.key}">
                   <div class="wiz-setup-inst-title">${esc(c.title)}</div>
                   <div class="wiz-setup-inst-groups"></div>
+                  <div class="wiz-setup-inst-custom"></div>
+                  <div class="wiz-setup-inst-addrow">
+                    <input type="text" class="wiz-setup-custom-input" placeholder="Add a custom setup item…" />
+                    <button class="btn ghost wiz-setup-custom-add" type="button">+ Add</button>
+                  </div>
                 </div>`).join('') : `
                 <div class="wiz-setup-intro-text" style="opacity:.7;">No instruments added yet — go back to the Instruments step to add some, or skip this for now.</div>`}
             </div>
@@ -11180,11 +11177,9 @@ function wireWizardStep(step) {
       resetBtn.addEventListener('click', () => {
         wizardData.stageCurvature = DEFAULT_STAGE_CURVATURE;
         wizardData.stageDepth = DEFAULT_STAGE_DEPTH;
-        if (slider) slider.value = DEFAULT_STAGE_CURVATURE;
-        if (valLabel) valLabel.textContent = DEFAULT_STAGE_CURVATURE + '%';
-        if (depthSlider) depthSlider.value = DEFAULT_STAGE_DEPTH;
-        if (depthValLabel) depthValLabel.textContent = DEFAULT_STAGE_DEPTH + '%';
-        refreshWizPreview();
+        // Reset to defaults also clears any custom shape, in one click.
+        wizardData.customStagePoints = null;
+        renderWizardStep();
       });
     }
     body.querySelectorAll('[data-wdir]').forEach(b => b.addEventListener('click', () => {
@@ -11195,13 +11190,6 @@ function wireWizardStep(step) {
     // Custom stage outline — simple polygon editor (replaces the old Bezier pen tool)
     (function() {
       const openBtn = body.querySelector('#wizDrawOpenBtn');
-      const clearSavedBtn = body.querySelector('#wizDrawClearSaved');
-      if (clearSavedBtn) {
-        clearSavedBtn.addEventListener('click', () => {
-          wizardData.customStagePoints = null;
-          renderWizardStep();
-        });
-      }
       if (openBtn) openBtn.addEventListener('click', () => {
         openPolygonStageEditor({
           getInitial: () => wizardData.customStagePoints,
@@ -11590,10 +11578,38 @@ function wireWizardStep(step) {
         if (!state.config.setupDefaults[key]) {
           state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
         }
-        renderSetupGroups(groupsEl, key, state.config.setupDefaults[key].selections, newSel => {
-          state.config.setupDefaults[key].selections = newSel;
+        const def = state.config.setupDefaults[key];
+        if (!Array.isArray(def.customOptions)) def.customOptions = [];
+        renderSetupGroups(groupsEl, key, def.selections, newSel => {
+          def.selections = newSel;
           saveState();
         });
+        // Custom setup items the church adds for this instrument (seed onto every player).
+        const customEl = card.querySelector('.wiz-setup-inst-custom');
+        const input = card.querySelector('.wiz-setup-custom-input');
+        const addBtn = card.querySelector('.wiz-setup-custom-add');
+        const renderCustom = () => {
+          if (!customEl) return;
+          customEl.innerHTML = def.customOptions.map((o, i) =>
+            `<span class="wiz-setup-custom-chip">${esc(o.text)}<button type="button" class="wiz-setup-custom-del" data-idx="${i}" title="Remove">✕</button></span>`
+          ).join('');
+          customEl.querySelectorAll('.wiz-setup-custom-del').forEach(b => b.addEventListener('click', () => {
+            def.customOptions.splice(parseInt(b.dataset.idx, 10), 1);
+            saveState();
+            renderCustom();
+          }));
+        };
+        const addCustom = () => {
+          const text = input ? input.value.trim() : '';
+          if (!text) return;
+          def.customOptions.push({ id: 'sc_' + Math.random().toString(36).slice(2, 8), text });
+          if (input) input.value = '';
+          saveState();
+          renderCustom();
+        };
+        if (addBtn) addBtn.addEventListener('click', addCustom);
+        if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
+        renderCustom();
       });
     }
   }

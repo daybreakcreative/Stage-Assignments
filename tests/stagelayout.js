@@ -27,11 +27,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const sp=Q('getStageShape().path'); const exp=Q('polygonPathFromPoints(wizardData.customStagePoints)');
    if(sp!==exp) throw new Error('getStageShape not custom');
  });
- check('clampStagePosition follows the custom front edge (apex bulge near y≈70)', ()=>{
-   // drag a point toward the audience at center-x; with the custom apex at y=70, it should clamp to ~that, not the slider curve
+ check('clampStagePosition no longer clamps to the stage outline (off-stage placement allowed)', ()=>{
+   // Behavior change (2026-07-01): positions are NOT clamped to the stage shape anymore —
+   // a person can be placed off-stage. clampStagePosition only bounds to the visible canvas.
    const c=JSON.parse(Q('JSON.stringify(clampStagePosition(400,10))'));
    if(typeof c.y!=='number') throw new Error('no y');
-   if(c.y < 55 || c.y > 95) throw new Error('center clamp y='+c.y+' not near custom apex ~70');
+   if(c.y !== 12) throw new Error('expected canvas min-bound 12 (no outline clamp), got y='+c.y);
+   const mid=JSON.parse(Q('JSON.stringify(clampStagePosition(400,200))'));
+   if(mid.y !== 200) throw new Error('a valid in-canvas point should be unchanged, got y='+mid.y);
  });
  check('temp placeholder instruments were restored (sentinel intact)', ()=>{
    if(Q("state.instruments && state.instruments.__sentinel")!=='ORIG') throw new Error('instruments not restored');
