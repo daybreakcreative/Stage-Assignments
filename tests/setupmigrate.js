@@ -60,6 +60,13 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if (after !== before) throw new Error('not idempotent ('+before+'->'+after+')');
   });
 
+  check('state.config.setupDefaults persists across save/load shape', ()=>{
+    ev(`state.config.setupDefaults = { keys:{ selections:{source:'k_house'}, customOptions:[] } };`);
+    ev(`saveState()`);
+    const reloaded = ev(`(function(){ const p=JSON.parse(localStorage.getItem(STORAGE_KEY)); return (p.config.setupDefaults&&p.config.setupDefaults.keys.selections.source)||''; })()`);
+    if (reloaded !== 'k_house') throw new Error('not persisted: '+reloaded);
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;
