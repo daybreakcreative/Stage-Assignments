@@ -2021,6 +2021,9 @@ const DEFAULT_STATE = {
   // Per-musician preferences: keyed by 'normfullname|roletype' (e.g. 'andrew smith|drums' or 'esther kim|vocal')
   // value = { askedAt: ISO, mic?: 'KMS105', setupNotes?: '...', wireless?: bool }
   musicianPreferences: {},
+  // Preferred / "goes by" display names. Keyed by normFullName(officialPcoName) → preferred display string.
+  // Applied at every PCO name-entry choke point so future pulls auto-rename (e.g. 'catherine smith' → 'Cat').
+  nameAliases: {},
   // Per-shadow preferences: keyed by normFullName → last selected option
   // value = { role: 'vocalist'|'band', choice: 'on-stage-mic'|'on-stage-iem'|'off-stage-iem'|'off-stage'|'observer', mic?:..., updatedAt: ISO }
   shadowPreferences: {},
@@ -2318,6 +2321,7 @@ function loadState() {
           ? { lastServiceDate: p.setupServiceMeta.lastServiceDate || null, lastCompletionByKey: p.setupServiceMeta.lastCompletionByKey || {} }
           : { lastServiceDate: null, lastCompletionByKey: {} },
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
+        nameAliases: (p.nameAliases && typeof p.nameAliases === 'object') ? p.nameAliases : {},
         shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
         checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {},
         savedStages: Array.isArray(p.savedStages) ? p.savedStages : []
@@ -2598,6 +2602,64 @@ function esc(s) { if (s==null) return ''; return String(s).replace(/&/g,'&amp;')
 function normName(n) { return (n||'').trim().toLowerCase().split(/\s+/)[0]; }
 // Full-name normalized — used for dedup and exact equality checks so two "Brian"s with different last names are distinct
 function normFullName(n) { return (n||'').trim().toLowerCase().replace(/\s+/g,' '); }
+// Preferred / "goes by" name support ------------------------------------------------
+// Given an official (PCO) name, return the operator's preferred display string if one
+// is recorded, else the name unchanged. Applied at every PCO name-entry choke point.
+function applyNameAlias(name) {
+  if (!name) return name;
+  const a = state.nameAliases && state.nameAliases[normFullName(name)];
+  return a || name;
+}
+// Record a preferred display name for a person and rename them everywhere live.
+// currentName may itself be a prior preferred value — we reverse-lookup the official
+// key so re-edits keep updating the SAME alias. Setting preferred back to the official
+// name clears the alias (a revert).
+function setPreferredName(currentName, preferred) {
+  currentName = (currentName || '').trim();
+  preferred = (preferred || '').trim();
+  if (!currentName || !preferred) return;
+  const curN = normFullName(currentName);
+  const prefN = normFullName(preferred);
+  if (!state.nameAliases) state.nameAliases = {};
+  // Find the OFFICIAL key: if currentName is itself a prior preferred value, reverse-lookup
+  // its official key; otherwise currentName IS the official name.
+  let officialKey = curN;
+  for (const k in state.nameAliases) {
+    if (normFullName(state.nameAliases[k]) === curN) { officialKey = k; break; }
+  }
+  // Record or clear the alias (clear if preferred matches the official name — a revert).
+  if (officialKey === prefN) delete state.nameAliases[officialKey];
+  else state.nameAliases[officialKey] = preferred;
+  if (curN === prefN) { saveState(); return; } // display unchanged (e.g. only case)
+  // Rename every live entity that matches the current name.
+  (state.vocalists||[]).forEach(v => { if (normFullName(v.name) === curN) v.name = preferred; });
+  (state.instruments||[]).forEach(i => { if (normFullName(i.assignedTo) === curN) i.assignedTo = preferred; });
+  const h = state.hosts || {};
+  ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(f => { if (normFullName(h[f]) === curN) h[f] = preferred; });
+  (state.shadows||[]).forEach(s => { if (normFullName(s.name) === curN) s.name = preferred; });
+  // Carry per-person keyed data: setup buckets, musician prefs, mic prefs.
+  const reKey = (obj, splitFn, joinFn) => {
+    if (!obj) return;
+    Object.keys(obj).forEach(key => {
+      const parts = splitFn(key);
+      if (parts && normFullName(parts.name) === curN) {
+        const nk = joinFn(preferred, parts);
+        if (nk !== key) { obj[nk] = obj[key]; delete obj[key]; }
+      }
+    });
+  };
+  // setupItems keys: `${normFullName}|role|typeKey`
+  reKey(state.setupItems, k => { const p = k.split('|'); return p.length>=2 ? { name:p[0], rest:p.slice(1).join('|') } : null; },
+        (pref, parts) => `${normFullName(pref)}|${parts.rest}`);
+  // musicianPreferences keys: `${normFullName}|role`
+  reKey(state.musicianPreferences, k => { const p = k.split('|'); return p.length>=2 ? { name:p[0], rest:p.slice(1).join('|') } : null; },
+        (pref, parts) => `${normFullName(pref)}|${parts.rest}`);
+  // micPrefs.people keyed by normFullName
+  const mp = state.config && state.config.micPrefs && state.config.micPrefs.people;
+  if (mp && mp[curN] && curN !== prefN) { mp[prefN] = mp[curN]; delete mp[curN]; }
+  saveState();
+  if (typeof renderAll === 'function') renderAll();
+}
 function firstName(n) { return (n||'').trim().split(/\s+/)[0] || ''; }
 // Format a name per the user's "Display Name Format" setting in Advanced Settings → Brand.
 // Display view only — edit view should still use the full name.
@@ -2992,7 +3054,13 @@ function finalizeVocName(id, prevName) {
   if (vRen && typeof prevName === 'string') {
     const newName = (vRen.name || '').trim();
     const oldName = (prevName || '').trim();
-    if (oldName && oldName !== newName) remapChecklistKeys(checklistPairsForVocalRename(vRen, oldName, newName));
+    if (oldName && oldName !== newName) {
+      remapChecklistKeys(checklistPairsForVocalRename(vRen, oldName, newName));
+      // Record a preferred-name alias + re-key setup/mic/musician stores so this rename
+      // is remembered and re-applied on future PCO pulls. (The live entity is already
+      // renamed by updateVocName, so setPreferredName's entity loops are no-ops here.)
+      setPreferredName(oldName, newName);
+    }
   }
   // Auto-link any band slots whose typed name matches this vocalist
   const changed = autoLinkBandToVocalists();
@@ -3435,7 +3503,12 @@ function renderBand() {
       // Keep this slot's setup check-offs when the typed name changes.
       const prevName = (e.target.dataset.prevName || '').trim();
       const newName = (inst.assignedTo || '').trim();
-      if (prevName && prevName !== newName) remapChecklistKeys(checklistPairsForBandRename(inst, prevName, newName));
+      if (prevName && prevName !== newName) {
+        remapChecklistKeys(checklistPairsForBandRename(inst, prevName, newName));
+        // Record a preferred-name alias + re-key setup/mic/musician stores so future PCO
+        // pulls re-apply this go-by name. (inst.assignedTo is already the new value.)
+        setPreferredName(prevName, newName);
+      }
       const changed = autoLinkBandToVocalists();
       saveState();
       // Always re-render band so the link-suggestion button updates based on current name
@@ -6791,7 +6864,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     if ((a.status||'') === 'D') return;
     const cls = classifyPosition(a.team_position_name || '');
     if (cls.kind === 'band' && cls.position === 'ag' && a.name) {
-      acousticPlayers.add(normFullName(a.name));
+      acousticPlayers.add(normFullName(applyNameAlias(a.name || '')));
     }
   });
   // Buckets we'll fill at the end (since order in PCO is arbitrary)
@@ -6801,7 +6874,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   console.group('[Stage·Assign] PCO team member classification');
   teamMembers.forEach(tm => {
     const a = tm.attributes;
-    const name = a.name || '';
+    const name = applyNameAlias(a.name || '');
     if (!name) return;
     const positionName = a.team_position_name || '';
     const status = a.status || '';
@@ -7069,7 +7142,7 @@ function derivePcoModel(planData, tmRes, itemsRes) {
   const people = [];
   ((tmRes && tmRes.data) || []).forEach(tm => {
     const a = tm.attributes || {};
-    const name = a.name || '';
+    const name = applyNameAlias(a.name || '');
     if (!name) return;
     const cls = classifyPosition(a.team_position_name || '');
     if (cls.kind === 'ignore' || cls.kind === 'unknown') return;
@@ -9872,6 +9945,10 @@ function renderPostPullStep() {
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
       <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on vocals. Set their preferences so we remember for future services.</p>
       <div class="pp-row">
+        <div class="pp-row-label">Name (what they go by)</div>
+        <input type="text" id="pp_name" value="${esc(step.personName)}" />
+      </div>
+      <div class="pp-row">
         <div class="pp-row-label">Preferred mic</div>
         <select id="pp_mic_select">
           <option value="">— No preference —</option>
@@ -9895,6 +9972,10 @@ function renderPostPullStep() {
       <div class="pp-step-person-tag">New on ${esc(step.instLabel)}</div>
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
       <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Select their setup — your defaults are pre-checked. Tick what they need (e.g. brings their own rig, needs the house rig) and add anything custom. These become checklist items on the ✓ Items page.</p>
+      <div class="pp-row">
+        <div class="pp-row-label">Name (what they go by)</div>
+        <input type="text" id="pp_name" value="${esc(step.personName)}" />
+      </div>
       <div class="pp-row">
         <div class="pp-row-label">Setup for ${esc(step.instLabel)}</div>
         <div id="pp_setup_editor"></div>
@@ -9961,6 +10042,14 @@ function savePostPullStep() {
   const content = document.getElementById('postPullContent');
   const nName = normFullName(step.personName);
   if (step.kind === 'pref-vocal') {
+    // Preferred / "goes by" name. Re-key BEFORE any name-based save so the setup bucket
+    // (already saved live under the old key) and the mic preference carry to the new name.
+    const nameInp = content.querySelector('#pp_name');
+    const newName = nameInp ? (nameInp.value || '').trim() : '';
+    if (newName && newName !== step.personName) {
+      setPreferredName(step.personName, newName);
+      step.personName = newName;
+    }
     const sel = content.querySelector('#pp_mic_select');
     const notes = content.querySelector('#pp_notes');
     const micVal = sel ? sel.value : '';
@@ -9976,6 +10065,14 @@ function savePostPullStep() {
     if (micName) setMicRemembered(step.personName, micName);
     // Setup selections are saved live by the grouped editor into the person's stable bucket.
   } else if (step.kind === 'pref-band') {
+    // Preferred / "goes by" name. Re-key BEFORE recording the pref so the setup bucket
+    // (already saved live under the old key) carries to the new name.
+    const nameInp = content.querySelector('#pp_name');
+    const newName = nameInp ? (nameInp.value || '').trim() : '';
+    if (newName && newName !== step.personName) {
+      setPreferredName(step.personName, newName);
+      step.personName = newName;
+    }
     // Setup selections are saved live by the grouped editor into the person's stable bucket;
     // just record that we've asked so this person isn't prompted again.
     state.musicianPreferences[step.prefKey] = {
