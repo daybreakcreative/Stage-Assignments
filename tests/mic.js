@@ -20,19 +20,15 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev('state.vocalists=[{id:"g",name:"Grayson",isWL:true,leadsSongs:true,micAssigned:"KMS105"},{id:"o",name:"Mo",isWL:false,leadsSongs:false,micAssigned:"SM58"}]');
  };
 
- check('panel renders leader-mic chips + a people table with both vocalists', ()=>{
+ // NOTE (2026-07): the Leader Mics pool + per-person "No mic" toggle were removed. The
+ // inventory ranking now decides who gets the best mic, so those checks are gone. The mic
+ // settings live under ONE "Mics" tab; per-person prefs render in #prefEdit beneath it.
+ check('panel renders a people table with both vocalists (no leader-mic chips)', ()=>{
    setup(); ev('renderPrefEditor()');
    const chips=doc.querySelectorAll('#prefEdit [data-leadermic]').length;
    const rows=doc.querySelectorAll('#prefEdit .pref-table tbody tr').length;
-   if(chips!==4) throw new Error('expected 4 leader-mic chips, got '+chips);
+   if(chips!==0) throw new Error('leader-mic chips should be gone, got '+chips);
    if(rows!==2) throw new Error('expected 2 people rows, got '+rows);
- });
- check('checking a leader-mic chip adds it to leaderMics', ()=>{
-   setup(); ev('renderPrefEditor()');
-   const cb=doc.querySelector('#prefEdit [data-leadermic="Beta 58A"]');
-   cb.checked=true; fire(cb,'change');
-   const lm=ev('JSON.stringify(micPrefsStore().leaderMics)');
-   if(!JSON.parse(lm).includes('Beta 58A')) throw new Error('leaderMics='+lm);
  });
  check('setting the "Always" dropdown locks that person to the mic', ()=>{
    setup(); ev('renderPrefEditor()');
@@ -40,12 +36,12 @@ window.addEventListener('load',()=>setTimeout(()=>{
    sel.value='D:Facto'; fire(sel,'change');
    if((rec('Grayson')||{}).lock!=='D:Facto') throw new Error('lock='+JSON.stringify(rec('Grayson')));
  });
- check('checking "No mic" sets noMic and frees the mic', ()=>{
-   setup(); ev('renderPrefEditor()');
-   const cb=doc.querySelector('#prefEdit .pp-nomic[data-name="Mo"]');
-   cb.checked=true; fire(cb,'change');
-   if(!(rec('Mo')||{}).noMic) throw new Error('noMic not set: '+JSON.stringify(rec('Mo')));
-   if(ev('state.vocalists.find(v=>v.id==="o").micAssigned')!=='') throw new Error('Mo mic not freed');
+ check('the Preferred Mic column shows a locked mic', ()=>{
+   setup(); ev('setMicLock("Grayson","D:Facto")'); ev('renderPrefEditor()');
+   const row=[...doc.querySelectorAll('#prefEdit .pref-table tbody tr')]
+     .find(tr=>/Grayson/.test(tr.querySelector('.pp-name').textContent));
+   if(!row) throw new Error('no Grayson row');
+   if(!/D:Facto/.test(row.children[1].textContent)) throw new Error('Preferred Mic cell='+row.children[1].textContent);
  });
  check('the "Usually" clear (✕) forgets the remembered mic', ()=>{
    setup(); ev('setMicRemembered("Mo","SM58"); saveState()'); ev('renderPrefEditor()');

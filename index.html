@@ -242,18 +242,7 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .mic-select:hover{border-color:var(--border-2)}
 .mic-select:focus{border-color:var(--accent)}
 .pref-tag{font-family:var(--ff-mono);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
-.voc-mic-lock-row{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
-.voc-mic-lock,.voc-nomic-toggle{font-family:var(--ff-mono);font-size:10px;letter-spacing:.04em;border:1px solid var(--border);background:var(--bg-inset);color:var(--text-muted);border-radius:5px;padding:3px 8px;cursor:pointer;white-space:nowrap;transition:all .12s}
-.voc-mic-lock:hover,.voc-nomic-toggle:hover{border-color:var(--border-2);color:var(--text)}
-.voc-mic-lock.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.voc-nomic-toggle.on{background:rgba(150,150,160,.18);border-color:var(--text-faint);color:var(--text-muted)}
-/* --- Unified mic-preferences panel (Settings) --- */
-.lm-grid{display:flex;flex-wrap:wrap;gap:7px}
-.lm-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff-mono);font-size:12px;color:var(--text-muted);background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;user-select:none;transition:all .12s}
-.lm-chip:hover{border-color:var(--border-2);color:var(--text)}
-.lm-chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.lm-chip input{margin:0;accent-color:var(--accent)}
-.lm-order{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;font-size:10px;font-weight:700;border-radius:50%;background:var(--accent);color:#fff}
+/* --- Mic assignments panel (Settings → Mics) --- */
 .pref-table{width:100%;border-collapse:collapse;font-size:13px}
 .pref-table th{text-align:left;font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);font-weight:600;padding:4px 8px;border-bottom:1px solid var(--border)}
 .pref-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
@@ -264,7 +253,6 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pp-rem{font-family:var(--ff-mono);font-size:12px;color:var(--text-muted)}
 .pp-rem-clear{border:none;background:none;color:var(--text-faint);cursor:pointer;font-size:12px;padding:0 2px;line-height:1}
 .pp-rem-clear:hover{color:var(--accent)}
-.pp-nomic{accent-color:var(--text-faint);cursor:pointer}
 .add-card{border:1px dashed var(--border-2);background:transparent;color:var(--text-muted);border-radius:12px;cursor:pointer;font-family:var(--ff-body);font-size:13px;transition:all .15s;min-height:130px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
 .add-card:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .add-card:disabled{opacity:.3;cursor:not-allowed}
@@ -1593,8 +1581,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
     <button class="sheet-close" id="settingsCloseBtn">✕</button>
     <h2>Settings<span class="settings-venue-tag" id="settingsVenueTag" style="display:none;"></span></h2>
     <div class="tabs">
-      <button class="tab active" data-tab="inventory">Mic Inventory</button>
-      <button class="tab" data-tab="prefs">Mic Assignments</button>
+      <button class="tab active" data-tab="inventory">Mics</button>
       <button class="tab" data-tab="layout">Display</button>
       <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="pco">Planning Center</button>
@@ -1606,9 +1593,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <p class="subtitle" style="margin-bottom:12px;">Mics ranked best → worst — <strong>drag the ⋮⋮ handles to reorder</strong> (top is your first-choice mic). Auto-assign hands the best mics out to worship leaders first.</p>
       <div id="invEdit"></div>
       <button class="add-row-btn" id="addMicBtn">+ Add mic type</button>
-    </div>
-    <div class="tab-panel" id="tab-prefs">
-      <div id="prefEdit"></div>
+      <div id="prefEdit" style="margin-top:26px;"></div>
     </div>
     <div class="tab-panel" id="tab-layout">
       <div id="layoutEdit"></div>
@@ -1990,11 +1975,10 @@ const DEFAULT_STATE = {
     stageAreas: [],
     personMicPrefs: {},        // DEPRECATED (migrated into micPrefs.people[].remembered)
     // Unified mic-assignment model. See assignMicsToVocalists() for the priority order.
-    //   leaderMics: ordered list of mic names reserved for song leaders (drawn first).
-    //   people[name] = { lock?:'Mic', remembered?:'Mic', noMic?:true }
-    //     lock       = hard override: always this mic if available (beats leader pool & memory)
+    //   leaderMics: retained-but-unused legacy field (Leader Mics UI + concept removed).
+    //   people[name] = { lock?:'Mic', remembered?:'Mic' }
+    //     lock       = hard override: always this mic if available (beats memory)
     //     remembered = soft memory: reuse this mic next time if it's free (seeded automatically)
-    //     noMic      = leave this person mic-less
     micPrefs: { leaderMics: [], people: {} },
     display: {
       showStage:true, showServiceOrder:true, showBand:true, showHosts:true, showShadows:true,
@@ -2336,7 +2320,7 @@ function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(st
 /* ============================================================================
    VENUE PROFILES (multi-campus). A "venue" is the per-ROOM slice of state:
    mic locker, stage geometry & fixtures, stage areas, IEM pack naming,
-   display/TV layout, the leader-mic pool, and the default PCO service type.
+   display/TV layout, mic preferences, and the default PCO service type.
    NOT part of a venue (never swapped on switch): this week's roster/hosts/
    service order (per-service), and brand, theme, PCO credentials, and person
    mic preferences (global). Phase 1 = data model + migration + switching.
@@ -2685,7 +2669,8 @@ function formatDisplayName(fullName, fmt) {
 // ---- Unified mic preferences (migration + accessors) ----
 // On first run with the new model, fold the three legacy stores into one:
 //   state.preferences (name->mic) and personMicPrefs (name->{primary}) become `remembered`.
-//   "__nomic__" becomes noMic. leaderMics starts empty (the user designates it in Settings).
+//   legacy "__nomic__" is preserved as noMic on the record (no longer used by the engine).
+//   leaderMics starts empty (Leader Mics concept removed; field retained for compatibility).
 function normalizeMicPrefs(loadedConfig, parsed) {
   if (loadedConfig && loadedConfig.micPrefs && typeof loadedConfig.micPrefs === 'object') {
     const mp = loadedConfig.micPrefs;
@@ -2731,26 +2716,13 @@ function micPrefRecord(name) { // find-or-create by name
 function setMicLock(name, mic) {
   if (!(name || '').trim()) return;
   const r = micPrefRecord(name);
-  if (mic) { r.lock = mic; r.noMic = false; } else { delete r.lock; }
+  if (mic) { r.lock = mic; delete r.noMic; } else { delete r.lock; }
   saveState();
 }
 function setMicRemembered(name, mic) {
   if (!(name || '').trim()) return;
   const r = micPrefRecord(name);
   if (mic) r.remembered = mic; else delete r.remembered;
-}
-function setMicNoMic(name, on) {
-  if (!(name || '').trim()) return;
-  const r = micPrefRecord(name);
-  if (on) { r.noMic = true; delete r.lock; } else { delete r.noMic; }
-  saveState();
-}
-function isLeaderMic(mic) { return micPrefsStore().leaderMics.includes(mic); }
-function toggleLeaderMic(mic) {
-  const lm = micPrefsStore().leaderMics;
-  const i = lm.indexOf(mic);
-  if (i === -1) lm.push(mic); else lm.splice(i, 1);
-  saveState();
 }
 
 function getPref(name) {
@@ -2906,8 +2878,6 @@ function computePositions(vocs) {
   return full;
 }
 function assignMicsToVocalists() {
-  const store = micPrefsStore();
-  const leaderMics = store.leaderMics;
   const named = state.vocalists.filter(v => (v.name || '').trim().length > 0);
   const wl = named.find(v => v.isWL);
   const leaders = named.filter(v => v.leadsSongs && !v.isWL);
@@ -2917,7 +2887,6 @@ function assignMicsToVocalists() {
 
   const pool = getMicPool(); // [{name, rank}] sorted by rank (best first)
   const result = {};
-  const noMic = new Set();
 
   const claim = (micName) => {
     if (!micName) return null;
@@ -2926,46 +2895,38 @@ function assignMicsToVocalists() {
     pool.splice(i, 1);
     return micName;
   };
-  const bestLeaderMic = () => {
-    for (const lm of leaderMics) { const i = pool.findIndex(m => m.name === lm); if (i !== -1) { pool.splice(i, 1); return lm; } }
-    return null;
-  };
-  const bestGeneralMic = () => {
+  const bestMic = () => {
     if (pool.length === 0) return null;
-    // Reserve leader mics for leaders: prefer a non-leader mic when one is available.
-    let i = pool.findIndex(m => !leaderMics.includes(m.name));
-    if (i === -1) i = 0;
-    const name = pool[i].name; pool.splice(i, 1); return name;
+    const name = pool[0].name; pool.splice(0, 1); return name;   // pool is rank-sorted best→worst
   };
 
-  // Pass 0 — explicit "no mic" people.
-  for (const v of ordered) { const p = micPrefFor(v.name); if (p && p.noMic) noMic.add(v.id); }
-  // Pass 1 — hard locks (override everything), in priority order.
+  // Priority order (matches the text shown in Settings):
+  //   1) Song leaders get their remembered mic
+  //   2) A person's locked mic
+  //   3) Otherwise, the best available (highest-ranked) mic
+  // Pass 1 — song leaders reuse their remembered mic if it's free.
   for (const v of ordered) {
-    if (noMic.has(v.id) || result[v.id]) continue;
+    if (result[v.id] || !leaderIds.has(v.id)) continue;
+    const p = micPrefFor(v.name);
+    if (p && p.remembered) { const got = claim(p.remembered); if (got) result[v.id] = got; }
+  }
+  // Pass 2 — anyone with a locked mic gets it (locks win over the general pool).
+  for (const v of ordered) {
+    if (result[v.id]) continue;
     const p = micPrefFor(v.name);
     if (p && p.lock) { const got = claim(p.lock); if (got) result[v.id] = got; }
   }
-  // Pass 2 — song leaders draw from the leader-mic pool (reusing a remembered leader mic first).
+  // Pass 3 — everyone left: their remembered mic if still free, else the best available.
   for (const v of ordered) {
-    if (noMic.has(v.id) || result[v.id] || !leaderIds.has(v.id)) continue;
-    const p = micPrefFor(v.name);
-    if (p && p.remembered && leaderMics.includes(p.remembered)) { const got = claim(p.remembered); if (got) { result[v.id] = got; continue; } }
-    const lm = bestLeaderMic(); if (lm) result[v.id] = lm;
-    // (if no leader mics remain, they fall through to the general pass below)
-  }
-  // Pass 3 — everyone left: their remembered mic if free, else best available (non-leader first).
-  for (const v of ordered) {
-    if (noMic.has(v.id) || result[v.id]) continue;
+    if (result[v.id]) continue;
     const p = micPrefFor(v.name);
     if (p && p.remembered) { const got = claim(p.remembered); if (got) { result[v.id] = got; continue; } }
-    const m = bestGeneralMic(); if (m) result[v.id] = m;
+    const m = bestMic(); if (m) result[v.id] = m;
   }
 
-  state.vocalists.forEach(v => { v.micAssigned = noMic.has(v.id) ? '' : (result[v.id] || ''); });
+  state.vocalists.forEach(v => { v.micAssigned = result[v.id] || ''; });
   // Auto-remember (seed only — never overwrite a usual mic with a one-time fallback).
   ordered.forEach(v => {
-    if (noMic.has(v.id)) return;
     const got = result[v.id]; if (!got) return;
     const p = micPrefFor(v.name);
     if (!p || !p.remembered) setMicRemembered(v.name, got);
@@ -3062,11 +3023,11 @@ function finalizeVocName(id, prevName) {
   }
   // Auto-link any band slots whose typed name matches this vocalist
   const changed = autoLinkBandToVocalists();
-  // If this newly-identified person has a saved mic pref (lock/remembered/no-mic), re-run
+  // If this newly-identified person has a saved mic pref (lock/remembered), re-run
   // assignment so it actually takes hold.
   const v = state.vocalists.find(x => x.id === id);
   const p = (v && (v.name || '').trim()) ? micPrefFor(v.name) : null;
-  const hasPref = !!(p && (p.lock || p.remembered || p.noMic));
+  const hasPref = !!(p && (p.lock || p.remembered));
   if (hasPref) assignMicsToVocalists();
   saveState();
   if (changed || hasPref) renderAll();
@@ -3078,9 +3039,9 @@ function setVocMic(id, mic) {
   // A manual pick is a deliberate signal — remember it for next time (blank "— pick —" doesn't).
   if (mic && (v.name || '').trim()) setMicRemembered(v.name, mic);
   saveState(); renderAll();
-  // If settings panel is showing on the prefs tab, refresh the mic assignments view too
+  // If the Mics settings tab is showing, refresh the per-person assignments view too
   if (document.getElementById('settingsOverlay')?.classList.contains('show') &&
-      document.querySelector('.tab[data-tab="prefs"]')?.classList.contains('active')) {
+      document.querySelector('.tab[data-tab="inventory"]')?.classList.contains('active')) {
     renderPrefEditor();
   }
 }
@@ -3191,18 +3152,8 @@ function renderVocalists() {
           </select>
           ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
           ${mpref.lock ? `<span class="pref-tag" title="Locked to ${esc(mpref.lock)}">🔒</span>`
-            : (mpref.noMic ? `<span class="pref-tag" title="No mic">∅</span>`
-            : (mpref.remembered ? `<span class="pref-tag" title="Usually on ${esc(mpref.remembered)}">★</span>` : ''))}
-        </div>
-        ${(() => {
-          const locked = !!mpref.lock;
-          const noMic = !!mpref.noMic;
-          const lockLabel = locked ? `🔒 Always: ${esc(mpref.lock)}` : '🔓 Lock mic';
-          const lockTitle = locked
-            ? `Always put ${esc(v.name || 'this person')} on ${esc(mpref.lock)} — tap to remove the lock`
-            : `Lock ${esc(v.name || 'this person')} to their selected mic (always use it)`;
-          return '';
-        })()}` : `
+            : (mpref.remembered ? `<span class="pref-tag" title="Usually on ${esc(mpref.remembered)}">★</span>` : '')}
+        </div>` : `
         <div class="mic-pick" style="border-top:none;padding-top:6px;">
           ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
         </div>`}
@@ -3326,27 +3277,7 @@ function renderVocalists() {
   grid.querySelectorAll('.shadow-pack-sel').forEach(sel => sel.addEventListener('change', e => updateShadowPack(e.target.dataset.shadowId, e.target.value)));
   grid.querySelectorAll('.shadow-setup-sel').forEach(sel => sel.addEventListener('change', e => updateShadowSetup(e.target.dataset.shadowId, e.target.value)));
   grid.querySelectorAll('.mic-select').forEach(sel => sel.addEventListener('change', e => setVocMic(e.target.dataset.id, e.target.value)));
-  grid.querySelectorAll('.voc-mic-lock').forEach(btn => btn.addEventListener('click', e => {
-    const v = state.vocalists.find(x => x.id === e.currentTarget.dataset.id);
-    if (!v || !(v.name || '').trim()) { toast('Name this vocalist first', 'warn'); return; }
-    const cur = micPrefFor(v.name) || {};
-    if (cur.lock) {
-      setMicLock(v.name, null);                       // tap again → remove the lock
-    } else if (v.micAssigned) {
-      setMicLock(v.name, v.micAssigned);              // lock to the currently selected mic
-    } else {
-      toast('Pick a mic first, then lock it', 'warn'); return;
-    }
-    renderAll();
-  }));
-  grid.querySelectorAll('.voc-nomic-toggle').forEach(btn => btn.addEventListener('click', e => {
-    const v = state.vocalists.find(x => x.id === e.currentTarget.dataset.id);
-    if (!v || !(v.name || '').trim()) { toast('Name this vocalist first', 'warn'); return; }
-    const cur = micPrefFor(v.name) || {};
-    setMicNoMic(v.name, !cur.noMic);
-    assignMicsToVocalists();                            // re-run so the mic is freed/reclaimed
-    renderAll();
-  }));
+  // (Mic locking now lives in Settings → Mics; the per-card lock / no-mic toggles were removed.)
   // Update count to reflect both vocalists and shadows
   const countEl = document.getElementById('vocCount');
   if (countEl) {
@@ -6343,7 +6274,6 @@ function renderInvEditor() {
 function renderPrefEditor() {
   const el = document.getElementById('prefEdit');
   if (!el) return;
-  const store = micPrefsStore();
   const inv = state.inventory || [];
 
   // People to show: named vocalists in the current service, then anyone else with a saved pref.
@@ -6354,7 +6284,7 @@ function renderPrefEditor() {
     const k = normName(n); if (seen.has(k)) return; seen.add(k);
     people.push({ name: n, current: true });
   });
-  Object.keys(store.people).forEach(n => {
+  Object.keys(micPrefsStore().people).forEach(n => {
     const nm = (n || '').trim(); if (!nm) return;
     const k = normName(nm); if (seen.has(k)) return; seen.add(k);
     people.push({ name: nm, current: false });
@@ -6362,64 +6292,39 @@ function renderPrefEditor() {
 
   const micOpts = (selected) => inv.map(m => `<option value="${esc(m.name)}"${m.name === selected ? ' selected' : ''}>${esc(m.name)}</option>`).join('');
 
-  const leaderRows = inv.length
-    ? inv.map(m => {
-        const on = store.leaderMics.includes(m.name);
-        const order = on ? store.leaderMics.indexOf(m.name) + 1 : '';
-        return `<label class="lm-chip${on ? ' on' : ''}"><input type="checkbox" data-leadermic="${esc(m.name)}"${on ? ' checked' : ''}/> ${esc(m.name)}${on ? ` <span class="lm-order">${order}</span>` : ''}</label>`;
-      }).join('')
-    : '<span class="pp-dim">No mics in inventory yet.</span>';
-
   const personRows = people.map(p => {
     const rec = micPrefFor(p.name) || {};
-    const v = state.vocalists.find(x => (x.name || '').trim() && normName(x.name) === normName(p.name));
-    const curMic = v ? (v.micAssigned || '') : '';
-    const curCell = v
-      ? `<select class="pp-cur" data-vid="${v.id}"><option value="">—</option>${micOpts(curMic)}</select>`
-      : '<span class="pp-dim">—</span>';
-    const remCell = rec.remembered
-      ? `<span class="pp-rem">${esc(rec.remembered)}</span> <button class="pp-rem-clear" data-name="${esc(p.name)}" title="Forget this">✕</button>`
-      : '<span class="pp-dim">—</span>';
+    // Preferred mic = what they'll normally get: their locked mic, else their remembered mic.
+    const preferred = rec.lock || rec.remembered || '';
+    const prefCell = preferred
+      ? `<span class="pp-rem">${esc(preferred)}</span>${rec.remembered && !rec.lock ? ` <button class="pp-rem-clear" data-name="${esc(p.name)}" title="Forget this">✕</button>` : ''}`
+      : '<span class="pp-dim">best available</span>';
     return `<tr class="pref-prow">
       <td class="pp-name">${esc(p.name)}${p.current ? ' <span class="pp-here">in service</span>' : ''}</td>
-      <td>${curCell}</td>
+      <td>${prefCell}</td>
       <td><select class="pp-lock" data-name="${esc(p.name)}"><option value="">— none —</option>${micOpts(rec.lock || '')}</select></td>
-      <td>${remCell}</td>
-      <td style="text-align:center;"><input type="checkbox" class="pp-nomic" data-name="${esc(p.name)}"${rec.noMic ? ' checked' : ''}/></td>
     </tr>`;
   }).join('');
 
   el.innerHTML = `
-    <p class="subtitle" style="margin-bottom:14px;">Mics are handed out in this priority order: <b>1.</b> a person's <b>locked</b> mic &middot; <b>2.</b> song leaders get a <b>leader mic</b> &middot; <b>3.</b> each person's <b>remembered</b> mic &middot; <b>4.</b> best available.</p>
+    <div class="section-label" style="margin-bottom:6px;">Mic assignments</div>
+    <p class="subtitle" style="margin-bottom:14px;white-space:pre-line;">Mics are handed out in this priority order:
+1. Song leaders get their remembered mic
+2. A person's locked mic
+3. Otherwise, the best available mic</p>
 
-    <div class="section-label" style="margin-bottom:6px;">Leader mics</div>
-    <p class="subtitle" style="font-size:12px;margin-bottom:8px;">Song leaders are put on these first, in the order you check them. Everything else stays reserved for non-leaders.</p>
-    <div class="lm-grid">${leaderRows}</div>
-
-    <div class="section-label" style="margin:20px 0 6px;">People</div>
-    <p class="subtitle" style="font-size:12px;margin-bottom:10px;"><b>Always</b> locks them to one mic no matter what. <b>Usually</b> is what they were last put on (remembered automatically; reused when it's free). <b>No mic</b> = silent vocalist.</p>
+    <p class="subtitle" style="font-size:12px;margin-bottom:10px;"><b>Preferred Mic</b> is what they'll normally get — their locked mic, or the one they're usually on (remembered automatically). <b>Always</b> locks them to one mic no matter what.</p>
     ${people.length
-      ? `<table class="pref-table"><thead><tr><th>Name</th><th>Mic now</th><th>Always</th><th>Usually</th><th>No&nbsp;mic</th></tr></thead><tbody>${personRows}</tbody></table>`
+      ? `<table class="pref-table"><thead><tr><th>Name</th><th>Preferred Mic</th><th>Always</th></tr></thead><tbody>${personRows}</tbody></table>`
       : '<div class="pp-dim" style="font-style:italic;">No vocalists or saved people yet — pull a plan or add vocalists first.</div>'}
   `;
 
-  el.querySelectorAll('[data-leadermic]').forEach(cb => cb.addEventListener('change', e => {
-    toggleLeaderMic(e.target.dataset.leadermic);
-    assignMicsToVocalists(); renderAll(); renderPrefEditor();
-  }));
-  el.querySelectorAll('.pp-cur').forEach(sel => sel.addEventListener('change', e => {
-    setVocMic(e.target.dataset.vid, e.target.value); renderPrefEditor();
-  }));
   el.querySelectorAll('.pp-lock').forEach(sel => sel.addEventListener('change', e => {
     setMicLock(e.target.dataset.name, e.target.value || null);
     assignMicsToVocalists(); renderAll(); renderPrefEditor();
   }));
   el.querySelectorAll('.pp-rem-clear').forEach(btn => btn.addEventListener('click', e => {
     setMicRemembered(e.currentTarget.dataset.name, null); saveState(); renderPrefEditor();
-  }));
-  el.querySelectorAll('.pp-nomic').forEach(cb => cb.addEventListener('change', e => {
-    setMicNoMic(e.target.dataset.name, e.target.checked);
-    assignMicsToVocalists(); renderAll(); renderPrefEditor();
   }));
 }
 
