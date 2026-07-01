@@ -977,14 +977,6 @@ body.setup-items-mode .container{display:none}
 .si-item-remove{background:transparent;border:none;color:var(--text-faint);font-size:14px;cursor:pointer;padding:2px 5px;border-radius:4px;opacity:0;transition:all .12s;flex-shrink:0}
 .si-item:hover .si-item-remove{opacity:.7}
 .si-item-remove:hover{color:#c8554d;opacity:1;background:rgba(200,85,77,.1)}
-/* Fallback notice card */
-.si-fallback{background:rgba(212,161,71,.08);border:1px dashed var(--accent);border-radius:8px;padding:10px 14px;margin:6px 0 10px 8px;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:12px}
-.si-fallback-text{flex:1;line-height:1.4}
-.si-fallback-text strong{color:var(--accent);font-weight:600}
-.si-fallback-btn{background:var(--accent);color:#1a1408;border:none;padding:6px 11px;border-radius:5px;font-family:var(--ff-mono);font-size:10.5px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0;transition:opacity .12s}
-.si-fallback-btn:hover{opacity:.85}
-.si-fallback-dismiss{background:transparent;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;padding:4px 6px}
-.si-fallback-dismiss:hover{color:var(--text)}
 /* Add new item form */
 .sp-editor-wrap{margin:6px 8px 4px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px}
 .sp-groups{display:flex;flex-wrap:wrap;gap:10px}
@@ -1114,7 +1106,6 @@ body.setup-items-mode .container{display:none}
   .si-summary-value{font-size:17px}
   .si-add-row{flex-wrap:wrap}
   .si-add-onetime{padding:6px 0}
-  .si-fallback{flex-wrap:wrap}
 }
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
@@ -8889,35 +8880,6 @@ function migrateLegacySetupBuckets() {
   });
 }
 
-// Find existing items for this person+instrument; fall back to tag/sibling if not found.
-// Returns { items, fallbackFrom } — fallbackFrom is the key items came from if it wasn't the exact match
-function getSetupItemsForBand(name, inst) {
-  if (!name || !inst) return { items: [], fallbackFrom: null };
-  const exactKey = setupKeyForBand(name, inst.id);
-  if (state.setupItems[exactKey] && state.setupItems[exactKey].items && state.setupItems[exactKey].items.length) {
-    return { items: state.setupItems[exactKey].items, fallbackFrom: null };
-  }
-  // Try same-tag siblings
-  if (inst.tag) {
-    const siblings = state.instruments.filter(i => i.id !== inst.id && i.tag === inst.tag);
-    for (const sib of siblings) {
-      const sibKey = setupKeyForBand(name, sib.id);
-      if (state.setupItems[sibKey] && state.setupItems[sibKey].items && state.setupItems[sibKey].items.length) {
-        return { items: [], fallbackFrom: sibKey, fallbackInst: sib };
-      }
-    }
-  }
-  return { items: [], fallbackFrom: null };
-}
-function getSetupItemsForVocal(name) {
-  const k = setupKeyForVocal(name);
-  return (state.setupItems[k] && state.setupItems[k].items) || [];
-}
-function getSetupItemsForShadow(name) {
-  const k = setupKeyForShadow(name);
-  return (state.setupItems[k] && state.setupItems[k].items) || [];
-}
-
 // Ensure bucket exists for a key
 function ensureSetupBucket(key) {
   if (!state.setupItems[key]) state.setupItems[key] = { items: [] };
@@ -9224,9 +9186,6 @@ function renderPersonCard(p) {
     <div class="si-preset-editor-wrap" id="pe_wrap_${esc(p.key)}" style="display:none"></div>
   </div>` : '';
 
-  // Sibling fallback removed: buckets are keyed by the STABLE per-person key and seeded
-  // once, so there is no longer a volatile legacy bucket to copy items from.
-  const fallbackBlock = '';
 
   // Roles label
   let roleLabel = '';
@@ -9246,7 +9205,6 @@ function renderPersonCard(p) {
           ${items.length > 0 ? `<button class="si-action-btn" data-action="save-options" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-inst-label="${esc(p.instLabel||'')}" data-preset-key="${esc(presetKey||'')}" title="Save options">Save…</button>` : ''}
         </div>
       </div>
-      ${fallbackBlock}
       ${spStableKey ? `<div class="sp-editor-wrap" id="sp_wrap_${esc(p.key)}" style="display:none"></div>` : ''}
       <div class="si-items">
         ${items.map(it => renderItemRow(p.key, it)).join('')}
@@ -9500,37 +9458,6 @@ function wireSetupItemsContent() {
   root.querySelectorAll('[data-add-input]').forEach(inp => {
     inp.addEventListener('keydown', e => {
       if (e.key === 'Enter') addItemForPerson(inp.dataset.addInput);
-    });
-  });
-
-  // Copy items from sibling fallback
-  root.querySelectorAll('[data-action="copy-fallback"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const wrap = e.target.closest('.si-fallback');
-      if (!wrap) return;
-      const targetKey = wrap.dataset.fallbackKey;
-      const sourceKey = wrap.dataset.fallbackSource;
-      const source = state.setupItems[sourceKey];
-      if (!source || !source.items) return;
-      const target = ensureSetupBucket(targetKey);
-      // Copy items — give them new ids; reset doneThisService
-      source.items.forEach(it => {
-        target.items.push({
-          id: 'si_' + Math.random().toString(36).slice(2,9),
-          text: it.text,
-          doneThisService: false,
-          scopeOneTime: !!it.scopeOneTime
-        });
-      });
-      saveState();
-      toast(`Copied ${source.items.length} item${source.items.length===1?'':'s'} ✓`, 'success');
-      renderSetupItemsView();
-    });
-  });
-  root.querySelectorAll('[data-action="dismiss-fallback"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const wrap = e.target.closest('.si-fallback');
-      if (wrap) wrap.remove();
     });
   });
 
@@ -10415,14 +10342,6 @@ function exitSetupItemsView() {
 /* ===================== FIRST-RUN WIZARD ===================== */
 const WIZARD_STEPS = ['identity', 'vocalists', 'instruments', 'mics', 'iems', 'stage', 'stage-layout', 'look', 'display-layout', 'setup-intro'];
 
-// Wizard quick-add chips, derived from SETUP_ITEM_PRESETS so they stay in sync with the
-// per-instrument setup library. Each chip = a preset name for that instrument.
-const SETUP_PRESETS = (function () {
-  const out = {};
-  for (const k in SETUP_ITEM_PRESETS) out[k] = SETUP_ITEM_PRESETS[k].presets.map(p => p.name);
-  out['default'] = ['Needs DI', 'Music stand', 'Power needed', 'XLR only', 'Needs cable'];
-  return out;
-})();
 let wizardData = null;
 let wizardStepIdx = 0;
 let wizardBrandSnapshot = null;

@@ -42,6 +42,30 @@ Behaviors that must keep working. **The executable version of this list is `test
 33. **Move-people drag works** inline (pointer events; reads the people layer live at
     drag time). Tablet touch-drag works (`touch-action:none` on edit-mode slots). →
     `editlayout`
+34. **Grouped per-instrument setup-items model.** The setup checklist is driven by a
+    grouped catalog and stable per-person keys, replacing the old flat per-person lists:
+    - **Grouped catalog.** `SETUP_TEMPLATES` (via `setupCatalogFor`) defines each
+      instrument's options as radio/check groups; `resolveSetupItems` turns a selection
+      object into the concrete item list. → `setupcatalog`, `setupresolve`
+    - **Church defaults in the wizard.** The wizard's per-instrument default cards write
+      `state.config.setupDefaults`; `churchSetupDefaults`/`defaultSelectionsFor` read it
+      (falling back to catalog defaults). → `setupwizard`
+    - **Stable per-person keys, seeded once.** Buckets are keyed
+      `stableSetupKey(name, role, typeKey)` (role ∈ band/vocalist/shadow) and seeded a
+      single time via `seedPersonSetup`. A re-pull that re-mints instrument ids does NOT
+      duplicate a person's bucket. → `setupmgr`, `setupcheckoff`
+    - **Legacy buckets migrate on load.** `migrateLegacySetupBuckets` (wired in init)
+      folds old `name|instId` / `name|vocal` / `name|shadow` / `name|tag:…` buckets into
+      the stable key, preserving items + done state. → `setupmigrate`
+    - **Editor + check-off share one bucket.** The grouped per-person editor
+      (`renderPersonSetupEditor`/`renderSetupGroups`) and the check-off view
+      (`getStageAreas`) read/write the SAME stable-key bucket. → `setupeditor`,
+      `setupcheckoff`
+    - **New adds are seeded + flagged for review.** A newly added person is seeded and
+      marked `needsReview`; the consolidated **review dialog** (`openSetupReviewDialog`)
+      surfaces them, and the ⚠ notice/badge mentions setup. → `setupreview`
+    - **Auto-refresh pauses while the review dialog is open** (same guard family as edit
+      mode / open modals). → `setupreview`, `pcorefresh`
 
 ---
 

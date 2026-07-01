@@ -39,10 +39,15 @@ window.addEventListener('load',()=>setTimeout(()=>{
      if(got!==exp) throw new Error(`tag='${tag}' label='${label}' → ${got} (want ${exp})`);
    }
  });
- check('SETUP_PRESETS derived from library (arrays of names) + default key', ()=>{
-   const keys=JSON.parse(Q("JSON.stringify(SETUP_PRESETS.keys)"));
-   if(!Array.isArray(keys)||!keys.includes('Sounds from computer (Dante)')) throw new Error('keys chips');
-   for(const k of ['md','strings','vocals','default']){ const a=JSON.parse(Q(`JSON.stringify(SETUP_PRESETS['${k}']||null)`)); if(!Array.isArray(a)) throw new Error('missing '+k); }
+ // New model: the grouped catalog (SETUP_TEMPLATES via setupCatalogFor) exposes
+ // per-instrument options. (The old flat SETUP_PRESETS wizard-chips map was retired —
+ // the wizard now uses per-instrument default cards driven by SETUP_TEMPLATES.)
+ check('grouped catalog exposes per-instrument options (keys→Dante, plus md/strings/vocals)', ()=>{
+   const keysCat=JSON.parse(Q("JSON.stringify(setupCatalogFor('keys'))"));
+   if(!keysCat||!Array.isArray(keysCat.groups)) throw new Error('keys catalog missing');
+   const hasDante=keysCat.groups.some(g=>(g.options||[]).some(o=>/Dante/.test(o.text)));
+   if(!hasDante) throw new Error('keys catalog missing Dante option');
+   for(const k of ['md','strings','vocals']){ const c=JSON.parse(Q(`JSON.stringify(setupCatalogFor('${k}')||null)`)); if(!c||!Array.isArray(c.groups)) throw new Error('missing catalog '+k); }
  });
  // live render: keys (=MD by default) + vocalist Mo
  ev(`state.savedStages=state.savedStages||[];
@@ -79,7 +84,9 @@ window.addEventListener('load',()=>setTimeout(()=>{
        state.instruments.find(i=>i.id==='inst_bass').vocalistPlayer='v2';
        state.vocalists=[{id:'v1',name:'Mo'},{id:'v2',name:'Grayson Kredit'}]; state.assignments=[]; state.assignments[1]='v2';
        state.setupItems={}; renderSetupItemsView();`);
-   const items=JSON.parse(Q(`JSON.stringify((state.setupItems[setupKeyForVocal('Grayson Kredit')]||{}).items||[])`));
+   // Boom now lands on the STABLE per-person key (name|vocalist|vocals), the same key
+   // the check-off view + grouped editor share — not the legacy setupKeyForVocal(name).
+   const items=JSON.parse(Q(`JSON.stringify((state.setupItems[stableSetupKey('Grayson Kredit','vocalist','vocals')]||{}).items||[])`));
    if(!items.some(it=>it.text==='Boom mic stand' && it.autoAdded)) throw new Error('boom not on vocalist bucket for linked dual-role: '+JSON.stringify(items.map(i=>i.text)));
  });
  check('boom-mic does NOT auto-add for a mere same-name match (no explicit link)', ()=>{
@@ -87,7 +94,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
        var eg=state.instruments.find(i=>i.id==='inst_eg1'); eg.assignedTo='Brian';
        state.vocalists=[{id:'vb',name:'Brian'}]; state.assignments=[]; state.assignments[0]='vb';
        state.setupItems={}; renderSetupItemsView();`);
-   const items=JSON.parse(Q(`JSON.stringify((state.setupItems[setupKeyForBand('Brian','inst_eg1')]||{}).items||[])`));
+   // Read the stable band key (name|band|eg) — same key the render path uses for this player.
+   const items=JSON.parse(Q(`JSON.stringify((state.setupItems[stableSetupKey('Brian','band','eg')]||{}).items||[])`));
    if(items.some(it=>it.text==='Boom mic stand')) throw new Error('boom wrongly auto-added on name match: '+JSON.stringify(items.map(i=>i.text)));
  });
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
