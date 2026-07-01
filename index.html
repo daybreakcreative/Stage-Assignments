@@ -7078,8 +7078,18 @@ async function pcoPullPlan(planId) {
     document.getElementById('pcoPullBtn').disabled = false;
     document.getElementById('pcoRefreshBtn').disabled = false;
     toast('Pulled from Planning Center ✓','success');
-    // Open per-musician preferences + shadow setup popup
-    setTimeout(() => { try { openPostPullPopup({ planId }); } catch(err) { console.warn('post-pull popup failed:', err); } }, 400);
+    // Seed setup for every assigned band/vocalist and flag for review, then open the
+    // per-musician preferences + shadow setup popup. The setup-review dialog is chained
+    // to open AFTER the post-pull popup closes (or immediately if that popup has no steps).
+    setTimeout(() => {
+      let reviewEntries = [];
+      try { reviewEntries = pcoSeedAllAssignedSetup(); saveState(); updateSetupProgressBadge(); } catch(err) { console.warn('setup seed after pull failed:', err); }
+      const openReview = () => { if (reviewEntries.length) { try { openSetupReviewDialog(reviewEntries); } catch(err) { console.warn('setup review dialog failed:', err); } } };
+      try {
+        const opened = openPostPullPopup({ planId }, openReview);
+        if (!opened) openReview(); // no post-pull steps → go straight to review
+      } catch(err) { console.warn('post-pull popup failed:', err); openReview(); }
+    }, 400);
   } catch (e) {
     setPCOStatus(e.message,'err');
     document.getElementById('pcoPullBtn').innerHTML = 'Pull Plan';
@@ -7631,6 +7641,60 @@ function applyPcoMerge(changeList, next) {
   changeList.roleChanged.forEach(c => pcoReslotPerson(c.from, c.to));
   changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
   changeList.added.forEach(pcoAddPerson);
+  // Seed setup buckets for newly-added band/vocalist people and flag them for review.
+  // Returned entries let the caller (pcoMergeRefresh) open the review dialog — applyPcoMerge
+  // itself never opens a modal, so it stays unit-testable with no DOM intent.
+  return { setupReviewEntries: pcoSeedAddedSetup(changeList.added) };
+}
+
+// For each added person that occupies an instrument (band, or md on an instrument) or
+// is a vocalist: seed their stable setup bucket from church defaults and mark needsReview.
+// Returns [{name, role, typeKey, stableKey}] entries suitable for openSetupReviewDialog.
+function pcoSeedAddedSetup(added) {
+  const entries = [];
+  (added || []).forEach(p => {
+    if (!p || !p.name) return;
+    let role = null, typeKey = null;
+    if (p.kind === 'vocalist') {
+      role = 'vocalist'; typeKey = 'vocals';
+    } else if (p.kind === 'band') {
+      role = 'band';
+      const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name));
+      typeKey = (inst && detectPresetKey(inst)) || (p.position || null);
+    } else if (p.kind === 'md') {
+      // md is band-like only when they actually occupy an instrument on stage
+      const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name));
+      if (!inst) return;
+      role = 'band'; typeKey = detectPresetKey(inst) || 'md';
+    } else {
+      return; // host/shadow → no setup review
+    }
+    if (!typeKey) return;
+    const stableKey = stableSetupKey(p.name, role, typeKey);
+    seedPersonSetup(stableKey, typeKey);
+    state.setupItems[stableKey].needsReview = true;
+    entries.push({ name: p.name, role, typeKey, stableKey });
+  });
+  return entries;
+}
+
+// Full-pull variant: seed setup buckets for EVERY currently-assigned band member and
+// vocalist, flag each needsReview, and return review entries. Used after a destructive pull.
+function pcoSeedAllAssignedSetup() {
+  const entries = [];
+  const push = (name, role, typeKey) => {
+    if (!name || !typeKey) return;
+    const stableKey = stableSetupKey(name, role, typeKey);
+    seedPersonSetup(stableKey, typeKey);
+    state.setupItems[stableKey].needsReview = true;
+    entries.push({ name, role, typeKey, stableKey });
+  };
+  (state.instruments || []).forEach(i => {
+    if (!i.assignedTo) return;
+    push(i.assignedTo, 'band', detectPresetKey(i));
+  });
+  (state.vocalists || []).forEach(v => { if (v && v.name) push(v.name, 'vocalist', 'vocals'); });
+  return entries;
 }
 
 let pcoMergeInFlight = false;
@@ -7642,7 +7706,7 @@ function pcoCanRefresh() {
   if (!state.pcoConfig.selectedPlanId) return false;             // no plan
   if (state.config.autoRefreshPaused) return false;              // user paused
   if (isStageEditing()) return false;                            // mid-edit
-  if (document.querySelector('.overlay.show')) return false;     // a sheet/modal is open
+  if (document.querySelector('.overlay.show, .setup-review-modal.show')) return false;     // a sheet/modal (incl. setup review) is open
   return true;
 }
 
@@ -7664,12 +7728,18 @@ async function pcoMergeRefresh() {
     const baseline = (state.pcoBaseline && state.pcoBaseline.planId === planId) ? state.pcoBaseline : null;
     const changeList = diffPcoModel(baseline, next);
 
+    let mergeResult = null;
     if (changeList.hasChanges) {
-      applyPcoMerge(changeList, next);
+      mergeResult = applyPcoMerge(changeList, next);
     }
     state.pcoBaseline = next;
     saveState();
-    if (changeList.hasChanges) { renderAll(); pcoMergeNotify(changeList); }
+    if (changeList.hasChanges) {
+      renderAll();
+      pcoMergeNotify(changeList);
+      const entries = (mergeResult && mergeResult.setupReviewEntries) || [];
+      if (entries.length) openSetupReviewDialog(entries);
+    }
     setPCOStatus('Synced ✓','ok');
   } catch (e) {
     console.warn('merge refresh failed', e);
@@ -7683,7 +7753,13 @@ let pcoMergeNotices = { needs: [], fyi: [] };   // {id, text} entries; ephemeral
 
 function pcoMergeNotify(changeList) {
   // ⚠ needs-you (adds: assign mic/position · declines: find a sub) — stays until you dismiss it
-  changeList.added.forEach(p => pcoMergeNotices.needs.push({ id:'n_'+p.pcoId, text:`⚠ ${p.name} added — assign mic/position` }));
+  changeList.added.forEach(p => {
+    const needsSetup = p.kind === 'band' || p.kind === 'vocalist' || p.kind === 'md';
+    const text = needsSetup
+      ? `⚠ ${p.name} added — assign mic/position & complete setup items`
+      : `⚠ ${p.name} added — assign mic/position`;
+    pcoMergeNotices.needs.push({ id:'n_'+p.pcoId, text });
+  });
   changeList.declined.forEach(p => pcoMergeNotices.needs.push({ id:'d_'+p.pcoId, text:`⚠ ${p.name} declined — find a sub` }));
   // ℹ FYI (dismissable): hard removals, role changes, renames
   changeList.hardRemoved.forEach(p => pcoMergeNotices.fyi.push({ id:'r_'+p.pcoId, text:`ℹ ${p.name} removed from plan` }));
@@ -10126,13 +10202,20 @@ function updateSetupProgressBadge() {
       if (cs[it.key]) done++;
     });
   });
-  if (total === 0) {
+  // Any bucket flagged needsReview (e.g. a freshly PCO-added person) should surface on
+  // the badge even if their items are otherwise complete/empty.
+  const reviewCount = Object.values(state.setupItems || {}).filter(b => b && b.needsReview === true).length;
+  if (total === 0 && reviewCount === 0) {
     badge.style.display = 'none';
     return;
   }
   badge.style.display = '';
   const remaining = total - done;
-  if (remaining === 0) {
+  if (reviewCount > 0) {
+    // Review pending takes precedence: amber badge with a review indicator.
+    badge.style.background = '#e0a030';
+    badge.textContent = remaining > 0 ? (remaining + '⁎') : '⁎';
+  } else if (remaining === 0) {
     badge.style.background = '#7a9960';
     badge.textContent = '✓';
   } else {
@@ -10527,17 +10610,19 @@ function buildPostPullSteps(planContext) {
   return steps;
 }
 
-function openPostPullPopup(planContext) {
+function openPostPullPopup(planContext, onClose) {
   const steps = buildPostPullSteps(planContext);
   if (steps.length === 0) return false; // nothing to ask
-  postPullState = { steps, idx: 0 };
+  postPullState = { steps, idx: 0, onClose: (typeof onClose === 'function' ? onClose : null) };
   document.getElementById('postPullOverlay').classList.add('show');
   renderPostPullStep();
   return true;
 }
 function closePostPullPopup() {
   document.getElementById('postPullOverlay').classList.remove('show');
+  const cb = postPullState && postPullState.onClose;
   postPullState = null;
+  if (cb) { try { cb(); } catch (err) { console.warn('post-pull onClose failed:', err); } }
 }
 
 // Consolidated review dialog for newly-added people.

@@ -110,6 +110,31 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     if (!ev('state.config.autoRefreshPaused')) throw new Error('pause not persisted');
     cb.checked = false; cb.dispatchEvent(new window.Event('change'));
   });
+  await check('merge-added band person is seeded + needsReview + notice mentions setup', async()=>{
+    ev(`state.config.setupDefaults={ bass:{selections:{rig:'b_house'},customOptions:[]}, vocals:{selections:{options:['v_stand']},customOptions:[]} };`);
+    ev(`state.setupItems={}; pcoMergeNotices={needs:[],fyi:[]};`);
+    ev(`state.instruments=[{id:'inst_bass_x',label:'Bass',tag:'Bass',assignedTo:''}];`);
+    ev(`applyPcoMerge({added:[{pcoId:'tmB',name:'Late Bass',kind:'band',position:'bass',host:'',isWL:false,leadsSongs:false}],declined:[],hardRemoved:[],roleChanged:[],renamed:[],serviceOrderChanged:false,metaChanged:false,hasChanges:true}, {meta:{},people:[],serviceOrder:[]})`);
+    const k = ev(`stableSetupKey('Late Bass','band','bass')`);
+    if (!ev(`state.setupItems['${k}']`)) throw new Error('added person setup not seeded');
+    if (ev(`state.setupItems['${k}'].needsReview`) !== true) throw new Error('needsReview not set');
+    ev(`pcoMergeNotify({added:[{pcoId:'tmB',name:'Late Bass',kind:'band'}],declined:[],hardRemoved:[],roleChanged:[],renamed:[],serviceOrderChanged:false,metaChanged:false,hasChanges:true})`);
+    if (!/setup/i.test(doc.getElementById('pcoMergeBanner').textContent)) throw new Error('notice lacks setup mention');
+  });
+  await check('setup nav badge reflects a needsReview bucket', async()=>{
+    ev(`state.setupItems={ 'x|band|bass':{selections:{},customItems:[],items:[{id:'i',text:'Needs DI',doneThisService:false}],seeded:true,needsReview:true} };`);
+    ev(`updateSetupProgressBadge()`);
+    const badge = doc.getElementById('setupNavBadge');
+    if (badge.style.display === 'none') throw new Error('badge hidden despite needsReview');
+  });
+  check('pcoCanRefresh pauses while the setup review modal is open', ()=>{
+    ev(`pcoTokens={access_token:'t',expires_at:9999999999999}; state.pcoConfig.selectedPlanId='p1'; state.config.autoRefreshPaused=false; document.body.classList.remove('stage-editing');`);
+    const ov = doc.createElement('div'); ov.className='setup-review-modal show'; doc.body.appendChild(ov);
+    const can = ev('pcoCanRefresh()');
+    ov.remove();
+    if (can !== false) throw new Error('refresh not paused during review modal');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;
