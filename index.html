@@ -5897,48 +5897,62 @@ function renderBrandEditor() {
   });
 }
 
+// Human label for an arbitrary stable/legacy setup key, used to label orphan
+// buckets (people no longer in the plan) that enumerateSetupRoles() won't return.
+// Stable keys are `name|role|typeKey`; falls back to the SETUP_TEMPLATES label,
+// then a title-cased typeKey — NEVER "Removed instrument".
+function setupKeyRoleLabel(key) {
+  const parts = String(key).split('|');
+  const role = parts[1], typeKey = parts[2];
+  if (role === 'vocalist' || typeKey === 'vocals') return 'Vocals';
+  if (role === 'shadow') return 'Shadow';
+  if (role === 'md' || typeKey === 'md') return 'MD';
+  const cat = typeKey && typeKey !== 'none' ? setupCatalogFor(typeKey) : null;
+  if (cat && cat.label) return cat.label;
+  if (typeKey && typeKey !== 'none') return typeKey.replace(/\b\w/g, c => c.toUpperCase());
+  // Legacy `name|scope` shapes: vocal / shadow / tag:xxx / an instrument id.
+  const scope = parts.slice(1).join('|');
+  if (scope === 'vocal') return 'Vocals';
+  if (scope === 'shadow') return 'Shadow';
+  if (scope.startsWith('tag:')) return scope.slice(4).toUpperCase() + ' (any)';
+  const inst = instById(scope);
+  if (inst) return inst.label;
+  return 'Set Up Needs';
+}
+
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
   if (!el) return;
   const store = state.setupItems || {};
 
+  // Enumerate current-plan role entries (the source of truth for labels + onPlan).
+  const enumerated = enumerateSetupRoles();
+  const enumByKey = {};
+  enumerated.forEach(en => { enumByKey[en.stableKey] = en; });
+
   // Resolve a display (original-cased) name for a normalized key, from people currently in state.
   const nameLookup = {};
+  enumerated.forEach(en => { nameLookup[normFullName(en.name)] = en.name; });
   state.vocalists.forEach(v => { const n = (v.name||'').trim(); if (n) nameLookup[normFullName(n)] = n; });
   (state.shadows||[]).forEach(s => { const n = (s.name||'').trim(); if (n) nameLookup[normFullName(n)] = n; });
   state.instruments.forEach(i => { const n = (i.assignedTo||'').trim(); if (n) nameLookup[normFullName(n)] = n; });
   const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
   const displayName = nn => nameLookup[nn] || titleCase(nn);
 
-  // Is this person currently in the lineup for the given scope?
-  const inLineup = (nn, scope) => {
-    if (scope === 'vocal') return state.vocalists.some(v => (v.name||'').trim() && normFullName(v.name) === nn);
-    if (scope === 'shadow') return (state.shadows||[]).some(s => (s.name||'').trim() && normFullName(s.name) === nn);
-    if (scope.startsWith('tag:')) return false;
-    const inst = instById(scope);
-    if (!inst) return false;
-    if ((inst.assignedTo||'').trim() && normFullName(inst.assignedTo) === nn) return true;
-    if (inst.vocalistPlayer) { const v = state.vocalists.find(x => x.id === inst.vocalistPlayer); if (v && normFullName(v.name) === nn) return true; }
-    return false;
-  };
-  const scopeLabelFor = scope => {
-    if (scope === 'vocal') return 'Vocals';
-    if (scope === 'shadow') return 'Shadow';
-    if (scope.startsWith('tag:')) return scope.slice(4).toUpperCase() + ' (any)';
-    const inst = instById(scope);
-    return inst ? inst.label : 'Removed instrument';
-  };
-
-  // Group buckets by person
+  // Group buckets by person. Every bucket in state.setupItems is shown; ones that
+  // match an enumerated entry are "present" (in this week's lineup) and take that
+  // entry's specific label; the rest are orphans (kept so setups carry over).
   const byPerson = {};
   Object.keys(store).forEach(key => {
     const bucket = store[key];
     if (!bucket || !Array.isArray(bucket.items)) return;
-    const sep = key.lastIndexOf('|');
+    const sep = key.indexOf('|');
     if (sep === -1) return;
-    const nn = key.slice(0, sep), scope = key.slice(sep + 1);
+    const nn = key.slice(0, sep);
+    const en = enumByKey[key];
+    const scopeLabel = en ? en.label : setupKeyRoleLabel(key);
     if (!byPerson[nn]) byPerson[nn] = [];
-    byPerson[nn].push({ key, scope, scopeLabel: scopeLabelFor(scope), items: bucket.items, present: inLineup(nn, scope) });
+    byPerson[nn].push({ key, scopeLabel, items: bucket.items, present: !!en });
   });
 
   // Order: people in this week's lineup first, then orphans; alpha within each.
@@ -6007,19 +6021,17 @@ function renderSetupManager() {
   // Delete a whole bucket
   el.querySelectorAll('.setup-bucket-del').forEach(btn => btn.addEventListener('click', e => {
     const key = e.currentTarget.dataset.delKey; const b = store[key]; if (!b) return;
-    const sep = key.lastIndexOf('|');
-    if (!confirm(`Delete the "${scopeLabelFor(key.slice(sep + 1))}" setup for ${displayName(key.slice(0, sep))}? This can't be undone.`)) return;
+    const sep = key.indexOf('|');
+    const lbl = (enumByKey[key] && enumByKey[key].label) || setupKeyRoleLabel(key);
+    if (!confirm(`Delete the "${lbl}" setup for ${displayName(key.slice(0, sep))}? This can't be undone.`)) return;
     delete store[key];
     saveState(); renderSetupManager(); renderSetupItemsView();
   }));
-  // Purge all orphaned setups at once
+  // Purge all orphaned setups at once — anything not in this week's enumerated lineup.
   const purge = el.querySelector('#setupPurgeOrphans');
   if (purge) purge.addEventListener('click', () => {
     if (!confirm(`Remove every saved setup for people not in this week's lineup? This can't be undone.`)) return;
-    Object.keys(store).forEach(key => {
-      const sep = key.lastIndexOf('|'); if (sep === -1) return;
-      if (!inLineup(key.slice(0, sep), key.slice(sep + 1))) delete store[key];
-    });
+    Object.keys(store).forEach(key => { if (!enumByKey[key]) delete store[key]; });
     saveState(); renderSetupManager(); renderSetupItemsView();
   });
 }
@@ -8587,6 +8599,81 @@ function setupCompletionStats(key) {
   return { total, done, status };
 }
 
+// ============================================================================
+// SINGLE SOURCE OF TRUTH for per-person-per-role setup enumeration.
+// Returns one entry per (person × role) from CURRENT state, each shaped:
+//   { name, role, typeKey, stableKey, label, onPlan }
+// where role ∈ band|vocalist|shadow|md and label is the SPECIFIC display label
+// (the instrument's own label e.g. "Keys"/"Electric 2", "Vocals", "MD", "Shadow").
+//   • Every instrument with an assignedTo name → a band entry (skipping
+//     vocalist-played instruments, which are covered by the vocalist entry so we
+//     don't double-count). label = inst.label (NEVER "Removed instrument").
+//   • Every named vocalist → a vocalist/vocals entry (label "Vocals").
+//   • The MD (state.musicDirectorId → an instrument with an assignee) → an
+//     ADDITIONAL md/md entry (label "MD") so the MD gets the `md` catalog on top
+//     of their instrument entry. Multiple instruments per person fall out
+//     naturally (Keys + EG + Vocals + MD = 4 entries for the same person).
+//   • Shadows (when enabled) → shadow entries (typeKey null, label "Shadow").
+// onPlan = true when the person is part of the current roster; since every entry
+// is derived from current state it is effectively always true, but it is computed
+// so callers can badge "on this plan".
+// Each bucket is seeded + reconstructed once here (safe no-ops if already done),
+// so all three setup surfaces share one stable-key bucket.
+function enumerateSetupRoles() {
+  const rows = [];
+  const stableFor = (name, role, typeKey) => {
+    const key = stableSetupKey(name, role, typeKey);
+    seedPersonSetup(key, typeKey);        // no-op if already seeded
+    reconstructSetupBucket(key, typeKey); // no-op if selections already present
+    return key;
+  };
+  // Names currently in the plan/roster (for the onPlan flag).
+  const rosterNames = new Set();
+  (state.vocalists || []).forEach(v => { const n = (v.name||'').trim(); if (n) rosterNames.add(normFullName(n)); });
+  (state.instruments || []).forEach(i => { const n = (i.assignedTo||'').trim(); if (n) rosterNames.add(normFullName(n)); });
+  if (state.hosts && typeof state.hosts === 'object') {
+    Object.values(state.hosts).forEach(h => { if (typeof h === 'string') { const n = h.trim(); if (n) rosterNames.add(normFullName(n)); } });
+  }
+  (state.shadows || []).forEach(s => { const n = (s.name||'').trim(); if (n) rosterNames.add(normFullName(n)); });
+  const onPlanFor = name => rosterNames.has(normFullName(name));
+
+  const push = (name, role, typeKey, label) => {
+    const n = (name||'').trim();
+    if (!n) return;
+    rows.push({
+      name: n, role, typeKey: typeKey || null, label,
+      stableKey: stableFor(n, role, typeKey),
+      onPlan: onPlanFor(n)
+    });
+  };
+
+  // Vocalists first (matches the check-off ordering).
+  (state.vocalists || []).forEach(v => push(v.name, 'vocalist', 'vocals', 'Vocals'));
+
+  // Shadows (only when the feature is on and any exist).
+  if (state.config && state.config.enableShadows && Array.isArray(state.shadows)) {
+    state.shadows.forEach(s => push(s.name, 'shadow', null, 'Shadow'));
+  }
+
+  // Band — one entry per assigned instrument, skipping vocalist-played ones.
+  (state.instruments || []).forEach(inst => {
+    if (!inst) return;
+    const name = (inst.assignedTo||'').trim();
+    if (!name) return;
+    if (inst.vocalistPlayer) return; // covered by the vocalist entry
+    push(name, 'band', detectPresetKey(inst), inst.label);
+  });
+
+  // MD — an ADDITIONAL md entry for whoever is on the MD instrument.
+  if (state.musicDirectorId) {
+    const mdInst = instById(state.musicDirectorId);
+    const mdName = mdInst ? (mdInst.assignedTo||'').trim() : '';
+    if (mdName) push(mdName, 'md', 'md', 'MD');
+  }
+
+  return rows;
+}
+
 // Get the stage area structure for the current configuration.
 // Returns array of areas: [{ id, name, people: [{name, key, typeKey, isVocalist, isShadow, inst?}], stats }]
 // Each person's `key` is now the STABLE per-person setup key (name|role|typeKey), the
@@ -9185,32 +9272,28 @@ let sessionSetupBypass = false;
 function collectChecklistItems() {
   const sections = [];
 
-  // --- Vocalists section ---
+  // People sections are driven by the SAME enumeration as the check-off view and
+  // the setup manager, reading the stable-key buckets in state.setupItems. This is
+  // why the go-live checklist no longer falsely shows "No setup items configured"
+  // when items ARE configured — it reads the real buckets, not the dead legacy
+  // v.setupItems / inst.setupItems arrays. Check-off keys are `stableKey|itemId`
+  // so a check-off is stable across relabels and per (person, role, item).
+  const rows = enumerateSetupRoles();
   const vocItems = [];
-  state.vocalists.forEach(v => {
-    const name = (v.name || '').trim();
-    if (!name) return;
-    const items = (v.setupItems && Array.isArray(v.setupItems)) ? v.setupItems : [];
-    items.forEach((itemText, idx) => {
-      vocItems.push({ personName: name, itemText, key: name + '|' + itemText + '|v' + idx });
+  const bandItems = [];
+  rows.forEach(en => {
+    const bucket = state.setupItems[en.stableKey];
+    const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
+    items.forEach(it => {
+      const text = it.text || '';
+      if (!text) return;
+      const rec = { personName: en.label + ' — ' + en.name, itemText: text, key: en.stableKey + '|' + it.id };
+      if (en.role === 'vocalist') vocItems.push(rec); else bandItems.push(rec);
     });
   });
   if (vocItems.length > 0) {
     sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems });
   }
-
-  // --- Band section ---
-  const bandItems = [];
-  state.instruments.forEach(inst => {
-    const playerVoc = inst.vocalistPlayer ? state.vocalists.find(v => v.id === inst.vocalistPlayer) : null;
-    const personName = playerVoc ? (playerVoc.name || '').trim() : (inst.assignedTo || '').trim();
-    const label = inst.label || '';
-    const items = (inst.setupItems && Array.isArray(inst.setupItems)) ? inst.setupItems : [];
-    items.forEach((itemText, idx) => {
-      const displayName = personName ? (label + ' — ' + personName) : label;
-      bandItems.push({ personName: displayName, itemText, key: label + '|' + (personName || '') + '|' + itemText + '|b' + idx });
-    });
-  });
   if (bandItems.length > 0) {
     sections.push({ title: '🎸 BAND', key: 'band', items: bandItems });
   }

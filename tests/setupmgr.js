@@ -14,14 +14,25 @@ const fire=(el,t)=>el.dispatchEvent(new window.Event(t,{bubbles:true}));
 const keys=()=>ev('Object.keys(state.setupItems)');
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderSetupItemsView=function(){}');
+ // NOTE: seeds STABLE-KEY buckets (name|role|typeKey) — the current setup model.
+ // (Old-format keys like "grayson|vocal" are folded into these by
+ // migrateLegacySetupBuckets() at init in the real app.) renderSetupManager now
+ // derives labels + in-lineup status from enumerateSetupRoles(), so buckets whose
+ // stable key is not in the current enumeration are the orphans. To keep the
+ // orphan test honest we DISABLE the MD entry (no musicDirectorId) so Marcus has a
+ // single band/keys entry; the orphan is a former vocalist not in state.vocalists.
+ const kV=()=>ev(`stableSetupKey("Grayson","vocalist","vocals")`);
+ const kB=()=>ev(`stableSetupKey("Marcus","band","keys")`);
+ const kO=()=>ev(`stableSetupKey("Old Singer","vocalist","vocals")`);
  const setup=()=>{
    ev(`state.vocalists=[{id:"v1",name:"Grayson",isWL:true,leadsSongs:true,micAssigned:""}]`);
    ev(`state.shadows=[]`);
    ev(`state.instruments=[{id:"inst_keys",label:"Keys",assignedTo:"Marcus",vocalistPlayer:null,tag:"Keys"}]`);
+   ev(`state.musicDirectorId=null`);
    ev(`state.setupItems={
-     "grayson|vocal":{items:[{id:"a",text:"Wedge"},{id:"b",text:"Music stand"}]},
-     "marcus|inst_keys":{items:[{id:"c",text:"MIDI cable"}]},
-     "old singer|vocal":{items:[{id:"d",text:"Handheld"}]}
+     [stableSetupKey("Grayson","vocalist","vocals")]:{items:[{id:"a",text:"Wedge"},{id:"b",text:"Music stand"}],seeded:true,selections:{},customItems:[]},
+     [stableSetupKey("Marcus","band","keys")]:{items:[{id:"c",text:"MIDI cable"}],seeded:true,selections:{},customItems:[]},
+     [stableSetupKey("Old Singer","vocalist","vocals")]:{items:[{id:"d",text:"Handheld"}],seeded:true,selections:{},customItems:[]}
    }`);
  };
 
@@ -47,29 +58,32 @@ window.addEventListener('load',()=>setTimeout(()=>{
  });
  check('delete a bucket removes it from state', ()=>{
    setup(); ev('renderSetupManager()');
-   const del=doc.querySelector('#setupMgrList .setup-bucket-del[data-del-key="old singer|vocal"]');
+   const del=doc.querySelector(`#setupMgrList .setup-bucket-del[data-del-key="${kO()}"]`);
    if(!del) throw new Error('no delete button for orphan bucket');
    del.click();
-   if(keys().includes('old singer|vocal')) throw new Error('bucket not deleted: '+JSON.stringify(keys()));
+   if(keys().includes(kO())) throw new Error('bucket not deleted: '+JSON.stringify(keys()));
  });
- check('removing the last item drops the bucket', ()=>{
+ check('removing the last item drops an orphan bucket', ()=>{
+   // In-lineup people always keep a (possibly empty) bucket because
+   // enumerateSetupRoles() re-seeds current-roster entries on every render, so we
+   // assert the drop on the ORPHAN (Old Singer), who is not re-seeded.
    setup(); ev('renderSetupManager()');
-   const rm=doc.querySelector('#setupMgrList .setup-item-rm[data-rm-key="marcus|inst_keys"][data-rm-i="0"]');
+   const rm=doc.querySelector(`#setupMgrList .setup-item-rm[data-rm-key="${kO()}"][data-rm-i="0"]`);
    rm.click();
-   if(keys().includes('marcus|inst_keys')) throw new Error('emptied bucket should be dropped: '+JSON.stringify(keys()));
+   if(keys().includes(kO())) throw new Error('emptied orphan bucket should be dropped: '+JSON.stringify(keys()));
  });
  check('editing an item updates its text', ()=>{
    setup(); ev('renderSetupManager()');
-   const inp=doc.querySelector('#setupMgrList .setup-item-input[data-key="grayson|vocal"][data-i="0"]');
+   const inp=doc.querySelector(`#setupMgrList .setup-item-input[data-key="${kV()}"][data-i="0"]`);
    inp.value='Wedge x2'; fire(inp,'change');
-   if(ev('state.setupItems["grayson|vocal"].items[0].text')!=='Wedge x2') throw new Error('edit not saved');
+   if(ev(`state.setupItems[stableSetupKey("Grayson","vocalist","vocals")].items[0].text`)!=='Wedge x2') throw new Error('edit not saved');
  });
  check('purge orphans removes only people not in the lineup', ()=>{
    setup(); ev('renderSetupManager()');
    doc.getElementById('setupPurgeOrphans').click();
    const k=keys();
-   if(k.includes('old singer|vocal')) throw new Error('orphan not purged');
-   if(!k.includes('grayson|vocal')||!k.includes('marcus|inst_keys')) throw new Error('purge removed in-lineup data: '+JSON.stringify(k));
+   if(k.includes(kO())) throw new Error('orphan not purged');
+   if(!k.includes(kV())||!k.includes(kB())) throw new Error('purge removed in-lineup data: '+JSON.stringify(k));
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
