@@ -6749,17 +6749,13 @@ async function pcoPullPlan(planId) {
     document.getElementById('pcoPullBtn').disabled = false;
     document.getElementById('pcoRefreshBtn').disabled = false;
     toast('Pulled from Planning Center ✓','success');
-    // Seed setup for every assigned band/vocalist and flag for review, then open the
-    // per-musician preferences + shadow setup popup. The setup-review dialog is chained
-    // to open AFTER the post-pull popup closes (or immediately if that popup has no steps).
+    // Seed setup for every assigned band/vocalist (so their buckets + defaults exist), then
+    // open the per-musician popup. NEW people get their setup asked right in the popup steps,
+    // so no separate review dialog is chained here. (openSetupReviewDialog is still used for
+    // last-minute merge-refresh adds, which don't go through this popup.)
     setTimeout(() => {
-      let reviewEntries = [];
-      try { reviewEntries = pcoSeedAllAssignedSetup(); saveState(); updateSetupProgressBadge(); } catch(err) { console.warn('setup seed after pull failed:', err); }
-      const openReview = () => { if (reviewEntries.length) { try { openSetupReviewDialog(reviewEntries); } catch(err) { console.warn('setup review dialog failed:', err); } } };
-      try {
-        const opened = openPostPullPopup({ planId }, openReview);
-        if (!opened) openReview(); // no post-pull steps → go straight to review
-      } catch(err) { console.warn('post-pull popup failed:', err); openReview(); }
+      try { pcoSeedAllAssignedSetup(); saveState(); updateSetupProgressBadge(); } catch(err) { console.warn('setup seed after pull failed:', err); }
+      try { openPostPullPopup({ planId }); } catch(err) { console.warn('post-pull popup failed:', err); }
     }, 400);
   } catch (e) {
     setPCOStatus(e.message,'err');
@@ -9879,47 +9875,37 @@ function renderPostPullStep() {
         <div class="pp-row-label">Preferred mic</div>
         <select id="pp_mic_select">
           <option value="">— No preference —</option>
-          <option value="__nomic__|">No mic (silent vocalist / observer)</option>
           ${micOptions}
         </select>
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label">Setup needs</div>
+        <div id="pp_setup_editor"></div>
       </div>
       <div class="pp-row">
         <div class="pp-row-label">Notes (optional)</div>
         <textarea id="pp_notes" placeholder="e.g. needs to borrow IEMs, prefers Mons Mix at higher volume, etc."></textarea>
       </div>
     `;
+    // Grouped Vocals setup (Straight mic stand, Music stand…), seeded from church defaults.
+    const spEd = content.querySelector('#pp_setup_editor');
+    if (spEd) renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'vocalist', 'vocals'), 'vocals');
   } else if (step.kind === 'pref-band') {
     content.innerHTML = `
       <div class="pp-step-person-tag">New on ${esc(step.instLabel)}</div>
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
-      <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. What needs to be set up for them on ${esc(step.instLabel)}? These become checklist items on the ✓ Items page.</p>
+      <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Select their setup — your defaults are pre-checked. Tick what they need (e.g. brings their own rig, needs the house rig) and add anything custom. These become checklist items on the ✓ Items page.</p>
       <div class="pp-row">
-        <div class="pp-row-label">Setup items for ${esc(step.instLabel)}</div>
-        <ul class="pp-setup-list" id="pp_setup_list">
-          ${['','',''].map(() => `<li class="pp-setup-row"><input type="text" class="pp-setup-item" placeholder="e.g. Run MIDI cable for Nord" /><button type="button" class="pp-setup-rm" title="Remove item" aria-label="Remove item">✕</button></li>`).join('')}
-        </ul>
-        <button type="button" class="btn ghost" id="pp_setup_add" style="font-size:11px;padding:4px 10px;">+ Add item</button>
+        <div class="pp-row-label">Setup for ${esc(step.instLabel)}</div>
+        <div id="pp_setup_editor"></div>
       </div>
     `;
-    (function wirePpSetup(){
-      const list = content.querySelector('#pp_setup_list');
-      if (!list) return;
-      const addRow = (val) => {
-        const li = document.createElement('li');
-        li.className = 'pp-setup-row';
-        li.innerHTML = '<input type="text" class="pp-setup-item" placeholder="e.g. Run MIDI cable for Nord" /><button type="button" class="pp-setup-rm" title="Remove item" aria-label="Remove item">✕</button>';
-        if (val) li.querySelector('input').value = val;
-        li.querySelector('.pp-setup-rm').addEventListener('click', () => { li.remove(); if (!list.querySelector('.pp-setup-row')) addRow(''); });
-        list.appendChild(li);
-        return li;
-      };
-      list.querySelectorAll('.pp-setup-rm').forEach(btn => btn.addEventListener('click', () => {
-        const li = btn.closest('.pp-setup-row'); if (li) li.remove();
-        if (!list.querySelector('.pp-setup-row')) addRow('');
-      }));
-      const addBtn = content.querySelector('#pp_setup_add');
-      if (addBtn) addBtn.addEventListener('click', () => { const li = addRow(''); const inp = li.querySelector('input'); if (inp) inp.focus(); });
-    })();
+    // Grouped per-instrument setup, seeded from the church's wizard defaults.
+    const spEd = content.querySelector('#pp_setup_editor');
+    if (spEd) {
+      const typeKey = detectPresetKey(instById(step.instId)) || null;
+      renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'band', typeKey), typeKey);
+    }
   } else if (step.kind === 'shadow') {
     const prev = state.shadowPreferences[normFullName(step.personName)];
     const isVocalist = step.shadowKind === 'vocalist';
@@ -9987,25 +9973,14 @@ function savePostPullStep() {
     // popup's "we'll remember for future services" promise holds — now and on the next pull.
     // (mic value is encoded "MicName|wl"/"…|wd", or "__nomic__|", or "" for no preference.)
     const micName = micVal ? micVal.split('|')[0] : '';
-    if (micName === '__nomic__') {
-      setMicNoMic(step.personName, true);
-    } else if (micName) {
-      setMicRemembered(step.personName, micName);
-    }
+    if (micName) setMicRemembered(step.personName, micName);
+    // Setup selections are saved live by the grouped editor into the person's stable bucket.
   } else if (step.kind === 'pref-band') {
-    const inputs = content.querySelectorAll('.pp-setup-item');
-    const texts = Array.from(inputs).map(i => (i.value || '').trim()).filter(Boolean);
+    // Setup selections are saved live by the grouped editor into the person's stable bucket;
+    // just record that we've asked so this person isn't prompted again.
     state.musicianPreferences[step.prefKey] = {
-      askedAt: new Date().toISOString(),
-      setupItemsAdded: texts.length
+      askedAt: new Date().toISOString()
     };
-    // Turn the entries into real per-person/per-instrument checklist items on the ✓ Items page.
-    if (step.instId && texts.length) {
-      const key = setupKeyForBand(step.personName, step.instId);
-      const bucket = ensureSetupBucket(key);
-      const existing = new Set(bucket.items.map(it => (it.text || '').trim().toLowerCase()));
-      texts.forEach(t => { if (!existing.has(t.toLowerCase())) bucket.items.push(newSetupItem(t)); });
-    }
   } else if (step.kind === 'shadow') {
     const selOpt = content.querySelector('[data-shadow-opt].selected');
     const choice = selOpt ? selOpt.dataset.shadowOpt : null;
