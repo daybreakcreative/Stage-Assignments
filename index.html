@@ -1461,7 +1461,6 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
     <button class="btn" id="summaryBtn">Print Summary</button>
     <button class="btn" id="setupItemsBtn" title="Open setup checklist" aria-label="Setup checklist">✓ Items<span class="nav-setup-badge" id="setupNavBadge" style="display:none"></span></button>
     <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
-    <button class="btn primary" id="assignBtn">Auto-Assign <span class="kbd">⌘↵</span></button>
   </div>
 </div>
 
@@ -1978,8 +1977,8 @@ const DEFAULT_STATE = {
     shadowPack: 'Misc 2 Pack',
     enableShadows: false, // off by default; user opts in via Advanced Settings → Display
     tvMode: false,
-    // Setup Items: lock display until setup done (soft warning; off by default)
-    blockDisplayUntilSetup: false,
+    // Setup Items: lock display until setup done (on by default for new installs)
+    blockDisplayUntilSetup: true,
     enableSetupItems: true, // toggled by wizard's setup-intro step; controls visibility of ✓ Items button
     // Name format used in DISPLAY view only (edit view always shows full names for clarity)
     // 'full' | 'first-initial' | 'first' | 'initials'
@@ -2283,7 +2282,7 @@ function loadState() {
           enableShadows: typeof loadedConfig.enableShadows === 'boolean'
             ? loadedConfig.enableShadows
             : (Array.isArray(p.shadows) && p.shadows.length > 0),
-          blockDisplayUntilSetup: !!loadedConfig.blockDisplayUntilSetup,
+          blockDisplayUntilSetup: typeof loadedConfig.blockDisplayUntilSetup === 'boolean' ? loadedConfig.blockDisplayUntilSetup : true,
           enableSetupItems: typeof loadedConfig.enableSetupItems === 'boolean' ? loadedConfig.enableSetupItems : true,
           displayNameFormat: ['full','first-initial','first','initials'].includes(loadedConfig.displayNameFormat) ? loadedConfig.displayNameFormat : 'full',
           stageAreas: Array.isArray(loadedConfig.stageAreas) ? loadedConfig.stageAreas : [],
@@ -5295,13 +5294,8 @@ function renderLayoutEditor() {
     <div class="section-label" style="margin-bottom:10px;">✓ Items checklist</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">The <strong>✓ Items</strong> page is your per-musician setup checklist for each service. These options affect how it behaves.</p>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
-      <label class="cfg-toggle"><input type="checkbox" data-cfg-blockdisplay ${c.blockDisplayUntilSetup?'checked':''} /><span>Block the Display view until the setup checklist is fully complete <span style="color:var(--text-faint);font-size:11px;">(off by default — Display always opens)</span></span></label>
+      <label class="cfg-toggle"><input type="checkbox" data-cfg-blockdisplay ${c.blockDisplayUntilSetup?'checked':''} /><span>Block the Display view until the setup checklist is fully complete <span style="color:var(--text-faint);font-size:11px;">(on by default — turn off to let Display always open)</span></span></label>
     </div>
-
-    <div class="section-label" style="margin-bottom:6px;">Stage Areas</div>
-    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Group instruments into named areas (e.g. "Guitars" combining Electric Guitar 1 + 2). Vocalists are always their own area. Leave empty to keep each instrument separate.</p>
-    <div id="stageAreasEditor"></div>
-    <button class="add-row-btn" id="addStageAreaBtn" style="margin-bottom:18px;">+ Add custom area</button>
 
     <div class="section-label" style="margin-bottom:10px;">Display Layout</div>
     <p class="subtitle" style="margin-bottom:8px;font-size:12px;">Drag the dividers in Display View to resize sections. Sizes are saved per device. Double-click a divider to reset it.</p>
@@ -5685,21 +5679,6 @@ function renderLayoutEditor() {
     });
   }
 
-  // Stage Areas editor
-  renderStageAreasEditor();
-  const addAreaBtn = el.querySelector('#addStageAreaBtn');
-  if (addAreaBtn) {
-    addAreaBtn.addEventListener('click', () => {
-      if (!Array.isArray(c.stageAreas)) c.stageAreas = [];
-      c.stageAreas.push({
-        id: 'sa_' + Math.random().toString(36).slice(2,9),
-        name: 'New Area',
-        instrumentIds: []
-      });
-      saveState();
-      renderStageAreasEditor();
-    });
-  }
   // Reset display layout
   const resetDvBtn = el.querySelector('#resetDvDividersBtn');
   if (resetDvBtn) {
@@ -8071,7 +8050,8 @@ function renderDisplayView() {
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[posIdx++];
       const el = document.createElement('div');
-      el.className = 'dv-sp' + (v.isWL ? ' is-wl' : '');
+      // Display view intentionally does NOT highlight worship leaders (no is-wl).
+      el.className = 'dv-sp';
       const css = toPct(pos);
       el.style.left = css.left; el.style.top = css.top;
       const tags = vocalistInstrumentTags(v.id);
@@ -11952,7 +11932,6 @@ function init() {
   document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
   document.getElementById('addShadowLink').addEventListener('click', addShadow);
-  document.getElementById('assignBtn').addEventListener('click', autoAssign);
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);

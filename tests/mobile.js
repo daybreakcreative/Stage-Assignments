@@ -28,8 +28,10 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!/#serviceName\{min-width:0 !important/.test(css)) throw new Error('serviceName min-width not overridden');
  });
  check('top-bar markup unchanged (brand, venue-switch, service-meta, actions, title)', ()=>{
-   ['.topbar .brand','.topbar .venue-switch','.topbar .service-meta','.topbar .actions','#serviceName','#assignBtn']
+   // NOTE: #assignBtn (top-bar Auto-Assign) was intentionally removed; the ⌘↵ shortcut still calls autoAssign().
+   ['.topbar .brand','.topbar .venue-switch','.topbar .service-meta','.topbar .actions','#serviceName']
      .forEach(sel=>{ if(!document.querySelector(sel)) throw new Error('missing '+sel); });
+   if(document.getElementById('assignBtn')) throw new Error('#assignBtn should have been removed');
  });
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
