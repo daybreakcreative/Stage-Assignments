@@ -2300,6 +2300,34 @@ const SETUP_TEMPLATES = {
   ]},
 };
 
+function setupCatalogFor(key) { return SETUP_TEMPLATES[key] || null; }
+function churchSetupDefaults(key) {
+  const d = (state.config.setupDefaults && state.config.setupDefaults[key]) || null;
+  return d ? { selections: d.selections || {}, customOptions: d.customOptions || [] }
+           : { selections: {}, customOptions: [] };
+}
+function defaultSelectionsFor(key) { return JSON.parse(JSON.stringify(churchSetupDefaults(key).selections || {})); }
+
+// Pure: (key, selections, customItems[]) -> [{text}] resolved checklist lines, catalog order.
+function resolveSetupItems(key, selections, customItems) {
+  const cat = setupCatalogFor(key);
+  const out = [];
+  const push = t => { if (t) out.push({ text: t }); };
+  if (cat) {
+    cat.groups.forEach(g => {
+      const sel = selections ? selections[g.id] : undefined;
+      const chosenIds = g.type === 'radio' ? (sel ? [sel] : []) : (Array.isArray(sel) ? sel : []);
+      g.options.forEach(o => {
+        if (chosenIds.indexOf(o.id) === -1) return;
+        push(o.text);
+        (o.addItems || []).forEach(push);
+      });
+    });
+  }
+  (customItems || []).forEach(ci => push(ci.text));
+  return out;
+}
+
 // Feature 2: resolve active presets (custom or built-in)
 function getSetupPresets() {
   return state.config.setupPresets || SETUP_ITEM_PRESETS;
