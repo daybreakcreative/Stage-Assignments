@@ -970,6 +970,20 @@ body.setup-items-mode .container{display:none}
 .si-fallback-dismiss{background:transparent;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;padding:4px 6px}
 .si-fallback-dismiss:hover{color:var(--text)}
 /* Add new item form */
+.sp-editor-wrap{margin:6px 8px 4px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px}
+.sp-groups{display:flex;flex-wrap:wrap;gap:10px}
+.sp-group{border:1px solid var(--border);border-radius:6px;padding:6px 10px 8px;margin:0;min-width:150px}
+.sp-group-name{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:0 4px}
+.sp-opt{display:flex;align-items:center;gap:6px;font-size:13px;padding:2px 0;cursor:pointer}
+.sp-customs{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.sp-custom-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.sp-custom-text{flex:1}
+.sp-custom-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px}
+.sp-custom-remove:hover{color:var(--text)}
+.sp-custom-add-row{display:flex;gap:6px;margin-top:8px}
+.sp-custom-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:13px;font-family:var(--ff-body);outline:none}
+.sp-custom-input:focus{border-color:var(--accent)}
+.sp-custom-add{background:var(--accent);border:none;color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer}
 .si-add-row{display:flex;gap:6px;margin-left:8px;margin-top:6px;padding-top:8px;border-top:1px dashed var(--border)}
 .si-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;font-family:var(--ff-body);outline:none}
 .si-add-input:focus{border-color:var(--accent)}
@@ -8705,6 +8719,50 @@ function rebuildPersonItems(stableKey, typeKey) {
     return it;
   });
 }
+// Reconstruct selections for a migrated/legacy bucket that has items but no
+// selections. Maps each item's text back to a catalog option (radio → set
+// selections[groupId]=optId; check → push optId). Text that matches an option's
+// addItems entry is consumed by that option (not re-added). Leftover text with no
+// catalog match → customItems. doneThisService is preserved (rebuilt by text).
+// No-op if selections already has any keys.
+function reconstructSetupBucket(stableKey, typeKey) {
+  const b = state.setupItems[stableKey];
+  if (!b) return;
+  b.selections = b.selections || {};
+  if (Object.keys(b.selections).length) return; // already has selections
+  const cat = setupCatalogFor(typeKey);
+  const doneByText = {};
+  (b.items || []).forEach(it => { if (it.doneThisService) doneByText[it.text] = true; });
+  // Build lookup: text -> { groupId, optId, type } for both option text and addItems.
+  const textMap = {};
+  if (cat) {
+    cat.groups.forEach(g => {
+      g.options.forEach(o => {
+        if (o.text && !(o.text in textMap)) textMap[o.text] = { groupId: g.id, optId: o.id, type: g.type };
+        (o.addItems || []).forEach(t => { if (t && !(t in textMap)) textMap[t] = { groupId: g.id, optId: o.id, type: g.type }; });
+      });
+    });
+  }
+  const selections = {};
+  const customItems = [];
+  (b.items || []).forEach(it => {
+    const m = textMap[it.text];
+    if (m) {
+      if (m.type === 'radio') { selections[m.groupId] = m.optId; }
+      else { const arr = selections[m.groupId] = selections[m.groupId] || []; if (arr.indexOf(m.optId) === -1) arr.push(m.optId); }
+    } else {
+      customItems.push({ id: (it.id || newSetupItem('').id), text: it.text });
+    }
+  });
+  b.selections = selections;
+  b.customItems = customItems;
+  // Preserve completion by text across the upcoming rebuild.
+  b.items = resolveSetupItems(typeKey, selections, customItems).map(l => {
+    const nit = newSetupItem(l.text, false);
+    if (doneByText[l.text]) nit.doneThisService = true;
+    return nit;
+  });
+}
 // One-time migration from OLD volatile buckets to stable keys.
 // Legacy formats (see setupKeyForBand/Vocal/Shadow/setupTagKey):
 //   band   -> `${name}|${instId}`
@@ -9021,6 +9079,9 @@ function renderPersonCard(p) {
   const items = bucket.items;
   const status = stats.status === 'empty' ? 'empty' : stats.status;
   const presetKey = (p.role === 'band') ? detectPresetKey(p.inst) : (p.role === 'vocalist' ? 'vocals' : null);
+  // Grouped setup editor: stable key + typeKey for this person (null typeKey => no catalog, no editor)
+  const spTypeKey = presetKey;
+  const spStableKey = spTypeKey ? stableSetupKey(p.name, p.role, spTypeKey) : null;
   // Feature 2: use editable presets
   const activePresets = getSetupPresets();
   const presetDef = presetKey ? activePresets[presetKey] : null;
@@ -9079,11 +9140,13 @@ function renderPersonCard(p) {
         ${roleLabel ? `<span class="si-person-role">${esc(roleLabel)}</span>` : ''}
         ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
         <div class="si-actions">
+          ${spStableKey ? `<button class="si-action-btn" data-action="edit-setup" data-sp-key="${esc(spStableKey)}" data-sp-type="${esc(spTypeKey)}" data-person-key="${esc(p.key)}" title="Edit grouped setup options">⚙ Edit setup</button>` : ''}
           <button class="si-action-btn" data-action="apply-template" data-person-key="${esc(p.key)}" title="Apply template">+ Template</button>
           ${items.length > 0 ? `<button class="si-action-btn" data-action="save-options" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-inst-label="${esc(p.instLabel||'')}" data-preset-key="${esc(presetKey||'')}" title="Save options">Save…</button>` : ''}
         </div>
       </div>
       ${fallbackBlock}
+      ${spStableKey ? `<div class="sp-editor-wrap" id="sp_wrap_${esc(p.key)}" style="display:none"></div>` : ''}
       <div class="si-items">
         ${items.map(it => renderItemRow(p.key, it)).join('')}
       </div>
@@ -9112,6 +9175,148 @@ function renderItemRow(personKey, item) {
       </div>
       <button class="si-item-remove" data-action="remove-item" title="Remove item">✕</button>
     </div>`;
+}
+
+// ===== Grouped setup editor (shared: per-person here + wizard later) =====
+
+// Render the catalog for `catalogKey` into `container` as one fieldset per group.
+// `selections` is the CURRENT selection object (radio: selections[gid]===optId;
+// check: (selections[gid]||[]).includes(optId)). On any change we compute the NEW
+// selections object and hand it to onChange(newSelections). The caller owns state.
+function renderSetupGroups(container, catalogKey, selections, onChange) {
+  const cat = setupCatalogFor(catalogKey);
+  container.innerHTML = '';
+  if (!cat) return;
+  const uid = 'sg' + Math.random().toString(36).slice(2, 8);
+  const cur = selections || {};
+  cat.groups.forEach(g => {
+    const fs = document.createElement('fieldset');
+    fs.className = 'sp-group';
+    fs.dataset.groupId = g.id;
+    const legend = document.createElement('legend');
+    legend.className = 'sp-group-name';
+    legend.textContent = g.name || g.id;
+    fs.appendChild(legend);
+    g.options.forEach(o => {
+      const lab = document.createElement('label');
+      lab.className = 'sp-opt';
+      const input = document.createElement('input');
+      input.value = o.id;
+      if (g.type === 'radio') {
+        input.type = 'radio';
+        input.name = uid + '_' + g.id;
+        input.checked = (cur[g.id] === o.id);
+      } else {
+        input.type = 'checkbox';
+        input.name = uid + '_' + g.id + '_' + o.id;
+        input.checked = Array.isArray(cur[g.id]) && cur[g.id].indexOf(o.id) !== -1;
+      }
+      input.addEventListener('change', () => {
+        // Recompute a fresh selections object from the live DOM.
+        const next = {};
+        cat.groups.forEach(gg => {
+          if (gg.type === 'radio') {
+            const picked = fs.parentNode.querySelector(`input[type=radio][name="${uid}_${gg.id}"]:checked`);
+            if (picked) next[gg.id] = picked.value;
+          } else {
+            const arr = [];
+            gg.options.forEach(oo => {
+              const cb = fs.parentNode.querySelector(`input[type=checkbox][value="${cssEscape(oo.id)}"][name="${uid}_${gg.id}_${cssEscape(oo.id)}"]`);
+              if (cb && cb.checked) arr.push(oo.id);
+            });
+            next[gg.id] = arr;
+          }
+        });
+        if (typeof onChange === 'function') onChange(next);
+      });
+      lab.appendChild(input);
+      lab.appendChild(document.createTextNode(' ' + (o.text || o.id)));
+      fs.appendChild(lab);
+    });
+    container.appendChild(fs);
+  });
+}
+
+// Per-person grouped setup editor. Ensures a bucket exists, reconstructs legacy
+// buckets (safe no-op if selections already present), renders the grouped
+// selectors bound to the bucket's selections, plus a custom-item add row and
+// per-custom-item removal. Every mutation rebuilds items, saves, and refreshes
+// the main setup view.
+function renderPersonSetupEditor(container, stableKey, typeKey) {
+  if (!state.setupItems[stableKey]) seedPersonSetup(stableKey, typeKey);
+  const bucket = state.setupItems[stableKey];
+  reconstructSetupBucket(stableKey, typeKey); // no-op if selections already set
+  bucket.selections = bucket.selections || {};
+  bucket.customItems = bucket.customItems || [];
+
+  container.innerHTML = '';
+  container.classList.add('sp-editor');
+
+  const groupsWrap = document.createElement('div');
+  groupsWrap.className = 'sp-groups';
+  container.appendChild(groupsWrap);
+  renderSetupGroups(groupsWrap, typeKey, bucket.selections, next => {
+    bucket.selections = next;
+    rebuildPersonItems(stableKey, typeKey);
+    saveState();
+    if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+  });
+
+  // Custom items list (with remove)
+  const customWrap = document.createElement('div');
+  customWrap.className = 'sp-customs';
+  const renderCustoms = () => {
+    customWrap.innerHTML = '';
+    bucket.customItems.forEach((ci, idx) => {
+      const row = document.createElement('div');
+      row.className = 'sp-custom-row';
+      const span = document.createElement('span');
+      span.className = 'sp-custom-text';
+      span.textContent = ci.text;
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'sp-custom-remove';
+      rm.title = 'Remove item';
+      rm.textContent = '✕';
+      rm.addEventListener('click', () => {
+        bucket.customItems.splice(idx, 1);
+        rebuildPersonItems(stableKey, typeKey);
+        saveState();
+        renderPersonSetupEditor(container, stableKey, typeKey);
+        if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+      });
+      row.appendChild(span);
+      row.appendChild(rm);
+      customWrap.appendChild(row);
+    });
+  };
+  renderCustoms();
+  container.appendChild(customWrap);
+
+  const addRow = document.createElement('div');
+  addRow.className = 'sp-custom-add-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'sp-custom-input';
+  inp.placeholder = 'Add a custom item…';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'sp-custom-add';
+  addBtn.textContent = 'Add';
+  const doAdd = () => {
+    const text = inp.value.trim();
+    if (!text) return;
+    bucket.customItems.push({ id: newSetupItem('').id, text });
+    rebuildPersonItems(stableKey, typeKey);
+    saveState();
+    renderPersonSetupEditor(container, stableKey, typeKey);
+    if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+  };
+  addBtn.addEventListener('click', doAdd);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+  addRow.appendChild(inp);
+  addRow.appendChild(addBtn);
+  container.appendChild(addRow);
 }
 
 // Wire all the interactions for the rendered content
@@ -9169,6 +9374,21 @@ function wireSetupItemsContent() {
       bucket.items = bucket.items.filter(i => i.id !== itemId);
       saveState();
       renderSetupItemsView();
+    });
+  });
+
+  // Toggle the grouped setup editor (⚙ Edit setup)
+  root.querySelectorAll('[data-action="edit-setup"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const personKey = btn.dataset.personKey;
+      const spKey = btn.dataset.spKey;
+      const spType = btn.dataset.spType;
+      const wrap = document.getElementById('sp_wrap_' + personKey);
+      if (!wrap) return;
+      if (wrap.style.display !== 'none') { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+      wrap.style.display = 'block';
+      renderPersonSetupEditor(wrap, spKey, spType);
     });
   });
 
