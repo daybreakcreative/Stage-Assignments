@@ -8665,10 +8665,14 @@ function enumerateSetupRoles() {
   });
 
   // MD — an ADDITIONAL md entry for whoever is on the MD instrument.
+  // Dedupe: if the MD's own instrument already resolves to typeKey 'md' (e.g. a
+  // Tracks/MD-labeled instrument), that instrument's band entry (name|band|md)
+  // already carries the md setup, so we do NOT emit a separate name|md|md bucket.
+  // For an MD who plays a normal instrument (Keys, etc.) we still emit BOTH.
   if (state.musicDirectorId) {
     const mdInst = instById(state.musicDirectorId);
     const mdName = mdInst ? (mdInst.assignedTo||'').trim() : '';
-    if (mdName) push(mdName, 'md', 'md', 'MD');
+    if (mdName && detectPresetKey(mdInst) !== 'md') push(mdName, 'md', 'md', 'MD');
   }
 
   return rows;
@@ -8784,6 +8788,31 @@ function getStageAreas() {
       }]
     });
   });
+
+  // MD — an ADDITIONAL md setup entry so the MD's `md` catalog appears in the
+  // check-off view too (mirrors enumerateSetupRoles). We surface it as its own
+  // small "MD" area, entry shaped like a person card (name/key/typeKey/role/instLabel).
+  // Dedupe: if the MD's own instrument already resolves to typeKey 'md' (Tracks/MD),
+  // that instrument's band entry already carries the md setup — skip the separate
+  // name|md|md bucket. An MD on a normal instrument (Keys) gets BOTH.
+  if (state.musicDirectorId) {
+    const mdInst = instById(state.musicDirectorId);
+    const mdName = mdInst ? (mdInst.assignedTo || '').trim() : '';
+    if (mdName && detectPresetKey(mdInst) !== 'md') {
+      areas.push({
+        id: 'area_md',
+        name: 'MD',
+        icon: '🎛️',
+        people: [{
+          name: mdName,
+          key: stableFor(mdName, 'md', 'md'),
+          typeKey: 'md',
+          role: 'band',
+          instLabel: 'MD'
+        }]
+      });
+    }
+  }
 
   // Compute total stats per area
   areas.forEach(area => {
