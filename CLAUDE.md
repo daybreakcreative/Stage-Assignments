@@ -1,7 +1,7 @@
 # Stage·Assign — project context for Claude Code
 
 Single-file web app that assigns mics, stage positions, and per-person setup
-checklists for a worship team. Built for Daybreak Church (Carlsbad + Meadowlark).
+checklists for a worship team. Built as a generic tool for any worship team (multi-campus capable).
 Deployed via GitHub Pages at **daybreakcreative.github.io/Stage-Assignments/**
 (served as `index.html`).
 

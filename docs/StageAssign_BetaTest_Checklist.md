@@ -138,7 +138,7 @@ Test the **deployed** site (not `file://`). For 🔍 items, cover the **booth ta
 - [ ] 🔍 Gap behavior surfaces only production roles (camera/audio/lighting/technical)
 - [x] ✅ Pulling another venue's service type → prompts to switch venues first
 - [ ] 🔍 Left idle long enough to need a token refresh → still works (no silent failure)
-- [ ] 🔍 Carlsbad (1058760) and Meadowlark (1662354) pull into their respective venues
+- [ ] 🔍 Campus A (1058760) and Campus B (1662354) pull into their respective venues
 
 ## §11 🏛 Multi-venue — ✅ all audited
 

@@ -12,7 +12,7 @@ const fire=(el,t)=>el.dispatchEvent(new window.Event(t,{bubbles:true}));
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}; toast=function(){}; window.confirm=function(){return true};');
- ev('if(venuesList().length<2){ addVenue("Meadowlark"); }');
+ ev('if(venuesList().length<2){ addVenue("Student Center"); }');
  ev('renderVenuesEditor()');
  check('panel renders a row per venue with rename input + Active badge + duplicate/delete', ()=>{
    const rows=doc.querySelectorAll('#venuesEdit .venue-manage-row');
@@ -25,8 +25,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('rename commits on change to state (top-bar chip UI disabled this release)', ()=>{
    const aid=ev('state.activeVenueId');
    const inp=doc.querySelector('#venuesEdit [data-venue-name="'+aid+'"]');
-   inp.value='Carlsbad Main'; fire(inp,'change');
-   if(ev('state.venues["'+aid+'"].name')!=='Carlsbad Main') throw new Error('name not saved');
+   inp.value='Main Stage'; fire(inp,'change');
+   if(ev('state.venues["'+aid+'"].name')!=='Main Stage') throw new Error('name not saved');
    const sw=doc.getElementById('venueSwitch');
    if(sw && sw.style.display!=='none') throw new Error('switcher should stay hidden');
  });

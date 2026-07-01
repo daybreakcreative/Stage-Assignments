@@ -2425,11 +2425,11 @@ function updateSettingsVenueTag() {
   // Multi-venue is not part of this release — never show the venue tag.
   tag.textContent = ''; tag.style.display = 'none';
 }
-// One-time migration: wrap a single-config state into one "Carlsbad" venue.
+// One-time migration: wrap a single-config state into one "Main Campus" venue.
 function ensureVenues(st) {
   if (st && st.venues && typeof st.venues === 'object' && st.activeVenueId && st.venues[st.activeVenueId]) return;
   const id = uid();
-  st.venues = { [id]: { id, name: 'Carlsbad', ...extractVenueFields(st) } };
+  st.venues = { [id]: { id, name: 'Main Campus', ...extractVenueFields(st) } };
   st.activeVenueId = id;
 }
 // Backfill instrument slots on venues created before phase 4, and keep the active venue's
@@ -2512,7 +2512,7 @@ function renderVenueSwitcher() {
 }
 // Quick-add from the top bar: name it, clone the current venue's settings, switch to it.
 function quickAddVenue() {
-  const name = (prompt('Name this venue (e.g. Meadowlark):', '') || '').trim();
+  const name = (prompt('Name this venue (e.g. Student Center):', '') || '').trim();
   if (!name) return;
   const id = addVenue(name); // starts as a copy of the venue you're on, so you tweak rather than rebuild
   switchVenueAndRefresh(id);
@@ -4095,7 +4095,7 @@ function renderSavedStagesPanel(container, opts) {
   const list = state.savedStages || [];
   el.innerHTML = `
     <div class="saved-stage-saverow">
-      <input type="text" class="saved-stage-name" placeholder="Name this stage (e.g. Carlsbad Main)" />
+      <input type="text" class="saved-stage-name" placeholder="Name this stage (e.g. Main Stage)" />
       <button class="btn ghost" data-ss-save>Save current stage</button>
     </div>
     ${list.length ? `<div class="saved-stage-list">${list.map(s => `
@@ -5820,7 +5820,7 @@ function renderBrandEditor() {
     <div class="setup-steps" style="margin-bottom:18px;">
       <strong style="display:block;margin-bottom:8px;">Quick presets</strong>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn" data-preset="daybreak">Daybreak (B&amp;W)</button>
+        <button class="btn" data-preset="mono">Mono (B&amp;W)</button>
         <button class="btn" data-preset="warm-amber">Warm Amber</button>
         <button class="btn" data-preset="forest">Forest</button>
         <button class="btn" data-preset="navy">Navy &amp; Gold</button>
@@ -5877,7 +5877,7 @@ function renderBrandEditor() {
   `;
 
   const PRESETS = {
-    'daybreak':    { accent:'#2d2d2d', accent2:'#4a4a4a', wl:'#2d2d2d', font:'Inter' },
+    'mono':        { accent:'#2d2d2d', accent2:'#4a4a4a', wl:'#2d2d2d', font:'Inter' },
     'warm-amber':  { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Fraunces' },
     'forest':      { accent:'#5b7553', accent2:'#7a9968', wl:'#9bb377', font:'Lora' },
     'navy':        { accent:'#c9a661', accent2:'#e0bc7c', wl:'#f0d490', font:'Playfair Display' },
@@ -12122,7 +12122,7 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
 
 /* ===================== INIT ===================== */
 function init() {
-  ensureVenues(state); // wrap a single-config (legacy) state into a Carlsbad venue, if needed
+  ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
   renderVenueSwitcher();
   applyRunSheetScale();

@@ -18,11 +18,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(el.querySelectorAll('.venue-chip').length!==0) throw new Error('chips still rendered');
  });
  check('quickAddVenue machinery still clones + adds + switches (no UI)', ()=>{
-   ev('window.prompt=function(){return "Meadowlark"};');
+   ev('window.prompt=function(){return "Student Center"};');
    const before=ev('venuesList().length');
    ev('quickAddVenue()');
    if(ev('venuesList().length')!==before+1) throw new Error('not added');
-   if(ev('activeVenue().name')!=='Meadowlark') throw new Error('new venue not active');
+   if(ev('activeVenue().name')!=='Student Center') throw new Error('new venue not active');
  });
  check('switchVenue machinery still switches the active venue (no UI)', ()=>{
    const ids=JSON.parse(ev('JSON.stringify(venuesList().map(v=>v.id))'));

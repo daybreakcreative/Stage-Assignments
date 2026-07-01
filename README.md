@@ -1,7 +1,7 @@
 # Stage·Assign
 
 Single-file web app for assigning mics, stage positions, and per-person setup
-checklists for a worship team (Daybreak Church). The entire app is `index.html`
+checklists for a worship team. The entire app is `index.html`
 (vanilla HTML/CSS/JS, state in `localStorage`, no build step). Deployed via GitHub
 Pages at `daybreakcreative.github.io/Stage-Assignments/`.
 

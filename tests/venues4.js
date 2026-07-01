@@ -21,7 +21,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.musicDirectorId='inst_keys';
    ensureVenueInstrumentSlots(state);
    var mid='v_meadow';
-   state.venues[mid]=Object.assign({}, extractVenueFields(state), {id:mid,name:'Meadowlark',
+   state.venues[mid]=Object.assign({}, extractVenueFields(state), {id:mid,name:'Student Center',
      instrumentSlots:[
        {id:'inst_drums',label:'Drums',pack:'Drum Pack',placeholder:'Drummer',tag:'Drums',optional:false},
        {id:'inst_bass', label:'Bass', pack:'Bass Pack', placeholder:'Bass', tag:'Bass', optional:false},
@@ -52,7 +52,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const ids=ev('JSON.stringify(state.instruments.map(i=>i.id))');
    if(ids!==JSON.stringify(['inst_drums','inst_bass','inst_keys','inst_eg1'])) throw new Error('band='+ids);
    if(ev("state.instruments.find(i=>i.id==='inst_drums').assignedTo")!=='Danny') throw new Error('drums lost on return');
-   if(ev("state.instruments.find(i=>i.id==='inst_keys').assignedTo")!=='') throw new Error('keys should be empty (was dropped at Meadowlark)');
+   if(ev("state.instruments.find(i=>i.id==='inst_keys').assignedTo")!=='') throw new Error('keys should be empty (was dropped at Student Center)');
  });
  check('migration backfills instrumentSlots on venues lacking them', ()=>{
    ev('state.venues["v_nofill"]={id:"v_nofill",name:"NoFill"}; ensureVenueInstrumentSlots(state);');

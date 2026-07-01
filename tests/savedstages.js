@@ -16,10 +16,10 @@ window.addEventListener('load',()=>setTimeout(()=>{
  ev(`state.config.customStagePoints=[{x:100,y:300},{x:700,y:300},{x:700,y:120},{x:400,y:60},{x:100,y:120}];
      state.config.stageCurvature=70; state.config.stageDepth=100; state.config.vocalDirection='ltr';
      state.config.stageFeatures=[{id:'f1',type:'stairs',x:200,y:200,w:60,h:40,rot:0,label:'Stairs'}];`);
- ev(`window.__e1=saveStageToLibrary('Carlsbad Main','config').id;`);
+ ev(`window.__e1=saveStageToLibrary('Main Stage','config').id;`);
  check('config: saved entry captures shape+arc+fixtures', ()=>{
    const e=JSON.parse(Q('JSON.stringify(state.savedStages.find(s=>s.id===window.__e1))'));
-   if(e.name!=='Carlsbad Main') throw new Error('name'); if(!e.points||e.points.length!==5) throw new Error('points');
+   if(e.name!=='Main Stage') throw new Error('name'); if(!e.points||e.points.length!==5) throw new Error('points');
    if(e.curvature!==70||e.depth!==100) throw new Error('curve/depth'); if(e.vocalDirection!=='ltr') throw new Error('dir');
    if(!e.features||e.features.length!==1) throw new Error('features');
  });
