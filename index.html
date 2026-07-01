@@ -8892,16 +8892,30 @@ function setupCompletionStats(key) {
 }
 
 // Get the stage area structure for the current configuration.
-// Returns array of areas: [{ id, name, people: [{name, key, isVocalist, isShadow, inst?}], stats }]
+// Returns array of areas: [{ id, name, people: [{name, key, typeKey, isVocalist, isShadow, inst?}], stats }]
+// Each person's `key` is now the STABLE per-person setup key (name|role|typeKey), the
+// SAME key the grouped editor uses — so the check-off list and the editor share one
+// bucket, and a re-pull that re-mints instrument ids does NOT duplicate the bucket.
+// On first encounter of a person we seed the bucket once (default selections → items)
+// and reconstruct any legacy selections (both are safe no-ops if already populated).
 function getStageAreas() {
   const areas = [];
+
+  // Resolve the stable key for a person, seeding + reconstructing their bucket once.
+  const stableFor = (name, role, typeKey) => {
+    const key = stableSetupKey(name, role, typeKey);
+    seedPersonSetup(key, typeKey);       // no-op if already seeded
+    reconstructSetupBucket(key, typeKey); // no-op if selections already present
+    return key;
+  };
 
   // Always: Vocalists area at the top
   const vocPeople = state.vocalists
     .filter(v => v.name && v.name.trim())
     .map(v => ({
       name: v.name.trim(),
-      key: setupKeyForVocal(v.name.trim()),
+      key: stableFor(v.name.trim(), 'vocalist', 'vocals'),
+      typeKey: 'vocals',
       role: 'vocalist',
       isWL: v.isWL,
       vocId: v.id
@@ -8921,7 +8935,8 @@ function getStageAreas() {
       .filter(s => s.name && s.name.trim())
       .map(s => ({
         name: s.name.trim(),
-        key: setupKeyForShadow(s.name.trim()),
+        key: stableFor(s.name.trim(), 'shadow', null),
+        typeKey: null,
         role: 'shadow'
       }));
     if (shadowPeople.length > 0) {
@@ -8949,7 +8964,8 @@ function getStageAreas() {
       if (inst.vocalistPlayer) return;
       people.push({
         name,
-        key: setupKeyForBand(name, inst.id),
+        key: stableFor(name, 'band', detectPresetKey(inst)),
+        typeKey: detectPresetKey(inst),
         role: 'band',
         inst,
         instLabel: inst.label
@@ -8977,7 +8993,8 @@ function getStageAreas() {
       icon: '🎸',
       people: [{
         name,
-        key: setupKeyForBand(name, inst.id),
+        key: stableFor(name, 'band', detectPresetKey(inst)),
+        typeKey: detectPresetKey(inst),
         role: 'band',
         inst,
         instLabel: inst.label
@@ -9078,10 +9095,14 @@ function renderPersonCard(p) {
   const stats = setupCompletionStats(p.key);
   const items = bucket.items;
   const status = stats.status === 'empty' ? 'empty' : stats.status;
-  const presetKey = (p.role === 'band') ? detectPresetKey(p.inst) : (p.role === 'vocalist' ? 'vocals' : null);
-  // Grouped setup editor: stable key + typeKey for this person (null typeKey => no catalog, no editor)
+  // typeKey/key come from getStageAreas (stable). Fall back to deriving if a caller
+  // built p without them (keeps older call sites safe).
+  const presetKey = ('typeKey' in p) ? p.typeKey
+    : ((p.role === 'band') ? detectPresetKey(p.inst) : (p.role === 'vocalist' ? 'vocals' : null));
+  // Grouped setup editor: the person's STABLE key IS the check-off key (p.key), so the
+  // editor and the visible check-off list write the same bucket. (null typeKey => no editor)
   const spTypeKey = presetKey;
-  const spStableKey = spTypeKey ? stableSetupKey(p.name, p.role, spTypeKey) : null;
+  const spStableKey = spTypeKey ? p.key : null;
   // Feature 2: use editable presets
   const activePresets = getSetupPresets();
   const presetDef = presetKey ? activePresets[presetKey] : null;
@@ -9111,21 +9132,9 @@ function renderPersonCard(p) {
     <div class="si-preset-editor-wrap" id="pe_wrap_${esc(p.key)}" style="display:none"></div>
   </div>` : '';
 
-  // Detect sibling fallback (only for band roles, when there are no items here)
-  let fallbackBlock = '';
-  if (p.role === 'band' && p.inst && items.length === 0) {
-    const fb = getSetupItemsForBand(p.name, p.inst);
-    if (fb.fallbackFrom) {
-      fallbackBlock = `
-        <div class="si-fallback" data-fallback-key="${esc(p.key)}" data-fallback-source="${esc(fb.fallbackFrom)}">
-          <div class="si-fallback-text">
-            <strong>${esc(p.name)}</strong> has setup items saved for <strong>${esc(fb.fallbackInst.label)}</strong>. Want to copy them here?
-          </div>
-          <button class="si-fallback-btn" data-action="copy-fallback">Copy items</button>
-          <button class="si-fallback-dismiss" data-action="dismiss-fallback" title="Dismiss">✕</button>
-        </div>`;
-    }
-  }
+  // Sibling fallback removed: buckets are keyed by the STABLE per-person key and seeded
+  // once, so there is no longer a volatile legacy bucket to copy items from.
+  const fallbackBlock = '';
 
   // Roles label
   let roleLabel = '';

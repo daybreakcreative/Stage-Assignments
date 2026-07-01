@@ -1,0 +1,40 @@
+const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
+const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
+const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push((e.detail&&e.detail.message)||e.message));
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'http://localhost/',virtualConsole:vc,beforeParse(w){
+ w.structuredClone=w.structuredClone||(v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)));
+ w.matchMedia=w.matchMedia||(()=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}}));
+ w.scrollTo=()=>{};w.confirm=()=>true;w.prompt=()=>'x';
+ w.Element.prototype.getBoundingClientRect=function(){return{left:0,top:0,width:800,height:380,right:800,bottom:380,x:0,y:0,toJSON(){}}};
+}});
+const{window,window:{document}}=dom;const ev=c=>window.eval(c);const Q=e=>ev(e);
+function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
+window.addEventListener('load',()=>setTimeout(()=>{
+ ev('toast=function(){};renderAll=function(){};saveState=function(){};');
+
+ console.log('--- check-off view uses stable keys, no duplicates ---');
+ check('two renders with re-minted inst ids do not duplicate a person bucket', ()=>{
+   ev(`state.config.setupDefaults={ bass:{selections:{rig:'b_house'},customOptions:[]} };`);
+   ev(`state.setupItems={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[];`);
+   ev(`state.instruments=[{id:'inst_bass_1',label:'Bass',tag:'Bass',assignedTo:'Sam Lee'}];`);
+   ev(`getStageAreas();`);
+   ev(`state.instruments=[{id:'inst_bass_2',label:'Bass',tag:'Bass',assignedTo:'Sam Lee'}];`); // id changed
+   ev(`getStageAreas();`);
+   const keys = ev(`Object.keys(state.setupItems).filter(x=>/sam lee/.test(x))`);
+   if (keys.length !== 1) throw new Error('duplicate buckets: '+JSON.stringify(keys));
+   if (!/\|band\|bass$/.test(keys[0])) throw new Error('not a stable key: '+keys[0]);
+ });
+ check('editor and check-off share one bucket (edit shows in stats)', ()=>{
+   const k = ev(`stableSetupKey('Sam Lee','band','bass')`);
+   // simulate an editor edit: select an extra item, rebuild
+   ev(`state.setupItems['${k}'].selections.extras=['b_di']; rebuildPersonItems('${k}','bass');`);
+   const s = ev(`JSON.stringify(setupCompletionStats('${k}'))`);
+   if (!/"total"/.test(s)) throw new Error('no stats for stable key: '+s);
+   const total = ev(`setupCompletionStats('${k}').total`);
+   if (total < 1) throw new Error('stable bucket has no items after edit');
+ });
+
+ console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
+ if(errs.length) console.log(errs.join('\n'));
+ process.exitCode=errs.length?1:0;
+},150));
