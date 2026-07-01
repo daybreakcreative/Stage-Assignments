@@ -3650,7 +3650,17 @@ function getBandStagePositions() {
   // Clamp so labels never overlap the back wall
   const maxY = safeBack - 18;
   const customs = (state.config.customStageEnabled && state.config.customStagePositions) || null;
-  insts.forEach((inst, i) => {
+  // Auto-layout order: spread instruments left→right, but always push Keys to the far end so it
+  // auto-lands at stage right (the "SR →" side, high x). Non-keys keep their relative order.
+  const ordered = insts.map((inst, i) => ({ inst, i }))
+    .sort((a, b) => {
+      const ak = detectPresetKey(a.inst) === 'keys' ? 1 : 0;
+      const bk = detectPresetKey(b.inst) === 'keys' ? 1 : 0;
+      if (ak !== bk) return ak - bk;   // keys sort after everyone else → rightmost slot(s)
+      return a.i - b.i;                // otherwise preserve original order
+    });
+  ordered.forEach((entry, oi) => {
+    const inst = entry.inst;
     // If the user has placed this instrument by hand, use that position directly.
     if (customs && customs[inst.id] && typeof customs[inst.id].x === 'number' && typeof customs[inst.id].y === 'number') {
       positions[inst.id] = { x: customs[inst.id].x, y: customs[inst.id].y };
@@ -3658,8 +3668,8 @@ function getBandStagePositions() {
     }
     let x;
     if (n === 1) x = 400;
-    else x = PAD + (i / (n - 1)) * span;
-    const rel = n === 1 ? 0.5 : i / (n - 1); // 0..1 left-to-right
+    else x = PAD + (oi / (n - 1)) * span;
+    const rel = n === 1 ? 0.5 : oi / (n - 1); // 0..1 left-to-right
     const fromCenter = Math.abs(rel - 0.5) * 2; // 0 at center, 1 at edges
     let y = centerY + (outerY - centerY) * fromCenter;
     if (y > maxY) y = maxY;
