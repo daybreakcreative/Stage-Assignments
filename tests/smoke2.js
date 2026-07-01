@@ -31,18 +31,20 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if (!/\.stage-edit-btn\{[^}]*opacity:\.72/.test(html)) throw new Error('opacity not .72');
     if (/\.stage-edit-btn\{[^}]*opacity:0;/.test(html)) throw new Error('still opacity:0');
   });
-  check('toolbar Outline button (in edit mode) opens polygon editor', ()=>{
+  check('toolbar "Edit Outline or Features" opens Advanced Settings → Display (not an inline editor)', ()=>{
     doc.getElementById('stageEditBtn').click();           // enter inline edit mode → toolbar buttons appear
-    doc.getElementById('stageEditOutlineBtn').click();
+    doc.getElementById('stageEditOutlineFeaturesBtn').click();
+    const ov = doc.getElementById('settingsOverlay');
+    if(!ov || !ov.classList.contains('show')) throw new Error('settings not opened');
+    if(doc.getElementById('saPolyModal')) throw new Error('should not open an inline polygon editor anymore');
+    if(doc.body.classList.contains('stage-editing')) throw new Error('should have left edit mode');
+    ev('closeSettings()');
+  });
+  check('the polygon editor still works when opened directly', ()=>{
+    ev('openPolygonStageEditor({ getInitial:()=>null, onSave:function(){} })');
     const m = doc.getElementById('saPolyModal'); if(!m) throw new Error('no modal');
     if(!m.querySelector('#saPolySvg path')) throw new Error('no polygon');
     if(!/Discard/.test(m.querySelector('#saPolyCancel').textContent)) throw new Error('cancel not relabeled');
-    m.remove();
-  });
-  check('toolbar Features button (in edit mode) opens features editor', ()=>{
-    doc.getElementById('stageEditFeaturesBtn').click();
-    const m = doc.getElementById('saFeatModal'); if(!m) throw new Error('no modal');
-    if(m.querySelectorAll('.feat-chip').length !== ev('FEATURE_TYPES.length')) throw new Error('palette mismatch');
     m.remove();
   });
   console.log('--- polygon editor: backdrop commits ---');

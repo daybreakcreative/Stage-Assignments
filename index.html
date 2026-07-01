@@ -1506,8 +1506,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
           <span class="stage-edit-hint">Drag people to reposition. Use Outline &amp; Features to edit the stage. Changes save automatically.</span>
         </div>
         <div class="stage-edit-actions">
-          <button class="btn ghost" id="stageEditOutlineBtn" title="Edit the stage outline / footprint shape">&#9998; Outline</button>
-          <button class="btn ghost" id="stageEditFeaturesBtn" title="Add stairs, doors, risers, monitor wedges">&#9783; Features</button>
+          <button class="btn ghost" id="stageEditOutlineFeaturesBtn" title="Edit the stage outline or features in Advanced Settings">&#9998; Edit Outline or Features</button>
           <button class="btn ghost" id="stageEditResetBtn" title="Reset all people to auto layout">Reset to Auto</button>
           <button class="btn primary" id="stageEditDoneBtn">Done</button>
         </div>
@@ -4081,8 +4080,13 @@ function seedPolygonPoints() {
   const fl = { x: 20, y: edgeY }, fr = { x: 780, y: edgeY };
   const br = { x: 780, y: backY }, bl = { x: 20, y: backY };
   if (tc < 0.05) return [fl, fr, br, bl];
+  // Seed the editor with the SAME shape that's currently rendered: a rectangle whose FRONT edge
+  // (fl → fr) is bowed toward the audience via a curve control point, matching getStageShape's
+  // front Bézier — rather than a peaked 5th point ("house roof"). Lets the user modify from the
+  // real starting shape they built with the curve/depth sliders.
   const midY = Math.max(12, Math.round(edgeY - 300 * tc));
-  return [fl, { x: 400, y: midY }, fr, br, bl];
+  fl.c = { x: 400, y: midY };
+  return [fl, fr, br, bl];
 }
 
 // A true four-corner rectangle (flat front + flat back), used by "Reset to rectangle".
@@ -4753,24 +4757,12 @@ function wireStageEditControls() {
   if (editBtn) editBtn.addEventListener('click', enterStageEditMode);
   if (doneBtn) doneBtn.addEventListener('click', exitStageEditMode);
   if (resetBtn) resetBtn.addEventListener('click', resetStageLayoutToAuto);
-  // Outline + Features editors, available from the Edit-Layout toolbar (also in Advanced Settings → Display)
-  const outlineBtn = document.getElementById('stageEditOutlineBtn');
-  if (outlineBtn) outlineBtn.addEventListener('click', () => {
-    openPolygonStageEditor({
-      getInitial: () => state.config.customStagePoints,
-      onSave: (pts) => {
-        state.config.customStagePoints = pts; saveState();
-        renderStage(); if (state.viewMode === 'display') renderDisplayView();
-        if (document.getElementById('settingsOverlay')?.classList.contains('show')) renderLayoutEditor();
-      }
-    });
-  });
-  const featuresBtn = document.getElementById('stageEditFeaturesBtn');
-  if (featuresBtn) featuresBtn.addEventListener('click', () => {
-    openStageFeaturesEditor(() => {
-      renderStage();
-      if (document.getElementById('settingsOverlay')?.classList.contains('show')) renderLayoutEditor();
-    });
+  // Outline + Features are edited in Advanced Settings → Display. The Edit-Layout toolbar just
+  // links there (leaving edit mode first), instead of hosting the editors inline.
+  const outlineFeaturesBtn = document.getElementById('stageEditOutlineFeaturesBtn');
+  if (outlineFeaturesBtn) outlineFeaturesBtn.addEventListener('click', () => {
+    if (isStageEditing()) exitStageEditMode();
+    openSettings('layout');
   });
   // Escape exits Edit-Layout mode
   document.addEventListener('keydown', e => {
@@ -12046,7 +12038,8 @@ function init() {
   // pcoDisconnectBtn was removed from the main PCO bar — Disconnect is now only inside Settings → Planning Center.
   const oldDisconnect = document.getElementById('pcoDisconnectBtn');
   if (oldDisconnect) oldDisconnect.addEventListener('click', pcoDisconnect);
-  document.getElementById('settingsOverlay').addEventListener('click', e => { if (e.target.id === 'settingsOverlay') closeSettings(); });
+  // Backdrop click does NOT close Advanced Settings — you must use the ✕ (top-right) to exit,
+  // so a stray click can't discard what you were configuring.
   document.getElementById('summaryOverlay').addEventListener('click', e => { if (e.target.id === 'summaryOverlay') hideSummary(); });
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); autoAssign(); }

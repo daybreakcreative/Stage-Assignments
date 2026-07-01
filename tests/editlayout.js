@@ -23,8 +23,26 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(document.getElementById('stageOutlineBtn')||document.getElementById('stageFeaturesBtn')) throw new Error('old buttons still present');
    if(!/Edit Layout/.test(document.getElementById('stageEditBtn').textContent)) throw new Error('label not Edit Layout');
  });
- check('toolbar has Outline + Features + Reset + Done', ()=>{
-   ['stageEditOutlineBtn','stageEditFeaturesBtn','stageEditResetBtn','stageEditDoneBtn'].forEach(id=>{ if(!document.getElementById(id)) throw new Error('missing '+id); });
+ check('toolbar has "Edit Outline or Features" + Reset + Done (old Outline/Features removed)', ()=>{
+   ['stageEditOutlineFeaturesBtn','stageEditResetBtn','stageEditDoneBtn'].forEach(id=>{ if(!document.getElementById(id)) throw new Error('missing '+id); });
+   if(document.getElementById('stageEditOutlineBtn')||document.getElementById('stageEditFeaturesBtn')) throw new Error('old Outline/Features toolbar buttons still present');
+ });
+ check('"Edit Outline or Features" opens Advanced Settings → Display and leaves edit mode', ()=>{
+   document.getElementById('stageEditBtn').dispatchEvent(pe('click',0,0)); // enter edit mode
+   document.getElementById('stageEditOutlineFeaturesBtn').dispatchEvent(pe('click',0,0));
+   const ov=document.getElementById('settingsOverlay');
+   if(!ov||!ov.classList.contains('show')) throw new Error('settings not opened');
+   if(document.body.classList.contains('stage-editing')) throw new Error('should have left edit mode');
+   ev('closeSettings()');
+ });
+ check('seedPolygonPoints seeds the CURRENT curved shape (front-edge curve, not a 5-point peak)', ()=>{
+   ev('state.config.stageCurvature=70; state.config.stageDepth=50; state.config.customStagePoints=null;');
+   const pts=JSON.parse(ev('JSON.stringify(seedPolygonPoints())'));
+   if(pts.length!==4) throw new Error('expected 4 corners (no peak point), got '+pts.length);
+   if(!pts[0].c || typeof pts[0].c.y!=='number') throw new Error('front edge not curved (no control point on corner 0)');
+ });
+ check('Advanced Settings backdrop click does NOT close it (force the ✕)', ()=>{
+   if(/settingsOverlay'\)\.addEventListener\('click', e => \{ if \(e\.target\.id === 'settingsOverlay'\) closeSettings/.test(html)) throw new Error('backdrop still wired to close settings');
  });
  check('Edit Layout enters INLINE edit mode (body class + toolbar shown, modal NOT shown)', ()=>{
    document.getElementById('stageEditBtn').dispatchEvent(pe('click',0,0));
