@@ -57,6 +57,20 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     const egStereo = ev(`SETUP_TEMPLATES.eg.groups.find(g=>g.id==='rig').options.find(o=>o.id==='eg_stereo').addItems.length`);
     if (egStereo !== 3) throw new Error('eg stereo addItems wrong');
   });
+  check('drums has House snare + House cymbals options', ()=>{
+    const texts = ev(`SETUP_TEMPLATES.drums.groups.find(g=>g.id==='options').options.map(o=>o.text)`);
+    if (!texts.includes('House snare') || !texts.includes('House cymbals')) throw new Error('drums missing house items: '+texts.join('|'));
+  });
+  check('keys source = keyboard provisioning; separate "Keys Sounds from" routing group', ()=>{
+    const src = ev(`SETUP_TEMPLATES.keys.groups.find(g=>g.id==='source').options.map(o=>o.id).join(',')`);
+    if (src !== 'k_house,k_user_kbd') throw new Error('keys source options wrong: '+src);
+    const sf = ev(`SETUP_TEMPLATES.keys.groups.find(g=>g.id==='soundsfrom')`);
+    if (!sf) throw new Error('keys soundsfrom group missing');
+    const sfIds = ev(`SETUP_TEMPLATES.keys.groups.find(g=>g.id==='soundsfrom').options.map(o=>o.id).join(',')`);
+    if (sfIds !== 'k_analog,k_dante,k_iface') throw new Error('soundsfrom options wrong: '+sfIds);
+    const dante = ev(`SETUP_TEMPLATES.keys.groups.find(g=>g.id==='soundsfrom').options.find(o=>o.id==='k_dante').addItems.length`);
+    if (dante !== 1) throw new Error('dante addItems wrong');
+  });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));

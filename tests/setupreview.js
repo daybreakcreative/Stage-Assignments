@@ -36,7 +36,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const dante = modal.querySelector('input[type=radio][value="k_dante"]');
    dante.checked = true; dante.dispatchEvent(new window.Event('change',{bubbles:true}));
    modal.querySelector('.srv-save').click();
-   if (ev(`state.setupItems['${k}'].selections.source`) !== 'k_dante') throw new Error('edit not saved');
+   if (ev(`state.setupItems['${k}'].selections.soundsfrom`) !== 'k_dante') throw new Error('edit not saved');
    if (!ev(`state.setupItems['${k}'].items.some(i=>i.text==='Needs network — thunderbolt adapter')`)) throw new Error('items not rebuilt');
  });
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');

@@ -2036,7 +2036,9 @@ const DEFAULT_STATE = {
 const SETUP_TEMPLATES = {
   drums: { label:'Drums', groups:[
     { id:'options', name:'Options', type:'check', options:[
+      { id:'d_housesnare', text:'House snare' },
       { id:'d_rmsnare', text:'Remove snare (bringing own snare)' },
+      { id:'d_housecym',  text:'House cymbals' },
       { id:'d_rmcym',   text:'Remove cymbals (bringing own cymbals)' },
       { id:'d_side',    text:'Bringing side snare' },
       { id:'d_tom3',    text:'Bringing tom 3' },
@@ -2092,10 +2094,13 @@ const SETUP_TEMPLATES = {
   ]},
   keys: { label:'Keys', groups:[
     { id:'source', name:'Signal source', type:'radio', options:[
-      { id:'k_house',  text:'House keys rig' },
-      { id:'k_analog', text:'Sounds from keyboard — analog' },
-      { id:'k_iface',  text:'Sounds from computer — interface', addItems:['Needs interface'] },
-      { id:'k_dante',  text:'Sounds from computer — Dante', addItems:['Needs network — thunderbolt adapter'] },
+      { id:'k_house',    text:'Keyboard — House Keyboard' },
+      { id:'k_user_kbd', text:'User Bringing Keyboard' },
+    ]},
+    { id:'soundsfrom', name:'Keys Sounds from', type:'radio', options:[
+      { id:'k_analog', text:'Analog keyboard outputs' },
+      { id:'k_dante',  text:'User computer via Dante', addItems:['Needs network — thunderbolt adapter'] },
+      { id:'k_iface',  text:'User computer via interface', addItems:['Needs interface'] },
     ]},
     { id:'inputs', name:'Stereo inputs', type:'radio', options:[
       { id:'k_in1', text:'1 stereo input' },

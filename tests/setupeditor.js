@@ -41,10 +41,15 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     ev(`state.setupItems['${k}'].items.forEach(it=>{ if(it.text==='Stereo DI/DIs & 1/4\\" cables') it.doneThisService=true; });`);
     const dante = wrap.querySelector('input[type=radio][value="k_dante"]');
     dante.checked = true; dante.dispatchEvent(new window.Event('change',{bubbles:true}));
-    if (ev(`state.setupItems['${k}'].selections.source`) !== 'k_dante') throw new Error('source not updated');
+    if (ev(`state.setupItems['${k}'].selections.soundsfrom`) !== 'k_dante') throw new Error('soundsfrom not updated');
     const texts = ev(`state.setupItems['${k}'].items.map(i=>i.text)`);
     if (!texts.includes('Needs network — thunderbolt adapter')) throw new Error('dante addItem missing');
-    if (texts.includes('House keys rig')) throw new Error('old source line lingered');
+    // switching the sounds-from radio must swap it out for interface, not leave both
+    const iface = wrap.querySelector('input[type=radio][value="k_iface"]');
+    iface.checked = true; iface.dispatchEvent(new window.Event('change',{bubbles:true}));
+    const texts2 = ev(`state.setupItems['${k}'].items.map(i=>i.text)`);
+    if (texts2.includes('Needs network — thunderbolt adapter')) throw new Error('old dante line lingered after radio swap');
+    if (!texts2.includes('Needs interface')) throw new Error('interface addItem missing');
   });
   check('adding a custom item appends and persists into items', ()=>{
     const wrap = doc.getElementById('__ed');
