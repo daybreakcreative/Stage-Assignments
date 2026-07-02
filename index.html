@@ -6173,14 +6173,15 @@ function renderDataEditor() {
 }
 
 function ensureFontLoaded(fontName) {
-  if (!fontName) return;
+  if (!fontName) return Promise.resolve();
   const id = 'brand-font-' + fontName.replace(/\s+/g,'-');
-  if (document.getElementById(id)) return;
+  if (document.getElementById(id)) return Promise.resolve();
   const link = document.createElement('link');
   link.id = id;
   link.rel = 'stylesheet';
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap`;
   document.head.appendChild(link);
+  return Promise.resolve();
 }
 
 // Master font list — used by both the wizard and Settings → Brand picker
@@ -9710,6 +9711,7 @@ function startWizard() {
     customInstrumentDraft: '',
     mics: [],
     iemAssignments: null,
+    useIems: true, // whether the team uses in-ear monitors (iems step opt-out)
     // PCO step: store client id/secret in wizardData; only commit to state on Connect or wizard finish
     pco: {
       clientId: state.pcoConfig.clientId || '',
@@ -10778,10 +10780,31 @@ function renderWizardStepBody(step) {
         if (a[sKey] === undefined) a[sKey] = `Shadow ${si + 1}`;
       }
       wizardData.iemAssignments = a; // ensure reference is stored for wireWizardStep
+      const useIems = wizardData.useIems !== false;
       return `
         <div>
-          <div class="wiz-q-title">Assign IEM pack names</div>
-          <div class="wiz-q-help">Each band slot and vocalist gets a default pack name. Rename anything if your pack labels don't match the role names (e.g. EG 2 → "Extra 2 Pack"). You can always change these later in Advanced Settings → Display.</div>
+          <div class="wiz-q-title">In-ear monitors (IEMs)</div>
+          <div class="wiz-q-help">Do your musicians and vocalists use in-ear monitors? If so, name each person's IEM pack below.</div>
+
+          <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+            <button class="wiz-stage-shape${useIems ? ' selected' : ''}" data-wiems="yes">
+              <div class="wiz-shape-label">✓ Yes, we use IEMs</div>
+              <div class="wiz-shape-sub">I'll name each person's pack</div>
+            </button>
+            <button class="wiz-stage-shape${!useIems ? ' selected' : ''}" data-wiems="no">
+              <div class="wiz-shape-label">No / skip for now</div>
+              <div class="wiz-shape-sub">We don't use in-ears</div>
+            </button>
+          </div>
+
+          ${!useIems ? `
+            <div class="wiz-setup-intro-card" style="margin-top:14px;">
+              <div class="wiz-setup-intro-icon">🎧</div>
+              <div class="wiz-setup-intro-text">
+                No problem — IEM packs are skipped. You can set them up any time later in <strong>Advanced Settings → Display</strong>.
+              </div>
+            </div>
+          ` : `
           ${slots.length > 0 ? `
             <div class="wiz-iem-section-label">Band</div>
             <div class="wiz-iem-list">
@@ -10816,6 +10839,7 @@ function renderWizardStepBody(step) {
               `).join('')}
             </div>
           ` : ''}
+          `}
         </div>`;
     }
     case 'stage': {
@@ -10823,7 +10847,7 @@ function renderWizardStepBody(step) {
       const depthVal = typeof wizardData.stageDepth === 'number' ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH;
       return `
         <div>
-          <div class="wiz-q-title">Stage shape</div>
+          <div class="wiz-q-title">Stage shape &amp; size</div>
           <div class="wiz-q-help">Drag the sliders to match your stage. The vocal arc follows the curve. You can fine-tune this any time in Advanced Settings → Display.</div>
           <div class="curvature-row" style="background:var(--bg-inset);">
             <div class="curvature-preview" id="wiz_curv_preview">${(wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) ? buildCustomOutlinePreviewSvg(wizardData.customStagePoints) : buildStagePreviewSvg(curVal, depthVal)}</div>
@@ -10884,14 +10908,14 @@ function renderWizardStepBody(step) {
       const hasVox = (wizardData.vocalistCount || 0) > 0;
       if (!hasSlots && !hasVox) {
         return `<div>
-          <div class="wiz-q-title">Stage layout</div>
+          <div class="wiz-q-title">Place your team on stage</div>
           <div class="wiz-q-help">No instruments or vocalists added yet — skip this step and arrange positions on the main page.</div>
         </div>`;
       }
       const hasCustom = wizardData.customStagePositions && Object.keys(wizardData.customStagePositions).length > 0;
       return `
         <div>
-          <div class="wiz-q-title">Stage layout</div>
+          <div class="wiz-q-title">Place your team on stage</div>
           <div class="wiz-q-help" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span>Drag each position to match your stage. Skip to use auto layout.</span>
             <button class="btn ghost" id="wizStageAutoBtn" style="font-size:11px;padding:3px 9px;${hasCustom?'':'opacity:.45;pointer-events:none;'}">Reset to auto</button>
@@ -11022,22 +11046,6 @@ function renderWizardStepBody(step) {
             </button>
           </div>
 
-        </div>`;
-    }
-    case 'display-design': {
-      return `
-        <div>
-          <div class="wiz-q-title">Design your display view</div>
-          <div class="wiz-q-help">Drag the borders to resize sections. Tap ✕ to hide a section. Tap the + buttons to restore hidden sections. This becomes your default layout.</div>
-
-          <div class="ddv-editor" id="ddvEditor">
-            <!-- Built by JS in wireWizardStep -->
-          </div>
-
-          <div class="ddv-hidden-row" id="ddvHiddenRow" style="display:none">
-            <span class="ddv-hidden-label">Hidden:</span>
-            <div class="ddv-hidden-chips" id="ddvHiddenChips"></div>
-          </div>
         </div>`;
     }
     case 'setup-intro': {
@@ -11305,6 +11313,12 @@ function wireWizardStep(step) {
     }
   }
   if (step === 'iems') {
+    body.querySelectorAll('[data-wiems]').forEach(b => {
+      b.addEventListener('click', () => {
+        wizardData.useIems = (b.dataset.wiems === 'yes');
+        renderWizardStep();
+      });
+    });
     body.querySelectorAll('[data-wiem-key]').forEach(inp => inp.addEventListener('input', e => {
       const key = e.target.dataset.wiemKey;
       wizardData.iemAssignments[key] = e.target.value;
@@ -11603,125 +11617,6 @@ function wireWizardStep(step) {
       });
     });
   }
-  if (step === 'display-design') {
-    if (!wizardData.displayLayout) wizardData.displayLayout = {};
-    const dl = wizardData.displayLayout;
-
-    // Section definitions
-    const SECTIONS = [
-      { id: 'vocalists', label: 'Vocalist Cards', icon: '🎤', defaultH: 80,
-        mockHtml: `<div class="ddv-voc-mock">${Array(4).fill('<div class="ddv-voc-pill"></div>').join('')}</div>` },
-      { id: 'stage',     label: 'Stage Diagram',  icon: '🎸', defaultH: 110,
-        mockHtml: `<div class="ddv-stage-mock">STAGE DIAGRAM</div>` },
-      { id: 'sidebar',   label: 'Band / Hosts / Shadows', icon: '🥁', defaultH: 80,
-        mockHtml: `<div class="ddv-list-mock">${Array(3).fill('<div class="ddv-list-row"></div>').join('')}</div>` },
-      { id: 'runsheet',  label: 'Run Sheet',       icon: '📋', defaultH: 90,
-        mockHtml: `<div class="ddv-rs-mock">${Array(4).fill('<div class="ddv-rs-row"></div>').join('')}</div>` },
-    ];
-
-    // Initialize layout state
-    if (!dl.sectionLayout) {
-      dl.sectionLayout = SECTIONS.map(s => ({ id: s.id, visible: true, h: s.defaultH }));
-    }
-    // Ensure h property exists on all items
-    dl.sectionLayout.forEach(item => {
-      const def = SECTIONS.find(s => s.id === item.id);
-      if (!item.h && def) item.h = def.defaultH;
-    });
-
-    const editor = body.querySelector('#ddvEditor');
-    const hiddenRow = body.querySelector('#ddvHiddenRow');
-    const hiddenChips = body.querySelector('#ddvHiddenChips');
-
-    function renderDDV() {
-      editor.innerHTML = '';
-      hiddenChips.innerHTML = '';
-
-      const visible = dl.sectionLayout.filter(s => s.visible);
-      const hidden = dl.sectionLayout.filter(s => !s.visible);
-
-      visible.forEach((item, idx) => {
-        const def = SECTIONS.find(s => s.id === item.id);
-        if (!def) return;
-
-        // Section card
-        const sec = document.createElement('div');
-        sec.className = 'ddv-section';
-        sec.dataset.id = item.id;
-        sec.innerHTML = `
-          <div class="ddv-section-header">
-            <span class="ddv-section-icon">${def.icon}</span>
-            <span class="ddv-section-title">${def.label}</span>
-            <button class="ddv-hide-btn" data-hide="${item.id}" title="Hide section">✕</button>
-          </div>
-          <div class="ddv-section-body" style="height:${item.h}px;overflow:hidden">${def.mockHtml}</div>
-        `;
-        editor.appendChild(sec);
-
-        // Resize handle between sections (not after last)
-        if (idx < visible.length - 1) {
-          const handle = document.createElement('div');
-          handle.className = 'ddv-drag-handle';
-          handle.dataset.idx = idx;
-          editor.appendChild(handle);
-
-          // Wire resize drag
-          handle.addEventListener('pointerdown', e => {
-            handle.classList.add('dragging');
-            handle.setPointerCapture(e.pointerId);
-            const startY = e.clientY;
-            const startH = item.h;
-            const nextItem = visible[idx + 1];
-            const startNextH = nextItem.h;
-
-            const onMove = mv => {
-              const delta = mv.clientY - startY;
-              item.h = Math.max(40, startH + delta);
-              nextItem.h = Math.max(40, startNextH - delta);
-              // Update DOM directly without full re-render
-              const bodies = editor.querySelectorAll('.ddv-section-body');
-              if (bodies[idx]) bodies[idx].style.height = item.h + 'px';
-              if (bodies[idx + 1]) bodies[idx + 1].style.height = nextItem.h + 'px';
-            };
-            const onUp = () => {
-              handle.classList.remove('dragging');
-              handle.removeEventListener('pointermove', onMove);
-              handle.removeEventListener('pointerup', onUp);
-            };
-            handle.addEventListener('pointermove', onMove);
-            handle.addEventListener('pointerup', onUp);
-            e.preventDefault();
-          });
-        }
-      });
-
-      // Hide buttons
-      editor.querySelectorAll('[data-hide]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const item = dl.sectionLayout.find(s => s.id === btn.dataset.hide);
-          if (item) { item.visible = false; renderDDV(); }
-        });
-      });
-
-      // Hidden row
-      if (hidden.length > 0) {
-        hiddenRow.style.display = 'flex';
-        hidden.forEach(item => {
-          const def = SECTIONS.find(s => s.id === item.id);
-          if (!def) return;
-          const chip = document.createElement('button');
-          chip.className = 'ddv-restore-chip';
-          chip.innerHTML = `${def.icon} + ${def.label}`;
-          chip.addEventListener('click', () => { item.visible = true; renderDDV(); });
-          hiddenChips.appendChild(chip);
-        });
-      } else {
-        hiddenRow.style.display = 'none';
-      }
-    }
-
-    renderDDV();
-  }
   if (step === 'setup-intro') {
     body.querySelectorAll('[data-wsetup]').forEach(b => {
       b.addEventListener('click', () => {
@@ -11784,13 +11679,15 @@ function applyWizardChoices() {
     state.service.name = `${wizardData.churchName.trim()} — Sunday`;
   }
   // 2. Build instruments list with proper numbering for duplicates
+  const useIems = wizardData.useIems !== false;
   const slots = expandedInstrumentSlots();
   if (slots.length > 0) {
     state.instruments = slots.map((s, i) => {
       // Stable IDs based on key + slotIdx (so duplicates get unique IDs like inst_keys_2)
       let id = `inst_${s.key}`;
       if (s.slotIdx) id += `_${s.slotIdx}`;
-      const pack = (wizardData.iemAssignments && wizardData.iemAssignments[`inst:${s.label}`]) || s.label;
+      // When the team opted out of IEMs, don't force a wizard-chosen pack — fall back to the role default.
+      const pack = (useIems && wizardData.iemAssignments && wizardData.iemAssignments[`inst:${s.label}`]) || s.label;
       return {
         id,
         label: s.label,
@@ -11815,7 +11712,8 @@ function applyWizardChoices() {
   state.config.voxIemPacks = [];
   for (let i = 1; i <= packCount; i++) {
     const key = `vocal:${i}`;
-    const rawName = (wizardData.iemAssignments && wizardData.iemAssignments[key]) || `Vocal ${i} Pack`;
+    // When the team opted out of IEMs, don't force wizard-chosen pack names — use plain defaults.
+    const rawName = (useIems && wizardData.iemAssignments && wizardData.iemAssignments[key]) || `Vocal ${i} Pack`;
     const packName = rawName.endsWith(' Pack') ? rawName : rawName + ' Pack';
     state.config.voxIemPacks.push(packName);
   }
@@ -11836,7 +11734,7 @@ function applyWizardChoices() {
     state.assignments = computePositions(state.vocalists);
   }
   // Shadow pack — individual per-shadow IEM assignments from wizard
-  if (wizardData.iemAssignments) {
+  if (useIems && wizardData.iemAssignments) {
     // legacy single key
     if (wizardData.iemAssignments['shadows']) {
       state.config.shadowPack = wizardData.iemAssignments['shadows'];
