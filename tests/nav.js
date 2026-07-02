@@ -29,7 +29,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
  });
  check('display scale tabs are hover-hidden on desktop but kept reachable on touch (hover:none)', ()=>{
    // Per request: scalers hide (opacity:0) until you hover the section on desktop.
-   const m=html.match(/\.dv-hover-tab\{[^}]*opacity:([0-9.]+)\}/);
+   const m=html.match(/\.dv-hover-tab\{[^}]*opacity:([0-9.]+)[;}]/);
    if(!m) throw new Error('.dv-hover-tab rule missing');
    if(parseFloat(m[1])!==0) throw new Error('expected desktop default opacity:0, got '+m[1]);
    // Touch devices can't hover, so a hover:none fallback must keep them visible.

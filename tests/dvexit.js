@@ -42,6 +42,15 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     doc.getElementById('displayBackBtn').click();
     if (ev("state.viewMode") === 'display') throw new Error('Exit button did not exit display mode');
   });
+  check('hidden scaler tabs are click-through (pointer-events:none) so they cannot eat cog clicks', ()=>{
+    if (!/\.dv-hover-tab\{[^}]*opacity:0;pointer-events:none\}/.test(html.replace(/\s+/g,''))) throw new Error('.dv-hover-tab default is not pointer-events:none while hidden');
+  });
+  check('display cogs sit above the scaler tabs (z-index)', ()=>{
+    const cog = html.match(/\.display-cog\{[^}]*z-index:(\d+)/); if(!cog) throw new Error('no cog z-index');
+    const railTab = html.match(/\.dv-rail-header .dv-hover-tab\{[^}]*z-index:(\d+)/);
+    const railZ = railTab ? parseInt(railTab[1],10) : 15;
+    if (parseInt(cog[1],10) <= railZ) throw new Error('cog z-index ('+cog[1]+') not above scaler tab z-index ('+railZ+')');
+  });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));

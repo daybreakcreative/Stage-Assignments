@@ -1045,7 +1045,7 @@ body.setup-items-mode .container{display:none}
 }
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
-.display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10;font-family:var(--ff-mono)}
+.display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:40;font-family:var(--ff-mono);pointer-events:auto}
 .display-cog:hover{background:var(--surface);border-color:var(--accent);color:var(--accent);transform:rotate(45deg)}
 /* Display view layout — sizes driven by CSS variables so dividers can adjust them */
 .dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
@@ -1099,18 +1099,20 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-header.has-explicit-height .dv-date{font-size:calc(clamp(11px, 12cqh, 18px) * var(--dv-title-scale, 1))}
 .dv-section-label{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--accent);margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:10px;position:relative}
 /* Hover-only tabs in the display view (run sheet + stage scale) */
-.dv-hover-tab{flex-shrink:0;width:24px;height:24px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:opacity .25s, color .15s, border-color .15s;cursor:pointer;padding:0;line-height:1;opacity:0}
-.dv-rail:hover .dv-hover-tab,.dv-stage-block:hover .dv-hover-tab{opacity:.8}
+/* Hidden by default AND click-through (pointer-events:none) so an invisible tab can't swallow
+   clicks meant for other controls (e.g. the Exit/fullscreen cogs). Revealed on section hover. */
+.dv-hover-tab{flex-shrink:0;width:24px;height:24px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:opacity .25s, color .15s, border-color .15s;cursor:pointer;padding:0;line-height:1;opacity:0;pointer-events:none}
+.dv-rail:hover .dv-hover-tab,.dv-stage-block:hover .dv-hover-tab{opacity:.8;pointer-events:auto}
 .dv-hover-tab:hover{opacity:1!important;color:var(--accent);border-color:var(--accent)}
-.dv-hover-tab.open{opacity:1;color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+.dv-hover-tab.open{opacity:1;pointer-events:auto;color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
 .dv-hover-tab-icon{font-size:12px;line-height:1;transform:rotate(45deg);display:inline-block}
 /* Section-label divider line — uses flex:1 to fill the gap; new button sits at the end */
 .dv-section-label::after{order:50;content:'';flex:1;height:1px;background:var(--border)}
 .dv-hover-tab-inline{order:99;margin-left:8px}
 /* Reveal each section's scaler tab only when hovering that section. */
-.dv-header:hover .dv-hover-tab,.dv-vocalists-block:hover .dv-hover-tab{opacity:.8}
+.dv-header:hover .dv-hover-tab,.dv-vocalists-block:hover .dv-hover-tab{opacity:.8;pointer-events:auto}
 /* Touch devices can't hover, so keep the section scalers reachable there. */
-@media (hover:none){.dv-hover-tab{opacity:.55}}
+@media (hover:none){.dv-hover-tab{opacity:.55;pointer-events:auto}}
 /* Title scaler tab sits in the header's top-right corner (header is centered). */
 .dv-hover-tab-corner{position:absolute;top:6px;right:8px;z-index:12}
 .dv-hover-popup-corner{position:absolute;top:34px;right:8px;z-index:13}
