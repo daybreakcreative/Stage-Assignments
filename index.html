@@ -1241,6 +1241,10 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
 #s_orderWrap{margin-bottom:8px;page-break-before:auto}
 .s-footer{margin-top:16px;padding-top:8px;border-top:1px solid black;color:#444;font-size:8px;letter-spacing:.1em}
 *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+/* Blank-PDF fix: backdrop-filter / filter / transform on the overlay & sheet composite fine in
+   print PREVIEW but the PDF rasterizer drops them, producing a blank page. Neutralize them (and
+   any entrance animation) when printing so the summary actually renders to PDF. */
+.overlay,.summary-overlay,.summary-overlay.open,.summary-sheet,.sheet{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;transform:none!important;animation:none!important;opacity:1!important}
 }
 /* IMPROVEMENT 1 — Run sheet empty state */
 .rs-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;gap:8px}
