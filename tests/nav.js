@@ -27,10 +27,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev('openSettings("setups")');
    if(!doc.getElementById('tab-setups').classList.contains('active')) throw new Error('tab-setups panel not active');
  });
- check('display scale tabs are visible without hover (touch-friendly, opacity>0)', ()=>{
+ check('display scale tabs are hover-hidden on desktop but kept reachable on touch (hover:none)', ()=>{
+   // Per request: scalers hide (opacity:0) until you hover the section on desktop.
    const m=html.match(/\.dv-hover-tab\{[^}]*opacity:([0-9.]+)\}/);
    if(!m) throw new Error('.dv-hover-tab rule missing');
-   if(parseFloat(m[1])<=0) throw new Error('still hidden: opacity '+m[1]);
+   if(parseFloat(m[1])!==0) throw new Error('expected desktop default opacity:0, got '+m[1]);
+   // Touch devices can't hover, so a hover:none fallback must keep them visible.
+   const compact=html.replace(/\s+/g,'');
+   if(!/@media\(hover:none\)\{\.dv-hover-tab\{opacity:0?\.[1-9]/.test(compact)) throw new Error('no touch (hover:none) fallback keeping scalers visible');
  });
  check('no stale "Set Up → " navigation hints, and "Set Up" no longer used as a label', ()=>{
    if(/Set Up → /.test(html)) throw new Error('stale "Set Up → " path remains');

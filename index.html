@@ -1099,7 +1099,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-header.has-explicit-height .dv-date{font-size:calc(clamp(11px, 12cqh, 18px) * var(--dv-title-scale, 1))}
 .dv-section-label{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--accent);margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:10px;position:relative}
 /* Hover-only tabs in the display view (run sheet + stage scale) */
-.dv-hover-tab{flex-shrink:0;width:24px;height:24px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:opacity .25s, color .15s, border-color .15s;cursor:pointer;padding:0;line-height:1;opacity:.4}
+.dv-hover-tab{flex-shrink:0;width:24px;height:24px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:opacity .25s, color .15s, border-color .15s;cursor:pointer;padding:0;line-height:1;opacity:0}
 .dv-rail:hover .dv-hover-tab,.dv-stage-block:hover .dv-hover-tab{opacity:.8}
 .dv-hover-tab:hover{opacity:1!important;color:var(--accent);border-color:var(--accent)}
 .dv-hover-tab.open{opacity:1;color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
@@ -1109,6 +1109,8 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-hover-tab-inline{order:99;margin-left:8px}
 /* Reveal each section's scaler tab only when hovering that section. */
 .dv-header:hover .dv-hover-tab,.dv-vocalists-block:hover .dv-hover-tab{opacity:.8}
+/* Touch devices can't hover, so keep the section scalers reachable there. */
+@media (hover:none){.dv-hover-tab{opacity:.55}}
 /* Title scaler tab sits in the header's top-right corner (header is centered). */
 .dv-hover-tab-corner{position:absolute;top:6px;right:8px;z-index:12}
 .dv-hover-popup-corner{position:absolute;top:34px;right:8px;z-index:13}
@@ -1760,8 +1762,8 @@ body>*:not(.summary-overlay){display:none!important}
     <button class="lock-go-setup-btn" id="lockGoSetupBtn">Go to ✓ Items</button>
     <button class="lock-override-btn" id="lockOverrideBtn">Show display anyway</button>
   </div>
-  <button class="display-cog" id="displayBackBtn" title="Back to setup">⚙︎</button>
-  <button class="display-cog" id="dvFullscreenBtn" title="Toggle fullscreen" style="right:62px;">⛶</button>
+  <button class="display-cog" id="displayBackBtn" title="Exit display view (Esc)" style="width:auto;padding:0 14px;border-radius:18px;gap:6px;font-family:var(--ff-body);font-size:13px;font-weight:600;">✕ Exit</button>
+  <button class="display-cog" id="dvFullscreenBtn" title="Toggle fullscreen" style="right:96px;">⛶</button>
 
   <div class="dv-layout" id="dvLayout">
     <div class="dv-main" id="dvMain">
@@ -12083,7 +12085,10 @@ function init() {
   document.getElementById('summaryOverlay').addEventListener('click', e => { if (e.target.id === 'summaryOverlay') hideSummary(); });
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); autoAssign(); }
-    if (e.key === 'Escape') { hideSummary(); closeSettings(); }
+    if (e.key === 'Escape') {
+      hideSummary(); closeSettings();
+      if (state.viewMode === 'display') exitDisplayMode();
+    }
   });
   window.addEventListener('resize', renderStage);
 
