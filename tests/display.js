@@ -12,33 +12,28 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 const fire=(el,t)=>el.dispatchEvent(new window.Event(t,{bubbles:true}));
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}');
- ev('state.viewMode="setup"; state.config.tvMode=false; document.body.classList.remove("tv-mode")');
+ ev('state.viewMode="setup"');
 
- check('TV/Projector radio now applies live (sets config + body.tv-mode)', ()=>{
+ // TV/Computer mode was replaced by per-section hover font-scalers (see dvscalers.js).
+ // These checks are now the removal regression guards.
+ check('Settings Display editor has NO TV/Computer radio anymore', ()=>{
    ev('renderLayoutEditor()');
-   const tv=doc.querySelector('#layoutEdit input[data-cfg-tvmode="true"]');
-   if(!tv) throw new Error('TV radio not rendered');
-   tv.checked=true; fire(tv,'change');
-   if(ev('state.config.tvMode')!==true) throw new Error('tvMode not set true');
-   if(!doc.body.classList.contains('tv-mode')) throw new Error('body.tv-mode not added');
+   if(doc.querySelector('#layoutEdit input[data-cfg-tvmode]')) throw new Error('tvMode radio still rendered');
+   if(doc.querySelector('#layoutEdit input[name="tvMode"]')) throw new Error('tvMode radio still rendered');
  });
- check('Computer/Tablet radio turns it back off', ()=>{
-   const pc=doc.querySelector('#layoutEdit input[data-cfg-tvmode="false"]');
-   pc.checked=true; fire(pc,'change');
-   if(ev('state.config.tvMode')!==false) throw new Error('tvMode not set false');
-   if(doc.body.classList.contains('tv-mode')) throw new Error('body.tv-mode not removed');
+ check('body never gets a tv-mode class in the display view', ()=>{
+   ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup"');
+   if(doc.body.classList.contains('tv-mode')) throw new Error('body.tv-mode present');
  });
- check('TV mode CSS uses COMPACT sizing (voc-name 14px < default 20px) for a screen viewed up close', ()=>{
-   const m=html.match(/body\.tv-mode \.dv-voc-name\{font-size:(\d+)px\}/);
-   if(!m) throw new Error('tv-mode .dv-voc-name rule missing');
-   if(parseInt(m[1],10) >= 20) throw new Error('tv-mode name should be smaller than default 20px, got '+m[1]+'px');
+ check('no body.tv-mode CSS rule remains', ()=>{
+   if(/body\.tv-mode\b/.test(html)) throw new Error('body.tv-mode CSS rule still present');
  });
  check('fullscreen button is present in the display chrome', ()=>{
    if(!doc.getElementById('dvFullscreenBtn')) throw new Error('no #dvFullscreenBtn');
  });
- check('help hint explains TV mode', ()=>{
+ check('Settings Display help now points to per-section hover scalers', ()=>{
    ev('renderLayoutEditor()');
-   if(!/compact text|up close/i.test(doc.getElementById('layoutEdit').textContent)) throw new Error('no TV-mode help text');
+   if(!/hover|section|resize/i.test(doc.getElementById('layoutEdit').textContent)) throw new Error('no per-section scaler help text');
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');

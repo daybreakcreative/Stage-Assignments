@@ -1063,8 +1063,15 @@ body.display-mode{overflow:hidden}
 /* When dragging, hide cursor change everywhere */
 body.dv-dragging{cursor:col-resize;user-select:none}
 body.dv-dragging.dv-dragging-h{cursor:row-resize}
-.dv-rail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-top:6px;padding-right:46px;flex-shrink:0;gap:10px}
-.dv-rail-meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;margin-left:auto}
+/* padding-right clears the absolutely-positioned display-cog chrome buttons
+   (⚙/⛶ at right:18px & 62px). The scaler tab is placed BEFORE the meta in the
+   markup so it lands inside the cleared area, not under those buttons. */
+.dv-rail-header{display:flex;align-items:center;margin-bottom:10px;padding-top:6px;padding-right:108px;flex-shrink:0;gap:10px;position:relative;z-index:14}
+.dv-rail-meta{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;margin-left:auto;flex-shrink:1;overflow:hidden;text-overflow:ellipsis}
+/* Keep the run-sheet scaler tab from being squeezed out or hidden under chrome. */
+.dv-rail-header .dv-hover-tab{flex-shrink:0;position:relative;z-index:15;order:2}
+.dv-rail-header .dv-section-label{order:0}
+.dv-rail-header .dv-rail-meta{order:1}
 /* Run sheet scale tab — inline in the EDIT-view run sheet header, after the item count */
 .run-sheet-header .meta{display:flex;align-items:center;gap:10px}
 .dv-rs-scale-tab{flex-shrink:0;width:26px;height:26px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:all .15s;cursor:pointer;padding:0;line-height:1}
@@ -1081,12 +1088,12 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-header{text-align:center;margin-bottom:0;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative;flex-shrink:0;min-height:60px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px}
 .dv-header.has-explicit-height{height:var(--dv-header-h, auto);overflow:hidden;container-type:size;container-name:dvheader}
 /* Default sizes */
-.dv-title{font-family:var(--ff-display);font-weight:500;font-style:italic;font-size:30px;letter-spacing:-.015em;line-height:1;color:var(--text);margin:0}
-.dv-date{font-family:var(--ff-display);font-size:14px;color:var(--text-muted);letter-spacing:.04em;font-weight:400;line-height:1.1;margin:0}
+.dv-title{font-family:var(--ff-display);font-weight:500;font-style:italic;font-size:calc(30px * var(--dv-title-scale, 1));letter-spacing:-.015em;line-height:1;color:var(--text);margin:0}
+.dv-date{font-family:var(--ff-display);font-size:calc(14px * var(--dv-title-scale, 1));color:var(--text-muted);letter-spacing:.04em;font-weight:400;line-height:1.1;margin:0}
 /* Scale-with-height only when user has dragged */
 .dv-header.has-explicit-height{gap:clamp(2px,3cqh,8px)}
-.dv-header.has-explicit-height .dv-title{font-size:clamp(18px, 26cqh, 44px)}
-.dv-header.has-explicit-height .dv-date{font-size:clamp(11px, 12cqh, 18px)}
+.dv-header.has-explicit-height .dv-title{font-size:calc(clamp(18px, 26cqh, 44px) * var(--dv-title-scale, 1))}
+.dv-header.has-explicit-height .dv-date{font-size:calc(clamp(11px, 12cqh, 18px) * var(--dv-title-scale, 1))}
 .dv-section-label{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.24em;color:var(--accent);margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:10px;position:relative}
 /* Hover-only tabs in the display view (run sheet + stage scale) */
 .dv-hover-tab{flex-shrink:0;width:24px;height:24px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);transition:opacity .25s, color .15s, border-color .15s;cursor:pointer;padding:0;line-height:1;opacity:.4}
@@ -1097,6 +1104,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 /* Section-label divider line — uses flex:1 to fill the gap; new button sits at the end */
 .dv-section-label::after{order:50;content:'';flex:1;height:1px;background:var(--border)}
 .dv-hover-tab-inline{order:99;margin-left:8px}
+/* Reveal each section's scaler tab only when hovering that section. */
+.dv-header:hover .dv-hover-tab,.dv-vocalists-block:hover .dv-hover-tab{opacity:.8}
+/* Title scaler tab sits in the header's top-right corner (header is centered). */
+.dv-hover-tab-corner{position:absolute;top:6px;right:8px;z-index:12}
+.dv-hover-popup-corner{position:absolute;top:34px;right:8px;z-index:13}
 /* Popup that drops below the header. Hidden by default. Both popups share class. */
 .dv-hover-popup{margin:0 0 10px;background:var(--bg-elev);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;box-shadow:0 14px 36px rgba(0,0,0,.4);display:none;cursor:default;max-width:260px;margin-left:auto}
 .dv-hover-popup.show{display:block}
@@ -1108,45 +1120,32 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    for cqh-based vertical scaling. Default keeps natural auto-height. */
 .dv-vocalists-block.has-explicit-height{height:var(--dv-vocals-h, auto);overflow:hidden;container-type:size;container-name:dvvocals}
 /* Cards size to fit content; container-query units in the cards scale typography with block height */
-/* TV / Projector mode: a large screen viewed up close — use compact sizing so more fits and
-   it still reads easily. (Computer/Tablet keeps the larger default sizes for small screens.) */
-body.tv-mode .dv-title{font-size:20px}
-body.tv-mode .dv-date{font-size:11px}
-body.tv-mode .dv-voc-pos{font-size:13px}
-body.tv-mode .dv-voc-name{font-size:14px}
-body.tv-mode .dv-voc-line{font-size:9px}
-body.tv-mode .dv-sp{transform:translate(-50%,-50%) scale(0.7);transform-origin:center center}
-body.tv-mode .dv-sp-role{font-size:7px}
-body.tv-mode .dv-sp-name{font-size:9px}
-body.tv-mode .dv-list-item .name{font-size:12px}
-body.tv-mode .dv-list-item .pos{font-size:9px}
-body.tv-mode .dv-list-item .detail{font-size:9px}
 .dv-voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-content:start;align-items:start}
 .dv-voc-card{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden}
 .dv-voc-card.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 14px var(--accent-dim)}
-.dv-voc-card.is-wl::after{content:'WL';position:absolute;top:8px;right:10px;color:var(--accent);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.06em}
-.dv-voc-pos{font-family:var(--ff-mono);font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px;line-height:1}
-.dv-voc-name{font-family:var(--ff-display);font-weight:600;font-size:20px;letter-spacing:-.01em;line-height:1.05;color:var(--text);margin-bottom:8px;padding-right:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dv-voc-card.is-wl::after{content:'WL';position:absolute;top:8px;right:10px;color:var(--accent);font-family:var(--ff-mono);font-size:calc(10px * var(--dv-voc-scale, 1));font-weight:700;letter-spacing:.06em}
+.dv-voc-pos{font-family:var(--ff-mono);font-size:calc(18px * var(--dv-voc-scale, 1));font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px;line-height:1}
+.dv-voc-name{font-family:var(--ff-display);font-weight:600;font-size:calc(20px * var(--dv-voc-scale, 1));letter-spacing:-.01em;line-height:1.05;color:var(--text);margin-bottom:8px;padding-right:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dv-voc-meta{display:flex;flex-direction:column;gap:3px;padding-top:8px;border-top:1px solid var(--border);min-height:0;overflow:hidden}
-.dv-voc-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--ff-mono);font-size:12px}
-.dv-voc-line .lbl{color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-size:9.5px;font-weight:500}
-.dv-voc-line .val{color:var(--text);font-weight:600;font-family:var(--ff-display);font-size:15px;letter-spacing:0}
+.dv-voc-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--ff-mono);font-size:calc(12px * var(--dv-voc-scale, 1))}
+.dv-voc-line .lbl{color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-size:calc(9.5px * var(--dv-voc-scale, 1));font-weight:500}
+.dv-voc-line .val{color:var(--text);font-weight:600;font-family:var(--ff-display);font-size:calc(15px * var(--dv-voc-scale, 1));letter-spacing:0}
 .dv-voc-line .val.empty{color:var(--text-faint);font-style:italic}
-.dv-voc-ag{display:inline-block;font-family:var(--ff-mono);font-size:9px;color:var(--success);background:rgba(122,153,96,0.14);border:1px solid rgba(122,153,96,0.4);padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:5px;vertical-align:middle}
+.dv-voc-ag{display:inline-block;font-family:var(--ff-mono);font-size:calc(9px * var(--dv-voc-scale, 1));color:var(--success);background:rgba(122,153,96,0.14);border:1px solid rgba(122,153,96,0.4);padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:5px;vertical-align:middle}
 /* When the user has resized the vocals block, switch the card typography to scale with container height */
 .dv-vocalists-block.has-explicit-height .dv-voc-grid{gap:clamp(4px,2cqh,10px)}
 .dv-voc-grid.single-row{display:flex;flex-direction:row;overflow-x:auto;flex-wrap:nowrap}
 .dv-voc-grid.single-row .dv-voc-card{min-width:140px;flex:1}
 /* Small cards */
 .dv-voc-grid.card-small .dv-voc-card{padding:6px 8px;min-width:90px}
-.dv-voc-grid.card-small .dv-voc-name{font-size:12px}
-.dv-voc-grid.card-small .dv-voc-pos{font-size:10px}
-.dv-voc-grid.card-small .dv-voc-line{font-size:8px}
+.dv-voc-grid.card-small .dv-voc-name{font-size:calc(12px * var(--dv-voc-scale, 1))}
+.dv-voc-grid.card-small .dv-voc-pos{font-size:calc(10px * var(--dv-voc-scale, 1))}
+.dv-voc-grid.card-small .dv-voc-line{font-size:calc(8px * var(--dv-voc-scale, 1))}
 /* Large cards */
 .dv-voc-grid.card-large .dv-voc-card{padding:16px 14px;min-width:160px}
-.dv-voc-grid.card-large .dv-voc-name{font-size:24px}
-.dv-voc-grid.card-large .dv-voc-pos{font-size:15px}
-.dv-voc-grid.card-large .dv-voc-line{font-size:12px}
+.dv-voc-grid.card-large .dv-voc-name{font-size:calc(24px * var(--dv-voc-scale, 1))}
+.dv-voc-grid.card-large .dv-voc-pos{font-size:calc(15px * var(--dv-voc-scale, 1))}
+.dv-voc-grid.card-large .dv-voc-line{font-size:calc(12px * var(--dv-voc-scale, 1))}
 /* Grid columns */
 .dv-voc-grid.cols-2{grid-template-columns:repeat(2,1fr)}
 .dv-voc-grid.cols-3{grid-template-columns:repeat(3,1fr)}
@@ -1165,14 +1164,14 @@ body.tv-mode .dv-list-item .detail{font-size:9px}
 .toggle-row input{width:14px;height:14px;accent-color:var(--accent)}
 .voc-mic-warn{font-size:11px;color:var(--text-faint);font-style:italic;margin-left:6px}
 .dv-vocalists-block.has-explicit-height .dv-voc-card{padding:clamp(4px,4cqh,12px) clamp(6px,5cqh,14px);border-radius:clamp(5px,3cqh,10px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-card.is-wl::after{top:clamp(2px,2cqh,8px);right:clamp(4px,3cqh,10px);font-size:clamp(9px,5cqh,14px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-pos{font-size:clamp(9px,7cqh,18px);margin-bottom:clamp(2px,3cqh,8px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-name{font-size:clamp(11px,8cqh,20px);margin-bottom:clamp(2px,3cqh,8px);padding-right:clamp(8px,8cqh,18px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-card.is-wl::after{top:clamp(2px,2cqh,8px);right:clamp(4px,3cqh,10px);font-size:calc(clamp(9px,5cqh,14px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-pos{font-size:calc(clamp(9px,7cqh,18px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-name{font-size:calc(clamp(11px,8cqh,20px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px);padding-right:clamp(8px,8cqh,18px)}
 .dv-vocalists-block.has-explicit-height .dv-voc-meta{gap:clamp(1px,1cqh,3px);padding-top:clamp(2px,3cqh,8px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-line{font-size:clamp(8px,4cqh,12px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-line .lbl{font-size:clamp(7px,3.5cqh,9.5px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-line .val{font-size:clamp(9px,5.5cqh,15px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-ag{font-size:clamp(7px,3cqh,9px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-line{font-size:calc(clamp(8px,4cqh,12px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-line .lbl{font-size:calc(clamp(7px,3.5cqh,9.5px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-line .val{font-size:calc(clamp(9px,5.5cqh,15px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-ag{font-size:calc(clamp(7px,3cqh,9px) * var(--dv-voc-scale, 1))}
 .dv-content{display:grid;grid-template-columns:var(--dv-stage-frac, 1.6fr) 8px var(--dv-side-frac, 1fr);gap:0;flex:1;min-height:0;overflow:hidden;padding-top:8px}
 .dv-content.no-side{grid-template-columns:1fr 0 0}
 .dv-stage-block{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-right:12px}
@@ -1189,15 +1188,15 @@ body.tv-mode .dv-list-item .detail{font-size:9px}
 #dvStagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none}
 #dvStagePeople > .dv-sp{pointer-events:auto}
 .dv-stage-svg{display:block}
-.dv-sp{position:absolute;transform:translate(-50%,-50%) scale(var(--dv-stage-scale, 1));transform-origin:center center;background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;max-width:120px;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
+.dv-sp{position:absolute;transform:translate(-50%,-50%);transform-origin:center center;background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;max-width:120px;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
 .dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
-.dv-sp-role{font-family:var(--ff-mono);font-size:8.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
+.dv-sp-role{font-family:var(--ff-mono);font-size:calc(8.5px * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
 .dv-sp.is-wl .dv-sp-role{color:var(--accent)}
-.dv-sp-name{font-family:var(--ff-display);font-size:13px;font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-sp-name{font-family:var(--ff-display);font-size:calc(13px * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv-sp.empty .dv-sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
-.dv-sp-mic{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);margin-top:2px;font-weight:500}
+.dv-sp-mic{font-family:var(--ff-mono);font-size:calc(9.5px * var(--dv-stage-text-scale, 1));color:var(--text-muted);margin-top:2px;font-weight:500}
 .dv-side-block{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex:0 1 auto;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 /* When the user has explicitly dragged the Band block, it gets a fixed height */
 #dvBandBlock.has-explicit-height{flex:0 0 var(--dv-band-h, auto);height:var(--dv-band-h)}
@@ -1759,6 +1758,17 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
   <div class="dv-layout" id="dvLayout">
     <div class="dv-main" id="dvMain">
       <div class="dv-header">
+        <button class="dv-hover-tab dv-hover-tab-corner" id="dvTitleScaleTab" title="Resize title text">
+          <span class="dv-hover-tab-icon">⤢</span>
+        </button>
+        <div class="dv-hover-popup dv-hover-popup-corner" id="dvTitleScalePopup">
+          <div class="dv-hover-popup-label">TITLE SIZE</div>
+          <div class="scale-control" id="dvTitleScaleSlider" data-step="0.05" data-val="1">
+            <button class="scale-btn minus" data-target="dvTitleScaleSlider">−</button>
+            <span class="scale-val" id="dvTitleScaleValue">100%</span>
+            <button class="scale-btn plus" data-target="dvTitleScaleSlider">+</button>
+          </div>
+        </div>
         <h1 class="dv-title" id="dv_title">—</h1>
         <div class="dv-date" id="dv_date"></div>
       </div>
@@ -1767,7 +1777,19 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <div class="dv-divider dv-divider-h" id="dvDividerHeader" data-divider="header" title="Drag to resize"></div>
 
       <div class="dv-vocalists-block" id="dvVocalistsBlock">
-        <div class="dv-section-label">Vocalists</div>
+        <div class="dv-section-label">Vocalists
+          <button class="dv-hover-tab dv-hover-tab-inline" id="dvVocScaleTab" title="Resize vocalist card text">
+            <span class="dv-hover-tab-icon">⤢</span>
+          </button>
+        </div>
+        <div class="dv-hover-popup" id="dvVocScalePopup">
+          <div class="dv-hover-popup-label">VOCALIST TEXT SIZE</div>
+          <div class="scale-control" id="dvVocScaleSlider" data-step="0.05" data-val="1">
+            <button class="scale-btn minus" data-target="dvVocScaleSlider">−</button>
+            <span class="scale-val" id="dvVocScaleValue">100%</span>
+            <button class="scale-btn plus" data-target="dvVocScaleSlider">+</button>
+          </div>
+        </div>
         <div class="dv-voc-grid" id="dvVocGrid"></div>
       </div>
 
@@ -1777,13 +1799,13 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       <div class="dv-content" id="dvContent">
         <div class="dv-stage-block" id="dvStageBlock">
           <div class="dv-section-label">Stage
-            <button class="dv-hover-tab dv-hover-tab-inline" id="dvStageScaleTab" title="Resize stage positions">
+            <button class="dv-hover-tab dv-hover-tab-inline" id="dvStageScaleTab" title="Resize stage name/role text">
               <span class="dv-hover-tab-icon">⤢</span>
             </button>
           </div>
           <div class="dv-hover-popup" id="dvStageScalePopup">
-            <div class="dv-hover-popup-label">STAGE POSITION SIZE</div>
-            <div class="scale-control" id="dvStageScaleSlider" data-min="0.6" data-max="1.6" data-step="0.05" data-val="1">
+            <div class="dv-hover-popup-label">STAGE TEXT SIZE</div>
+            <div class="scale-control" id="dvStageScaleSlider" data-step="0.05" data-val="1">
               <button class="scale-btn minus" data-target="dvStageScaleSlider">−</button>
               <span class="scale-val" id="dvStageScaleValue">100%</span>
               <button class="scale-btn plus" data-target="dvStageScaleSlider">+</button>
@@ -1841,7 +1863,7 @@ body>*:not(.summary-overlay):not(#editView){display:none!important}
       </div>
       <div class="dv-hover-popup" id="dvRsScalePopupDv">
         <div class="dv-hover-popup-label">RUN SHEET SCALE</div>
-        <div class="scale-control" id="dvRsScaleSliderDv" data-min="0.7" data-max="1.5" data-step="0.05" data-val="1">
+        <div class="scale-control" id="dvRsScaleSliderDv" data-step="0.05" data-val="1">
           <button class="scale-btn minus" data-target="dvRsScaleSliderDv">−</button>
           <span class="scale-val" id="dvRsScaleValueDv">100%</span>
           <button class="scale-btn plus" data-target="dvRsScaleSliderDv">+</button>
@@ -1961,7 +1983,6 @@ const DEFAULT_STATE = {
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
     shadowPack: 'Misc 2 Pack',
     enableShadows: true, // shadows are always processed; retained as a harmless legacy field
-    tvMode: false,
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
     enableSetupItems: true, // toggled by wizard's setup-intro step; controls visibility of ✓ Items button
@@ -2276,7 +2297,6 @@ function loadState() {
             ? loadedConfig.customStagePoints.map(roundStagePoint)
             : null,
           stageFeatures: Array.isArray(loadedConfig.stageFeatures) ? loadedConfig.stageFeatures : [],
-          tvMode: !!loadedConfig.tvMode,
           personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           micPrefs: normalizeMicPrefs(loadedConfig, p),
           display: {
@@ -2328,8 +2348,7 @@ const VENUE_CONFIG_KEYS = [
   'vocalDirection', 'stageShape', 'stageCurvature', 'stageDepth',
   'customStagePositions', 'customStageEnabled', 'customStagePoints',
   'stageFeatures', 'stageAreas',
-  'voxIemPacks', 'iemPackPresets', 'shadowPack', 'enableShadows',
-  'tvMode'
+  'voxIemPacks', 'iemPackPresets', 'shadowPack', 'enableShadows'
 ];
 function vClone(v) { return v === undefined ? undefined : structuredClone(v); }
 // Slot template = an instrument minus its per-service assignment (assignedTo / vocalistPlayer).
@@ -2441,9 +2460,7 @@ function switchVenue(id) {
 // Re-apply everything that reads venue-specific config (used by the switcher UI in phase 2).
 function applyActiveVenueToUI() {
   if (typeof applyBrand === 'function') applyBrand();
-  document.body.classList.toggle('tv-mode', !!(state.config && state.config.tvMode));
-  if (typeof applyStagePositionScale === 'function') applyStagePositionScale();
-  if (typeof applyRunSheetScale === 'function') applyRunSheetScale();
+  if (typeof applyDisplaySectionScales === 'function') applyDisplaySectionScales();
   renderAll();
   renderVenueSwitcher();
   updateSettingsVenueTag();
@@ -5231,12 +5248,7 @@ function renderLayoutEditor() {
       <label class="cfg-toggle"><input type="checkbox" data-cfg="showMicCapsules" ${c.showMicCapsules?'checked':''} /><span>Show mic capsule type on vocalist cards (edit view + display view)</span></label>
     </div>
     <div class="field-group" style="margin-bottom:24px;">
-      <label class="field-label">Display mode</label>
-      <div style="display:flex;gap:8px;">
-        <label class="cfg-toggle" style="flex:1;justify-content:center;"><input type="radio" name="tvMode" value="computer" ${!c.tvMode?'checked':''} data-cfg-tvmode="false" /><span>Computer / Tablet</span></label>
-        <label class="cfg-toggle" style="flex:1;justify-content:center;"><input type="radio" name="tvMode" value="tv" ${c.tvMode?'checked':''} data-cfg-tvmode="true" /><span>TV / Projector</span></label>
-      </div>
-      <div class="field-help">TV / Projector uses more compact text — a large screen has room for more detail and it stays readable up close. Computer / Tablet uses larger text for small screens.</div>
+      <div class="field-help">Tip: in Display View, hover any section (title, stage, vocalist cards, service order) and click its ⤢ tab to resize that section's text. Sizes are saved per device.</div>
     </div>
 
     <div class="section-label" style="margin-bottom:10px;">Display View — What to Show</div>
@@ -5325,9 +5337,9 @@ function renderLayoutEditor() {
     <div style="margin-bottom:8px;">
       <label style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted);">
         <span style="min-width:90px;">Text size</span>
-        <div class="scale-control" data-rs-textscale data-min="0.7" data-max="1.6" data-step="0.05" data-val="${c.display.runSheet.textScale || 1.0}" style="flex:1;">
+        <div class="scale-control" data-rs-textscale data-step="0.05" data-val="${getDisplaySectionScale('runSheet')}" style="flex:1;">
           <button class="scale-btn minus" data-target="rs-textscale">−</button>
-          <span class="scale-val" id="rsTextScaleLabel">${Math.round((c.display.runSheet.textScale || 1.0) * 100)}%</span>
+          <span class="scale-val" id="rsTextScaleLabel">${Math.round(getDisplaySectionScale('runSheet') * 100)}%</span>
           <button class="scale-btn plus" data-target="rs-textscale">+</button>
         </div>
       </label>
@@ -5566,17 +5578,8 @@ function renderLayoutEditor() {
       if (e.target.dataset.cfg === 'showMicCapsules') renderLayoutEditor();
     });
   });
-  // Display-mode radios (Computer/Tablet vs TV/Projector). These previously had no handler,
-  // so the choice never took effect outside the setup wizard. Wire them to apply live.
-  el.querySelectorAll('[data-cfg-tvmode]').forEach(radio => {
-    radio.addEventListener('change', e => {
-      if (!e.target.checked) return;
-      c.tvMode = e.target.dataset.cfgTvmode === 'true';
-      document.body.classList.toggle('tv-mode', c.tvMode);
-      saveState();
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-  });
+  // (TV/Computer display-mode radios removed — display sizing is now per-section
+  // hover font-scalers in the display view. See setDisplaySectionScale.)
   // (The enable-shadows toggle was removed — shadows are always available.)
 
   // Block-display-until-setup-complete toggle
@@ -5714,39 +5717,89 @@ function renderLayoutEditor() {
       if (state.viewMode === 'display') renderDisplayView();
     });
   });
-  // Text scale control (+/- buttons)
+  // Text scale control (+/- buttons) — drives the per-device Service Order scale
+  // (same --rs-scale as the display-view rail tab). No clamp.
   const tsSlider = el.querySelector('[data-rs-textscale]');
   if (tsSlider) {
     const label = el.querySelector('#rsTextScaleLabel');
-    const minV = parseFloat(tsSlider.dataset.min) || 0.7;
-    const maxV = parseFloat(tsSlider.dataset.max) || 1.6;
     const stepV = parseFloat(tsSlider.dataset.step) || 0.05;
-    tsSlider.dataset.val = String(c.display.runSheet.textScale || 1.0);
+    tsSlider.dataset.val = String(getDisplaySectionScale('runSheet'));
     tsSlider.querySelectorAll('.scale-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        let cur = parseFloat(tsSlider.dataset.val) || (c.display.runSheet.textScale || 1.0);
-        if (btn.classList.contains('plus')) cur = Math.min(maxV, Math.round((cur + stepV) * 100) / 100);
-        else cur = Math.max(minV, Math.round((cur - stepV) * 100) / 100);
+        let cur = parseFloat(tsSlider.dataset.val) || getDisplaySectionScale('runSheet');
+        if (btn.classList.contains('plus')) cur = Math.round((cur + stepV) * 100) / 100;
+        else cur = Math.round((cur - stepV) * 100) / 100;
+        if (cur <= 0) cur = stepV;
         tsSlider.dataset.val = String(cur);
-        c.display.runSheet.textScale = cur;
+        setDisplaySectionScale('runSheet', cur);
         if (label) label.textContent = Math.round(cur * 100) + '%';
-        saveState();
-        applyRunSheetScale();
       });
     });
   }
-  applyRunSheetScale();
+  applyDisplaySectionScales();
 }
 
-// Apply the text scale to the display-view run sheet via a CSS variable
-function applyRunSheetScale() {
-  const scale = (state.config.display && state.config.display.runSheet && state.config.display.runSheet.textScale) || 1.0;
-  document.documentElement.style.setProperty('--rs-scale', String(scale));
+/* ===================== DISPLAY-VIEW SECTION FONT SCALERS =====================
+   Four independent per-device font-size scalers, one per display-view section:
+     title     → --dv-title-scale       (.dv-title / .dv-date)
+     stageText → --dv-stage-text-scale  (.dv-sp-role / .dv-sp-name)
+     voc       → --dv-voc-scale         (.dv-voc-* card text)
+     runSheet  → --rs-scale             (service-order rail text)
+   Stored per-device in localStorage (NOT in exportable state) so a booth machine's
+   preferred sizing doesn't travel with an exported JSON. No min/max clamp — the
+   operator can size each section arbitrarily small or large. */
+const DV_SCALE_KEY = 'stageAssign.v3.displayScales';
+const DV_SCALE_VARS = {
+  title:     '--dv-title-scale',
+  stageText: '--dv-stage-text-scale',
+  voc:       '--dv-voc-scale',
+  runSheet:  '--rs-scale'
+};
+const DV_SCALE_DEFAULTS = { title: 1.0, stageText: 1.0, voc: 1.0, runSheet: 1.0 };
+
+function loadDisplaySectionScales() {
+  try {
+    const raw = localStorage.getItem(DV_SCALE_KEY);
+    if (!raw) return { ...DV_SCALE_DEFAULTS };
+    const parsed = JSON.parse(raw) || {};
+    const out = { ...DV_SCALE_DEFAULTS };
+    Object.keys(DV_SCALE_DEFAULTS).forEach(k => {
+      const n = parseFloat(parsed[k]);
+      if (isFinite(n) && n > 0) out[k] = n;
+    });
+    return out;
+  } catch (e) { return { ...DV_SCALE_DEFAULTS }; }
 }
-function applyStagePositionScale() {
-  const scale = (state.config.display && state.config.display.stagePositionScale) || 1.0;
-  document.documentElement.style.setProperty('--dv-stage-scale', String(scale));
+function saveDisplaySectionScales(s) {
+  try { localStorage.setItem(DV_SCALE_KEY, JSON.stringify(s)); } catch (e) {}
 }
+// Push the stored scales onto the document as CSS custom properties.
+function applyDisplaySectionScales() {
+  const s = loadDisplaySectionScales();
+  const root = document.documentElement;
+  Object.keys(DV_SCALE_VARS).forEach(k => {
+    root.style.setProperty(DV_SCALE_VARS[k], String(s[k]));
+  });
+}
+// Set one section's scale (no clamp), persist per-device, and apply live.
+function setDisplaySectionScale(section, value) {
+  if (!DV_SCALE_VARS[section]) return;
+  let v = parseFloat(value);
+  if (!isFinite(v) || v <= 0) v = DV_SCALE_DEFAULTS[section];
+  const s = loadDisplaySectionScales();
+  s[section] = v;
+  saveDisplaySectionScales(s);
+  document.documentElement.style.setProperty(DV_SCALE_VARS[section], String(v));
+  return v;
+}
+function getDisplaySectionScale(section) {
+  return loadDisplaySectionScales()[section] || DV_SCALE_DEFAULTS[section] || 1.0;
+}
+
+// Back-compat shims: older call sites reference these names. Both now just
+// re-apply the per-device section scales.
+function applyRunSheetScale() { applyDisplaySectionScales(); }
+function applyStagePositionScale() { applyDisplaySectionScales(); }
 
 function renderBrandEditor() {
   const el = document.getElementById('brandEdit');
@@ -8123,15 +8176,14 @@ function renderDisplayView() {
     }
   }
 
-  // Wire display-view stage position scale slider each time the DOM is rebuilt
+  // Wire display-view stage TEXT scaler. The tab element is static markup (not
+  // rebuilt by renderDisplayView), so wireHoverSlider's _wired guard prevents
+  // stacking duplicate listeners across re-renders.
   wireHoverSlider(
     'dvStageScaleTab', 'dvStageScalePopup', 'dvStageScaleSlider', 'dvStageScaleValue',
-    () => (state.config.display && state.config.display.stagePositionScale) || 1.0,
-    (v) => {
-      if (!state.config.display) state.config.display = {};
-      state.config.display.stagePositionScale = v;
-    },
-    applyStagePositionScale,
+    () => getDisplaySectionScale('stageText'),
+    (v) => { setDisplaySectionScale('stageText', v); },
+    applyDisplaySectionScales,
     []
   );
 }
@@ -9681,7 +9733,6 @@ function startWizard() {
       showShadows: true,
       showRunSheet: true,
       vocalistRows: 'auto',  // 'auto' | '1'
-      tvMode: false,
       vocCardSize: 'medium',
       runSheetPosition: 'right'
     },
@@ -10951,18 +11002,6 @@ function renderWizardStepBody(step) {
             </button>
           </div>
 
-          <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Display device</div>
-          <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
-            <button class="wiz-stage-shape${!dl.tvMode ? ' selected' : ''}" data-dl-tv="false">
-              <div class="wiz-shape-label">💻 Computer / Tablet</div>
-              <div class="wiz-shape-sub">Standard sizing for a monitor</div>
-            </button>
-            <button class="wiz-stage-shape${dl.tvMode ? ' selected' : ''}" data-dl-tv="true">
-              <div class="wiz-shape-label">📺 TV / Projector</div>
-              <div class="wiz-shape-sub">Scaled down for large screens</div>
-            </button>
-          </div>
-
           <div class="section-label" style="margin-top:18px;margin-bottom:10px;">Card size</div>
           <div class="wiz-stage-shapes" style="grid-template-columns:repeat(3,1fr);margin-top:0;">
             <button class="wiz-stage-shape${(dl.vocCardSize||'medium')==='small'?' selected':''}" data-dl-cardsize="small">
@@ -11537,7 +11576,7 @@ function wireWizardStep(step) {
     }
   }
   if (step === 'display-layout') {
-    if (!wizardData.displayLayout) wizardData.displayLayout = { showStage:true, showBand:true, showHosts:true, showShadows:true, showRunSheet:true, vocalistRows:'auto', tvMode:false };
+    if (!wizardData.displayLayout) wizardData.displayLayout = { showStage:true, showBand:true, showHosts:true, showShadows:true, showRunSheet:true, vocalistRows:'auto' };
     const dl = wizardData.displayLayout;
     // Section visibility toggles
     body.querySelectorAll('[data-dl-key]').forEach(cb => {
@@ -11550,13 +11589,6 @@ function wireWizardStep(step) {
       btn.addEventListener('click', () => {
         dl.vocalistRows = btn.dataset.dlVrows;
         body.querySelectorAll('[data-dl-vrows]').forEach(b => b.classList.toggle('selected', b === btn));
-      });
-    });
-    // TV mode
-    body.querySelectorAll('[data-dl-tv]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        dl.tvMode = btn.dataset.dlTv === 'true';
-        body.querySelectorAll('[data-dl-tv]').forEach(b => b.classList.toggle('selected', b === btn));
       });
     });
     // Card size
@@ -11879,11 +11911,6 @@ function applyWizardChoices() {
     if (typeof dl.showShadows === 'boolean') state.config.display.showShadows = dl.showShadows;
     if (typeof dl.showRunSheet === 'boolean') state.config.display.showServiceOrder = dl.showRunSheet;
     if (dl.vocalistRows) state.config.display.vocalistRows = dl.vocalistRows;
-    if (typeof dl.tvMode === 'boolean') {
-      state.config.tvMode = dl.tvMode;
-      if (dl.tvMode) document.body.classList.add('tv-mode');
-      else document.body.classList.remove('tv-mode');
-    }
     if (dl.vocCardSize) state.config.display.vocCardSize = dl.vocCardSize;
     if (dl.runSheetPosition) state.config.display.runSheetPosition = dl.runSheetPosition;
 
@@ -11922,6 +11949,17 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
   const ctrlEl = document.getElementById(sliderId);
   const valueEl = document.getElementById(valueId);
   if (!tab || !popup || !ctrlEl) return;
+  // Guard against stacking listeners if this tab is re-wired (renderDisplayView
+  // re-invokes for the stage tab on every render). Re-sync the displayed value
+  // and bail if already wired.
+  if (tab._hoverWired) {
+    const cur = getValue();
+    if (ctrlEl.classList.contains('scale-control')) ctrlEl.dataset.val = String(cur);
+    else ctrlEl.value = String(cur);
+    if (valueEl) valueEl.textContent = Math.round(cur * 100) + '%';
+    return;
+  }
+  tab._hoverWired = true;
   const isScaleControl = ctrlEl.classList.contains('scale-control');
   const initial = getValue();
   // Initialize display
@@ -11959,8 +11997,12 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
   popup.addEventListener('click', e => e.stopPropagation());
 
   if (isScaleControl) {
-    const minV = parseFloat(ctrlEl.dataset.min) || 0.6;
-    const maxV = parseFloat(ctrlEl.dataset.max) || 1.6;
+    // Clamp ONLY when data-min / data-max are explicitly present. Section font
+    // scalers omit them so the operator can size arbitrarily small / large.
+    const hasMin = ctrlEl.dataset.min != null && ctrlEl.dataset.min !== '';
+    const hasMax = ctrlEl.dataset.max != null && ctrlEl.dataset.max !== '';
+    const minV = hasMin ? parseFloat(ctrlEl.dataset.min) : 0;   // floor at 0 to stay positive
+    const maxV = hasMax ? parseFloat(ctrlEl.dataset.max) : Infinity;
     const stepV = parseFloat(ctrlEl.dataset.step) || 0.05;
     ctrlEl.querySelectorAll('.scale-btn').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -11968,6 +12010,8 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
         let cur = parseFloat(ctrlEl.dataset.val) || getValue();
         if (btn.classList.contains('plus')) cur = Math.min(maxV, Math.round((cur + stepV) * 100) / 100);
         else cur = Math.max(minV, Math.round((cur - stepV) * 100) / 100);
+        // Never let an unclamped minus drive the scale to 0 or negative.
+        if (cur <= 0) cur = stepV;
         ctrlEl.dataset.val = String(cur);
         applyValue(cur);
       });
@@ -11993,9 +12037,7 @@ function init() {
   migrateLegacySetupBuckets(); // one-time: fold OLD volatile setup buckets into stable per-person keys
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
   renderVenueSwitcher();
-  applyRunSheetScale();
-  applyStagePositionScale();
-  if (state.config.tvMode) document.body.classList.add('tv-mode');
+  applyDisplaySectionScales();
   wireStageEditControls();
   document.getElementById('serviceDate').addEventListener('change', e => { state.service.date = e.target.value; saveState(); });
   document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
@@ -12029,31 +12071,39 @@ function init() {
 
   // wireHoverSlider is defined at module scope (above init)
 
-  // Edit-view run sheet scale slider (existing)
+  // --- Per-section display-view font scalers (per-device, no clamp) ---
+  // All three run-sheet scale tabs (edit-view + display-view rail) drive the same
+  // per-device --rs-scale via setDisplaySectionScale('runSheet', …).
+  const rsGet = () => getDisplaySectionScale('runSheet');
+  const rsSet = (v) => { setDisplaySectionScale('runSheet', v); };
   wireHoverSlider(
     'dvRsScaleTab', 'dvRsScalePopup', 'dvRsScaleSlider', 'dvRsScaleValue',
-    () => (state.config.display && state.config.display.runSheet && state.config.display.runSheet.textScale) || 1.0,
-    (v) => {
-      if (!state.config.display.runSheet) state.config.display.runSheet = {};
-      state.config.display.runSheet.textScale = v;
-    },
-    applyRunSheetScale,
+    rsGet, rsSet, applyDisplaySectionScales,
     [{ slider: 'dvRsScaleSliderDv', value: 'dvRsScaleValueDv' }]
   );
-
-  // Display-view run sheet scale slider (mirrors edit-view)
   wireHoverSlider(
     'dvRsScaleTabDv', 'dvRsScalePopupDv', 'dvRsScaleSliderDv', 'dvRsScaleValueDv',
-    () => (state.config.display && state.config.display.runSheet && state.config.display.runSheet.textScale) || 1.0,
-    (v) => {
-      if (!state.config.display.runSheet) state.config.display.runSheet = {};
-      state.config.display.runSheet.textScale = v;
-    },
-    applyRunSheetScale,
+    rsGet, rsSet, applyDisplaySectionScales,
     [{ slider: 'dvRsScaleSlider', value: 'dvRsScaleValue' }]
   );
 
-  // Display-view stage position scale slider — wired in renderDisplayView() so it survives re-renders
+  // Title text scaler (display-view header)
+  wireHoverSlider(
+    'dvTitleScaleTab', 'dvTitleScalePopup', 'dvTitleScaleSlider', 'dvTitleScaleValue',
+    () => getDisplaySectionScale('title'),
+    (v) => { setDisplaySectionScale('title', v); },
+    applyDisplaySectionScales, []
+  );
+
+  // Vocalist card text scaler
+  wireHoverSlider(
+    'dvVocScaleTab', 'dvVocScalePopup', 'dvVocScaleSlider', 'dvVocScaleValue',
+    () => getDisplaySectionScale('voc'),
+    (v) => { setDisplaySectionScale('voc', v); },
+    applyDisplaySectionScales, []
+  );
+
+  // Display-view stage TEXT scaler — wired in renderDisplayView() so it survives re-renders
 
   document.getElementById('setupItemsBtn').addEventListener('click', openSetupChecklistView);
   // Hide ✓ Items button if user opted out
