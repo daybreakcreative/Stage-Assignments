@@ -1962,6 +1962,7 @@ const DEFAULT_STATE = {
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
   hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'', hh3IsBaptismal:false },
+  hostMics: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' },  // assigned mic per host slot (per-service, like assignments)
   notes: '',
   serviceOrder: [],
   inventory: structuredClone(DEFAULT_INVENTORY),
@@ -2286,6 +2287,7 @@ function loadState() {
       return { ...DEFAULT_STATE, ...p,
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: { ...DEFAULT_STATE.hosts, ...(p.hosts||{}) },
+        hostMics: { ...DEFAULT_STATE.hostMics, ...(p.hostMics||{}) },
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
         pcoBaseline: (p.pcoBaseline && typeof p.pcoBaseline === 'object') ? p.pcoBaseline : null,
         brand: { ...DEFAULT_STATE.brand, ...(p.brand||{}) },
@@ -2959,6 +2961,23 @@ function assignMicsToVocalists() {
     const p = micPrefFor(v.name);
     if (!p || !p.remembered) setMicRemembered(v.name, got);
   });
+  // Host mics — assigned AFTER vocalists, BEFORE shadows, from the same shared pool.
+  // Named hosts (speaker → welcomeHost1 → welcomeHost2 → hh3, in slot order) each get:
+  //   1) their locked mic if any (claimed even if a "better" mic is free),
+  //   2) else their remembered mic if still free,
+  //   3) else the best remaining mic.
+  // An unnamed slot (or no mic left) records ''.
+  if (!state.hostMics || typeof state.hostMics !== 'object') state.hostMics = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
+  ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(slot => {
+    const name = ((state.hosts && state.hosts[slot]) || '').trim();
+    if (!name) { state.hostMics[slot] = ''; return; }
+    const p = micPrefFor(name);
+    let got = null;
+    if (p && p.lock) got = claim(p.lock);
+    if (!got && p && p.remembered) got = claim(p.remembered);
+    if (!got) got = bestMic();
+    state.hostMics[slot] = got || '';
+  });
   // Shadow mics — lowest priority of all. A shadow only gets a mic if its setup is
   // "on stage with a mic", and it always takes the LOWEST-ranked mic still free, drawn
   // from this same pool so it's reserved (a vocalist can never be handed a shadow's mic).
@@ -3585,6 +3604,7 @@ function renderBand() {
 
 /* ===================== HOSTS / SERVICE ===================== */
 function renderHosts() {
+  if (!state.hostMics || typeof state.hostMics !== 'object') state.hostMics = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
   ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -3599,6 +3619,31 @@ function renderHosts() {
         if (b) b.style.display = 'none';
       }
       saveState();
+    };
+    // On blur, reassign mics (a newly named host now claims from the pool) and re-render so
+    // the per-host mic dropdown appears. Deferred to blur to avoid disrupting the input.
+    el.onblur = () => { assignMicsToVocalists(); renderAll(); };
+    // Per-host mic control (only when the slot has a name). Blank = auto (clears the lock).
+    const row = el.closest('.host-row');
+    if (!row) return;
+    let sel = row.querySelector('.host-mic-select');
+    const name = (state.hosts[id] || '').trim();
+    if (!name) { if (sel) sel.remove(); return; }
+    if (!sel) {
+      sel = document.createElement('select');
+      sel.className = 'host-mic-select mic-select';
+      sel.title = 'Host mic — blank = auto';
+      row.appendChild(sel);
+    }
+    const pref = micPrefFor(name) || {};
+    const current = pref.lock || state.hostMics[id] || '';
+    sel.innerHTML = `<option value="">🎤 Auto</option>` +
+      state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===current?' selected':''}>${esc(m.name)}</option>`).join('');
+    sel.dataset.host = id;
+    sel.onchange = (e) => {
+      setMicLock((state.hosts[id] || '').trim(), e.target.value || null);
+      assignMicsToVocalists();
+      renderAll();
     };
   });
   // Show baptism badge on HH3 when applicable
@@ -7683,16 +7728,20 @@ function fillSummary() {
   });
   const hhList = document.getElementById('s_hhList');
   hhList.innerHTML = '';
+  const _hm = state.hostMics || {};
   [
-    {pos:'Pastor',name:state.hosts.speaker},
-    {pos:'HH 1',name:state.hosts.welcomeHost1},
-    {pos:'HH 2',name:state.hosts.welcomeHost2},
-    {pos:'HH 3',name:state.hosts.hh3, baptism:state.hosts.hh3IsBaptismal}
+    {pos:'Pastor',name:state.hosts.speaker, mic:_hm.speaker},
+    {pos:'HH 1',name:state.hosts.welcomeHost1, mic:_hm.welcomeHost1},
+    {pos:'HH 2',name:state.hosts.welcomeHost2, mic:_hm.welcomeHost2},
+    {pos:'HH 3',name:state.hosts.hh3, baptism:state.hosts.hh3IsBaptismal, mic:_hm.hh3}
   ].forEach(h => {
     if (!h.name) return;
     const li = document.createElement('li');
     li.className = 's-item';
-    const detail = h.baptism ? '<span style="color:#3a8bd5;font-family:var(--ff-mono);font-size:.78em;font-weight:700;letter-spacing:.08em;">💧 BAPTISM</span>' : '';
+    const dbits = [];
+    if (h.mic) dbits.push(`🎤 ${esc(h.mic)}`);
+    if (h.baptism) dbits.push('<span style="color:#3a8bd5;font-family:var(--ff-mono);font-size:.78em;font-weight:700;letter-spacing:.08em;">💧 BAPTISM</span>');
+    const detail = dbits.join(' ');
     li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail">${detail}</span>`;
     hhList.appendChild(li);
   });
@@ -7815,10 +7864,12 @@ function copySummaryText() {
     lines.push(`  ${inst.label}${md}: ${n||'—'}  (${iemPackFor(inst)})`);
   });
   lines.push('', 'HANDHELDS');
-  if (state.hosts.speaker)      lines.push(`  Pastor:  ${state.hosts.speaker}`);
-  if (state.hosts.welcomeHost1) lines.push(`  HH 1:    ${state.hosts.welcomeHost1}`);
-  if (state.hosts.welcomeHost2) lines.push(`  HH 2:    ${state.hosts.welcomeHost2}`);
-  if (state.hosts.hh3)          lines.push(`  HH 3:    ${state.hosts.hh3}${state.hosts.hh3IsBaptismal?' [BAPTISM]':''}`);
+  const hmt = state.hostMics || {};
+  const hmSuffix = m => m ? `  (${m})` : '';
+  if (state.hosts.speaker)      lines.push(`  Pastor:  ${state.hosts.speaker}${hmSuffix(hmt.speaker)}`);
+  if (state.hosts.welcomeHost1) lines.push(`  HH 1:    ${state.hosts.welcomeHost1}${hmSuffix(hmt.welcomeHost1)}`);
+  if (state.hosts.welcomeHost2) lines.push(`  HH 2:    ${state.hosts.welcomeHost2}${hmSuffix(hmt.welcomeHost2)}`);
+  if (state.hosts.hh3)          lines.push(`  HH 3:    ${state.hosts.hh3}${state.hosts.hh3IsBaptismal?' [BAPTISM]':''}${hmSuffix(hmt.hh3)}`);
   // IEM Packs
   lines.push('', 'IEM PACKS');
   state.instruments.forEach(inst => {
@@ -7963,15 +8014,19 @@ function renderDisplayView() {
     // Move blocks into order (remove dividers, re-insert blocks with dividers between them)
     const divBH = document.getElementById('dvDividerBandHosts');
     const divHS = document.getElementById('dvDividerHostsShadows');
-    // Detach all side blocks and dividers
+    // Detach all side blocks and dividers. Hold references to the detached blocks so we can
+    // re-append them without a second getElementById — that second lookup returns null in
+    // jsdom after removeChild (id-cache bug) and silently drops the block from the panel.
+    const blockRefs = {};
     ['dvBandBlock','dvHostsBlock','dvShadowsBlock'].forEach(id => {
-      const el2 = document.getElementById(id); if (el2 && el2.parentNode === dvSideEl) dvSideEl.removeChild(el2);
+      const el2 = document.getElementById(id);
+      if (el2) { blockRefs[id] = el2; if (el2.parentNode === dvSideEl) dvSideEl.removeChild(el2); }
     });
     if (divBH && divBH.parentNode === dvSideEl) dvSideEl.removeChild(divBH);
     if (divHS && divHS.parentNode === dvSideEl) dvSideEl.removeChild(divHS);
     // Re-append in order with dividers between visible sections
     visibleSections.forEach((sec, idx) => {
-      const blockEl = document.getElementById(blockMap[sec]);
+      const blockEl = blockRefs[blockMap[sec]] || document.getElementById(blockMap[sec]);
       if (blockEl) dvSideEl.appendChild(blockEl);
       if (idx < visibleSections.length - 1) {
         // Create a fresh divider element for between-section gaps
@@ -8106,14 +8161,19 @@ function renderDisplayView() {
     if (bandList) bandList.appendChild(li);
   });
 
-  // Hosts list
-  const hostsList = document.getElementById('dvHostsList');
+  // Hosts list. Resolve resiliently: the side-block re-order above detaches/re-appends
+  // #dvHostsBlock, which trips jsdom's id cache so document.getElementById('dvHostsList')
+  // returns null for a still-present node. Walk from the (freshly re-attached) block first.
+  const dvHostsBlockEl = document.getElementById('dvHostsBlock');
+  const hostsList = (dvHostsBlockEl && dvHostsBlockEl.querySelector('.dv-list'))
+    || document.getElementById('dvHostsList') || null;
   if (hostsList) hostsList.innerHTML = '';
+  const hm = state.hostMics || {};
   const hosts = [
-    { pos:'Pastor', name:state.hosts.speaker },
-    { pos:'HH 1',   name:state.hosts.welcomeHost1 },
-    { pos:'HH 2',   name:state.hosts.welcomeHost2 },
-    { pos:'HH 3',   name:state.hosts.hh3, baptism: state.hosts.hh3IsBaptismal }
+    { pos:'Pastor', name:state.hosts.speaker,       mic: hm.speaker },
+    { pos:'HH 1',   name:state.hosts.welcomeHost1,  mic: hm.welcomeHost1 },
+    { pos:'HH 2',   name:state.hosts.welcomeHost2,  mic: hm.welcomeHost2 },
+    { pos:'HH 3',   name:state.hosts.hh3, baptism: state.hosts.hh3IsBaptismal, mic: hm.hh3 }
   ];
   let anyHost = false;
   hosts.forEach(h => {
@@ -8121,7 +8181,10 @@ function renderDisplayView() {
     anyHost = true;
     const li = document.createElement('li');
     li.className = 'dv-list-item';
-    const detail = h.baptism ? '<span class="baptism-tag">💧 Baptism</span>' : '';
+    const bits = [];
+    if (h.mic) bits.push(`🎤 ${esc(h.mic)}`);
+    if (h.baptism) bits.push('<span class="baptism-tag">💧 Baptism</span>');
+    const detail = bits.join(' ');
     li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(formatDisplayName(h.name))}</span><span class="detail">${detail}</span>`;
     if (hostsList) hostsList.appendChild(li);
   });
