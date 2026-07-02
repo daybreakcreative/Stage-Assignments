@@ -15,6 +15,9 @@ const vmics=()=>ev('state.vocalists.map(v=>v.micAssigned)');
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}');
  const setup=(nVoc,shadows)=>{
+   // NOTE: enableShadows is now a harmless legacy field — shadows are always processed
+   // regardless (see tests/shadowflow.js). Setting it here is a no-op but kept so this
+   // suite's assertions remain unchanged.
    ev('state.config.enableShadows=true; state.config.micPrefs={leaderMics:[],people:{}}; state.config.iemPackPresets=["Misc 2 Pack","Drum Pack"]');
    ev('state.inventory=[{name:"KMS105",total:1,rank:1},{name:"SM58",total:1,rank:2},{name:"PG58",total:1,rank:3}]'); // 3 mics, PG58 lowest
    const vs=[]; for(let i=0;i<nVoc;i++) vs.push(`{id:"v${i}",name:"V${i}",isWL:${i===0},leadsSongs:${i===0},micAssigned:""}`);

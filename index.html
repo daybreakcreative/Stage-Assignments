@@ -1960,7 +1960,7 @@ const DEFAULT_STATE = {
     voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
     shadowPack: 'Misc 2 Pack',
-    enableShadows: false, // off by default; user opts in via Advanced Settings → Display
+    enableShadows: true, // shadows are always processed; retained as a harmless legacy field
     tvMode: false,
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
@@ -2262,10 +2262,9 @@ function loadState() {
           voxIemPacks: voxPacks,
           iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
           shadowPack: loadedConfig.shadowPack || 'Misc 2 Pack',
-          // Existing users with shadows: keep them enabled. Brand-new users: off by default.
-          enableShadows: typeof loadedConfig.enableShadows === 'boolean'
-            ? loadedConfig.enableShadows
-            : (Array.isArray(p.shadows) && p.shadows.length > 0),
+          // Shadows are always processed now (no user toggle). Retained as a harmless
+          // legacy field; force true so any lingering read stays consistent.
+          enableShadows: true,
           blockDisplayUntilSetup: typeof loadedConfig.blockDisplayUntilSetup === 'boolean' ? loadedConfig.blockDisplayUntilSetup : true,
           enableSetupItems: typeof loadedConfig.enableSetupItems === 'boolean' ? loadedConfig.enableSetupItems : true,
           displayNameFormat: ['full','first-initial','first','initials'].includes(loadedConfig.displayNameFormat) ? loadedConfig.displayNameFormat : 'full',
@@ -2934,7 +2933,7 @@ function assignMicsToVocalists() {
   // Shadow mics — lowest priority of all. A shadow only gets a mic if its setup is
   // "on stage with a mic", and it always takes the LOWEST-ranked mic still free, drawn
   // from this same pool so it's reserved (a vocalist can never be handed a shadow's mic).
-  if (state.config.enableShadows) {
+  {
     (state.shadows || []).forEach(sh => {
       if (!sh) return;
       if (shadowNeedsMic(sh.setup) && pool.length) {
@@ -3202,8 +3201,8 @@ function renderVocalists() {
     grid.appendChild(card);
   }
 
-  // Shadow cards — only rendered when shadows are enabled in config
-  const shadowsEnabled = !!state.config.enableShadows;
+  // Shadow cards — shadows are always available (no enable toggle).
+  const shadowsEnabled = true;
   // Show/hide the "+ Shadow" link in the hero header
   const addShadowLink = document.getElementById('addShadowLink');
   if (addShadowLink) addShadowLink.style.display = shadowsEnabled ? '' : 'none';
@@ -5211,16 +5210,11 @@ function renderLayoutEditor() {
     </div>
 
     <div class="section-label" style="margin-bottom:10px;">Shadows</div>
-    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Shadow vocalists fill in extra harmonies without being on stage. They get an IEM pack but no mic. Off by default.</p>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:${c.enableShadows ? '14' : '24'}px;">
-      <label class="cfg-toggle"><input type="checkbox" data-cfg-shadows ${c.enableShadows?'checked':''} /><span>Enable Shadow positions</span></label>
+    <p class="subtitle" style="margin-bottom:14px;font-size:12px;">Shadows are people learning a position (vocal or instrument). They always get asked, on each pull, what they need this week — a mic or just an IEM pack, and which pack. Add them with <strong>+ Shadow</strong> in the vocalist area or via a "Shadow" position in Planning Center.</p>
+    <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
+      <span class="iem-lbl">Default Shadow IEM Pack</span>
+      <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
     </div>
-    ${c.enableShadows ? `
-      <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
-        <span class="iem-lbl">Shadow IEM Pack</span>
-        <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
-      </div>
-    ` : ''}
 
     <div class="section-label" style="margin-bottom:10px;">✓ Items checklist</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">The <strong>✓ Items</strong> page is your per-musician setup checklist for each service. These options affect how it behaves.</p>
@@ -5306,7 +5300,7 @@ function renderLayoutEditor() {
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
       ${[
         ['showStage','Stage diagram'],
-        ...(c.enableShadows ? [['showShadows','Shadows list']] : []),
+        ['showShadows','Shadows list'],
         ['showBand','Band list (sidebar)'],
         ['showHosts','Handhelds list (sidebar)'],
         ['showServiceOrder','Service Order / Run Sheet']
@@ -5583,23 +5577,7 @@ function renderLayoutEditor() {
       if (state.viewMode === 'display') renderDisplayView();
     });
   });
-  // Enable Shadows master toggle — also re-renders the layout editor to show/hide sub-rows
-  const shToggle = el.querySelector('[data-cfg-shadows]');
-  if (shToggle) {
-    shToggle.addEventListener('change', e => {
-      c.enableShadows = e.target.checked;
-      // If turning OFF and shadows exist, ask for confirmation since their data will stay but be hidden
-      if (!c.enableShadows && state.shadows.length > 0) {
-        // Don't delete — just hide. The data persists in case they re-enable.
-        toast('Shadow positions hidden — your existing shadows are still saved', 'success');
-      } else if (c.enableShadows) {
-        toast('Shadow positions enabled — use "+ Shadow" in the vocalist area to add', 'success');
-      }
-      saveState();
-      renderLayoutEditor();
-      renderAll();
-    });
-  }
+  // (The enable-shadows toggle was removed — shadows are always available.)
 
   // Block-display-until-setup-complete toggle
   const blockToggle = el.querySelector('[data-cfg-blockdisplay]');
@@ -6781,12 +6759,12 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     console.log(`  "${positionName}" → ${name} → ${cls.kind}${cls.host?'/'+cls.host:''}${cls.position?'/'+cls.position:''}`);
     if (cls.kind === 'ignore') return;
     if (cls.kind === 'shadow') {
-      // If shadows are disabled in config, ignore these PCO assignments entirely
-      if (!state.config.enableShadows) return;
+      // Shadows are always processed (no enable toggle).
       if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normFullName(s.name) === normFullName(name))) {
         state.shadows.push({
           id: 'sh_'+Math.random().toString(36).slice(2,8),
           name,
+          position: positionName,
           pack: state.config.shadowPack || 'Misc 2 Pack'
         });
       }
@@ -7049,6 +7027,7 @@ function derivePcoModel(planData, tmRes, itemsRes) {
       name,
       kind: cls.kind === 'md_flag' ? 'md' : cls.kind,   // vocalist|band|host|shadow|md
       position: cls.position || '',
+      positionName: a.team_position_name || '',          // raw PCO position label (e.g. "EG Shadow")
       host: cls.host || '',
       isWL: !!cls.isWL,
       leadsSongs: !!cls.leadsSongs,
@@ -7198,10 +7177,10 @@ function pcoAddHost(p) {
 }
 
 function pcoAddShadow(p) {
-  if (!state.config.enableShadows) return;
+  // Shadows are always processed (no enable toggle).
   if (state.shadows.length >= (typeof MAX_SHADOWS !== 'undefined' ? MAX_SHADOWS : 6)) return;
   if (state.shadows.some(s => normFullName(s.name) === normFullName(p.name))) return;
-  state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, pack: state.config.shadowPack || 'Misc 2 Pack' });
+  state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, position: p.positionName || '', pack: state.config.shadowPack || 'Misc 2 Pack' });
 }
 
 function pcoAddPerson(p) {
@@ -8650,9 +8629,14 @@ function enumerateSetupRoles() {
   // Vocalists first (matches the check-off ordering).
   (state.vocalists || []).forEach(v => push(v.name, 'vocalist', 'vocals', 'Vocals'));
 
-  // Shadows (only when the feature is on and any exist).
-  if (state.config && state.config.enableShadows && Array.isArray(state.shadows)) {
-    state.shadows.forEach(s => push(s.name, 'shadow', null, 'Shadow'));
+  // Shadows: only on-stage PLAYING instrumental shadows carry setup. A shadow who is
+  // observing / IEM-only / off-stage (or any vocal shadow) has no setup bucket.
+  if (Array.isArray(state.shadows)) {
+    state.shadows.forEach(s => {
+      if (!s || !(s.name || '').trim()) return;
+      const typeKey = shadowSetupTypeKey(s);
+      if (typeKey && shadowNeedsSetup(s.setup)) push(s.name, 'shadow', typeKey, 'Shadow');
+    });
   }
 
   // Band — one entry per assigned instrument, skipping vocalist-played ones.
@@ -8716,16 +8700,23 @@ function getStageAreas() {
     });
   }
 
-  // Shadows area (if enabled and any exist)
-  if (state.config.enableShadows && state.shadows && state.shadows.length > 0) {
+  // Shadows area (always available; shown when any exist). Only an on-stage PLAYING
+  // instrumental shadow carries a real instrument typeKey (and thus a seeded setup
+  // bucket + editor). Every other shadow (vocal, IEM-only, observing, off-stage) has
+  // typeKey null — visible in the list but with no setup.
+  if (state.shadows && state.shadows.length > 0) {
     const shadowPeople = state.shadows
       .filter(s => s.name && s.name.trim())
-      .map(s => ({
-        name: s.name.trim(),
-        key: stableFor(s.name.trim(), 'shadow', null),
-        typeKey: null,
-        role: 'shadow'
-      }));
+      .map(s => {
+        const instTypeKey = shadowSetupTypeKey(s);
+        const typeKey = (instTypeKey && shadowNeedsSetup(s.setup)) ? instTypeKey : null;
+        return {
+          name: s.name.trim(),
+          key: stableFor(s.name.trim(), 'shadow', typeKey),
+          typeKey,
+          role: 'shadow'
+        };
+      });
     if (shadowPeople.length > 0) {
       areas.push({
         id: 'area_shadows',
@@ -9754,6 +9745,32 @@ function classifyShadowPosition(positionName) {
   return { isShadow: true, kind: 'vocalist' };
 }
 
+// Map a shadow's classified impliedRole (from classifyShadowPosition) to a setup
+// preset key (drums/bass/eg/ag/keys/strings). Returns null for vocal / unknown
+// shadows (they carry no instrument setup).
+function shadowImpliedRoleToTypeKey(impliedRole) {
+  return ({
+    drums: 'drums',
+    bass: 'bass',
+    keys: 'keys',
+    acoustic: 'ag',
+    electric: 'eg',
+    strings: 'strings'
+  })[impliedRole] || null;
+}
+
+// Derive the instrument setup typeKey for a shadow record from its stored position
+// label (e.g. "EG Shadow" → 'eg'). Vocal / plain "Shadow" → null.
+function shadowSetupTypeKey(sh) {
+  if (!sh) return null;
+  const cls = classifyShadowPosition(sh.position || sh.label || '');
+  if (!cls.isShadow || cls.kind !== 'band') return null;
+  return shadowImpliedRoleToTypeKey(cls.impliedRole);
+}
+
+// An on-stage-PLAYING instrumental shadow needs setup; every other choice does not.
+function shadowNeedsSetup(choice) { return choice === 'on-stage-playing'; }
+
 // Build the list of popup steps from current state.
 // Each step is { kind: 'pref-vocal'|'pref-band'|'shadow', personName, ... }
 function buildPostPullSteps(planContext) {
@@ -10005,11 +10022,23 @@ function renderPostPullStep() {
     ];
     const options = isVocalist ? vocalistOptions : bandOptions;
     const selectedKey = prev && prev.choice ? prev.choice : null;
+    // IEM pack picker — always asked for both vocal and instrument shadows. Pre-select the
+    // shadow's current pack, else the church's default shadow pack.
+    const shRec = step.shadowId ? state.shadows.find(s => s.id === step.shadowId) : null;
+    const curPack = (shRec && shRec.pack) || state.config.shadowPack || 'Misc 2 Pack';
+    const packPresets = (state.config.iemPackPresets && state.config.iemPackPresets.length)
+      ? state.config.iemPackPresets : ['Misc 2 Pack'];
+    const packOptions = [
+      ...packPresets.map(p => `<option value="${esc(p)}"${p === curPack ? ' selected' : ''}>${esc(p)}</option>`),
+      (packPresets.indexOf(curPack) === -1 && curPack) ? `<option value="${esc(curPack)}" selected>${esc(curPack)} (custom)</option>` : ''
+    ].join('');
     content.innerHTML = `
       <div class="pp-step-person-tag">Shadow this week · ${esc(step.positionName)}</div>
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
       <p class="pp-step-sub">
-        Does ${esc(firstName(step.personName))} need a mic this week, or just an IEM pack?${prev ? ` <em>(last week: ${esc((options.find(o=>o.key===prev.choice)||{}).title || '—')})</em>` : ''}
+        ${isVocalist
+          ? `Does ${esc(firstName(step.personName))} need a mic this week, or just an IEM pack?`
+          : `Is ${esc(firstName(step.personName))} playing this week, or just watching with an IEM pack?`}${prev ? ` <em>(last week: ${esc((options.find(o=>o.key===prev.choice)||{}).title || '—')})</em>` : ''}
       </p>
       <div class="pp-options-grid" id="pp_shadow_opts">
         ${options.map(o => `
@@ -10018,6 +10047,10 @@ function renderPostPullStep() {
             <div class="pp-option-card-sub">${esc(o.sub)}</div>
           </button>
         `).join('')}
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label">IEM pack</div>
+        <select data-shadow-pack>${packOptions}</select>
       </div>
     `;
     // Wire shadow options
@@ -10078,6 +10111,14 @@ function savePostPullStep() {
   } else if (step.kind === 'shadow') {
     const selOpt = content.querySelector('[data-shadow-opt].selected');
     const choice = selOpt ? selOpt.dataset.shadowOpt : null;
+    const sh = state.shadows.find(s => normFullName(s.name) === nName)
+            || (step.shadowId ? state.shadows.find(s => s.id === step.shadowId) : null);
+    // Persist the position label onto the shadow record so its instrument type can be
+    // re-derived later (e.g. by the ✓ Items views) without the step context.
+    if (sh && step.positionName && !sh.position) sh.position = step.positionName;
+    // IEM pack is ALWAYS asked (vocal or instrument). Save it regardless of the mic/stage choice.
+    const packSel = content.querySelector('[data-shadow-pack]');
+    if (sh && packSel && packSel.value) sh.pack = packSel.value;
     if (choice) {
       state.shadowPreferences[nName] = {
         role: step.shadowKind,
@@ -10086,9 +10127,21 @@ function savePostPullStep() {
       };
       // Write the choice onto the shadow record. The actual mic (if any) is assigned by
       // assignMicsToVocalists() — a shadow always gets the lowest-priority free mic.
-      const sh = state.shadows.find(s => normFullName(s.name) === nName)
-              || (step.shadowId ? state.shadows.find(s => s.id === step.shadowId) : null);
       if (sh) sh.setup = choice;   // sh.mic is (re)computed by the assignment pass
+      // Instrumental shadow setup: an on-stage PLAYING shadow needs a setup checklist
+      // (seed a bucket keyed to their instrument type). Any other choice → no setup:
+      // remove any stale bucket so it doesn't linger in the ✓ Items views.
+      if (sh) {
+        const typeKey = shadowSetupTypeKey(sh);
+        if (typeKey) {
+          const setupKey = stableSetupKey(sh.name, 'shadow', typeKey);
+          if (shadowNeedsSetup(choice)) {
+            seedPersonSetup(setupKey, typeKey);
+          } else if (state.setupItems[setupKey]) {
+            delete state.setupItems[setupKey];
+          }
+        }
+      }
     }
   }
   saveState();
@@ -11785,11 +11838,10 @@ function applyWizardChoices() {
     state.assignments = computePositions(state.vocalists);
     assignMicsToVocalists();
   }
-  // 5. Enable Shadows (pre-create empty slots if shadowCount was set by a prior wizard run)
-  // NOTE: state.config.enableShadows is intentionally NOT set here — it must only be changed
-  // via Settings. The shadows wizard step was removed; wizardData.enableShadows is always false
-  // so setting it here would silently wipe the user's shadows-enabled preference.
-  if (state.config.enableShadows && wizardData.shadowCount > 0) {
+  // 5. Shadows (pre-create empty slots if shadowCount was set by a prior wizard run).
+  // Shadows are always processed now (no enable toggle); the shadows wizard step was removed,
+  // so wizardData.shadowCount is 0 in practice and this seeding rarely runs.
+  if (wizardData.shadowCount > 0) {
     // Only seed if there are no shadows already (don't blow away existing data)
     if (!Array.isArray(state.shadows) || state.shadows.length === 0) {
       state.shadows = [];
