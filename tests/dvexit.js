@@ -51,6 +51,26 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     const railZ = railTab ? parseInt(railTab[1],10) : 15;
     if (parseInt(cog[1],10) <= railZ) throw new Error('cog z-index ('+cog[1]+') not above scaler tab z-index ('+railZ+')');
   });
+  check('Exit/fullscreen cogs sit ABOVE the setup lock screen (so Exit always works)', ()=>{
+    const cog = parseInt(html.match(/\.display-cog\{[^}]*z-index:(\d+)/)[1],10);
+    const lock = html.match(/#setupLockScreen\s*\{[^}]*z-index:\s*(\d+)/);
+    const lockZ = lock ? parseInt(lock[1],10) : 100;
+    if (cog <= lockZ) throw new Error('cog z-index ('+cog+') not above lock screen z-index ('+lockZ+') — lock screen would eat Exit clicks');
+  });
+  check('display view does NOT highlight worship leaders on the vocal cards', ()=>{
+    // A WL vocalist rendered in display mode must not get the is-wl accent/badge.
+    ev("state.vocalists=[{id:'v1',name:'Grace',isWL:true}]; state.assignments=['v1'];");
+    ev("state.viewMode='display'; renderDisplayView();");
+    const wl = doc.querySelectorAll('#dvVocGrid .dv-voc-card.is-wl');
+    if (wl.length) throw new Error(wl.length+' WL-highlighted vocal card(s) in display view');
+    const cards = doc.querySelectorAll('#dvVocGrid .dv-voc-card');
+    if (!cards.length) throw new Error('no vocal cards rendered — test setup failed');
+  });
+  check('a build stamp is present so the booth can confirm it is on the latest deploy', ()=>{
+    const el = doc.getElementById('buildStamp');
+    if (!el) throw new Error('no #buildStamp element');
+    if (!/build\s+\d{4}-\d{2}-\d{2}/.test(el.textContent)) throw new Error('build stamp has no dated tag: "'+el.textContent+'"');
+  });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));

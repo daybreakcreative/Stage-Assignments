@@ -1045,8 +1045,10 @@ body.setup-items-mode .container{display:none}
 }
 body.display-mode .topbar,body.display-mode .pco-bar,body.display-mode .workspace,body.display-mode .toast{display:none!important}
 body.display-mode{overflow:hidden}
-.display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:40;font-family:var(--ff-mono);pointer-events:auto}
+.display-cog{position:absolute;top:14px;right:18px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:200;font-family:var(--ff-mono);pointer-events:auto}
 .display-cog:hover{background:var(--surface);border-color:var(--accent);color:var(--accent);transform:rotate(45deg)}
+/* Build stamp: lets the booth confirm it's on the latest deploy (rule out stale browser cache). Bump on each deploy. */
+#buildStamp{position:fixed;left:6px;bottom:5px;z-index:300;font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);opacity:.5;pointer-events:none;user-select:none}
 /* Display view layout — sizes driven by CSS variables so dividers can adjust them */
 .dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
 .dv-layout.has-rail{grid-template-columns:var(--dv-main-frac, 1fr) 8px var(--dv-rail-frac, minmax(320px, 33%))}
@@ -1753,6 +1755,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
+<div id="buildStamp">build 2026-07-02·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -7920,8 +7923,11 @@ function enterDisplayMode() {
 }
 function exitDisplayMode() {
   document.body.classList.remove('display-mode');
+  const lock = document.getElementById('setupLockScreen');
+  if (lock) lock.style.display = 'none';
   state.viewMode = 'setup';
   saveState();
+  renderAll();
 }
 function renderDisplayView() {
   const s = state.service;
@@ -8112,7 +8118,8 @@ function renderDisplayView() {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const card = document.createElement('div');
-    card.className = 'dv-voc-card' + (v.isWL ? ' is-wl' : '');
+    // Display view intentionally does NOT highlight worship leaders (no is-wl badge/accent).
+    card.className = 'dv-voc-card';
     const iemPackName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
     const showMic = state.config.showMicCapsules;
     const tags = vocalistInstrumentTags(v.id);
