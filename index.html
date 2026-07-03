@@ -6,7 +6,7 @@
 <title>Stage·Assign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Familjen+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d0e10;--bg-elev:#15171a;--bg-inset:#0a0b0d;--surface:#1c1e22;--surface-2:#23262b;--border:#2a2d33;--border-2:#3a3e46;--text:#e8e6e1;--text-muted:#8a8c92;--text-faint:#5a5c62;--accent:#d4a147;--accent-2:#e8b857;--accent-dim:rgba(212,161,71,.12);--wl:#e8b857;--leader:#c98b3d;--success:#7a9960;--danger:#b8614a;--pco:#4a90c2;--ff-display:'Fraunces',Georgia,serif;--ff-body:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;--ff-mono:'JetBrains Mono',ui-monospace,monospace}
 [data-theme="light"]{--bg:#fafaf8;--bg-elev:#ffffff;--bg-inset:#f0eee9;--surface:#ffffff;--surface-2:#f5f3ee;--border:#e2dfd8;--border-2:#c5c2bb;--text:#1a1a1a;--text-muted:#5a5a5a;--text-faint:#9a9a9a}
@@ -1230,6 +1230,55 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-content{grid-template-columns:1fr}
 }
 
+/* ===================== AURORA LOOK — opt-in via [data-look="aurora"] =====================
+   Classic (default, no data-look or data-look=classic) is unaffected. Aurora re-defines the
+   core tokens so existing var(--…) usages recolor; mood rules set --c1/--c2/--c3/--gd. */
+[data-look="aurora"]{
+  --ff-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --ff-body:'Familjen Grotesk',system-ui,sans-serif;
+  --mix:24%;
+  --bg:var(--gd);--bg-elev:rgba(255,255,255,.05);--bg-inset:rgba(255,255,255,.03);
+  --surface:rgba(255,255,255,.055);--surface-2:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.13);--border-2:rgba(255,255,255,.2);
+  --text:#eef2ff;--text-muted:#9aa3c4;--text-faint:#5c6488;
+  --accent:var(--c1);--accent-2:var(--c2);--accent-dim:color-mix(in srgb,var(--c1) 16%,transparent)}
+[data-look="aurora"][data-theme="light"]{
+  --mix:36%;--gd:#eef1f8;
+  --bg-elev:rgba(255,255,255,.6);--bg-inset:rgba(255,255,255,.5);
+  --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
+  --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
+  --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
+/* moods (PROVISIONAL set — trim/confirm to Dillon's gallery picks) */
+[data-look="aurora"][data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
+[data-look="aurora"][data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
+[data-look="aurora"][data-mood="vesper"]  {--c1:#9a86f5;--c2:#e6b45a;--c3:#6a8cff;--gd:#0b0913}
+[data-look="aurora"][data-mood="ember"]   {--c1:#ffb865;--c2:#ff8fa3;--c3:#ffd98a;--gd:#130c09}
+[data-look="aurora"][data-mood="northern"]{--c1:#4ade80;--c2:#2dd4bf;--c3:#a78bfa;--gd:#060f0c}
+[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:15%}
+/* mono moods: near-white accent would vanish on light — keep IEM readable */
+[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-voc-line .val,
+[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail{color:var(--text)}
+/* drifting aurora backdrop on the app ground (dark + light both) */
+[data-look="aurora"] body{
+  background:
+    radial-gradient(52% 60% at 12% 6%, color-mix(in srgb,var(--c1) var(--mix),transparent), transparent 60%),
+    radial-gradient(56% 66% at 90% 16%, color-mix(in srgb,var(--c2) var(--mix),transparent), transparent 62%),
+    radial-gradient(62% 62% at 58% 104%, color-mix(in srgb,var(--c3) calc(var(--mix) - 5%),transparent), transparent 60%),
+    var(--gd);
+  background-attachment:fixed;background-size:200% 200%;animation:auroraDrift 22s ease-in-out infinite}
+@keyframes auroraDrift{0%,100%{background-position:0% 0%,100% 0%,50% 100%}50%{background-position:22% 26%,72% 12%,42% 82%}}
+@media (prefers-reduced-motion:reduce){[data-look="aurora"] body{animation:none}}
+/* frosted glass for surfaces that were solid panels */
+[data-look="aurora"] .dv-voc-card,
+[data-look="aurora"] .dv-side-block,
+[data-look="aurora"] .voc-card,
+[data-look="aurora"] .setup-review-sheet{
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 34px rgba(0,0,0,.22)}
+/* glowing IEM + gradient section labels (the signature) */
+[data-look="aurora"][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
+[data-look="aurora"] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
 @media print{
 @page{size:letter;margin:.5in}
 html,body{background:white!important;overflow:visible;height:auto}
@@ -2081,7 +2130,9 @@ const DEFAULT_STATE = {
   savedStages: [],
   checklistState: {},
   viewMode: 'setup',
-  theme: 'dark'
+  theme: 'dark',
+  look: 'classic',        // 'classic' (current look) | 'aurora'
+  auroraMood: 'nebula'    // active Aurora color mood; ignored unless look==='aurora'
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -5441,6 +5492,16 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
+    <div class="section-label" style="margin-bottom:8px;">Look &amp; theme</div>
+    <div class="look-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <button class="btn ghost${state.look!=='aurora'?' primary':''}" data-look-opt="classic">Classic</button>
+      <button class="btn ghost${state.look==='aurora'?' primary':''}" data-look-opt="aurora">Aurora</button>
+    </div>
+    <div class="mood-picker" style="display:${state.look==='aurora'?'flex':'none'};gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+      ${AURORA_MOODS.map(m=>`<button class="btn ghost${state.auroraMood===m?' primary':''}" data-mood-opt="${m}" style="text-transform:capitalize;">${m}</button>`).join('')}
+    </div>
+    <p class="subtitle" style="margin:0 0 18px;font-size:11.5px;">Aurora is a luminous glass theme with color moods. Dark/light follows the ☾ button. (Moods here are provisional pending your picks.)</p>
+
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
       <label class="cfg-toggle"><input type="checkbox" data-display="allowEditorShadows" ${c.display.allowEditorShadows?'checked':''} /><span>Allow adding shadow positions from the editor</span></label>
@@ -5836,6 +5897,13 @@ function renderLayoutEditor() {
       if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
+  // Look & mood picker (Aurora is opt-in; re-render settings so the active chip + mood row update)
+  el.querySelectorAll('[data-look-opt]').forEach(b => b.addEventListener('click', e => {
+    setLook(e.currentTarget.dataset.lookOpt); renderLayoutEditor();
+  }));
+  el.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', e => {
+    setMood(e.currentTarget.dataset.moodOpt); renderLayoutEditor();
+  }));
   // Run sheet sub-toggles
   el.querySelectorAll('[data-rs]').forEach(cb => {
     cb.addEventListener('change', e => {
@@ -8482,6 +8550,31 @@ function setTheme(theme) {
 }
 function toggleTheme() {
   setTheme(state.theme === 'light' ? 'dark' : 'light');
+}
+
+// ---- Look + mood (Aurora is opt-in; classic = today's look, the default) ----
+// PROVISIONAL mood set so the switcher is reviewable; trim/confirm to Dillon's picks.
+const AURORA_MOODS = ['nebula','dusk','vesper','ember','northern','graphite'];
+function applyLook() {
+  const html = document.documentElement;
+  const look = (state.look === 'aurora') ? 'aurora' : 'classic';
+  html.setAttribute('data-look', look);
+  if (look === 'aurora') {
+    const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'nebula';
+    html.setAttribute('data-mood', mood);
+  } else {
+    html.removeAttribute('data-mood');
+  }
+}
+function setLook(look) {
+  state.look = (look === 'aurora') ? 'aurora' : 'classic';
+  applyLook(); saveState();
+  if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
+}
+function setMood(mood) {
+  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'nebula';
+  applyLook(); saveState();
+  if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
 }
 
 function applyBrand() {
@@ -12408,6 +12501,7 @@ function init() {
   // The first-run wizard handles their initial setup.
 
   setTheme(state.theme || 'dark');
+  applyLook();
   // Wire wizard buttons (always wire, even if not first-run, in case user re-launches via Advanced Settings)
   document.getElementById('wizardNextBtn').addEventListener('click', () => {
     if (wizardStepIdx < WIZARD_STEPS.length - 1) {
