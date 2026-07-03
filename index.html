@@ -1420,6 +1420,16 @@ body>*:not(.summary-overlay){display:none!important}
 .scv-item-dash { color:var(--text-faint); font-size:11px }
 .scv-item-text { font-size:13px; color:var(--text-muted); flex:1 }
 .scv-item-auto { font-size:9px; background:var(--bg-inset); border:1px solid var(--border); border-radius:8px; padding:1px 6px; color:var(--text-faint); font-family:var(--ff-mono) }
+/* Per-person cards inside a checklist section (grouped ✓ Items view) */
+.scv-person { background:var(--bg-elev); border:1px solid var(--border); border-radius:10px; overflow:hidden }
+.scv-person + .scv-person { margin-top:10px }
+.scv-person-head { display:flex; align-items:baseline; gap:10px; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--bg-inset) }
+.scv-person-name { font-size:13px; font-weight:700; color:var(--text) }
+.scv-person-role { font-size:11px; color:var(--text-muted); font-family:var(--ff-mono); letter-spacing:.02em }
+.scv-person-count { margin-left:auto; font-size:10px; color:var(--text-faint); font-family:var(--ff-mono) }
+.scv-person.all-done .scv-person-count { color:var(--accent) }
+.scv-person-items { display:flex; flex-direction:column; gap:6px; padding:10px 12px }
+.scv-person .scv-item { background:var(--surface) }
 .scv-footer { display:flex; gap:10px; justify-content:flex-end; padding:10px 20px; border-top:1px solid var(--border); flex-shrink:0; background:var(--bg-elev) }
 .scv-btn { padding:7px 18px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:13px; cursor:pointer }
 .scv-btn.primary { border-color:var(--accent); color:var(--accent) }
@@ -9459,29 +9469,42 @@ function collectChecklistItems() {
   // when items ARE configured — it reads the real buckets, not the dead legacy
   // v.setupItems / inst.setupItems arrays. Check-off keys are `stableKey|itemId`
   // so a check-off is stable across relabels and per (person, role, item).
+  // Each enumerated role becomes one "person card": a group keyed by stableKey with
+  // the person's name, their role/instrument label as a subheading, and their items.
+  // The flat `items` array on each section is preserved (badge, lock screen, mark-all/
+  // reset all iterate it) — `people` is the additive grouping the ✓ Items view renders.
   const rows = enumerateSetupRoles();
-  const vocItems = [];
-  const bandItems = [];
+  const vocItems = [], bandItems = [];
+  const vocPeople = [], bandPeople = [];
   rows.forEach(en => {
     const bucket = state.setupItems[en.stableKey];
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
+    const isVoc = en.role === 'vocalist';
+    const flatBucket = isVoc ? vocItems : bandItems;
+    const groupItems = [];
     items.forEach(it => {
       const text = it.text || '';
       if (!text) return;
       const rec = { personName: en.label + ' — ' + en.name, itemText: text, key: en.stableKey + '|' + it.id };
-      if (en.role === 'vocalist') vocItems.push(rec); else bandItems.push(rec);
+      flatBucket.push(rec);
+      groupItems.push({ itemText: text, key: rec.key });
     });
+    if (groupItems.length > 0) {
+      const person = { name: en.name, roleLabel: en.label, stableKey: en.stableKey, items: groupItems };
+      (isVoc ? vocPeople : bandPeople).push(person);
+    }
   });
   if (vocItems.length > 0) {
-    sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems });
+    sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
   }
   if (bandItems.length > 0) {
-    sections.push({ title: '🎸 BAND', key: 'band', items: bandItems });
+    sections.push({ title: '🎸 BAND', key: 'band', items: bandItems, people: bandPeople });
   }
 
   // --- Stage / tech section (auto-derived from placed monitor & DI/power fixtures) ---
   // Keyed by the fixture's stable id, so a check-off survives relabeling or moving it.
   const stageItems = [];
+  const stagePeople = [];
   const sFeats = (state.config && Array.isArray(state.config.stageFeatures)) ? state.config.stageFeatures : [];
   const sLabelCounts = {};
   sFeats.forEach(f => { if (FIXTURE_CHECKLIST_ACTIONS[f.type]) { const b = ((f.label || '').trim() || getFeatureDef(f.type).label); sLabelCounts[b] = (sLabelCounts[b] || 0) + 1; } });
@@ -9492,10 +9515,13 @@ function collectChecklistItems() {
     const base = (f.label || '').trim() || getFeatureDef(f.type).label;
     let name = base;
     if (sLabelCounts[base] > 1) { sLabelSeen[base] = (sLabelSeen[base] || 0) + 1; name = base + ' #' + sLabelSeen[base]; } // distinguish identical labels
-    stageItems.push({ personName: name, itemText: action, key: 'stage|' + f.id });
+    const key = 'stage|' + f.id;
+    stageItems.push({ personName: name, itemText: action, key });
+    // Each stage fixture is its own single-item "card" so the grouped view is uniform.
+    stagePeople.push({ name, roleLabel: 'Stage', stableKey: key, items: [{ itemText: action, key }] });
   });
   if (stageItems.length > 0) {
-    sections.push({ title: '🔌 STAGE', key: 'stage', items: stageItems });
+    sections.push({ title: '🔌 STAGE', key: 'stage', items: stageItems, people: stagePeople });
   }
 
   return sections;
@@ -9612,19 +9638,38 @@ function renderSetupChecklist() {
   if (sections.length === 0) {
     sectionsHtml = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">No setup items configured.<br>Add setup items to vocalists or band positions.</div>';
   } else {
-    sections.forEach(sec => {
-      const itemsHtml = sec.items.map(it => {
-        const isDone = !!cs[it.key];
-        return `<div class="scv-item${isDone ? ' done' : ''}" data-item-key="${esc(it.key)}">
+    const rowHtml = it => {
+      const isDone = !!cs[it.key];
+      return `<div class="scv-item${isDone ? ' done' : ''}" data-item-key="${esc(it.key)}">
           <div class="scv-checkbox">${isDone ? '✓' : ''}</div>
-          <span class="scv-item-person">${esc(it.personName)}</span>
-          <span class="scv-item-dash">—</span>
           <span class="scv-item-text">${esc(it.itemText)}</span>
         </div>`;
-      }).join('');
+    };
+    sections.forEach(sec => {
+      // One card per person (enumerated role). Header = name; subheading = role/instrument.
+      // Falls back to a flat list only if a section somehow lacks grouping.
+      const groups = Array.isArray(sec.people) ? sec.people : null;
+      let bodyHtml;
+      if (groups) {
+        bodyHtml = groups.map(p => {
+          const pTotal = p.items.length;
+          const pDone = p.items.filter(it => !!cs[it.key]).length;
+          const rows = p.items.map(rowHtml).join('');
+          return `<div class="scv-person${pTotal > 0 && pDone === pTotal ? ' all-done' : ''}">
+            <div class="scv-person-head">
+              <span class="scv-person-name">${esc(p.name)}</span>
+              <span class="scv-person-role">${esc(p.roleLabel)}</span>
+              <span class="scv-person-count">${pDone}/${pTotal}</span>
+            </div>
+            <div class="scv-person-items">${rows}</div>
+          </div>`;
+        }).join('');
+      } else {
+        bodyHtml = sec.items.map(rowHtml).join('');
+      }
       sectionsHtml += `<div class="scv-section">
         <div class="scv-section-title">${sec.title}</div>
-        ${itemsHtml}
+        ${bodyHtml}
       </div>`;
     });
   }

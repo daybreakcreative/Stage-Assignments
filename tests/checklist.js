@@ -77,6 +77,98 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!o['Mo|X|v0']) throw new Error('check-off lost on no-op rename');
  });
 
+ // ---- MD setup items surface in the checklist -------------------------------------
+ // Give the church a real MD default so the seeded md bucket has an item.
+ const seedMdDefault = () => ev(`
+   if(!state.config.setupDefaults) state.config.setupDefaults={};
+   state.config.setupDefaults.md={selections:{rig:['md_tracks','md_talk']},customOptions:[]};
+ `);
+
+ check('scheduled MD who plays Keys gets an MD role row with md items', ()=>{
+   ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
+   seedMdDefault();
+   ev(`state.instruments=[{id:'inst_k',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}]; state.musicDirectorId='inst_k';`);
+   const rows=JSON.parse(ev(`JSON.stringify(enumerateSetupRoles().map(r=>({name:r.name,role:r.role,typeKey:r.typeKey,label:r.label})))`));
+   const md=rows.find(r=>r.name==='Pat Reed' && r.typeKey==='md' && r.role==='md');
+   if(!md) throw new Error('no MD role row: '+JSON.stringify(rows));
+   if(md.label!=='MD') throw new Error('MD row label not MD: '+md.label);
+   const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
+   const band=secs.find(s=>s.key==='band');
+   if(!band) throw new Error('no band section');
+   const flatTexts=band.items.map(i=>i.itemText).join(' | ');
+   if(!/House tracks computer/.test(flatTexts)) throw new Error('md item text missing from checklist: '+flatTexts);
+ });
+
+ check('MD who also plays Keys: BOTH Keys items and MD items collected', ()=>{
+   ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
+   seedMdDefault();
+   ev(`if(!state.config.setupDefaults) state.config.setupDefaults={}; state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};`);
+   ev(`state.instruments=[{id:'inst_k2',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k2';`);
+   const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
+   const band=secs.find(s=>s.key==='band');
+   const people=band.people||[];
+   const daveGroups=people.filter(p=>p.name==='Dave Lee');
+   const keysGroup=daveGroups.find(p=>p.roleLabel==='Keys');
+   const mdGroup=daveGroups.find(p=>p.roleLabel==='MD');
+   if(!keysGroup) throw new Error('no Keys card for Dave: '+JSON.stringify(daveGroups));
+   if(!mdGroup) throw new Error('no MD card for Dave: '+JSON.stringify(daveGroups));
+   if(!keysGroup.items.some(i=>/Keyboard — House Keyboard/.test(i.itemText))) throw new Error('keys item missing: '+JSON.stringify(keysGroup.items));
+   if(!mdGroup.items.some(i=>/House tracks computer/.test(i.itemText))) throw new Error('md item missing: '+JSON.stringify(mdGroup.items));
+ });
+
+ // ---- Grouped-by-person rendering --------------------------------------------------
+ check('renderSetupChecklist groups items into per-person cards (not one flat list)', ()=>{
+   ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
+   seedMdDefault();
+   ev(`state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};`);
+   ev(`state.config.setupDefaults.vocals={selections:{options:['v_stand']},customOptions:[]};`);
+   ev(`state.vocalists=[{id:'vv',name:'Grace',isWL:false}];`);
+   ev(`state.instruments=[{id:'inst_k3',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k3';`);
+   ev(`openSetupChecklistView();`);
+   const view=window.document.getElementById('setupChecklistView');
+   const persons=view.querySelectorAll('.scv-person');
+   if(persons.length<2) throw new Error('expected >=2 person cards, got '+persons.length);
+   // Each card must have a name header and its own item rows.
+   const graceCard=Array.from(persons).find(c=>{const h=c.querySelector('.scv-person-name'); return h && h.textContent==='Grace';});
+   if(!graceCard) throw new Error('no Grace person card');
+   if(!graceCard.querySelector('.scv-person-role')) throw new Error('Grace card missing role subheading');
+   if(graceCard.querySelectorAll('.scv-item').length<1) throw new Error('Grace card has no check rows');
+ });
+
+ // ---- Check state persists across re-render ---------------------------------------
+ check('toggling an item persists in checklist state and survives a re-render', ()=>{
+   ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[]; state.pcoConfig.selectedPlanId='PLANMD';`);
+   seedMdDefault();
+   ev(`state.instruments=[{id:'inst_k4',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}]; state.musicDirectorId='inst_k4';`);
+   ev(`openSetupChecklistView();`);
+   const view=window.document.getElementById('setupChecklistView');
+   const first=view.querySelector('.scv-item');
+   if(!first) throw new Error('no items rendered');
+   const key=first.dataset.itemKey;
+   first.click(); // toggles + re-renders
+   const cs=JSON.parse(ev(`JSON.stringify(getChecklistState())`));
+   if(!cs[key]) throw new Error('check state not stored after click');
+   // re-render and confirm the same key shows done
+   ev(`renderSetupChecklist();`);
+   const again=window.document.querySelector('.scv-item[data-item-key="'+key.replace(/"/g,'\\"')+'"]');
+   if(!again || !again.classList.contains('done')) throw new Error('done state lost after re-render');
+ });
+
+ // ---- Lock-screen count still works ----------------------------------------------
+ check('collectChecklistItems flat shape intact + lock-screen count sane', ()=>{
+   ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
+   seedMdDefault();
+   ev(`state.instruments=[{id:'inst_k5',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}]; state.musicDirectorId='inst_k5';`);
+   const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
+   let total=0; secs.forEach(s=>{ if(!Array.isArray(s.items)) throw new Error('section lost flat items array: '+s.key); total+=s.items.length; });
+   if(total<1) throw new Error('expected some flat items, got '+total);
+   // showSetupLockScreen must not throw and must report remaining
+   ev(`openSetupChecklistView();`); // ensure planKey exists / view mounted
+   ev(`showSetupLockScreen();`);
+   const sub=window.document.getElementById('lockSubtitle');
+   if(!sub || !/item/.test(sub.textContent)) throw new Error('lock subtitle not populated: '+(sub&&sub.textContent));
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
