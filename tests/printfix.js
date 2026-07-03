@@ -44,6 +44,17 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     const ov = doc.getElementById('summaryOverlay');
     if (!ov || ov.parentElement !== doc.body) throw new Error('summaryOverlay is not a direct body child');
   });
+  check('print puts text first and the stage diagram LAST (flex order), stage unsplittable', ()=>{
+    if (!printCss) throw new Error('no @media print block');
+    const c = printCss.replace(/\s+/g,'');
+    if (!/\.summary-sheet\{[^}]*display:flex/.test(c)) throw new Error('summary-sheet not flex in print (needed for reorder)');
+    const grid = printCss.match(/\.s-grid\{[^}]*order:(\d+)/);
+    const stage = printCss.match(/\.s-stage-block\{[^}]*order:(\d+)/);
+    if (!grid || !stage) throw new Error('missing order on .s-grid or .s-stage-block');
+    if (parseInt(stage[1],10) <= parseInt(grid[1],10)) throw new Error('stage order ('+stage[1]+') not after text/grid order ('+grid[1]+')');
+    // The stage block must stay whole (declared on the base rule; keep it from splitting).
+    if (!/\.s-stage-block\{[^}]*(page-)?break-inside:avoid/.test(html.replace(/\s+/g,''))) throw new Error('.s-stage-block missing break-inside:avoid');
+  });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));

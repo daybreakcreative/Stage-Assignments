@@ -1248,8 +1248,18 @@ body>*:not(.summary-overlay){display:none!important}
 .s-item .name.is-wl::after{content:' (WL)';color:#333;font-size:.85em}
 .s-item .detail{font-size:9px;color:#444}
 .s-item.empty{display:none!important}
-#s_orderWrap{margin-bottom:8px;page-break-before:auto}
-.s-footer{margin-top:16px;padding-top:8px;border-top:1px solid black;color:#444;font-size:8px;letter-spacing:.1em}
+#s_orderWrap{margin-bottom:8px;page-break-before:auto;order:2}
+/* One-page-friendly print: text first, stage diagram LAST as an unsplittable block.
+   Small rosters fit on a single page; larger ones fill page 1 with text and move the
+   whole stage to page 2 — text is never shrunk or split across pages. */
+.summary-sheet{display:flex;flex-direction:column}
+.s-header{order:0}
+.s-grid{order:1}
+.s-stage-block{order:8;margin:8px 0 0}
+.s-stage-block h3{margin-bottom:4px}
+.s-stage-frame{min-height:0;margin:4px auto 0;background:white!important;border-color:#999}
+.s-stage-tags{color:#333;font-size:8px}
+.s-footer{margin-top:16px;padding-top:8px;border-top:1px solid black;color:#444;font-size:8px;letter-spacing:.1em;order:9}
 *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 /* Blank-PDF fix: backdrop-filter / filter / transform on the overlay & sheet composite fine in
    print PREVIEW but the PDF rasterizer drops them, producing a blank page. Neutralize them (and
@@ -1765,7 +1775,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-02·b</div>
+<div id="buildStamp">build 2026-07-02·c</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
