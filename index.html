@@ -2991,15 +2991,24 @@ function assignMicsToVocalists() {
   //   3) else the best remaining mic.
   // An unnamed slot (or no mic left) records ''.
   if (!state.hostMics || typeof state.hostMics !== 'object') state.hostMics = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
+  // A person can appear as both a vocalist and a host (or in two host slots). They carry ONE
+  // physical mic, so reuse the mic already assigned to that name this pass instead of claiming a
+  // second one from the shared pool — otherwise inventory is double-counted and the two sections
+  // disagree. Vocalists are keyed by id, hosts by name; bridge them by normalized name.
+  const micByName = {};
+  state.vocalists.forEach(v => { const n = normName(v.name); if (n && v.micAssigned) micByName[n] = v.micAssigned; });
   ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(slot => {
     const name = ((state.hosts && state.hosts[slot]) || '').trim();
     if (!name) { state.hostMics[slot] = ''; return; }
+    const key = normName(name);
+    if (key && micByName[key]) { state.hostMics[slot] = micByName[key]; return; }  // same person already has a mic → reuse it
     const p = micPrefFor(name);
     let got = null;
     if (p && p.lock) got = claim(p.lock);
     if (!got && p && p.remembered) got = claim(p.remembered);
     if (!got) got = bestMic();
     state.hostMics[slot] = got || '';
+    if (key && got) micByName[key] = got;  // a later same-name host slot reuses this
   });
   // Shadow mics — lowest priority of all. A shadow only gets a mic if its setup is
   // "on stage with a mic", and it always takes the LOWEST-ranked mic still free, drawn
@@ -3659,9 +3668,15 @@ function renderHosts() {
       row.appendChild(sel);
     }
     const pref = micPrefFor(name) || {};
-    const current = pref.lock || state.hostMics[id] || '';
-    sel.innerHTML = `<option value="">🎤 Auto</option>` +
-      state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===current?' selected':''}>${esc(m.name)}</option>`).join('');
+    // The dropdown selection reflects the LOCK only. An auto-assigned mic keeps the control on
+    // "Auto" (showing which mic auto picked) so it (a) reads as auto rather than a manual pin and
+    // (b) lets the user lock the very mic auto chose — re-selecting an already-selected option
+    // fires no change event, so a fake-selected auto mic could never be pinned.
+    const locked = pref.lock || '';
+    const auto = state.hostMics[id] || '';
+    const autoLabel = auto ? `🎤 Auto (${esc(auto)})` : '🎤 Auto';
+    sel.innerHTML = `<option value=""${locked ? '' : ' selected'}>${autoLabel}</option>` +
+      state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===locked?' selected':''}>${esc(m.name)}</option>`).join('');
     sel.dataset.host = id;
     sel.onchange = (e) => {
       setMicLock((state.hosts[id] || '').trim(), e.target.value || null);

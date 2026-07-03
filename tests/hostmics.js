@@ -96,6 +96,49 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!/Beta 58A/.test(list.textContent)) throw new Error('host mic not in print summary: '+list.textContent);
  });
 
+ // --- regression: a person in two roles / two slots carries ONE mic (no double-claim) ---
+ check('dedupe: a vocalist who is also a host shows the SAME mic (pool not double-consumed)', ()=>{
+   setup();
+   ev('state.hosts={speaker:"Grayson",welcomeHost1:"",welcomeHost2:"",hh3:"",hh3IsBaptismal:false}'); // same name as the vocalist
+   ev('assignMicsToVocalists()');
+   const vmic=ev('state.vocalists[0].micAssigned');
+   if(vmic!=='KMS105') throw new Error('vocalist Grayson should hold KMS105, got '+vmic);
+   if(hm('speaker')!==vmic) throw new Error('host Grayson should reuse the vocalist mic '+vmic+', got '+hm('speaker'));
+ });
+
+ check('dedupe: the same name in two host slots shares one mic', ()=>{
+   setup();
+   ev('state.vocalists=[]'); // isolate hosts from the vocalist pool
+   ev('state.hosts={speaker:"Dave",welcomeHost1:"Dave",welcomeHost2:"",hh3:"",hh3IsBaptismal:false}');
+   ev('assignMicsToVocalists()');
+   if(!hm('speaker')) throw new Error('speaker Dave should get a mic');
+   if(hm('welcomeHost1')!==hm('speaker')) throw new Error('both Dave slots should share one mic; got '+hm('speaker')+' vs '+hm('welcomeHost1'));
+ });
+
+ // --- regression: dropdown distinguishes auto from lock and lets you pin the auto mic ---
+ check('dropdown: an unlocked host sits on "Auto (<mic>)", not the mic shown as a fake lock', ()=>{
+   setup(); ev('assignMicsToVocalists()');
+   ev('renderAll=function(){}');
+   ev('renderHosts()');
+   const sel=doc.getElementById('speaker').closest('.host-row').querySelector('.host-mic-select');
+   if(!sel) throw new Error('named speaker has no mic dropdown');
+   if(sel.value!=='') throw new Error('unlocked host dropdown should rest on Auto (value ""), got "'+sel.value+'"');
+   const autoOpt=sel.querySelector('option[value=""]');
+   if(!autoOpt || !/Auto/.test(autoOpt.textContent) || !/Beta 58A/.test(autoOpt.textContent))
+     throw new Error('Auto option should name the auto-picked mic, got: '+(autoOpt&&autoOpt.textContent));
+ });
+
+ check('dropdown: picking the very mic auto chose LOCKS it (no silent no-op)', ()=>{
+   setup(); ev('assignMicsToVocalists()');
+   ev('renderAll=function(){}');
+   ev('renderHosts()');
+   const sel=doc.getElementById('speaker').closest('.host-row').querySelector('.host-mic-select');
+   if(hm('speaker')!=='Beta 58A') throw new Error('precondition: speaker auto mic should be Beta 58A, got '+hm('speaker'));
+   sel.value='Beta 58A'; fire(sel,'change'); // the same mic auto already picked
+   const r=ev('JSON.stringify(micPrefFor("Pastor Dave"))');
+   if(!r || JSON.parse(r).lock!=='Beta 58A') throw new Error('picking the auto mic should lock it, got: '+r);
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
