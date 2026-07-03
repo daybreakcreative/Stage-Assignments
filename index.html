@@ -1011,6 +1011,14 @@ body.setup-items-mode .container{display:none}
 .sa-add-inst{margin-top:4px}
 .sa-add-select{font-size:12px;padding:6px 10px;cursor:pointer}
 /* Setup manager (Settings → Setups) */
+.setup-mgr-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.setup-mgr-search{flex:1;min-width:170px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:7px;font-size:13px;outline:none}
+.setup-mgr-search:focus{border-color:var(--accent)}
+.setup-mgr-sort{display:flex;gap:4px}
+.setup-mgr-sort button{background:var(--bg-inset);border:1px solid var(--border);color:var(--text-muted);padding:6px 10px;border-radius:6px;font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.04em;cursor:pointer;text-transform:uppercase}
+.setup-mgr-sort button.active{background:var(--accent-dim);border-color:var(--accent);color:var(--text)}
+.setup-mgr-empty{color:var(--text-faint);font-style:italic;font-size:13px;padding:14px 4px}
+.setup-bucket-edit{margin-left:auto}
 .setup-person{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px}
 .setup-person.orphan{opacity:.82;border-style:dashed}
 .setup-person-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
@@ -1769,7 +1777,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·e</div>
+<div id="buildStamp">build 2026-07-03·f</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -6071,6 +6079,8 @@ function setupKeyRoleLabel(key) {
   return 'Set Up Needs';
 }
 
+let setupMgrSort = 'lineup';   // 'lineup' | 'name' | 'position'
+let setupMgrSearch = '';
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
   if (!el) return;
@@ -6102,12 +6112,23 @@ function renderSetupManager() {
     const nn = key.slice(0, sep);
     const en = enumByKey[key];
     const scopeLabel = en ? en.label : setupKeyRoleLabel(key);
+    const typeKey = (en && en.typeKey) || (key.split('|')[2] || 'none');
     if (!byPerson[nn]) byPerson[nn] = [];
-    byPerson[nn].push({ key, scopeLabel, items: bucket.items, present: !!en });
+    byPerson[nn].push({ key, scopeLabel, typeKey, items: bucket.items, present: !!en });
   });
 
-  // Order: people in this week's lineup first, then orphans; alpha within each.
+  // Sort order per the toolbar. Position sort ranks by instrument/role; a person with
+  // multiple buckets ranks by their earliest (lowest) position.
+  const POS_ORDER = ['drums','bass','keys','eg','ag','strings','md','vocals'];
+  const posRank = nn => Math.min(...byPerson[nn].map(b => { const i = POS_ORDER.indexOf(b.typeKey); return i === -1 ? 99 : i; }));
   const persons = Object.keys(byPerson).sort((a, b) => {
+    if (setupMgrSort === 'name') return displayName(a).localeCompare(displayName(b));
+    if (setupMgrSort === 'position') {
+      const ra = posRank(a), rb = posRank(b);
+      if (ra !== rb) return ra - rb;
+      return displayName(a).localeCompare(displayName(b));
+    }
+    // 'lineup' (default): in-lineup first, then orphans; alpha within each.
     const ap = byPerson[a].some(x => x.present), bp = byPerson[b].some(x => x.present);
     if (ap !== bp) return ap ? -1 : 1;
     return displayName(a).localeCompare(displayName(b));
@@ -6125,13 +6146,21 @@ function renderSetupManager() {
 
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:14px;">Every saved setup list — by person and instrument. People <strong>not in this week's lineup</strong> are kept so their setups carry over; delete any you no longer need.</p>
+    <div class="setup-mgr-toolbar">
+      <input type="text" id="setupMgrSearch" class="setup-mgr-search" placeholder="Search by name…" value="${esc(setupMgrSearch)}" />
+      <div class="setup-mgr-sort">
+        <button data-sort="lineup" class="${setupMgrSort==='lineup'?'active':''}">In lineup</button>
+        <button data-sort="name" class="${setupMgrSort==='name'?'active':''}">Name A–Z</button>
+        <button data-sort="position" class="${setupMgrSort==='position'?'active':''}">Position</button>
+      </div>
+    </div>
     ${orphanCount > 0 ? `<button class="btn ghost" id="setupPurgeOrphans" style="margin-bottom:14px;">🧹 Remove all ${orphanCount} setup${orphanCount === 1 ? '' : 's'} not in this week's lineup</button>` : ''}
     <div id="setupMgrList">
       ${persons.map(nn => {
         const buckets = byPerson[nn];
         const present = buckets.some(x => x.present);
         return `
-        <div class="setup-person${present ? '' : ' orphan'}">
+        <div class="setup-person${present ? '' : ' orphan'}" data-name="${esc(displayName(nn).toLowerCase())}">
           <div class="setup-person-head">
             <span class="setup-person-name">${esc(displayName(nn))}</span>
             <span class="setup-person-badge ${present ? 'here' : 'gone'}">${present ? 'in lineup' : 'not this week'}</span>
@@ -6141,6 +6170,7 @@ function renderSetupManager() {
               <div class="setup-bucket-head">
                 <span class="setup-bucket-scope">${esc(b.scopeLabel)}</span>
                 <span class="setup-bucket-meta">${b.items.length} item${b.items.length === 1 ? '' : 's'}</span>
+                <button class="btn ghost setup-bucket-edit" data-edit-key="${esc(b.key)}" data-edit-type="${esc(b.typeKey)}" data-edit-name="${esc(displayName(nn))}" data-edit-label="${esc(b.scopeLabel)}" title="Edit setup items — the questions a new team member gets">✎ Edit setup items</button>
                 <button class="btn ghost setup-bucket-del" data-del-key="${esc(b.key)}" title="Delete this setup">Delete</button>
               </div>
               <ul class="setup-items">
@@ -6185,6 +6215,79 @@ function renderSetupManager() {
     Object.keys(store).forEach(key => { if (!enumByKey[key]) delete store[key]; });
     saveState(); renderSetupManager(); renderSetupItemsView();
   });
+
+  // Sort buttons re-render; search filters the rendered list in place (keeps input focus).
+  el.querySelectorAll('.setup-mgr-sort button').forEach(btn => btn.addEventListener('click', e => {
+    setupMgrSort = e.currentTarget.dataset.sort || 'lineup';
+    renderSetupManager();
+  }));
+  const applyFilter = () => {
+    const q = setupMgrSearch.trim().toLowerCase();
+    let shown = 0;
+    el.querySelectorAll('#setupMgrList .setup-person').forEach(p => {
+      const match = !q || (p.dataset.name || '').includes(q);
+      p.style.display = match ? '' : 'none';
+      if (match) shown++;
+    });
+    let none = el.querySelector('#setupMgrNoMatch');
+    if (q && shown === 0) {
+      if (!none) { none = document.createElement('div'); none.id = 'setupMgrNoMatch'; none.className = 'setup-mgr-empty'; const list = el.querySelector('#setupMgrList'); if (list) list.appendChild(none); }
+      none.textContent = `No one matches “${setupMgrSearch.trim()}”.`;
+      none.style.display = '';
+    } else if (none) { none.style.display = 'none'; }
+  };
+  const searchInp = el.querySelector('#setupMgrSearch');
+  if (searchInp) searchInp.addEventListener('input', e => { setupMgrSearch = e.target.value; applyFilter(); });
+  // "✎ Edit setup items" → open the full new-member question flow for this bucket in a modal.
+  el.querySelectorAll('.setup-bucket-edit').forEach(btn => btn.addEventListener('click', e => {
+    const d = e.currentTarget.dataset;
+    openPersonSetupModal(d.editName || '', d.editKey, (d.editType && d.editType !== 'none') ? d.editType : null, d.editLabel || '');
+  }));
+  applyFilter();  // re-apply any active search after a re-render
+}
+
+// Open one person's full setup question flow (the same grouped questions + custom
+// add/remove a new team member gets) in a modal. renderPersonSetupEditor saves on
+// every change; closing re-renders the manager + checklist so counts stay in sync.
+function openPersonSetupModal(name, stableKey, typeKey, scopeLabel) {
+  if (!stableKey) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'setup-review-modal show';
+  const sheet = document.createElement('div');
+  sheet.className = 'setup-review-sheet';
+  overlay.appendChild(sheet);
+  const close = () => {
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    renderSetupManager();
+    if (typeof renderSetupItemsView === 'function') renderSetupItemsView();
+  };
+  const head = document.createElement('div');
+  head.className = 'setup-review-head';
+  const title = document.createElement('div');
+  title.className = 'setup-review-title';
+  title.textContent = scopeLabel ? `${name} · ${scopeLabel}` : (name || 'Setup items');
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'setup-review-x'; x.setAttribute('aria-label', 'Close'); x.textContent = '✕';
+  x.addEventListener('click', close);
+  head.appendChild(title); head.appendChild(x); sheet.appendChild(head);
+  const sub = document.createElement('p');
+  sub.className = 'setup-review-sub';
+  sub.textContent = 'The same questions a new team member gets. Changes save automatically.';
+  sheet.appendChild(sub);
+  const body = document.createElement('div');
+  body.className = 'setup-review-body';
+  body.style.overflow = 'auto'; body.style.flex = '1'; body.style.minHeight = '0';
+  sheet.appendChild(body);
+  renderPersonSetupEditor(body, stableKey, typeKey);
+  const actions = document.createElement('div');
+  actions.className = 'setup-review-actions';
+  const done = document.createElement('button');
+  done.type = 'button'; done.className = 'btn primary'; done.textContent = 'Done';
+  done.addEventListener('click', close);
+  actions.appendChild(done); sheet.appendChild(actions);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+  return overlay;
 }
 
 function renderDataEditor() {

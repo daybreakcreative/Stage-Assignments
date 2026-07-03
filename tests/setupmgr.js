@@ -86,6 +86,43 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!k.includes(kV())||!k.includes(kB())) throw new Error('purge removed in-lineup data: '+JSON.stringify(k));
  });
 
+ check('toolbar: search box + 3 sort buttons render', ()=>{
+   setup(); ev('renderSetupManager()');
+   if(!doc.getElementById('setupMgrSearch')) throw new Error('no search box');
+   const sorts=doc.querySelectorAll('.setup-mgr-sort button');
+   if(sorts.length!==3) throw new Error('expected 3 sort buttons, got '+sorts.length);
+ });
+ check('sort by Name A–Z orders alphabetically (Grayson, Marcus, Old Singer)', ()=>{
+   setup(); ev('renderSetupManager()');
+   doc.querySelector('.setup-mgr-sort button[data-sort="name"]').click();
+   const names=[...doc.querySelectorAll('#setupMgrList .setup-person-name')].map(n=>n.textContent);
+   if(names[0]!=='Grayson'||names[2]!=='Old Singer') throw new Error('name sort wrong: '+JSON.stringify(names));
+ });
+ check('sort by Position leads with the Keys player (Marcus) before Vocals', ()=>{
+   setup(); ev('renderSetupManager()');
+   doc.querySelector('.setup-mgr-sort button[data-sort="position"]').click();
+   const names=[...doc.querySelectorAll('#setupMgrList .setup-person-name')].map(n=>n.textContent);
+   if(names[0]!=='Marcus') throw new Error('position sort should lead with Keys player Marcus: '+JSON.stringify(names));
+ });
+ check('search filters the person list in place (only Marcus for "marc")', ()=>{
+   setup(); ev('renderSetupManager()');
+   const inp=doc.getElementById('setupMgrSearch');
+   inp.value='marc'; fire(inp,'input');
+   const visible=[...doc.querySelectorAll('#setupMgrList .setup-person')].filter(p=>p.style.display!=='none').map(p=>p.dataset.name);
+   if(visible.length!==1||visible[0]!=='marcus') throw new Error('search should show only Marcus: '+JSON.stringify(visible));
+   inp.value=''; fire(inp,'input'); // restore
+ });
+ check('"✎ Edit setup items" opens the new-member question modal with the editor', ()=>{
+   setup(); ev('renderSetupManager()');
+   const edit=doc.querySelector(`.setup-bucket-edit[data-edit-key="${kB()}"]`);
+   if(!edit) throw new Error('no edit button for Marcus keys bucket');
+   edit.click();
+   const modal=doc.querySelector('.setup-review-modal.show');
+   if(!modal) throw new Error('modal did not open');
+   if(!modal.querySelector('.sp-custom-add-row')) throw new Error('modal missing the setup editor (custom-add row)');
+   const x=modal.querySelector('.setup-review-x'); if(x) x.click(); // close
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
