@@ -1214,7 +1214,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-list-item .pos{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;font-weight:500;text-transform:uppercase;min-width:54px}
 .dv-list-item .name{color:var(--text);font-weight:500}
 .dv-list-item .name.is-md::after{content:' · MD';color:var(--accent);font-family:var(--ff-mono);font-size:.7em;font-weight:600;letter-spacing:.1em}
-.dv-list-item .detail{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);letter-spacing:.05em}
+.dv-list-item .detail{font-family:var(--ff-mono);font-size:12px;color:var(--text);font-weight:600;letter-spacing:.03em;white-space:nowrap}
 .dv-list-item.empty .name{color:var(--text-faint);font-style:italic;font-weight:400}
 .dv-list-item.empty .detail{color:var(--text-faint);font-style:italic}
 @media (max-width:900px){
@@ -1503,7 +1503,6 @@ body>*:not(.summary-overlay){display:none!important}
       <div class="meta">
         <span class="count" id="vocCount">0/8</span>
         <span class="add-link" id="addVocLink" style="display:none;">+ Vocal</span>
-        <span class="add-link" id="addShadowLink">+ Shadow</span>
       </div>
     </div>
     <div class="voc-grid" id="vocGrid"></div>
@@ -1770,7 +1769,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·d</div>
+<div id="buildStamp">build 2026-07-03·e</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2049,6 +2048,8 @@ const DEFAULT_STATE = {
       vocShowMic: true,
       vocShowIem: true,
       vocGridCols: 'auto',
+      allowEditorShadows: false, // opt-in: show the "+ Add shadow" tile in the Vocalists editor
+
       runSheet: { songsOnly:false, showDuration:true, showDescriptions:true, showKey:true, showLeader:true, textScale:1.0 },
       stagePositionScale: 1.0
     }
@@ -3265,11 +3266,9 @@ function renderVocalists() {
     grid.appendChild(card);
   }
 
-  // Shadow cards — shadows are always available (no enable toggle).
+  // Shadow cards always render (existing + PCO-pulled shadows). Manual "add" is opt-in
+  // via the setting below — see the add-tile gate.
   const shadowsEnabled = true;
-  // Show/hide the "+ Shadow" link in the hero header
-  const addShadowLink = document.getElementById('addShadowLink');
-  if (addShadowLink) addShadowLink.style.display = shadowsEnabled ? '' : 'none';
   if (shadowsEnabled) {
     const packPresets = (state.config.iemPackPresets && state.config.iemPackPresets.length)
       ? state.config.iemPackPresets : ['Misc 2 Pack'];
@@ -3318,7 +3317,8 @@ function renderVocalists() {
     add.addEventListener('click', addVocalist);
     grid.appendChild(add);
   }
-  if (shadowsEnabled && state.shadows.length < MAX_SHADOWS) {
+  const allowEditorShadows = !!(state.config.display && state.config.display.allowEditorShadows);
+  if (shadowsEnabled && allowEditorShadows && state.shadows.length < MAX_SHADOWS) {
     const addSh = document.createElement('button');
     addSh.className = 'add-card add-card-shadow';
     addSh.innerHTML = `<span class="plus">+</span><span>Add shadow</span>`;
@@ -5433,6 +5433,12 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
+    <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+      <label class="cfg-toggle"><input type="checkbox" data-display="allowEditorShadows" ${c.display.allowEditorShadows?'checked':''} /><span>Allow adding shadow positions from the editor</span></label>
+      <p class="subtitle" style="margin:0;font-size:11.5px;">When on, a “+ Add shadow” tile appears next to the vocalists. Shadows pulled from Planning Center always show regardless.</p>
+    </div>
+
     <div class="section-label" style="margin-bottom:10px;">Service Order — What to Include</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Fine-tune what shows in the Service Order on both edit view and Display view.</p>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
@@ -5818,6 +5824,8 @@ function renderLayoutEditor() {
       c.display[e.target.dataset.display] = e.target.checked;
       saveState();
       if (state.viewMode === 'display') renderDisplayView();
+      // allowEditorShadows affects the Vocalists editor (the "+ Add shadow" tile), not display.
+      if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
   // Run sheet sub-toggles
@@ -12178,7 +12186,6 @@ function init() {
   document.getElementById('serviceDate').addEventListener('change', e => { state.service.date = e.target.value; saveState(); });
   document.getElementById('serviceName').addEventListener('input', e => { state.service.name = e.target.value; saveState(); if (state.viewMode === 'display') renderDisplayView(); });
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
-  document.getElementById('addShadowLink').addEventListener('click', addShadow);
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);

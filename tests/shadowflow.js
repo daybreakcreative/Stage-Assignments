@@ -113,6 +113,25 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!ev('state.shadows[0].mic')) throw new Error('no mic assigned via shadowNeedsMic path');
  });
 
+ // --- editor "+ Add shadow" tile is opt-in; the old top-right "+ Shadow" link is gone ---
+ check('no top-right "+ Shadow" link exists in the hero header', ()=>{
+   if(doc.getElementById('addShadowLink')) throw new Error('addShadowLink should be removed from the header');
+ });
+
+ check('"+ Add shadow" tile is HIDDEN when allowEditorShadows is off (default)', ()=>{
+   ev('state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[];');
+   ev('state.config.display.allowEditorShadows=false');
+   ev('renderVocalists()');
+   if(doc.querySelector('#vocGrid .add-card-shadow')) throw new Error('add-shadow tile should be hidden when setting is off');
+ });
+
+ check('"+ Add shadow" tile SHOWS when allowEditorShadows is on', ()=>{
+   ev('state.config.display.allowEditorShadows=true');
+   ev('renderVocalists()');
+   if(!doc.querySelector('#vocGrid .add-card-shadow')) throw new Error('add-shadow tile should appear when setting is on');
+   ev('state.config.display.allowEditorShadows=false'); // restore default
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
