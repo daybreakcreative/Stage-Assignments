@@ -1141,7 +1141,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-voc-line .val.empty{color:var(--text-faint);font-style:italic}
 .dv-voc-ag{display:inline-block;font-family:var(--ff-mono);font-size:calc(9px * var(--dv-voc-scale, 1));color:var(--success);background:rgba(122,153,96,0.14);border:1px solid rgba(122,153,96,0.4);padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-left:5px;vertical-align:middle}
 /* When the user has resized the vocals block, switch the card typography to scale with container height */
-.dv-vocalists-block.has-explicit-height .dv-voc-grid{gap:clamp(4px,2cqh,10px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-grid{gap:clamp(4px,2cqh,10px);height:100%;align-content:stretch;align-items:stretch;grid-auto-rows:minmax(0,1fr)}
 .dv-voc-grid.single-row{display:flex;flex-direction:row;overflow-x:auto;flex-wrap:nowrap}
 .dv-voc-grid.single-row .dv-voc-card{min-width:140px;flex:1}
 /* Small cards */
@@ -1171,15 +1171,15 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .toggle-row{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
 .toggle-row input{width:14px;height:14px;accent-color:var(--accent)}
 .voc-mic-warn{font-size:11px;color:var(--text-faint);font-style:italic;margin-left:6px}
-.dv-vocalists-block.has-explicit-height .dv-voc-card{padding:clamp(4px,4cqh,12px) clamp(6px,5cqh,14px);border-radius:clamp(5px,3cqh,10px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-card{padding:clamp(4px,4cqh,12px) clamp(6px,5cqh,14px);border-radius:clamp(5px,3cqh,10px);display:flex;flex-direction:column;justify-content:center;min-height:0}
 .dv-vocalists-block.has-explicit-height .dv-voc-card.is-wl::after{top:clamp(2px,2cqh,8px);right:clamp(4px,3cqh,10px);font-size:calc(clamp(9px,5cqh,14px) * var(--dv-voc-scale, 1))}
-.dv-vocalists-block.has-explicit-height .dv-voc-pos{font-size:calc(clamp(9px,7cqh,18px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-name{font-size:calc(clamp(11px,8cqh,20px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px);padding-right:clamp(8px,8cqh,18px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-pos{font-size:calc(clamp(9px,7cqh,26px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px)}
+.dv-vocalists-block.has-explicit-height .dv-voc-name{font-size:calc(clamp(11px,8cqh,32px) * var(--dv-voc-scale, 1));margin-bottom:clamp(2px,3cqh,8px);padding-right:clamp(8px,8cqh,18px)}
 .dv-vocalists-block.has-explicit-height .dv-voc-meta{gap:clamp(1px,1cqh,3px);padding-top:clamp(2px,3cqh,8px)}
-.dv-vocalists-block.has-explicit-height .dv-voc-line{font-size:calc(clamp(8px,4cqh,12px) * var(--dv-voc-scale, 1))}
-.dv-vocalists-block.has-explicit-height .dv-voc-line .lbl{font-size:calc(clamp(7px,3.5cqh,9.5px) * var(--dv-voc-scale, 1))}
-.dv-vocalists-block.has-explicit-height .dv-voc-line .val{font-size:calc(clamp(9px,5.5cqh,15px) * var(--dv-voc-scale, 1))}
-.dv-vocalists-block.has-explicit-height .dv-voc-ag{font-size:calc(clamp(7px,3cqh,9px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-line{font-size:calc(clamp(8px,4cqh,17px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-line .lbl{font-size:calc(clamp(7px,3.5cqh,13px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-line .val{font-size:calc(clamp(9px,5.5cqh,22px) * var(--dv-voc-scale, 1))}
+.dv-vocalists-block.has-explicit-height .dv-voc-ag{font-size:calc(clamp(7px,3cqh,13px) * var(--dv-voc-scale, 1))}
 .dv-content{display:grid;grid-template-columns:var(--dv-stage-frac, 1.6fr) 8px var(--dv-side-frac, 1fr);gap:0;flex:1;min-height:0;overflow:hidden;padding-top:8px}
 .dv-content.no-side{grid-template-columns:1fr 0 0}
 .dv-stage-block{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-right:12px}
@@ -1770,7 +1770,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·c</div>
+<div id="buildStamp">build 2026-07-03·d</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
