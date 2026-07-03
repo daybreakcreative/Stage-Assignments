@@ -368,8 +368,6 @@ background-size:5% 10%}
 .md-row select{flex:1;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-family:var(--ff-mono);font-size:10.5px;padding:4px 6px;border-radius:5px;outline:none}
 .hosts{display:flex;flex-direction:column;gap:5px}
 .host-row{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 11px;display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;transition:border-color .15s}
-.baptism-badge{font-family:var(--ff-mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;color:#3a8bd5;background:rgba(58,139,213,.13);padding:3px 7px;border-radius:4px;white-space:nowrap;border:1px solid rgba(58,139,213,.25)}
-.baptism-tag{font-family:var(--ff-mono);font-size:8.5px;font-weight:700;letter-spacing:.1em;color:#3a8bd5;text-transform:uppercase}
 .host-row:hover{border-color:var(--border-2)}
 .host-row .lbl{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em}
 .host-row input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:13px;font-weight:500;width:100%}
@@ -1576,12 +1574,7 @@ body>*:not(.summary-overlay){display:none!important}
         </div>
         <div>
           <div class="section-label">Service Hosts</div>
-          <div class="hosts">
-            <div class="host-row pastor"><span class="lbl">Pastor</span><input type="text" id="speaker" placeholder="Speaker (PCO)" /></div>
-            <div class="host-row"><span class="lbl">HH 1</span><input type="text" id="welcomeHost1" placeholder="Welcome host" /></div>
-            <div class="host-row"><span class="lbl">HH 2</span><input type="text" id="welcomeHost2" placeholder="2nd host (if any)" /></div>
-            <div class="host-row" id="hh3Row"><span class="lbl">HH 3</span><input type="text" id="hh3" placeholder="Baptism / misc" /><span class="baptism-badge" id="hh3Baptism" style="display:none;" title="Baptism handheld">💧 BAPTISM</span></div>
-          </div>
+          <div class="hosts" id="hostsList"></div>
         </div>
       </div>
     </div>
@@ -1627,6 +1620,7 @@ body>*:not(.summary-overlay){display:none!important}
       <div id="invEdit"></div>
       <button class="add-row-btn" id="addMicBtn">+ Add mic type</button>
       <div id="prefEdit" style="margin-top:26px;"></div>
+      <div id="hostChanEdit" style="margin-top:26px;"></div>
     </div>
     <div class="tab-panel" id="tab-layout">
       <div id="layoutEdit"></div>
@@ -1984,8 +1978,7 @@ const DEFAULT_STATE = {
   shadows: [],
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
-  hosts: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'', hh3IsBaptismal:false },
-  hostMics: { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' },  // assigned mic per host slot (per-service, like assignments)
+  hosts: {},  // per-service person assignments, keyed by host channel id → name. Channels live in config.hostChannels.
   notes: '',
   serviceOrder: [],
   inventory: structuredClone(DEFAULT_INVENTORY),
@@ -2037,6 +2030,15 @@ const DEFAULT_STATE = {
     //     lock       = hard override: always this mic if available (beats memory)
     //     remembered = soft memory: reuse this mic next time if it's free (seeded automatically)
     micPrefs: { leaderMics: [], people: {} },
+    // Host handheld channels — configurable count + labels + default capsule. Persist across services
+    // (live in config, preserved by resetAll). Each: { id, label, capsule }. `capsule` is the default
+    // mic to grab for that channel (informational only — hosts do NOT draw from the vocalist mic pool).
+    hostChannels: [
+      { id:'h1', label:'HH 1', capsule:'' },
+      { id:'h2', label:'HH 2', capsule:'' },
+      { id:'h3', label:'HH 3', capsule:'' },
+      { id:'h4', label:'HH 4', capsule:'' }
+    ],
     display: {
       showStage:true, showServiceOrder:true, showBand:true, showHosts:true, showShadows:true,
       vocalistRows: 'auto',
@@ -2309,8 +2311,7 @@ function loadState() {
 
       return { ...DEFAULT_STATE, ...p,
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
-        hosts: { ...DEFAULT_STATE.hosts, ...(p.hosts||{}) },
-        hostMics: { ...DEFAULT_STATE.hostMics, ...(p.hostMics||{}) },
+        hosts: migrateHosts(p),
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
         pcoBaseline: (p.pcoBaseline && typeof p.pcoBaseline === 'object') ? p.pcoBaseline : null,
         brand: { ...DEFAULT_STATE.brand, ...(p.brand||{}) },
@@ -2336,6 +2337,7 @@ function loadState() {
           stageFeatures: Array.isArray(loadedConfig.stageFeatures) ? loadedConfig.stageFeatures : [],
           personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           micPrefs: normalizeMicPrefs(loadedConfig, p),
+          hostChannels: migrateHostChannels(loadedConfig, p),
           display: {
             ...DEFAULT_STATE.config.display,
             ...(loadedConfig.display||{}),
@@ -2670,7 +2672,7 @@ function setPreferredName(currentName, preferred) {
   (state.vocalists||[]).forEach(v => { if (normFullName(v.name) === curN) v.name = preferred; });
   (state.instruments||[]).forEach(i => { if (normFullName(i.assignedTo) === curN) i.assignedTo = preferred; });
   const h = state.hosts || {};
-  ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(f => { if (normFullName(h[f]) === curN) h[f] = preferred; });
+  Object.keys(h).forEach(f => { if (normFullName(h[f]) === curN) h[f] = preferred; });
   (state.shadows||[]).forEach(s => { if (normFullName(s.name) === curN) s.name = preferred; });
   // Carry per-person keyed data: setup buckets, musician prefs, mic prefs.
   const reKey = (obj, splitFn, joinFn) => {
@@ -2984,32 +2986,8 @@ function assignMicsToVocalists() {
     const p = micPrefFor(v.name);
     if (!p || !p.remembered) setMicRemembered(v.name, got);
   });
-  // Host mics — assigned AFTER vocalists, BEFORE shadows, from the same shared pool.
-  // Named hosts (speaker → welcomeHost1 → welcomeHost2 → hh3, in slot order) each get:
-  //   1) their locked mic if any (claimed even if a "better" mic is free),
-  //   2) else their remembered mic if still free,
-  //   3) else the best remaining mic.
-  // An unnamed slot (or no mic left) records ''.
-  if (!state.hostMics || typeof state.hostMics !== 'object') state.hostMics = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
-  // A person can appear as both a vocalist and a host (or in two host slots). They carry ONE
-  // physical mic, so reuse the mic already assigned to that name this pass instead of claiming a
-  // second one from the shared pool — otherwise inventory is double-counted and the two sections
-  // disagree. Vocalists are keyed by id, hosts by name; bridge them by normalized name.
-  const micByName = {};
-  state.vocalists.forEach(v => { const n = normName(v.name); if (n && v.micAssigned) micByName[n] = v.micAssigned; });
-  ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(slot => {
-    const name = ((state.hosts && state.hosts[slot]) || '').trim();
-    if (!name) { state.hostMics[slot] = ''; return; }
-    const key = normName(name);
-    if (key && micByName[key]) { state.hostMics[slot] = micByName[key]; return; }  // same person already has a mic → reuse it
-    const p = micPrefFor(name);
-    let got = null;
-    if (p && p.lock) got = claim(p.lock);
-    if (!got && p && p.remembered) got = claim(p.remembered);
-    if (!got) got = bestMic();
-    state.hostMics[slot] = got || '';
-    if (key && got) micByName[key] = got;  // a later same-name host slot reuses this
-  });
+  // Hosts do NOT draw from the shared vocalist/shadow mic pool. Each host channel has its own
+  // default capsule (config.hostChannels[].capsule) that the setup person sets — see renderHosts.
   // Shadow mics — lowest priority of all. A shadow only gets a mic if its setup is
   // "on stage with a mic", and it always takes the LOWEST-ranked mic still free, drawn
   // from this same pool so it's reserved (a vocalist can never be handed a shadow's mic).
@@ -3635,58 +3613,64 @@ function renderBand() {
 }
 
 /* ===================== HOSTS / SERVICE ===================== */
+// ---- Host channels (configurable count + labels + default capsule) ----
+function DEFAULT_HOST_CHANNELS() {
+  return [1,2,3,4].map(n => ({ id:'h'+n, label:'HH '+n, capsule:'' }));
+}
+// The live, well-shaped channel list. Self-heals a missing/empty config so callers never guard.
+function hostChannels() {
+  const c = state.config || (state.config = {});
+  if (!Array.isArray(c.hostChannels) || !c.hostChannels.length) c.hostChannels = DEFAULT_HOST_CHANNELS();
+  return c.hostChannels;
+}
+function newHostChannelId() { return 'h_' + Math.random().toString(36).slice(2,8); }
+function hostName(id) { return (state.hosts && state.hosts[id]) || ''; }
+// Old saves used fixed slots {speaker, welcomeHost1, welcomeHost2, hh3(+IsBaptismal)}.
+function isLegacyHosts(p) {
+  return !!(p && p.hosts && typeof p.hosts === 'object' &&
+    ('speaker' in p.hosts || 'welcomeHost1' in p.hosts || 'welcomeHost2' in p.hosts || 'hh3' in p.hosts));
+}
+function migrateHosts(p) {
+  if (isLegacyHosts(p)) {
+    const h = p.hosts || {};
+    return { h1: h.speaker||'', h2: h.welcomeHost1||'', h3: h.welcomeHost2||'', h4: h.hh3||'' };
+  }
+  return (p && p.hosts && typeof p.hosts === 'object' && !Array.isArray(p.hosts)) ? { ...p.hosts } : {};
+}
+function migrateHostChannels(loadedConfig, p) {
+  const src = loadedConfig && loadedConfig.hostChannels;
+  if (Array.isArray(src) && src.length) {
+    return src.map((c, i) => ({ id: (c && c.id) || 'h'+(i+1), label: (c && c.label) || 'HH '+(i+1), capsule: (c && c.capsule) || '' }));
+  }
+  // Legacy save with no channel config → preserve what those users currently see (Pastor + HH 1..3).
+  if (isLegacyHosts(p)) {
+    return [ {id:'h1',label:'Pastor',capsule:''}, {id:'h2',label:'HH 1',capsule:''}, {id:'h3',label:'HH 2',capsule:''}, {id:'h4',label:'HH 3',capsule:''} ];
+  }
+  return DEFAULT_HOST_CHANNELS();
+}
+
 function renderHosts() {
-  if (!state.hostMics || typeof state.hostMics !== 'object') state.hostMics = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'' };
-  ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = state.hosts[id] || '';
-    el.oninput = (e) => {
-      state.hosts[id] = e.target.value;
-      // If the user edits HH3 manually, drop the baptism flag — but DON'T re-render mid-typing
-      // (re-rendering resets the field value and disrupts the cursor). Hide the badge directly.
-      if (id === 'hh3' && state.hosts.hh3IsBaptismal) {
-        state.hosts.hh3IsBaptismal = false;
-        const b = document.getElementById('hh3Baptism');
-        if (b) b.style.display = 'none';
-      }
-      saveState();
-    };
-    // On blur, reassign mics (a newly named host now claims from the pool) and re-render so
-    // the per-host mic dropdown appears. Deferred to blur to avoid disrupting the input.
-    el.onblur = () => { assignMicsToVocalists(); renderAll(); };
-    // Per-host mic control (only when the slot has a name). Blank = auto (clears the lock).
-    const row = el.closest('.host-row');
-    if (!row) return;
-    let sel = row.querySelector('.host-mic-select');
-    const name = (state.hosts[id] || '').trim();
-    if (!name) { if (sel) sel.remove(); return; }
-    if (!sel) {
-      sel = document.createElement('select');
-      sel.className = 'host-mic-select mic-select';
-      sel.title = 'Host mic — blank = auto';
-      row.appendChild(sel);
-    }
-    const pref = micPrefFor(name) || {};
-    // The dropdown selection reflects the LOCK only. An auto-assigned mic keeps the control on
-    // "Auto" (showing which mic auto picked) so it (a) reads as auto rather than a manual pin and
-    // (b) lets the user lock the very mic auto chose — re-selecting an already-selected option
-    // fires no change event, so a fake-selected auto mic could never be pinned.
-    const locked = pref.lock || '';
-    const auto = state.hostMics[id] || '';
-    const autoLabel = auto ? `🎤 Auto (${esc(auto)})` : '🎤 Auto';
-    sel.innerHTML = `<option value=""${locked ? '' : ' selected'}>${autoLabel}</option>` +
-      state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===locked?' selected':''}>${esc(m.name)}</option>`).join('');
-    sel.dataset.host = id;
+  const wrap = document.getElementById('hostsList');
+  if (!wrap) return;
+  const invOptions = (cur) => `<option value="">🎤 (none set)</option>` +
+    state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===cur?' selected':''}>${esc(m.name)}</option>`).join('');
+  wrap.innerHTML = hostChannels().map(ch => `
+    <div class="host-row" data-ch="${esc(ch.id)}">
+      <span class="lbl">${esc(ch.label)}</span>
+      <input type="text" class="host-name" data-ch="${esc(ch.id)}" value="${esc(hostName(ch.id))}" placeholder="Name" />
+      <select class="host-cap mic-select" data-ch="${esc(ch.id)}" title="Default capsule for ${esc(ch.label)} — the mic to grab">${invOptions(ch.capsule||'')}</select>
+    </div>`).join('');
+  // Name → per-service assignment. No re-render on input (nothing else depends on it live).
+  wrap.querySelectorAll('.host-name').forEach(inp => {
+    inp.oninput = (e) => { state.hosts[e.target.dataset.ch] = e.target.value; saveState(); };
+  });
+  // Capsule → persistent per-channel default (config). Informational only; not pooled.
+  wrap.querySelectorAll('.host-cap').forEach(sel => {
     sel.onchange = (e) => {
-      setMicLock((state.hosts[id] || '').trim(), e.target.value || null);
-      assignMicsToVocalists();
-      renderAll();
+      const ch = hostChannels().find(c => c.id === e.target.dataset.ch);
+      if (ch) { ch.capsule = e.target.value || ''; saveState(); }
     };
   });
-  // Show baptism badge on HH3 when applicable
-  const badge = document.getElementById('hh3Baptism');
-  if (badge) badge.style.display = (state.hosts.hh3IsBaptismal && state.hosts.hh3) ? '' : 'none';
 }
 function renderService() {
   document.getElementById('serviceDate').value = state.service.date || '';
@@ -5106,6 +5090,7 @@ function openSettings(tab='inventory') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
   renderInvEditor();
   renderPrefEditor();
+  renderHostChannelEditor();
   renderLayoutEditor();
   renderBrandEditor();
   renderPCOSettings();
@@ -6436,6 +6421,53 @@ function renderInvEditor() {
     });
   });
 }
+// Settings → Mics tab: configure how many host handhelds you have, their labels, and the
+// default capsule (the mic to grab) for each. Count/labels also settable in the wizard.
+function renderHostChannelEditor() {
+  const el = document.getElementById('hostChanEdit');
+  if (!el) return;
+  const invOptions = (cur) => `<option value="">🎤 (none set)</option>` +
+    state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===cur?' selected':''}>${esc(m.name)}</option>`).join('');
+  el.innerHTML = `<div class="section-label" style="margin-bottom:6px;">Service Handhelds</div>
+    <p class="subtitle" style="margin-bottom:12px;">How many handheld mics you have and what to grab for each. Names are entered per service on the main screen.</p>
+    <div id="hostChanRows"></div>
+    <button class="add-row-btn" id="addHostChanBtn">+ Add host mic</button>`;
+  const rows = el.querySelector('#hostChanRows');
+  rows.innerHTML = hostChannels().map((ch, idx) => `
+    <div class="inv-edit-row" data-idx="${idx}">
+      <input type="text" value="${esc(ch.label)}" data-idx="${idx}" data-field="label" placeholder="Label (e.g. HH 1)" />
+      <select class="mic-select" data-idx="${idx}" data-field="capsule" title="Default capsule — the mic to grab for this handheld">${invOptions(ch.capsule||'')}</select>
+      <button class="x-btn" data-idx="${idx}" data-action="remove-host" title="Remove this host mic">✕</button>
+    </div>`).join('');
+  rows.querySelectorAll('input[data-field="label"]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const ch = hostChannels()[parseInt(e.target.dataset.idx,10)];
+      if (ch) { ch.label = e.target.value.trim() || ch.label; saveState(); renderHostChannelEditor(); renderHosts(); }
+    });
+  });
+  rows.querySelectorAll('select[data-field="capsule"]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const ch = hostChannels()[parseInt(e.target.dataset.idx,10)];
+      if (ch) { ch.capsule = e.target.value || ''; saveState(); renderHosts(); }
+    });
+  });
+  rows.querySelectorAll('[data-action="remove-host"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.currentTarget.dataset.idx,10);
+      const ch = hostChannels()[idx];
+      if (!ch) return;
+      hostChannels().splice(idx, 1);
+      if (state.hosts) delete state.hosts[ch.id];   // drop this channel's per-service assignment
+      saveState(); renderHostChannelEditor(); renderHosts();
+    });
+  });
+  const addBtn = el.querySelector('#addHostChanBtn');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    const chs = hostChannels();
+    chs.push({ id: newHostChannelId(), label: 'HH ' + (chs.length + 1), capsule: '' });
+    saveState(); renderHostChannelEditor(); renderHosts();
+  });
+}
 function renderPrefEditor() {
   const el = document.getElementById('prefEdit');
   if (!el) return;
@@ -6902,7 +6934,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.assignments = new Array(MAX_VOCALISTS).fill(null);
   // Reset all instrument assignments and vocalist-coverage on a fresh PCO pull
   state.instruments.forEach(i => { i.assignedTo = ''; i.vocalistPlayer = null; });
-  state.hosts = { speaker:'', welcomeHost1:'', welcomeHost2:'', hh3:'', hh3IsBaptismal:false };
+  state.hosts = {};
   state.shadows = [];
   state.serviceOrder = [];
   let mdNameCandidate = null;
@@ -6920,6 +6952,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   });
   // Buckets we'll fill at the end (since order in PCO is arbitrary)
   const welcomeNames = [];
+  let speakerName = null;
   let baptismalName = null;
 
   console.group('[Stage·Assign] PCO team member classification');
@@ -6967,22 +7000,23 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     } else if (cls.kind === 'md_flag') {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
-      if (cls.host === 'speaker' && !state.hosts.speaker) state.hosts.speaker = name;
+      if (cls.host === 'speaker') { if (!speakerName) speakerName = name; }
       else if (cls.host === 'baptismal') { if (!baptismalName) baptismalName = name; }
       else if (cls.host === 'welcome') { welcomeNames.push(name); }
     }
   });
   console.groupEnd();
 
-  // Welcome hosts go into HH1, HH2 first
-  if (welcomeNames[0]) state.hosts.welcomeHost1 = welcomeNames[0];
-  if (welcomeNames[1]) state.hosts.welcomeHost2 = welcomeNames[1];
-  state.hosts.hh3IsBaptismal = false;
-  if (baptismalName) {
-    state.hosts.hh3 = baptismalName;
-    state.hosts.hh3IsBaptismal = true;
-  } else if (welcomeNames[2]) {
-    state.hosts.hh3 = welcomeNames[2];
+  // Fill host channels by POSITION: channel[0] = speaker/pastor, then welcome hosts (and any
+  // baptism host, now treated as a plain welcome) in order. Extra people beyond the configured
+  // channel count are dropped. Labels/count are user config; the ordering is the mapping.
+  {
+    const ordered = [];
+    if (speakerName) ordered.push(speakerName);
+    welcomeNames.forEach(n => ordered.push(n));
+    if (baptismalName) ordered.push(baptismalName);
+    state.hosts = {};
+    hostChannels().forEach((ch, i) => { if (ordered[i]) state.hosts[ch.id] = ordered[i]; });
   }
 
   // ----- DISTRIBUTE BAND BUCKETS INTO INSTRUMENT SLOTS -----
@@ -7341,14 +7375,12 @@ function pcoAddBand(p) {
 }
 
 function pcoAddHost(p) {
-  const h = state.hosts;
-  if (p.host === 'speaker') { if (!h.speaker) h.speaker = p.name; }
-  else if (p.host === 'baptismal') { if (!h.hh3) { h.hh3 = p.name; h.hh3IsBaptismal = true; } }
-  else {
-    if (!h.welcomeHost1) h.welcomeHost1 = p.name;
-    else if (!h.welcomeHost2) h.welcomeHost2 = p.name;
-    else if (!h.hh3) h.hh3 = p.name;
-  }
+  const channels = hostChannels();
+  const isFree = id => !((state.hosts[id] || '').trim());
+  // Speaker/pastor prefers channel 0; otherwise (and as fallback) take the first free channel.
+  if (p.host === 'speaker' && channels[0] && isFree(channels[0].id)) { state.hosts[channels[0].id] = p.name; return; }
+  const free = channels.find(ch => isFree(ch.id));
+  if (free) state.hosts[free.id] = p.name;
 }
 
 function pcoAddShadow(p) {
@@ -7380,7 +7412,7 @@ function pcoRemovePerson(p) {
     if (inst) { inst.assignedTo = ''; if (state.musicDirectorId === inst.id) state.musicDirectorId = null; }
   } else if (p.kind === 'host') {
     const h = state.hosts;
-    ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(k => { if (normFullName(h[k]) === normFullName(p.name)) { h[k] = ''; if (k === 'hh3') h.hh3IsBaptismal = false; } });
+    Object.keys(h).forEach(k => { if (normFullName(h[k]) === normFullName(p.name)) h[k] = ''; });
   } else if (p.kind === 'shadow') {
     state.shadows = state.shadows.filter(s => normFullName(s.name) !== normFullName(p.name));
   } else if (p.kind === 'md') {
@@ -7398,7 +7430,7 @@ function pcoRenamePerson(from, to) {
     if (inst) inst.assignedTo = to.name;
   } else if (from.kind === 'host') {
     const h = state.hosts;
-    ['speaker','welcomeHost1','welcomeHost2','hh3'].forEach(k => { if (normFullName(h[k]) === normFullName(from.name)) h[k] = to.name; });
+    Object.keys(h).forEach(k => { if (normFullName(h[k]) === normFullName(from.name)) h[k] = to.name; });
   } else if (from.kind === 'shadow') {
     const s = state.shadows.find(x => normFullName(x.name) === normFullName(from.name));
     if (s) s.name = to.name;
@@ -7766,21 +7798,12 @@ function fillSummary() {
   });
   const hhList = document.getElementById('s_hhList');
   hhList.innerHTML = '';
-  const _hm = state.hostMics || {};
-  [
-    {pos:'Pastor',name:state.hosts.speaker, mic:_hm.speaker},
-    {pos:'HH 1',name:state.hosts.welcomeHost1, mic:_hm.welcomeHost1},
-    {pos:'HH 2',name:state.hosts.welcomeHost2, mic:_hm.welcomeHost2},
-    {pos:'HH 3',name:state.hosts.hh3, baptism:state.hosts.hh3IsBaptismal, mic:_hm.hh3}
-  ].forEach(h => {
-    if (!h.name) return;
+  hostChannels().forEach(ch => {
+    const name = hostName(ch.id);
+    if (!name) return;
     const li = document.createElement('li');
     li.className = 's-item';
-    const dbits = [];
-    if (h.mic) dbits.push(`🎤 ${esc(h.mic)}`);
-    if (h.baptism) dbits.push('<span style="color:#3a8bd5;font-family:var(--ff-mono);font-size:.78em;font-weight:700;letter-spacing:.08em;">💧 BAPTISM</span>');
-    const detail = dbits.join(' ');
-    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(h.name)}</span><span class="detail">${detail}</span>`;
+    li.innerHTML = `<span class="pos">${esc(ch.label)}</span><span class="name">${esc(name)}</span><span class="detail"></span>`;
     hhList.appendChild(li);
   });
   if (!hhList.innerHTML) hhList.innerHTML = '<li class="s-item empty"><span class="pos">—</span><span class="name">No hosts</span><span class="detail"></span></li>';
@@ -7902,12 +7925,10 @@ function copySummaryText() {
     lines.push(`  ${inst.label}${md}: ${n||'—'}  (${iemPackFor(inst)})`);
   });
   lines.push('', 'HANDHELDS');
-  const hmt = state.hostMics || {};
-  const hmSuffix = m => m ? `  (${m})` : '';
-  if (state.hosts.speaker)      lines.push(`  Pastor:  ${state.hosts.speaker}${hmSuffix(hmt.speaker)}`);
-  if (state.hosts.welcomeHost1) lines.push(`  HH 1:    ${state.hosts.welcomeHost1}${hmSuffix(hmt.welcomeHost1)}`);
-  if (state.hosts.welcomeHost2) lines.push(`  HH 2:    ${state.hosts.welcomeHost2}${hmSuffix(hmt.welcomeHost2)}`);
-  if (state.hosts.hh3)          lines.push(`  HH 3:    ${state.hosts.hh3}${state.hosts.hh3IsBaptismal?' [BAPTISM]':''}${hmSuffix(hmt.hh3)}`);
+  hostChannels().forEach(ch => {
+    const name = hostName(ch.id);
+    if (name) lines.push(`  ${ch.label}: ${name}`);
+  });
   // IEM Packs
   lines.push('', 'IEM PACKS');
   state.instruments.forEach(inst => {
@@ -8210,24 +8231,15 @@ function renderDisplayView() {
   const hostsList = (dvHostsBlockEl && dvHostsBlockEl.querySelector('.dv-list'))
     || document.getElementById('dvHostsList') || null;
   if (hostsList) hostsList.innerHTML = '';
-  const hm = state.hostMics || {};
-  const hosts = [
-    { pos:'Pastor', name:state.hosts.speaker,       mic: hm.speaker },
-    { pos:'HH 1',   name:state.hosts.welcomeHost1,  mic: hm.welcomeHost1 },
-    { pos:'HH 2',   name:state.hosts.welcomeHost2,  mic: hm.welcomeHost2 },
-    { pos:'HH 3',   name:state.hosts.hh3, baptism: state.hosts.hh3IsBaptismal, mic: hm.hh3 }
-  ];
   let anyHost = false;
-  hosts.forEach(h => {
-    if (!h.name) return;
+  hostChannels().forEach(ch => {
+    const name = hostName(ch.id);
+    if (!name) return;
     anyHost = true;
     const li = document.createElement('li');
     li.className = 'dv-list-item';
-    const bits = [];
-    if (h.mic) bits.push(`🎤 ${esc(h.mic)}`);
-    if (h.baptism) bits.push('<span class="baptism-tag">💧 Baptism</span>');
-    const detail = bits.join(' ');
-    li.innerHTML = `<span class="pos">${esc(h.pos)}</span><span class="name">${esc(formatDisplayName(h.name))}</span><span class="detail">${detail}</span>`;
+    // Display shows role + person only — no mic capsule (setup page carries "what to grab").
+    li.innerHTML = `<span class="pos">${esc(ch.label)}</span><span class="name">${esc(formatDisplayName(name))}</span><span class="detail"></span>`;
     if (hostsList) hostsList.appendChild(li);
   });
   if (!anyHost && hostsList) {
@@ -9884,6 +9896,7 @@ function startWizard() {
     ],
     customInstrumentDraft: '',
     mics: [],
+    hostChannels: DEFAULT_HOST_CHANNELS(),
     iemAssignments: null,
     useIems: true, // whether the team uses in-ear monitors (iems step opt-out)
     // PCO step: store client id/secret in wizardData; only commit to state on Connect or wizard finish
@@ -10395,7 +10408,7 @@ function computeBandRosterSig() {
     .map(i => i.id)
     .sort();
   const h = state.hosts || {};
-  const hostCount = ['speaker','welcomeHost1','welcomeHost2','hh3'].filter(k => (h[k] || '').trim()).length;
+  const hostCount = Object.keys(h).filter(k => (h[k] || '').trim()).length;
   return `b${bandIds.length}:${bandIds.join(',')}|h${hostCount}`;
 }
 
@@ -10928,6 +10941,17 @@ function renderWizardStepBody(step) {
             <input type="text" id="wiz_mic_custom_name" placeholder="Mic name (e.g. KSM11)" />
             <button class="btn primary" id="wiz_mic_custom_add">+ Add</button>
           </div>
+
+          <div class="section-label" style="margin-top:22px;margin-bottom:4px;">Service handhelds</div>
+          <div class="wiz-q-help" style="margin-bottom:10px;">How many handheld mics your hosts share (pastor, welcome hosts, etc.) and what to call them. Names are entered per service later.</div>
+          <div id="wiz_host_rows">
+            ${(wizardData.hostChannels||[]).map((ch, i) => `
+              <div class="wiz-mic-custom-row" data-whost-idx="${i}" style="margin-bottom:6px;">
+                <input type="text" class="wiz-host-label" value="${esc(ch.label)}" data-whost-label="${i}" placeholder="Label (e.g. HH 1)" />
+                <button class="wmic-rm" data-whost-rm="${i}" title="Remove">✕</button>
+              </div>`).join('')}
+          </div>
+          <button class="add-row-btn" id="wiz_host_add">+ Add host mic</button>
         </div>`;
     }
     case 'iems': {
@@ -11485,6 +11509,21 @@ function wireWizardStep(step) {
         if (e.key === 'Enter') { e.preventDefault(); addCustom(); }
       });
     }
+    // Service handhelds: count via add/remove, labels via inline inputs.
+    if (!Array.isArray(wizardData.hostChannels)) wizardData.hostChannels = DEFAULT_HOST_CHANNELS();
+    body.querySelectorAll('[data-whost-label]').forEach(inp => inp.addEventListener('input', e => {
+      const ch = wizardData.hostChannels[parseInt(e.target.dataset.whostLabel,10)];
+      if (ch) ch.label = e.target.value;
+    }));
+    body.querySelectorAll('[data-whost-rm]').forEach(btn => btn.addEventListener('click', e => {
+      wizardData.hostChannels.splice(parseInt(e.currentTarget.dataset.whostRm,10), 1);
+      renderWizardStep();
+    }));
+    const hostAdd = body.querySelector('#wiz_host_add');
+    if (hostAdd) hostAdd.addEventListener('click', () => {
+      wizardData.hostChannels.push({ id: newHostChannelId(), label: 'HH ' + (wizardData.hostChannels.length + 1), capsule: '' });
+      renderWizardStep();
+    });
   }
   if (step === 'iems') {
     body.querySelectorAll('[data-wiems]').forEach(b => {
@@ -11881,6 +11920,10 @@ function applyWizardChoices() {
   state.inventory = wizardData.mics
     .filter(m => m.name && m.name.trim() && m.total > 0)
     .map((m, i) => ({ name: m.name.trim(), total: m.total, rank: i + 1, wireless: !!m.wireless }));
+  // 3b. Host handheld channels (count + labels). Capsules default empty; set later on the Mics tab.
+  const wizHost = (wizardData.hostChannels || []).filter(ch => (ch.label || '').trim());
+  state.config.hostChannels = (wizHost.length ? wizHost : DEFAULT_HOST_CHANNELS())
+    .map((ch, i) => ({ id: ch.id || ('h' + (i + 1)), label: (ch.label || 'HH ' + (i + 1)).trim(), capsule: ch.capsule || '' }));
   // 4. Per-vocalist IEM packs
   const packCount = wizardData.vocalistCount;
   state.config.voxIemPacks = [];
