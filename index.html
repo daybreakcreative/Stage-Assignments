@@ -473,6 +473,7 @@ background-size:5% 10%}
 .iem-preset-row input{font-size:11.5px;padding:6px 9px}
 .inv-edit-row,.pref-row{display:grid;gap:8px;align-items:center;padding:5px 0}
 .inv-edit-row{grid-template-columns:18px 1fr 70px 56px 30px}
+.inv-edit-row.host-chan-row{grid-template-columns:minmax(160px,240px) minmax(0,1fr) 30px}
 .inv-grip{color:var(--text-faint);font-size:13px;cursor:grab;user-select:none;text-align:center;font-family:var(--ff-mono);line-height:1}
 .inv-grip:hover{color:var(--accent)}
 .inv-edit-row.dragging{opacity:.4}
@@ -1769,7 +1770,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·b</div>
+<div id="buildStamp">build 2026-07-03·c</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -6439,7 +6440,7 @@ function renderHostChannelEditor() {
     <button class="add-row-btn" id="addHostChanBtn">+ Add host mic</button>`;
   const rows = el.querySelector('#hostChanRows');
   rows.innerHTML = hostChannels().map((ch, idx) => `
-    <div class="inv-edit-row" data-idx="${idx}">
+    <div class="inv-edit-row host-chan-row" data-idx="${idx}">
       <input type="text" value="${esc(ch.label)}" data-idx="${idx}" data-field="label" placeholder="Label (e.g. HH 1)" />
       <select class="mic-select" data-idx="${idx}" data-field="capsule" title="Default capsule — the mic to grab for this handheld">${invOptions(ch.capsule||'')}</select>
       <button class="x-btn" data-idx="${idx}" data-action="remove-host" title="Remove this host mic">✕</button>
