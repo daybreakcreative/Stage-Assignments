@@ -1769,7 +1769,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-02·d</div>
+<div id="buildStamp">build 2026-07-03·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2131,9 +2131,11 @@ const SETUP_TEMPLATES = {
       { id:'eg_single', text:'Single guitar stand' },
       { id:'eg_multi',  text:'Multi guitar stand (bringing multiple EGs)' },
     ]},
-    { id:'extras', name:'Extras', type:'check', options:[
-      { id:'eg_10',   text:"Needs 10' 1/4\" cable" },
-      { id:'eg_talk', text:'Needs talkback mic' },
+    { id:'extras', name:'Cabling & extras', type:'check', options:[
+      { id:'eg_di',    text:'Needs DI' },
+      { id:'eg_10',    text:"Needs 10' 1/4\" cable" },
+      { id:'eg_talk',  text:'Needs talkback mic' },
+      { id:'eg_music', text:'Music stand' },
     ]},
   ]},
   keys: { label:'Keys', groups:[
