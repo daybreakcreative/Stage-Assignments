@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aurora — Mood Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#06070c;color:#e6e8f0;font-family:'Familjen Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  .bar{position:sticky;top:0;z-index:60;background:rgba(6,7,12,.86);backdrop-filter:blur(16px);border-bottom:1px solid #171a24}
+  .bar-in{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bar .ttl{font-family:'Bricolage Grotesque';font-weight:700;font-size:15px}
+  .bar .ttl small{color:#6a6f80;font-weight:500}
+  .sel-readout{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#9aa0b2;margin-left:8px;max-width:640px}
+  .sel-readout b{color:#fff}
+  .modebtn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;border:1px solid #2a2f3b;background:#141722;padding:7px 13px;border-radius:999px;cursor:pointer}
+  .clearbtn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa0b2;border:1px solid #23262f;background:#0e1017;padding:7px 12px;border-radius:999px;cursor:pointer}
+
+  .intro{max-width:1280px;margin:0 auto;padding:32px 24px 4px}
+  .intro h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:38px;letter-spacing:-.02em}
+  .intro p{color:#969ab0;font-size:15px;max-width:720px;margin-top:10px}
+  .intro p b{color:#d3d6e2}
+
+  .grid{max-width:1280px;margin:22px auto 70px;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+
+  /* ---- tile = a self-contained aurora scene + selectable ---- */
+  .tile{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;border:1px solid #191c26;
+    transition:transform .18s ease, box-shadow .2s ease;isolation:isolate;display:block}
+  .tile:hover{transform:translateY(-3px)}
+  .tile input{position:absolute;opacity:0;pointer-events:none}
+  .tile .backer{position:absolute;inset:0;z-index:-1;background:
+      radial-gradient(60% 70% at 15% 8%, color-mix(in srgb,var(--c1) var(--mix),transparent), transparent 60%),
+      radial-gradient(64% 72% at 88% 16%, color-mix(in srgb,var(--c2) var(--mix),transparent), transparent 62%),
+      radial-gradient(70% 66% at 60% 104%, color-mix(in srgb,var(--c3) calc(var(--mix) - 5%),transparent), transparent 60%),
+      var(--gd);
+    background-size:200% 200%;animation:drift 24s ease-in-out infinite}
+  @keyframes drift{0%,100%{background-position:0% 0%,100% 0%,50% 100%}50%{background-position:24% 28%,74% 12%,44% 82%}}
+
+  .scene{padding:16px 16px 15px;--ink:#eef2ff;--muted:#9aa3c4;--faint:#5c6488;--glass:rgba(255,255,255,.06);--glass-bd:rgba(255,255,255,.14);color:var(--ink)}
+  .tile[data-mode="light"] .scene{--ink:#141834;--muted:#5b6288;--faint:#98a0c4;--glass:rgba(255,255,255,.55);--glass-bd:rgba(255,255,255,.8)}
+  .head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .mname{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .mvibe{font-size:11px;color:var(--muted)}
+  .badge{margin-left:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--glass-bd);display:grid;place-items:center;font-size:12px;color:transparent;transition:.15s}
+
+  .mini{border-radius:13px;padding:13px 14px 12px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+  .mno{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .mnm{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;letter-spacing:-.02em;margin:5px 0 11px}
+  .mkv{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--glass-bd);font-size:12px}
+  .mkv .k{color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.12em;align-self:center}
+  .mkv .v{font-weight:600}
+  .mkv .v.iem{color:var(--c1)}
+  .tile[data-mode="dark"] .mkv .v.iem{text-shadow:0 0 14px color-mix(in srgb,var(--c1) 65%,transparent)}
+  .mgrp{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin:12px 0 8px;
+    background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hexes{display:flex;gap:6px}
+  .hexes i{flex:1;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.14);font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(0,0,0,.55);display:grid;place-items:center;font-weight:600}
+
+  /* selected state */
+  .tile.sel{box-shadow:0 0 0 2px var(--c1),0 18px 50px rgba(0,0,0,.5)}
+  .tile.sel .badge{background:var(--c1);border-color:var(--c1);color:#08101a}
+
+  /* ---- 12 moods ---- */
+  .tile{--mix:26%}
+  .tile[data-mode="light"]{--mix:38%;--gd:#eef1f8!important}
+  [data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
+  [data-mood="northern"]{--c1:#4ade80;--c2:#2dd4bf;--c3:#a78bfa;--gd:#060f0c}
+  [data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
+  [data-mood="ocean"]   {--c1:#38bdf8;--c2:#4f7cff;--c3:#22d3ee;--gd:#050b16}
+  [data-mood="frost"]   {--c1:#a5f3fc;--c2:#7dd3fc;--c3:#cbd5ff;--gd:#070b12}
+  [data-mood="vesper"]  {--c1:#9a86f5;--c2:#e6b45a;--c3:#6a8cff;--gd:#0b0913}
+  [data-mood="ember"]   {--c1:#ffb865;--c2:#ff8fa3;--c3:#ffd98a;--gd:#130c09}
+  [data-mood="sunrise"] {--c1:#ff8a5c;--c2:#ffc59e;--c3:#ffb3c1;--gd:#150d0b}
+  [data-mood="molten"]  {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806}
+  [data-mood="rose"]    {--c1:#f9a8d4;--c2:#c4b5fd;--c3:#fbcfe8;--gd:#120b12}
+  [data-mood="citrus"]  {--c1:#a3e635;--c2:#22d3ee;--c3:#fde047;--gd:#0a0f08}
+  [data-mood="meadow"]  {--c1:#86d9a6;--c2:#e3cf7a;--c3:#8ecae6;--gd:#08110c}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="ttl">Aurora <small>· mood gallery</small></div>
+    <div class="sel-readout" id="readout">Selected (0): <b>none yet</b> — click tiles to pick</div>
+    <button class="clearbtn" id="clearBtn">Clear</button>
+    <button class="modebtn" id="modeBtn">☾ Dark</button>
+  </div>
+</div>
+
+<div class="intro">
+  <h1>Pick your palettes.</h1>
+  <p>12 Aurora moods — every one is the same glass-and-light system, just re-tinted. <b>Click any tile to select it</b>; your picks collect in the bar up top so you can read them back to me. Flip <b>Dark / Light</b> to judge both. Shortlist whatever you'd want shippable as selectable "looks" — one, three, or all twelve.</p>
+</div>
+
+<div class="grid" id="grid">
+  <!-- tiles injected by JS to keep this readable -->
+</div>
+
+<script>
+  var MOODS = [
+    ['nebula','Nebula','cool · cyan · violet · magenta'],
+    ['northern','Northern Lights','green aurora · teal · violet'],
+    ['dusk','Dusk','indigo · orchid · periwinkle'],
+    ['ocean','Ocean','deep blue · cyan · indigo'],
+    ['frost','Frost','icy · pale blue · crisp'],
+    ['vesper','Vesper','sacred · violet + gold'],
+    ['ember','Ember','warm · amber · rose'],
+    ['sunrise','Sunrise','coral · peach · rose-gold'],
+    ['molten','Molten','fiery · red-orange · crimson'],
+    ['rose','Rose Quartz','soft · pink · lilac'],
+    ['citrus','Citrus','fresh · lime · cyan · yellow'],
+    ['meadow','Meadow','natural · sage · gold · sky']
+  ];
+  var HEX = {
+    nebula:['#67E8F9','#B39CFF','#F7A8D8'], northern:['#4ADE80','#2DD4BF','#A78BFA'],
+    dusk:['#8B9CFF','#C08CFF','#7FB0FF'], ocean:['#38BDF8','#4F7CFF','#22D3EE'],
+    frost:['#A5F3FC','#7DD3FC','#CBD5FF'], vesper:['#9A86F5','#E6B45A','#6A8CFF'],
+    ember:['#FFB865','#FF8FA3','#FFD98A'], sunrise:['#FF8A5C','#FFC59E','#FFB3C1'],
+    molten:['#FF6B4A','#FFB020','#FF4D6D'], rose:['#F9A8D4','#C4B5FD','#FBCFE8'],
+    citrus:['#A3E635','#22D3EE','#FDE047'], meadow:['#86D9A6','#E3CF7A','#8ECAE6']
+  };
+  var grid = document.getElementById('grid');
+  MOODS.forEach(function(m){
+    var id=m[0], name=m[1], vibe=m[2], hx=HEX[id];
+    var t=document.createElement('label');
+    t.className='tile'; t.setAttribute('data-mood',id); t.setAttribute('data-mode','dark');
+    t.innerHTML =
+      '<input type="checkbox" data-name="'+name+'">'+
+      '<div class="backer"></div>'+
+      '<div class="scene">'+
+        '<div class="head"><span class="mname">'+name+'</span><span class="mvibe">'+vibe+'</span><span class="badge">✓</span></div>'+
+        '<div class="mini">'+
+          '<div class="mno">Vocal 1</div>'+
+          '<div class="mnm">Amelia Garcia</div>'+
+          '<div class="mkv"><span class="k">Mic</span><span class="v">KMS105</span></div>'+
+          '<div class="mkv"><span class="k">IEM</span><span class="v iem">Vocal 1 Pack</span></div>'+
+        '</div>'+
+        '<div class="mgrp">Worship · Service Order</div>'+
+        '<div class="hexes"><i style="background:'+hx[0]+'">'+hx[0]+'</i><i style="background:'+hx[1]+'">'+hx[1]+'</i><i style="background:'+hx[2]+'">'+hx[2]+'</i></div>'+
+      '</div>';
+    grid.appendChild(t);
+  });
+
+  var selected = [];
+  var readout = document.getElementById('readout');
+  function refresh(){
+    if(!selected.length){ readout.innerHTML='Selected (0): <b>none yet</b> — click tiles to pick'; return; }
+    readout.innerHTML='Selected ('+selected.length+'): <b>'+selected.join(' · ')+'</b>';
+  }
+  grid.addEventListener('change', function(e){
+    var cb=e.target.closest('input[type=checkbox]'); if(!cb) return;
+    var tile=cb.closest('.tile'); var nm=cb.dataset.name;
+    if(cb.checked){ tile.classList.add('sel'); if(selected.indexOf(nm)<0) selected.push(nm); }
+    else { tile.classList.remove('sel'); selected=selected.filter(function(x){return x!==nm}); }
+    refresh();
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    selected=[]; grid.querySelectorAll('input:checked').forEach(function(cb){cb.checked=false;cb.closest('.tile').classList.remove('sel')}); refresh();
+  });
+  var mode='dark';
+  document.getElementById('modeBtn').addEventListener('click', function(){
+    mode=(mode==='dark')?'light':'dark';
+    grid.querySelectorAll('.tile').forEach(function(t){t.setAttribute('data-mode',mode)});
+    this.textContent=(mode==='dark')?'☾ Dark':'☀ Light';
+  });
+</script>
+</body>
+</html>

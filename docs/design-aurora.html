@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stage·Assign — Aurora theme system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#06070c;color:#e6e8f0;font-family:'Familjen Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ---------- control bar ---------- */
+  .bar{position:sticky;top:0;z-index:60;background:rgba(6,7,12,.8);backdrop-filter:blur(16px);border-bottom:1px solid #171a24}
+  .bar-in{max-width:1220px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .bar .ttl{font-family:'Bricolage Grotesque';font-weight:700;font-size:15px}
+  .bar .ttl small{color:#6a6f80;font-weight:500}
+  .moods{display:flex;gap:6px;margin-left:auto}
+  .moods button{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#c7cad4;border:1px solid #23273180;background:#0e1017;padding:6px 11px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.15s}
+  .moods button:hover{border-color:#3a3f4d}
+  .moods button.on{border-color:#fff;color:#fff}
+  .moods button i{width:22px;height:10px;border-radius:999px}
+  .modebtn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;border:1px solid #2a2f3b;background:#141722;padding:6px 12px;border-radius:999px;cursor:pointer}
+
+  .intro{max-width:1220px;margin:0 auto;padding:34px 24px 4px}
+  .intro h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:40px;letter-spacing:-.02em}
+  .intro p{color:#969ab0;font-size:15px;max-width:680px;margin-top:11px}
+  .intro p b{color:#d3d6e2}
+  .lbl{max-width:1220px;margin:30px auto 10px;padding:0 24px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6a6f80}
+  .wrap{max-width:1220px;margin:0 auto;padding:0 24px}
+  .frame{border-radius:20px;overflow:hidden;border:1px solid #191c26;box-shadow:0 34px 90px rgba(0,0,0,.6)}
+  .cap{max-width:1220px;margin:10px auto 0;padding:0 26px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#63677a}
+
+  /* =========================================================
+     AURORA THEME ENGINE — mood sets --c1/2/3 + ground; mode
+     sets ink/glass. Backdrop blobs read the mood vars live.
+     ========================================================= */
+  .aurora{
+    --mix:24%;
+    --ink:#eef2ff;--muted:#9aa3c4;--faint:#5c6488;
+    --glass:rgba(255,255,255,.055);--glass-bd:rgba(255,255,255,.13);--glass-hi:rgba(255,255,255,.08);
+    --field:rgba(255,255,255,.05);--field-bd:rgba(255,255,255,.16);
+    color:var(--ink);font-family:'Familjen Grotesk',sans-serif;position:relative;isolation:isolate;background:var(--gd)}
+  .aurora::before{content:'';position:absolute;inset:0;z-index:-1;background:
+      radial-gradient(52% 60% at 12% 6%, color-mix(in srgb,var(--c1) var(--mix),transparent), transparent 60%),
+      radial-gradient(56% 66% at 90% 16%, color-mix(in srgb,var(--c2) var(--mix),transparent), transparent 62%),
+      radial-gradient(62% 62% at 58% 104%, color-mix(in srgb,var(--c3) calc(var(--mix) - 5%),transparent), transparent 60%),
+      var(--gd);
+    background-size:200% 200%;animation:drift 22s ease-in-out infinite}
+  @keyframes drift{0%,100%{background-position:0% 0%,100% 0%,50% 100%}50%{background-position:22% 26%,72% 12%,42% 82%}}
+
+  /* moods */
+  .aurora[data-mood="nebula"]{--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
+  .aurora[data-mood="ember"] {--c1:#ffb865;--c2:#ff8fa3;--c3:#ffd98a;--gd:#130c09}
+  .aurora[data-mood="tide"]  {--c1:#5ff2d0;--c2:#56c8f5;--c3:#3fa6a0;--gd:#05100f}
+  .aurora[data-mood="dusk"]  {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
+
+  /* light mode: neutral bright ground, mood blobs carry the hue */
+  .aurora[data-mode="light"]{--mix:36%;--gd:#eef1f8;--ink:#141834;--muted:#5b6288;--faint:#98a0c4;
+    --glass:rgba(255,255,255,.55);--glass-bd:rgba(255,255,255,.8);--glass-hi:rgba(255,255,255,.6);
+    --field:rgba(255,255,255,.7);--field-bd:rgba(30,40,90,.16)}
+
+  .aurora .glass{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--glass-bd);box-shadow:inset 0 1px 0 var(--glass-hi),0 10px 34px rgba(0,0,0,.22)}
+  .aurora[data-mode="light"] .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 10px 30px rgba(70,80,150,.14)}
+
+  /* ---- display surface ---- */
+  .disp{display:grid;grid-template-columns:1fr 320px;min-height:580px}
+  .stagearea{padding:30px 32px 30px;display:flex;flex-direction:column}
+  .mast .k{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--c1)}
+  .mast h2{font-family:'Bricolage Grotesque';font-weight:700;font-size:40px;letter-spacing:-.02em;line-height:1;margin-top:6px}
+  .mast .date{font-size:12px;color:var(--muted);margin-top:5px}
+  .eye{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin:22px 0 12px}
+  .voc-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{border-radius:16px;padding:15px 15px 14px;opacity:0;transform:translateY(10px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card:nth-child(1){animation-delay:.08s}.card:nth-child(2){animation-delay:.15s}.card:nth-child(3){animation-delay:.22s}.card:nth-child(4){animation-delay:.29s}
+  .card .no{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .card .nm{font-family:'Bricolage Grotesque';font-weight:700;font-size:21px;letter-spacing:-.02em;line-height:1.02;margin:6px 0 13px}
+  .kv{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--glass-bd);font-size:12.5px}
+  .kv .k{color:var(--muted);text-transform:uppercase;font-size:9.5px;letter-spacing:.12em;align-self:center}
+  .kv .v{font-weight:600}
+  .kv .v.iem{color:var(--c1)}
+  .aurora[data-mode="dark"] .kv .v.iem{text-shadow:0 0 15px color-mix(in srgb,var(--c1) 60%,transparent)}
+
+  .stagewrap{position:relative;border-radius:16px;margin-top:20px;flex:1;min-height:230px;overflow:hidden}
+  .stagewrap .aud,.stagewrap .bk{position:absolute;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
+  .stagewrap .aud{top:9px}.stagewrap .bk{bottom:9px}
+  .chip{position:absolute;transform:translate(-50%,-50%);border-radius:9px;padding:6px 11px;text-align:center;min-width:80px;font-size:11px}
+  .chip .cp{font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .chip .cn{font-family:'Bricolage Grotesque';font-weight:600;margin-top:1px}
+
+  .rail{border-left:1px solid var(--glass-bd)}
+  .rail .in{padding:24px 20px}
+  .rt{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.22em;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--glass-bd);margin-bottom:4px}
+  .rt .m{font-size:10px;color:var(--muted);letter-spacing:.08em}
+  .grp{font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin:16px 0 3px;
+    background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .item{display:grid;grid-template-columns:22px 1fr auto;gap:9px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--glass-bd)}
+  .item .n{font-size:11px;color:var(--faint)}
+  .item .s{font-family:'Bricolage Grotesque';font-weight:600;font-size:15.5px}
+  .item .who{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:3px}
+  .item .who b{width:14px;height:14px;border-radius:50%;display:inline-block}
+  .item .len{font-size:10px;color:var(--faint)}
+  .band{margin-top:20px}
+  .band .bl{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .brow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:5px 0}
+  .brow .p{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-width:50px;align-self:center}
+  .brow .n{font-family:'Bricolage Grotesque';font-weight:600;font-size:15px}
+  .brow .i{font-size:11px;color:var(--c1);font-weight:600}
+
+  /* ---- editor surface ---- */
+  .editor{padding:26px 30px 34px}
+  .ed-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}
+  .ed-head h2{font-family:'Bricolage Grotesque';font-weight:700;font-size:26px;letter-spacing:-.02em}
+  .ed-head .count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
+  .ed-head .add{margin-left:auto;font-size:13px;color:var(--c1);border:1px solid color-mix(in srgb,var(--c1) 45%,transparent);background:color-mix(in srgb,var(--c1) 12%,transparent);border-radius:999px;padding:7px 15px;font-weight:600;cursor:pointer}
+  .ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .ed-card{border-radius:16px;padding:15px 16px 16px;position:relative}
+  .ed-card .top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ed-card .pos{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .ed-card .wl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--c1);border:1px solid color-mix(in srgb,var(--c1) 45%,transparent);border-radius:999px;padding:2px 8px}
+  .ed-card .x{margin-left:auto;color:var(--faint);cursor:pointer;font-size:14px}
+  .ed-card .name{font-family:'Bricolage Grotesque';font-weight:700;font-size:20px;letter-spacing:-.02em;border:none;background:transparent;color:var(--ink);width:100%;outline:none;border-bottom:1.5px solid var(--glass-bd);padding-bottom:8px;margin-bottom:12px}
+  .fieldrow{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .fieldrow .fl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-width:30px}
+  .sel{flex:1;position:relative}
+  .sel select{appearance:none;width:100%;background:var(--field);border:1px solid var(--field-bd);color:var(--ink);border-radius:9px;padding:8px 30px 8px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;cursor:pointer}
+  .sel::after{content:'▾';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:11px}
+  .sel select:focus{border-color:var(--c1)}
+  .ed-card.iem-hi .sel.iem select{color:var(--c1);border-color:color-mix(in srgb,var(--c1) 40%,transparent);font-weight:600}
+  .add-tile{border-radius:16px;border:1.5px dashed var(--glass-bd);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);min-height:150px;cursor:pointer;font-size:13px}
+  .add-tile .plus{font-size:26px;line-height:1;color:var(--c1)}
+  .add-tile.shadow{opacity:.85}
+
+  .foot{max-width:1220px;margin:40px auto 70px;padding:0 24px;color:#63677a;font-size:13px}
+  .foot b{color:#c2c4d0}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="ttl">Aurora <small>· theme system</small></div>
+    <div class="moods" id="moods">
+      <button data-mood="nebula" class="on"><i style="background:linear-gradient(90deg,#67e8f9,#b39cff,#f7a8d8)"></i>Nebula</button>
+      <button data-mood="ember"><i style="background:linear-gradient(90deg,#ffb865,#ff8fa3,#ffd98a)"></i>Ember</button>
+      <button data-mood="tide"><i style="background:linear-gradient(90deg,#5ff2d0,#56c8f5,#3fa6a0)"></i>Tide</button>
+      <button data-mood="dusk"><i style="background:linear-gradient(90deg,#8b9cff,#c08cff,#7fb0ff)"></i>Dusk</button>
+      <button class="modebtn" id="modeBtn">☾ Dark</button>
+    </div>
+  </div>
+</div>
+
+<div class="intro">
+  <h1>Aurora, as a system.</h1>
+  <p>One aesthetic — drifting light behind frosted glass — that becomes a whole <b>theme engine</b>. Four color <b>moods</b> to match a room's vibe, each in <b>dark and light</b>. Switch mood + mode up top and watch both surfaces below respond. This is the same idea across the <b>display</b> and the <b>editor</b> you actually work in.</p>
+</div>
+
+<!-- DISPLAY -->
+<div class="lbl">Display view — the green-room / stage screen</div>
+<div class="wrap">
+  <div class="frame aurora" data-mood="nebula" data-mode="dark">
+    <div class="disp">
+      <div class="stagearea">
+        <div class="mast"><div class="k">Sunday Service</div><h2>Fully Devoted</h2><div class="date">Friday · July 3, 2026</div></div>
+        <div class="eye">Vocalists</div>
+        <div class="voc-row">
+          <div class="card glass"><div class="no">Vocal 1</div><div class="nm">Amelia Garcia</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 2</div><div class="nm">Emma Johnson</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 3</div><div class="nm">Jake Williams</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 4</div><div class="nm">Sophia Davis</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+        <div class="stagewrap glass">
+          <div class="aud">↑ Audience</div>
+          <svg viewBox="0 0 600 300" width="100%" height="100%" preserveAspectRatio="none" style="position:absolute;inset:0"><path d="M36,58 Q300,18 564,58 L564,264 L36,264 Z" fill="none" stroke="var(--glass-bd)" stroke-width="1.5"/></svg>
+          <div class="chip glass" style="left:20%;top:42%"><div class="cp">Vocal 4</div><div class="cn">Sophia</div></div>
+          <div class="chip glass" style="left:42%;top:31%"><div class="cp">Vocal 3</div><div class="cn">Jake</div></div>
+          <div class="chip glass" style="left:63%;top:31%"><div class="cp">Vocal 2</div><div class="cn">Emma</div></div>
+          <div class="chip glass" style="left:82%;top:42%"><div class="cp">Vocal 1</div><div class="cn">Amelia</div></div>
+          <div class="chip glass" style="left:24%;top:80%"><div class="cp">Drums</div><div class="cn">Sam</div></div>
+          <div class="chip glass" style="left:54%;top:84%"><div class="cp">EG 1</div><div class="cn">Daniel</div></div>
+          <div class="chip glass" style="left:80%;top:80%"><div class="cp">Bass</div><div class="cn">Carlos</div></div>
+          <div class="bk">Back ↓</div>
+        </div>
+      </div>
+      <div class="rail glass"><div class="in">
+        <div class="rt">Service Order<span class="m">9 · 45 MIN</span></div>
+        <div class="grp">Worship</div>
+        <div class="item"><span class="n">1</span><div><div class="s">Holy Forever</div><span class="who"><b style="background:var(--c1)"></b>Jake</span></div><span class="len">6m</span></div>
+        <div class="item"><span class="n">2</span><div><div class="s">Great Are You Lord</div><span class="who"><b style="background:var(--c2)"></b>Emma</span></div><span class="len">5m</span></div>
+        <div class="item"><span class="n">3</span><div><div class="s">Way Maker</div><span class="who"><b style="background:var(--c1)"></b>Jake</span></div><span class="len">7m</span></div>
+        <div class="grp">Message</div>
+        <div class="item"><span class="n">4</span><div><div class="s">Being a Disciple</div><span class="who">Sermon</span></div><span class="len">30m</span></div>
+        <div class="grp">Response</div>
+        <div class="item"><span class="n">5</span><div><div class="s">King of Kings</div><span class="who"><b style="background:var(--c3)"></b>Sophia</span></div><span class="len">6m</span></div>
+        <div class="band">
+          <div class="bl">Band</div>
+          <div class="brow"><span class="p">Drums</span><span class="n">Sam Rodriguez</span><span class="i">Drum Pack</span></div>
+          <div class="brow"><span class="p">EG 1</span><span class="n">Daniel Martinez</span><span class="i">EG Pack</span></div>
+          <div class="brow"><span class="p">Keys</span><span class="n">Carlos Brown</span><span class="i">Keys Pack</span></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+<div class="cap">Glow-lit IEM values, gradient section labels, glass stage. The drifting backdrop is one slow, calm motion — not busy.</div>
+
+<!-- EDITOR -->
+<div class="lbl">Editor view — where you build the plan (glass must stay usable)</div>
+<div class="wrap">
+  <div class="frame aurora" data-mood="nebula" data-mode="dark">
+    <div class="editor">
+      <div class="ed-head"><h2>Vocalists</h2><span class="count">4 / 8</span><span class="add">+ Vocal</span></div>
+      <div class="ed-grid">
+        <div class="ed-card glass iem-hi">
+          <div class="top"><span class="pos">Vocal 1</span><span class="wl">WL</span><span class="x">✕</span></div>
+          <input class="name" value="Amelia Garcia" />
+          <div class="fieldrow"><span class="fl">Mic</span><div class="sel"><select><option>KMS105</option><option>D:Facto</option></select></div></div>
+          <div class="fieldrow"><span class="fl">IEM</span><div class="sel iem"><select><option>Vocal 1 Pack</option><option>Vocal 2 Pack</option></select></div></div>
+        </div>
+        <div class="ed-card glass iem-hi">
+          <div class="top"><span class="pos">Vocal 2</span><span class="x">✕</span></div>
+          <input class="name" value="Emma Johnson" />
+          <div class="fieldrow"><span class="fl">Mic</span><div class="sel"><select><option>D:Facto</option><option>KMS105</option></select></div></div>
+          <div class="fieldrow"><span class="fl">IEM</span><div class="sel iem"><select><option>Vocal 2 Pack</option></select></div></div>
+        </div>
+        <div class="ed-card glass iem-hi">
+          <div class="top"><span class="pos">Vocal 3</span><span class="x">✕</span></div>
+          <input class="name" value="Jake Williams" />
+          <div class="fieldrow"><span class="fl">Mic</span><div class="sel"><select><option>D:Facto</option></select></div></div>
+          <div class="fieldrow"><span class="fl">IEM</span><div class="sel iem"><select><option>Vocal 3 Pack</option></select></div></div>
+        </div>
+        <div class="ed-card glass iem-hi">
+          <div class="top"><span class="pos">Vocal 4</span><span class="x">✕</span></div>
+          <input class="name" value="Sophia Davis" />
+          <div class="fieldrow"><span class="fl">Mic</span><div class="sel"><select><option>KMS105</option></select></div></div>
+          <div class="fieldrow"><span class="fl">IEM</span><div class="sel iem"><select><option>Vocal 4 Pack</option></select></div></div>
+        </div>
+        <button class="add-tile"><span class="plus">+</span>Add vocalist</button>
+        <button class="add-tile shadow"><span class="plus">+</span>Add shadow</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="cap">Same theme, working surface: real inputs + dropdowns on glass, accent-tinted IEM fields, dashed add-tiles. Legibility holds in both modes — check with the toggle.</div>
+
+<div class="foot">
+  Pick a <b>mood</b> as the default (or ship all four as selectable). When you're set, I build it into <b>index.html</b> for real — full stage diagram, motion, every screen — behind a theme switcher with your existing <code>[data-theme]</code> hook. Want <b>Call Sheet</b> kept as a non-Aurora alternate too? Easy to add.
+</div>
+
+<script>
+  (function(){
+    var frames=[].slice.call(document.querySelectorAll('.frame.aurora'));
+    var mode='dark';
+    document.getElementById('moods').addEventListener('click',function(e){
+      var b=e.target.closest('button[data-mood]'); if(!b) return;
+      document.querySelectorAll('#moods button[data-mood]').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      frames.forEach(function(f){f.setAttribute('data-mood',b.dataset.mood)});
+    });
+    document.getElementById('modeBtn').addEventListener('click',function(){
+      mode=(mode==='dark')?'light':'dark';
+      frames.forEach(function(f){f.setAttribute('data-mode',mode)});
+      this.textContent=(mode==='dark')?'☾ Dark':'☀ Light';
+    });
+  })();
+</script>
+</body>
+</html>

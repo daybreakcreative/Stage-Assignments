@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stage·Assign — Call Sheet (Dark) · Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CALL SHEET — DARK.  Editorial run-of-show, dark newsprint.
+     paper→ink inverted: warm near-black ground, warm off-white ink,
+     hairline rules, heavy grotesque names, vermilion accent.
+     ============================================================ */
+  :root{
+    --ground:#131210;      /* warm near-black "dark paper" */
+    --panel:#1a1813;       /* raised inset */
+    --rule:#34302a;        /* hairline */
+    --rule-strong:#4a453c; /* masthead / header rules */
+    --ink:#ece7dc;         /* warm off-white */
+    --ink-dim:#b7b1a4;
+    --muted:#857f72;
+    --faint:#5c574d;
+    --red:#e4573f;         /* vermilion — IEM + numbering + accents */
+    --amber:#e0a34a;       /* leader chip */
+    --teal:#57a99a;        /* leader chip */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ground);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  /* faint paper grain so the dark ground doesn't read as flat web-black */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background:radial-gradient(1200px 700px at 70% -10%,rgba(228,87,63,.05),transparent 60%),
+               radial-gradient(900px 600px at 0% 100%,rgba(224,163,74,.04),transparent 55%)}
+
+  .screen{display:grid;grid-template-columns:1fr 320px;min-height:100vh;position:relative;z-index:1}
+
+  /* ---------------- MAIN (stage side) ---------------- */
+  .main{padding:26px 30px 40px;display:flex;flex-direction:column}
+  .masthead{text-align:center;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule-strong);padding:12px 0 14px;margin-bottom:22px}
+  .masthead .svc{font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+  .masthead .date{margin-top:8px;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+
+  .sec-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .sec-eyebrow::after{content:'';flex:1;height:1px;background:var(--rule)}
+
+  /* vocalist cards — tabular, numbered, ruled */
+  .vocs{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--rule)}
+  .voc{padding:14px 16px 15px;border-right:1px solid var(--rule)}
+  .voc:last-child{border-right:none}
+  .voc .no{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--red);font-weight:600}
+  .voc .nm{font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em;line-height:1.02;text-transform:uppercase;margin:8px 0 13px}
+  .voc .kv{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 0}
+  .voc .kv .k{color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .voc .kv .v{font-weight:600;color:var(--ink)}
+  .voc .kv .v.iem{color:var(--red)}
+
+  /* stage block */
+  .stage-head{display:flex;justify-content:space-between;align-items:center;margin:24px 0 10px}
+  .stage-head .mono{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .stage-zone{display:grid;grid-template-columns:1fr 232px;gap:20px;flex:1;min-height:0}
+  .stage-wrap{position:relative;background:var(--panel);border:1px solid var(--rule);border-radius:4px;overflow:hidden;min-height:340px}
+  .stage-wrap .audience{position:absolute;top:8px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--faint);text-transform:uppercase}
+  .stage-wrap .back{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--faint);text-transform:uppercase}
+  .chip{position:absolute;transform:translate(-50%,-50%);background:var(--ground);border:1px solid var(--rule-strong);border-radius:5px;padding:5px 9px;text-align:center;min-width:76px}
+  .chip .cpos{font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .chip .cnm{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:-.01em;margin-top:1px}
+  .chip.band{border-color:var(--rule);background:#100f0c}
+
+  /* band + handhelds boxes floated beside stage */
+  .float-col{display:flex;flex-direction:column;gap:16px}
+  .box{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:12px 13px}
+  .box .bl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:8px}
+  .brow{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:baseline;padding:4px 0}
+  .brow .p{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--muted);min-width:40px;text-transform:uppercase}
+  .brow .n{font-family:'Archivo',sans-serif;font-weight:600;font-size:13px}
+  .brow .i{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--red);font-weight:600}
+
+  /* ---------------- SERVICE ORDER RAIL ---------------- */
+  .rail{background:#100f0c;border-left:1px solid var(--rule-strong);padding:0;display:flex;flex-direction:column}
+  .rail-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:2px solid var(--ink)}
+  .rail-head .t{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
+  .rail-head .meta{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
+  .rail-body{padding:6px 18px 20px;overflow:auto}
+  .grp{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--red);margin:16px 0 4px}
+  .item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--rule)}
+  .item .n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint)}
+  .item .song{font-family:'Archivo',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .item .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .item .len{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
+  .lead{display:inline-flex;align-items:center;gap:6px;margin-top:4px}
+  .lead .sq{width:14px;height:14px;border-radius:3px;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#131210}
+  .lead .who{font-size:11px;color:var(--ink-dim)}
+  .song.msg{font-style:normal;color:var(--ink)}
+
+  .stamp{position:fixed;left:8px;bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--faint);z-index:5}
+  .exit{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border:1px solid var(--rule-strong);border-radius:5px;padding:4px 9px}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="masthead">
+      <div class="svc">Sunday Service</div>
+      <div class="date">Friday · July 3 · 2026</div>
+    </div>
+
+    <div class="sec-eyebrow">Vocalists</div>
+    <div class="vocs">
+      <div class="voc"><div class="no">01 · VOCAL</div><div class="nm">Amelia Garcia</div><div class="kv"><span class="k">mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 1 Pack</span></div></div>
+      <div class="voc"><div class="no">02 · VOCAL</div><div class="nm">Emma Johnson</div><div class="kv"><span class="k">mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 2 Pack</span></div></div>
+      <div class="voc"><div class="no">03 · VOCAL</div><div class="nm">Jake Williams</div><div class="kv"><span class="k">mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 3 Pack</span></div></div>
+      <div class="voc"><div class="no">04 · VOCAL</div><div class="nm">Sophia Davis</div><div class="kv"><span class="k">mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 4 Pack</span></div></div>
+    </div>
+
+    <div class="stage-head">
+      <span class="mono">‹ 5L &nbsp;·&nbsp; ↑ Audience &nbsp;·&nbsp; 5R ›</span>
+      <span class="mono">Stage</span>
+    </div>
+    <div class="stage-zone">
+      <div class="stage-wrap">
+        <div class="audience">↑ Audience</div>
+        <svg viewBox="0 0 600 360" width="100%" height="100%" preserveAspectRatio="none" style="position:absolute;inset:0">
+          <path d="M40,70 Q300,20 560,70 L560,320 L40,320 Z" fill="none" stroke="#34302a" stroke-width="1.5"/>
+        </svg>
+        <!-- vocalists arc -->
+        <div class="chip" style="left:18%;top:44%"><div class="cpos">Vocal 4</div><div class="cnm">Sophia Davis</div></div>
+        <div class="chip" style="left:40%;top:33%"><div class="cpos">Vocal 3</div><div class="cnm">Jake Williams</div></div>
+        <div class="chip" style="left:62%;top:33%"><div class="cpos">Vocal 2</div><div class="cnm">Emma Johnson</div></div>
+        <div class="chip" style="left:82%;top:44%"><div class="cpos">Vocal 1</div><div class="cnm">Amelia Garcia</div></div>
+        <!-- band -->
+        <div class="chip band" style="left:20%;top:82%"><div class="cpos">Drums</div><div class="cnm">Sam Rodriguez</div></div>
+        <div class="chip band" style="left:52%;top:86%"><div class="cpos">EG 1</div><div class="cnm">Daniel Martinez</div></div>
+        <div class="chip band" style="left:80%;top:82%"><div class="cpos">Bass</div><div class="cnm">Carlos Brown</div></div>
+        <div class="back">Back ↓</div>
+      </div>
+
+      <div class="float-col">
+        <div class="box">
+          <div class="bl">Band</div>
+          <div class="brow"><span class="p">Drums</span><span class="n">Sam Rodriguez</span><span class="i">Drum Pack</span></div>
+          <div class="brow"><span class="p">EG 1</span><span class="n">Daniel Martinez</span><span class="i">EG Pack</span></div>
+          <div class="brow"><span class="p">Keys</span><span class="n">Carlos Brown</span><span class="i">Keys Pack</span></div>
+        </div>
+        <div class="box">
+          <div class="bl">Handhelds</div>
+          <div class="brow"><span class="p">HH 1</span><span class="n">Bill Smith</span><span class="i"></span></div>
+          <div class="brow"><span class="p">HH 2</span><span class="n">Anna Jones</span><span class="i"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SERVICE ORDER RAIL ============ -->
+  <div class="rail">
+    <div class="rail-head">
+      <span class="t">Service Order</span>
+      <span class="meta">9 ITEMS · 45 MIN</span>
+      <span class="exit">✕ Exit</span>
+    </div>
+    <div class="rail-body">
+      <div class="grp">Pre-Service</div>
+      <div class="item"><span class="n">02</span><div><div class="song">Countdown</div></div><span class="len">5m</span></div>
+
+      <div class="grp">Worship</div>
+      <div class="item"><span class="n">04</span><div><div class="song">Holy Forever</div><div class="lead"><span class="sq" style="background:var(--amber)">J</span><span class="who">Jake</span></div></div><span class="len">6m</span></div>
+      <div class="item"><span class="n">05</span><div><div class="song">Great Are You Lord</div><div class="lead"><span class="sq" style="background:var(--teal)">E</span><span class="who">Emma</span></div></div><span class="len">5m</span></div>
+      <div class="item"><span class="n">07</span><div><div class="song">Way Maker</div><div class="lead"><span class="sq" style="background:var(--amber)">J</span><span class="who">Jake</span></div></div><span class="len">7m</span></div>
+      <div class="item"><span class="n">08</span><div><div class="song msg">Welcome &amp; Announcements</div><div class="sub">Host · Anna</div></div><span class="len">3m</span></div>
+      <div class="item"><span class="n">09</span><div><div class="song msg">Offering</div></div><span class="len">2m</span></div>
+
+      <div class="grp">Message</div>
+      <div class="item"><span class="n">10</span><div><div class="song msg">Sermon · Being a Disciple</div></div><span class="len">30m</span></div>
+
+      <div class="grp">Response</div>
+      <div class="item"><span class="n">12</span><div><div class="song">King of Kings</div><div class="lead"><span class="sq" style="background:var(--red)">S</span><span class="who">Sophia</span></div></div><span class="len">6m</span></div>
+      <div class="item"><span class="n">13</span><div><div class="song msg">Benediction</div></div><span class="len">2m</span></div>
+    </div>
+  </div>
+
+</div>
+<div class="stamp">CALL SHEET · DARK — preview mock</div>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stage·Assign — Creative Directions v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#050608;color:#e6e6e6;font-family:'Familjen Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---------- page chrome + theme picker ---------- */
+  .top{position:sticky;top:0;z-index:50;background:rgba(5,6,8,.82);backdrop-filter:blur(14px);border-bottom:1px solid #17191e}
+  .top-in{max-width:1200px;margin:0 auto;padding:14px 26px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .top-title{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .top-title small{color:#6b6e76;font-weight:500}
+  .picker{display:flex;gap:6px;margin-left:auto}
+  .picker a{font-family:'IBM Plex Mono',monospace;font-size:11px;text-decoration:none;color:#c7c9cf;border:1px solid #23262c;background:#0e1013;padding:7px 12px;border-radius:999px;transition:.15s}
+  .picker a:hover{border-color:#3a3e46;color:#fff}
+  .picker a i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .mode-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;border:1px solid #2a2d33;background:#15171b;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .mode-btn:hover{border-color:#5a5e66}
+
+  .intro{max-width:1200px;margin:0 auto;padding:40px 26px 6px}
+  .intro h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:42px;letter-spacing:-.02em;line-height:1.02}
+  .intro p{color:#9a9ca2;font-size:15px;max-width:660px;margin-top:12px}
+  .intro p b{color:#d3d3d3}
+
+  section.dir{max-width:1200px;margin:30px auto;padding:0 26px;opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+  section.dir:nth-of-type(2){animation-delay:.08s}
+  section.dir:nth-of-type(3){animation-delay:.16s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .dir-meta{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .dir-meta .no{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#63666d}
+  .dir-meta .nm{font-size:24px;font-weight:700;font-family:'Bricolage Grotesque';letter-spacing:-.01em}
+  .dir-meta .tag{font-size:13px;color:#9a9ca2}
+  .dir-note{font-size:13px;color:#7f8188;max-width:760px;margin-bottom:14px}
+  .dir-note b{color:#c2c1bc}
+  .sw-strip{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .sw{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8a8c92;background:#0e1013;border:1px solid #1c1f24;border-radius:7px;padding:5px 9px}
+  .sw i{width:14px;height:14px;border-radius:3px;border:1px solid rgba(255,255,255,.1)}
+  .frame{border-radius:18px;overflow:hidden;border:1px solid #191b20;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .cap{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#63666d;margin:10px 2px 0}
+
+  /* shared display skeleton */
+  .disp{display:grid;grid-template-columns:1fr 316px;min-height:560px}
+  .stagearea{padding:30px 32px 34px;display:flex;flex-direction:column}
+  .rail{display:flex;flex-direction:column}
+  .voc-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{opacity:0;transform:translateY(10px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+  .card:nth-child(1){animation-delay:.10s}.card:nth-child(2){animation-delay:.18s}
+  .card:nth-child(3){animation-delay:.26s}.card:nth-child(4){animation-delay:.34s}
+  .brow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:6px 0}
+  .item{display:grid;grid-template-columns:24px 1fr auto;gap:9px;align-items:baseline;padding:9px 0}
+
+  /* =========================================================
+     1 · SANCTUARY  — obsidian + gold, high-contrast serif
+     ========================================================= */
+  .sanctuary{--bg:#0b0e13;--bg2:#0e1219;--panel:rgba(230,214,178,.035);--line:rgba(198,167,110,.26);
+    --ink:#efe8d8;--muted:#9d947f;--faint:#6a6455;--gold:#c9a96e;--gold-hi:#e6cd93;
+    background:radial-gradient(90% 60% at 50% -8%,#191510 0%,var(--bg) 46%);color:var(--ink);
+    font-family:'Spectral',Georgia,serif}
+  .sanctuary[data-mode="light"]{--bg:#f5f0e4;--bg2:#efe8d6;--panel:rgba(120,95,45,.05);--line:rgba(150,120,60,.4);
+    --ink:#241f16;--muted:#6f6650;--faint:#a99e82;--gold:#9c7a34;--gold-hi:#7d5f22;
+    background:radial-gradient(90% 60% at 50% -8%,#fbf6ea 0%,#f2ecdd 60%)}
+  .sanctuary .rail{background:var(--bg2);border-left:1px solid var(--line)}
+  .sanctuary .mast{text-align:center;padding:6px 0 18px;margin-bottom:8px}
+  .sanctuary .mast .k{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold)}
+  .sanctuary .mast h2{font-family:'Cormorant Garamond';font-weight:500;font-size:44px;line-height:1;margin:8px 0 6px;letter-spacing:.01em}
+  .sanctuary .mast .orn{color:var(--gold);letter-spacing:.5em;font-size:13px}
+  .sanctuary .eye{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin:18px 0 12px;text-align:center}
+  .sanctuary .card{padding:14px 6px 0;border-top:1px solid var(--line);text-align:center}
+  .sanctuary .card .no{font-family:'Cormorant Garamond';font-size:15px;color:var(--gold);letter-spacing:.2em}
+  .sanctuary .card .nm{font-family:'Cormorant Garamond';font-weight:600;font-size:26px;line-height:1.04;margin:4px 0 12px}
+  .sanctuary .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 2px;border-top:1px solid rgba(201,169,110,.12)}
+  .sanctuary .kv .k{color:var(--muted);font-variant:small-caps;letter-spacing:.08em}
+  .sanctuary .kv .v{font-weight:500}
+  .sanctuary .kv .v.iem{color:var(--gold-hi);font-style:italic}
+  .sanctuary .rail-in{padding:26px 22px}
+  .sanctuary .rl-title{font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:var(--gold);text-align:center;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .sanctuary .grp{font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px}
+  .sanctuary .item{border-bottom:1px solid rgba(201,169,110,.12)}
+  .sanctuary .item .n{font-family:'Cormorant Garamond';font-size:15px;color:var(--gold)}
+  .sanctuary .item .s{font-family:'Cormorant Garamond';font-size:19px;font-weight:600}
+  .sanctuary .item .who{font-size:11px;color:var(--muted);font-variant:small-caps;letter-spacing:.06em}
+  .sanctuary .item .len{font-size:11px;color:var(--faint);font-variant:small-caps}
+  .sanctuary .band{margin-top:auto;padding-top:20px}
+  .sanctuary .band .bl{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .sanctuary .brow .p{font-size:11px;color:var(--muted);font-variant:small-caps;letter-spacing:.06em;min-width:52px}
+  .sanctuary .brow .n{font-family:'Cormorant Garamond';font-size:17px;font-weight:600}
+  .sanctuary .brow .i{font-size:12px;color:var(--gold-hi);font-style:italic}
+
+  /* =========================================================
+     2 · BROADCAST  — concert lower-thirds, ultra-condensed
+     ========================================================= */
+  .broadcast{--bg:#0a0c0f;--panel:#111419;--line:#20242b;--ink:#f3f5f7;--muted:#828892;--faint:#565c66;
+    --sig:#ff5b23;--sig2:#25e6ff;
+    background:var(--bg);color:var(--ink);font-family:'Barlow Semi Condensed',sans-serif;
+    background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.015) 0 2px,transparent 2px 9px)}
+  .broadcast[data-mode="light"]{--bg:#eef0f2;--panel:#fff;--line:#d8dbe0;--ink:#0a0c0f;--muted:#5c626c;--faint:#9aa0aa;
+    --sig:#ee4409;--sig2:#0693ab;background-color:var(--bg)}
+  .broadcast .rail{background:var(--panel);border-left:1px solid var(--line)}
+  .broadcast .mast{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .broadcast .mast .live{font-family:'Anton';font-size:12px;letter-spacing:.18em;color:#fff;background:var(--sig);padding:5px 10px 4px;border-radius:3px}
+  .broadcast .mast h2{font-family:'Anton';font-size:38px;letter-spacing:.005em;text-transform:uppercase;line-height:.9}
+  .broadcast .mast .date{margin-left:auto;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .broadcast .eye{font-family:'Anton';font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 12px}
+  .broadcast .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .broadcast .card .hd{background:var(--sig);color:#fff;font-family:'Anton';font-size:13px;letter-spacing:.14em;padding:5px 12px 4px;display:flex;justify-content:space-between}
+  .broadcast .card .hd .dot{width:8px;height:8px;border-radius:50%;background:#fff;align-self:center;opacity:.9}
+  .broadcast .card .bd{padding:12px 13px 13px}
+  .broadcast .card .nm{font-family:'Anton';font-size:24px;letter-spacing:.01em;text-transform:uppercase;line-height:.92;margin-bottom:12px}
+  .broadcast .kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-top:1px solid var(--line);font-weight:500}
+  .broadcast .kv .k{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.08em;align-self:center}
+  .broadcast .kv .v.iem{color:var(--sig);font-weight:700}
+  .broadcast .rail-in{padding:20px 18px}
+  .broadcast .rl-title{font-family:'Anton';font-size:15px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid var(--sig);margin-bottom:6px}
+  .broadcast .rl-title .meta{font-family:'Barlow Semi Condensed';font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .broadcast .grp{font-family:'Anton';font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--sig2);margin:15px 0 2px}
+  .broadcast .item{border-bottom:1px solid var(--line)}
+  .broadcast .item .n{font-family:'Anton';font-size:14px;color:var(--faint)}
+  .broadcast .item .s{font-weight:600;font-size:16px;text-transform:uppercase;letter-spacing:.01em}
+  .broadcast .item .who{font-size:12px;color:var(--muted);font-weight:600}
+  .broadcast .item .len{font-family:'Anton';font-size:13px;color:var(--muted)}
+  .broadcast .band{margin-top:auto;padding-top:20px}
+  .broadcast .band .bl{font-family:'Anton';font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .broadcast .brow .p{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);min-width:48px}
+  .broadcast .brow .n{font-weight:600;font-size:15px}
+  .broadcast .brow .i{font-weight:700;font-size:12px;color:var(--sig)}
+
+  /* =========================================================
+     3 · AURORA  — drifting light, frosted glass, glow
+     ========================================================= */
+  .aurora{--ink:#eef2ff;--muted:#9aa3c4;--faint:#5c6488;--cy:#67e8f9;--vi:#b39cff;--mag:#f7a8d8;
+    position:relative;color:var(--ink);font-family:'Familjen Grotesk',sans-serif;
+    background:#080b16;isolation:isolate}
+  .aurora::before{content:'';position:absolute;inset:0;z-index:-1;
+    background:
+      radial-gradient(50% 60% at 15% 10%,rgba(103,232,249,.20),transparent 60%),
+      radial-gradient(55% 65% at 85% 20%,rgba(179,156,255,.22),transparent 62%),
+      radial-gradient(60% 60% at 60% 100%,rgba(247,168,216,.16),transparent 60%),
+      #080b16;
+    background-size:200% 200%;animation:drift 18s ease-in-out infinite}
+  @keyframes drift{0%,100%{background-position:0% 0%,100% 0%,50% 100%}50%{background-position:20% 30%,70% 10%,40% 80%}}
+  .aurora[data-mode="light"]{--ink:#121634;--muted:#5a628a;--faint:#98a0c4;--cy:#0e93b8;--vi:#6d4fd0;--mag:#c65f9e;background:#eef1fb}
+  .aurora[data-mode="light"]::before{background:
+      radial-gradient(50% 60% at 15% 10%,rgba(103,232,249,.30),transparent 60%),
+      radial-gradient(55% 65% at 85% 20%,rgba(179,156,255,.34),transparent 62%),
+      radial-gradient(60% 60% at 60% 100%,rgba(247,168,216,.28),transparent 60%),
+      #eef1fb;background-size:200% 200%;animation:drift 18s ease-in-out infinite}
+  .aurora .glass{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.14)}
+  .aurora[data-mode="light"] .glass{background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 30px rgba(80,90,160,.12)}
+  .aurora .rail{border-left:1px solid rgba(255,255,255,.1)}
+  .aurora .rail-in{padding:24px 20px}
+  .aurora .mast{margin-bottom:22px}
+  .aurora .mast .k{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--cy)}
+  .aurora .mast h2{font-family:'Bricolage Grotesque';font-weight:700;font-size:40px;letter-spacing:-.02em;line-height:1;margin-top:6px}
+  .aurora .mast .date{font-size:12px;color:var(--muted);margin-top:5px}
+  .aurora .eye{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:4px 0 12px}
+  .aurora .card{border-radius:16px;padding:16px 16px 15px}
+  .aurora .card .no{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .aurora .card .nm{font-family:'Bricolage Grotesque';font-weight:700;font-size:21px;letter-spacing:-.02em;line-height:1.02;margin:6px 0 13px}
+  .aurora .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-top:1px solid rgba(255,255,255,.09)}
+  .aurora[data-mode="light"] .kv{border-top:1px solid rgba(20,30,80,.08)}
+  .aurora .kv .k{color:var(--muted);text-transform:uppercase;font-size:9.5px;letter-spacing:.12em;align-self:center}
+  .aurora .kv .v{font-weight:600}
+  .aurora .kv .v.iem{color:var(--cy);text-shadow:0 0 14px rgba(103,232,249,.5)}
+  .aurora[data-mode="light"] .kv .v.iem{text-shadow:none}
+  .aurora .rl-title{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:4px}
+  .aurora .rl-title .meta{font-size:10px;color:var(--muted);letter-spacing:.08em}
+  .aurora .grp{font-size:10px;letter-spacing:.24em;text-transform:uppercase;background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent;margin:16px 0 3px;font-weight:700}
+  .aurora .item{border-bottom:1px solid rgba(255,255,255,.07)}
+  .aurora[data-mode="light"] .item{border-bottom:1px solid rgba(20,30,80,.07)}
+  .aurora .item .n{font-size:11px;color:var(--faint)}
+  .aurora .item .s{font-family:'Bricolage Grotesque';font-weight:600;font-size:16px}
+  .aurora .item .who{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:3px}
+  .aurora .item .who b{width:16px;height:16px;border-radius:50%;display:inline-block;font-size:0}
+  .aurora .item .len{font-size:10px;color:var(--faint)}
+  .aurora .band{margin-top:auto;padding-top:20px}
+  .aurora .band .bl{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .aurora .brow .p{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:50px;align-self:center}
+  .aurora .brow .n{font-family:'Bricolage Grotesque';font-weight:600;font-size:15px}
+  .aurora .brow .i{font-size:11px;color:var(--cy);font-weight:600;text-shadow:0 0 12px rgba(103,232,249,.45)}
+  .aurora[data-mode="light"] .brow .i{text-shadow:none}
+
+  .foot{max-width:1200px;margin:44px auto 70px;padding:0 26px;color:#63666d;font-size:13px}
+  .foot b{color:#c2c1bc}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="top-title">Stage·Assign <small>· creative directions v2</small></div>
+    <div class="picker">
+      <a href="#sanctuary"><i style="background:#c9a96e"></i>Sanctuary</a>
+      <a href="#broadcast"><i style="background:#ff5b23"></i>Broadcast</a>
+      <a href="#aurora"><i style="background:#67e8f9"></i>Aurora</a>
+      <button class="mode-btn" id="modeBtn">☾ Dark mode — click for Light</button>
+    </div>
+  </div>
+</div>
+
+<div class="intro">
+  <h1>Three looks, your pick.</h1>
+  <p>Each is a shippable <b>theme</b> — a person can choose the vibe that fits their room, and every theme has a <b>dark and light</b> mode. Dark is the hero (most booths run dark); light adapts for a bright green room. <b>Toggle the button up top</b> to flip all three live. Same real roster + service order as your display.</p>
+</div>
+
+<!-- ============ 1 · SANCTUARY ============ -->
+<section class="dir" id="sanctuary">
+  <div class="dir-meta"><span class="no">01</span><span class="nm">Sanctuary</span><span class="tag">reverent · elegant · gold leaf</span></div>
+  <p class="dir-note">A cathedral hush. High-contrast <b>Cormorant</b> serif, gold hairlines, candlelight glow, small-caps labels, centered composition. Feels sacred and considered — nothing shouts. <b>Signature:</b> the gold ornamental rule and italic gold IEM.</p>
+  <div class="sw-strip">
+    <div class="sw"><i style="background:#0b0e13"></i>obsidian</div>
+    <div class="sw"><i style="background:#c9a96e"></i>#C9A96E gold</div>
+    <div class="sw"><i style="background:#e6cd93"></i>#E6CD93 gold hi</div>
+    <div class="sw"><i style="background:#efe8d8"></i>ivory ink</div>
+    <div class="sw"><i style="background:#efe8d8;border-color:#c9a96e"></i>Cormorant + Spectral</div>
+  </div>
+  <div class="frame sanctuary" data-mode="dark">
+    <div class="disp">
+      <div class="stagearea">
+        <div class="mast"><div class="k">Sunday Service</div><h2>Fully Devoted</h2><div class="orn">✦ ✦ ✦</div></div>
+        <div class="eye">Vocalists</div>
+        <div class="voc-row">
+          <div class="card"><div class="no">I</div><div class="nm">Amelia Garcia</div><div class="kv"><span class="k">mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="card"><div class="no">II</div><div class="nm">Emma Johnson</div><div class="kv"><span class="k">mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="card"><div class="no">III</div><div class="nm">Jake Williams</div><div class="kv"><span class="k">mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="card"><div class="no">IV</div><div class="nm">Sophia Davis</div><div class="kv"><span class="k">mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">iem</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+        <div class="band">
+          <div class="bl">Band</div>
+          <div class="brow"><span class="p">drums</span><span class="n">Sam Rodriguez</span><span class="i">Drum Pack</span></div>
+          <div class="brow"><span class="p">eg 1</span><span class="n">Daniel Martinez</span><span class="i">EG Pack</span></div>
+          <div class="brow"><span class="p">keys</span><span class="n">Carlos Brown</span><span class="i">Keys Pack</span></div>
+        </div>
+      </div>
+      <div class="rail"><div class="rail-in">
+        <div class="rl-title">Service Order</div>
+        <div class="grp">Worship</div>
+        <div class="item"><span class="n">1</span><div><div class="s">Holy Forever</div><span class="who">Jake</span></div><span class="len">6 min</span></div>
+        <div class="item"><span class="n">2</span><div><div class="s">Great Are You Lord</div><span class="who">Emma</span></div><span class="len">5 min</span></div>
+        <div class="item"><span class="n">3</span><div><div class="s">Way Maker</div><span class="who">Jake</span></div><span class="len">7 min</span></div>
+        <div class="grp">Message</div>
+        <div class="item"><span class="n">4</span><div><div class="s">Being a Disciple</div><span class="who">Sermon</span></div><span class="len">30 min</span></div>
+        <div class="grp">Response</div>
+        <div class="item"><span class="n">5</span><div><div class="s">King of Kings</div><span class="who">Sophia</span></div><span class="len">6 min</span></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="cap">Signature — gold ornamental rule, roman-numeral vocals, italic gold IEM. Try the light toggle: becomes warm ivory parchment.</div>
+</section>
+
+<!-- ============ 2 · BROADCAST ============ -->
+<section class="dir" id="broadcast">
+  <div class="dir-meta"><span class="no">02</span><span class="nm">Broadcast</span><span class="tag">high-energy · concert · kinetic</span></div>
+  <p class="dir-note">Concert-screen adrenaline. Ultra-condensed <b>Anton</b> headlines, lower-third accent tabs, a live pill, signal-orange + electric-cyan. Reads across a dark room in a glance and feels like showtime. <b>Signature:</b> the colored card tabs + fat accent underline.</p>
+  <div class="sw-strip">
+    <div class="sw"><i style="background:#0a0c0f"></i>ink</div>
+    <div class="sw"><i style="background:#ff5b23"></i>#FF5B23 signal</div>
+    <div class="sw"><i style="background:#25e6ff"></i>#25E6FF cyan</div>
+    <div class="sw"><i style="background:#f3f5f7"></i>bright ink</div>
+    <div class="sw"><i style="background:#f3f5f7;border-color:#ff5b23"></i>Anton + Barlow</div>
+  </div>
+  <div class="frame broadcast" data-mode="dark">
+    <div class="disp">
+      <div class="stagearea">
+        <div class="mast"><span class="live">● LIVE</span><h2>Fully Devoted</h2><span class="date">Sun · Jul 5</span></div>
+        <div class="eye">Vocalists</div>
+        <div class="voc-row">
+          <div class="card"><div class="hd">Vocal 01<span class="dot"></span></div><div class="bd"><div class="nm">Amelia Garcia</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 1 Pack</span></div></div></div>
+          <div class="card"><div class="hd">Vocal 02<span class="dot"></span></div><div class="bd"><div class="nm">Emma Johnson</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 2 Pack</span></div></div></div>
+          <div class="card"><div class="hd">Vocal 03<span class="dot"></span></div><div class="bd"><div class="nm">Jake Williams</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 3 Pack</span></div></div></div>
+          <div class="card"><div class="hd">Vocal 04<span class="dot"></span></div><div class="bd"><div class="nm">Sophia Davis</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 4 Pack</span></div></div></div>
+        </div>
+        <div class="band">
+          <div class="bl">Band</div>
+          <div class="brow"><span class="p">Drums</span><span class="n">Sam Rodriguez</span><span class="i">Drum Pack</span></div>
+          <div class="brow"><span class="p">EG 1</span><span class="n">Daniel Martinez</span><span class="i">EG Pack</span></div>
+          <div class="brow"><span class="p">Keys</span><span class="n">Carlos Brown</span><span class="i">Keys Pack</span></div>
+        </div>
+      </div>
+      <div class="rail"><div class="rail-in">
+        <div class="rl-title">Run Sheet<span class="meta">9 · 45 MIN</span></div>
+        <div class="grp">Worship</div>
+        <div class="item"><span class="n">01</span><div><div class="s">Holy Forever</div><span class="who">Jake</span></div><span class="len">6m</span></div>
+        <div class="item"><span class="n">02</span><div><div class="s">Great Are You Lord</div><span class="who">Emma</span></div><span class="len">5m</span></div>
+        <div class="item"><span class="n">03</span><div><div class="s">Way Maker</div><span class="who">Jake</span></div><span class="len">7m</span></div>
+        <div class="grp">Message</div>
+        <div class="item"><span class="n">04</span><div><div class="s">Being a Disciple</div><span class="who">Sermon</span></div><span class="len">30m</span></div>
+        <div class="grp">Response</div>
+        <div class="item"><span class="n">05</span><div><div class="s">King of Kings</div><span class="who">Sophia</span></div><span class="len">6m</span></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="cap">Signature — orange lower-third tabs + cyan section heads. Try light toggle: crisp white broadcast graphics.</div>
+</section>
+
+<!-- ============ 3 · AURORA ============ -->
+<section class="dir" id="aurora">
+  <div class="dir-meta"><span class="no">03</span><span class="nm">Aurora</span><span class="tag">luminous · frosted glass · atmospheric</span></div>
+  <p class="dir-note">A living wash of light. A slow-drifting aurora gradient behind <b>frosted-glass</b> cards, rounded <b>Bricolage</b> headlines, IEM values that softly glow. Modern and gorgeous — the "wow" option. <b>Signature:</b> the moving backdrop + glass depth + gradient section labels.</p>
+  <div class="sw-strip">
+    <div class="sw"><i style="background:#080b16"></i>space navy</div>
+    <div class="sw"><i style="background:#67e8f9"></i>#67E8F9 cyan</div>
+    <div class="sw"><i style="background:#b39cff"></i>#B39CFF violet</div>
+    <div class="sw"><i style="background:#f7a8d8"></i>#F7A8D8 magenta</div>
+    <div class="sw"><i style="background:#eef2ff;border-color:#67e8f9"></i>Bricolage + Familjen</div>
+  </div>
+  <div class="frame aurora" data-mode="dark">
+    <div class="disp">
+      <div class="stagearea">
+        <div class="mast"><div class="k">Sunday Service</div><h2>Fully Devoted</h2><div class="date">Friday · July 3, 2026</div></div>
+        <div class="eye">Vocalists</div>
+        <div class="voc-row">
+          <div class="card glass"><div class="no">Vocal 1</div><div class="nm">Amelia Garcia</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 2</div><div class="nm">Emma Johnson</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 3</div><div class="nm">Jake Williams</div><div class="kv"><span class="k">Mic</span><span class="v">D:Facto</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="card glass"><div class="no">Vocal 4</div><div class="nm">Sophia Davis</div><div class="kv"><span class="k">Mic</span><span class="v">KMS105</span></div><div class="kv"><span class="k">IEM</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+        <div class="band">
+          <div class="bl">Band</div>
+          <div class="brow"><span class="p">Drums</span><span class="n">Sam Rodriguez</span><span class="i">Drum Pack</span></div>
+          <div class="brow"><span class="p">EG 1</span><span class="n">Daniel Martinez</span><span class="i">EG Pack</span></div>
+          <div class="brow"><span class="p">Keys</span><span class="n">Carlos Brown</span><span class="i">Keys Pack</span></div>
+        </div>
+      </div>
+      <div class="rail glass"><div class="rail-in">
+        <div class="rl-title">Service Order<span class="meta">9 · 45 MIN</span></div>
+        <div class="grp">Worship</div>
+        <div class="item"><span class="n">1</span><div><div class="s">Holy Forever</div><span class="who"><b style="background:#67e8f9"></b>Jake</span></div><span class="len">6m</span></div>
+        <div class="item"><span class="n">2</span><div><div class="s">Great Are You Lord</div><span class="who"><b style="background:#b39cff"></b>Emma</span></div><span class="len">5m</span></div>
+        <div class="item"><span class="n">3</span><div><div class="s">Way Maker</div><span class="who"><b style="background:#67e8f9"></b>Jake</span></div><span class="len">7m</span></div>
+        <div class="grp">Message</div>
+        <div class="item"><span class="n">4</span><div><div class="s">Being a Disciple</div><span class="who">Sermon</span></div><span class="len">30m</span></div>
+        <div class="grp">Response</div>
+        <div class="item"><span class="n">5</span><div><div class="s">King of Kings</div><span class="who"><b style="background:#f7a8d8"></b>Sophia</span></div><span class="len">6m</span></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="cap">Signature — the drifting aurora backdrop + frosted glass. Try light toggle: pastel daylight aurora, glass turns milky.</div>
+</section>
+
+<div class="foot">
+  Static mockups to pick a <b>vibe</b> — real motion, the stage diagram, and every screen get built properly with the Frontend Design tool once you choose. Want to keep <b>Call Sheet</b> in the mix as a 4th selectable theme? Say so. Or mix: e.g. "Aurora backdrop + Broadcast's condensed names."
+</div>
+
+<script>
+  // Live Dark/Light toggle across all three themed frames.
+  (function(){
+    var btn = document.getElementById('modeBtn');
+    var mode = 'dark';
+    btn.addEventListener('click', function(){
+      mode = (mode === 'dark') ? 'light' : 'dark';
+      document.querySelectorAll('.frame[data-mode]').forEach(function(f){ f.setAttribute('data-mode', mode); });
+      btn.textContent = (mode === 'dark') ? '☾ Dark mode — click for Light' : '☀ Light mode — click for Dark';
+    });
+  })();
+</script>
+</body>
+</html>

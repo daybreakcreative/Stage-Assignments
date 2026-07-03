@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stage·Assign — Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#08090b;color:#e8e6e1;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  /* ---------- page chrome ---------- */
+  .page-head{max-width:1180px;margin:0 auto;padding:44px 28px 8px}
+  .page-kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#6c7076}
+  .page-title{font-family:'Instrument Serif',Georgia,serif;font-size:46px;line-height:1.05;margin:10px 0 8px;font-weight:400;letter-spacing:-.01em}
+  .page-sub{color:#9a9ca2;font-size:15px;max-width:640px}
+  .page-sub b{color:#d0cfca;font-weight:600}
+  .nav{max-width:1180px;margin:22px auto 0;padding:0 28px;display:flex;gap:8px;flex-wrap:wrap}
+  .nav a{font-family:'IBM Plex Mono',monospace;font-size:12px;text-decoration:none;color:#b9bbc0;border:1px solid #23262b;background:#101216;padding:7px 13px;border-radius:999px;transition:.15s}
+  .nav a:hover{border-color:#3a3e46;color:#fff}
+  .nav a .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+
+  section.dir{max-width:1180px;margin:26px auto;padding:0 28px}
+  .dir-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+  .dir-no{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#6c7076}
+  .dir-name{font-size:26px;font-weight:700;letter-spacing:-.01em}
+  .dir-tag{font-size:13.5px;color:#9a9ca2}
+  .dir-why{font-size:13px;color:#7f8188;margin:6px 0 16px;max-width:720px}
+  .dir-why b{color:#c2c1bc;font-weight:600}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .sw{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a8c92;background:#101216;border:1px solid #1e2126;border-radius:8px;padding:6px 10px}
+  .sw i{width:16px;height:16px;border-radius:4px;display:block;border:1px solid rgba(255,255,255,.08)}
+
+  /* frame that holds each mockup so section styles stay scoped */
+  .mock{border-radius:16px;overflow:hidden;border:1px solid #1e2126;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .mock-note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6c7076;margin:10px 2px 0}
+
+  /* generic display-mock grid used by all three (styled per-direction) */
+  .dv{display:grid;grid-template-columns:1fr 300px;gap:0}
+  .dv-main{padding:26px 26px 30px}
+  .dv-side{padding:22px 22px;border-left:1px solid var(--line)}
+  .dv-topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}
+  .voc-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .side-sec+.side-sec{margin-top:20px}
+  .list-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:5px 0}
+
+  /* ============ 1 · FOH CONSOLE ============ */
+  .foh{--bg:#0e1113;--panel:#171b1e;--line:#262c31;--text:#e6e9ec;--muted:#8a949b;--amber:#e8a13c;--led:#57d07a;
+       background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif}
+  .foh .dv-side{background:#131719}
+  .foh .kicker{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .foh .svc-title{font-size:22px;font-weight:600;letter-spacing:-.01em;margin-top:3px}
+  .foh .svc-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:right}
+  .foh .ch{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 13px 13px 18px;overflow:hidden}
+  .foh .ch::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--amber),#b97f27)}
+  .foh .ch-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .foh .ch-no{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:var(--muted)}
+  .foh .led{width:8px;height:8px;border-radius:50%;background:var(--led);box-shadow:0 0 8px var(--led)}
+  .foh .ch-name{font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.1;margin-bottom:11px}
+  .foh .strip{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 0;border-top:1px solid var(--line)}
+  .foh .strip .l{color:var(--muted);letter-spacing:.08em}
+  .foh .strip .v{color:var(--text);font-weight:500}
+  .foh .strip .v.iem{color:var(--amber)}
+  .foh .sec-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .foh .sec-label::after{content:'';flex:1;height:1px;background:var(--line)}
+  .foh .list-row .pos{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);min-width:46px}
+  .foh .list-row .nm{font-weight:500;font-size:13.5px}
+  .foh .list-row .iem{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber);font-weight:600}
+  .foh .run .r{display:flex;gap:9px;align-items:baseline;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .foh .run .n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);min-width:20px}
+  .foh .run .song{font-weight:500}
+  .foh .run .len{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
+
+  /* ============ 2 · CALL SHEET ============ */
+  .cs{--paper:#f5f3ee;--ink:#1a1a18;--rule:#d8d3c7;--muted:#6f6a5f;--red:#b23a2e;
+      background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;--line:var(--rule)}
+  .cs .dv-side{background:#efece4}
+  .cs .kicker{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .cs .svc-title{font-family:'Archivo',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px;text-transform:uppercase}
+  .cs .svc-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:right}
+  .cs .voc-row{gap:0;border-top:2px solid var(--ink)}
+  .cs .ch{padding:14px 14px 14px 0;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
+  .cs .ch:last-child{border-right:none}
+  .cs .ch{padding-left:14px}
+  .cs .ch-no{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--red);font-weight:600}
+  .cs .ch-name{font-family:'Archivo',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.02;margin:7px 0 12px;text-transform:uppercase}
+  .cs .strip{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 0}
+  .cs .strip .l{color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .cs .strip .v{color:var(--ink);font-weight:600}
+  .cs .strip .v.iem{color:var(--red)}
+  .cs .sec-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--ink);padding-bottom:5px;margin-bottom:8px}
+  .cs .list-row{border-bottom:1px solid var(--rule)}
+  .cs .list-row .pos{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--muted);min-width:46px;text-transform:uppercase}
+  .cs .list-row .nm{font-family:'Archivo',sans-serif;font-weight:600;font-size:14px}
+  .cs .list-row .iem{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);font-weight:600}
+  .cs .run .r{display:flex;gap:9px;align-items:baseline;font-size:13px;padding:5px 0;border-bottom:1px solid var(--rule)}
+  .cs .run .n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);min-width:20px}
+  .cs .run .song{font-family:'Archivo',sans-serif;font-weight:600}
+  .cs .run .len{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
+
+  /* ============ 3 · STAGE WASH ============ */
+  .sw-dir{--bg:#0b0a0f;--panel:#171320;--line:#2a2536;--text:#f2ece3;--muted:#9b93a6;--amber:#f0b45a;--mag:#c86b9a;--cyan:#5fb8c8;
+          background:radial-gradient(120% 90% at 30% -10%,#1c1526 0%,#0b0a0f 60%);color:var(--text);font-family:'Inter',sans-serif}
+  .sw-dir .dv-side{background:linear-gradient(180deg,rgba(240,180,90,.05),transparent);border-left:1px solid var(--line)}
+  .sw-dir .kicker{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+  .sw-dir .svc-title{font-family:'Instrument Serif',serif;font-size:30px;font-weight:400;letter-spacing:0;margin-top:2px}
+  .sw-dir .svc-date{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+  .sw-dir .ch{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:14px;padding:16px 16px 15px;overflow:hidden}
+  .sw-dir .ch::after{content:'';position:absolute;left:16px;right:16px;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.7}
+  .sw-dir .ch-glow{position:absolute;inset:-40% 40% 60% -10%;background:radial-gradient(circle,rgba(240,180,90,.16),transparent 70%);pointer-events:none}
+  .sw-dir .ch-no{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .sw-dir .ch-name{font-family:'Instrument Serif',serif;font-size:23px;line-height:1;margin:6px 0 13px}
+  .sw-dir .strip{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;position:relative}
+  .sw-dir .strip .l{color:var(--muted);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;align-self:center}
+  .sw-dir .strip .v{font-weight:500}
+  .sw-dir .strip .v.iem{color:var(--amber)}
+  .sw-dir .sec-label{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .sw-dir .list-row .pos{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-width:48px;align-self:center}
+  .sw-dir .list-row .nm{font-family:'Instrument Serif',serif;font-size:16px}
+  .sw-dir .list-row .iem{font-size:11px;color:var(--amber);font-weight:600}
+  .sw-dir .run .r{display:flex;gap:10px;align-items:baseline;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .sw-dir .run .n{font-size:10px;color:var(--muted);min-width:20px}
+  .sw-dir .run .song{font-family:'Instrument Serif',serif;font-size:15px}
+  .sw-dir .run .len{margin-left:auto;font-size:10px;color:var(--muted)}
+
+  .foot{max-width:1180px;margin:40px auto 60px;padding:0 28px;color:#6c7076;font-size:13px}
+  .foot b{color:#c2c1bc}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="page-kicker">Stage·Assign — Redesign · brainstorm</div>
+  <h1 class="page-title">Three ways it could look</h1>
+  <p class="page-sub">Each mockup below uses your <b>real</b> roster, band + IEM, hosts, and service order — so you're judging the feel in context, not lorem ipsum. Today it's dark + serif + amber; all three move away from that. Pick one and I'll build it for real with the Frontend Design tool.</p>
+</div>
+
+<div class="nav">
+  <a href="#foh"><span class="dot" style="background:#e8a13c"></span>1 · FOH Console</a>
+  <a href="#cs"><span class="dot" style="background:#b23a2e"></span>2 · Call Sheet</a>
+  <a href="#sw"><span class="dot" style="background:#f0b45a"></span>3 · Stage Wash</a>
+</div>
+
+<!-- ============ 1 · FOH CONSOLE ============ -->
+<section class="dir" id="foh">
+  <div class="dir-head"><span class="dir-no">01</span><span class="dir-name">FOH Console</span><span class="dir-tag">dark · pro-audio · precise</span></div>
+  <p class="dir-why">Grounded in the mixing desk this app basically <b>is</b>. Channel-strip cards, monospace data labels, an LED status dot, a fader rail down each card. Reads as gear, not a web template — and stays dark for a dim booth.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0e1113"></i>#0E1113 ink</div>
+    <div class="sw"><i style="background:#171b1e"></i>#171B1E panel</div>
+    <div class="sw"><i style="background:#262c31"></i>#262C31 line</div>
+    <div class="sw"><i style="background:#e8a13c"></i>#E8A13C fader amber</div>
+    <div class="sw"><i style="background:#57d07a"></i>#57D07A LED green</div>
+    <div class="sw"><i style="background:#e6e9ec"></i>Space Grotesk + IBM Plex Mono</div>
+  </div>
+  <div class="mock foh">
+    <div class="dv">
+      <div class="dv-main">
+        <div class="dv-topbar">
+          <div><div class="kicker">Sunday Service</div><div class="svc-title">Fully Devoted</div></div>
+          <div class="svc-date">2026·07·05<br>09:00 &amp; 11:00</div>
+        </div>
+        <div class="voc-row">
+          <div class="ch"><div class="ch-top"><span class="ch-no">CH 01</span><span class="led"></span></div><div class="ch-name">Hannah Jones</div><div class="strip"><span class="l">MIC</span><span class="v">KSM9</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="ch"><div class="ch-top"><span class="ch-no">CH 02</span><span class="led"></span></div><div class="ch-name">Marcus Donalson</div><div class="strip"><span class="l">MIC</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="ch"><div class="ch-top"><span class="ch-no">CH 03</span><span class="led"></span></div><div class="ch-name">Bennett Selby</div><div class="strip"><span class="l">MIC</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="ch"><div class="ch-top"><span class="ch-no">CH 04</span><span class="led"></span></div><div class="ch-name">Aimee Cruz</div><div class="strip"><span class="l">MIC</span><span class="v">KMS105</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+      </div>
+      <div class="dv-side">
+        <div class="side-sec">
+          <div class="sec-label">Band</div>
+          <div class="list-row"><span class="pos">DRUMS</span><span class="nm">Louis Vore</span><span class="iem">Drum Pack</span></div>
+          <div class="list-row"><span class="pos">GTR</span><span class="nm">Tanner White</span><span class="iem">EG Pack</span></div>
+          <div class="list-row"><span class="pos">BASS</span><span class="nm">Nick Post</span><span class="iem">Bass Pack</span></div>
+          <div class="list-row"><span class="pos">KEYS</span><span class="nm">Pace · MD</span><span class="iem">Keys Pack</span></div>
+        </div>
+        <div class="side-sec">
+          <div class="sec-label">Handhelds</div>
+          <div class="list-row"><span class="pos">HH 1</span><span class="nm">Ben Graham</span><span class="iem"></span></div>
+          <div class="list-row"><span class="pos">HH 2</span><span class="nm">Marcus Phifer</span><span class="iem"></span></div>
+        </div>
+        <div class="side-sec run">
+          <div class="sec-label">Service Order</div>
+          <div class="r"><span class="n">01</span><span class="song">Walk-In Loop</span><span class="len">15m</span></div>
+          <div class="r"><span class="n">02</span><span class="song">A Forgiving God</span><span class="len">4m</span></div>
+          <div class="r"><span class="n">03</span><span class="song">Dwell</span><span class="len">5m</span></div>
+          <div class="r"><span class="n">04</span><span class="song">Goodness Of God</span><span class="len">6m</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mock-note">Signature: the fader rail + LED per channel. Amber is reserved for the IEM value — the one thing the booth scans for.</div>
+</section>
+
+<!-- ============ 2 · CALL SHEET ============ -->
+<section class="dir" id="cs">
+  <div class="dir-head"><span class="dir-no">02</span><span class="dir-name">Call Sheet</span><span class="dir-tag">light · editorial · tabular</span></div>
+  <p class="dir-why">Grounded in a production run-of-show. Warm paper, heavy grotesque names, numbered rows, hairline rules — a <b>real</b> stage call sheet, not a newspaper pastiche. Calmest and most legible; best when the screen sits in a lit room.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#f5f3ee"></i>#F5F3EE paper</div>
+    <div class="sw"><i style="background:#1a1a18"></i>#1A1A18 ink</div>
+    <div class="sw"><i style="background:#d8d3c7"></i>#D8D3C7 rule</div>
+    <div class="sw"><i style="background:#b23a2e"></i>#B23A2E ink-red</div>
+    <div class="sw"><i style="background:#1a1a18"></i>Archivo + IBM Plex Mono</div>
+  </div>
+  <div class="mock cs">
+    <div class="dv">
+      <div class="dv-main">
+        <div class="dv-topbar">
+          <div><div class="kicker">Sunday Service · Run Sheet</div><div class="svc-title">Fully Devoted</div></div>
+          <div class="svc-date">JUL 05 2026<br>09:00 &amp; 11:00</div>
+        </div>
+        <div class="voc-row">
+          <div class="ch"><div class="ch-no">01 · VOCAL</div><div class="ch-name">Hannah Jones</div><div class="strip"><span class="l">mic</span><span class="v">KSM9</span></div><div class="strip"><span class="l">iem</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="ch"><div class="ch-no">02 · VOCAL</div><div class="ch-name">Marcus Donalson</div><div class="strip"><span class="l">mic</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">iem</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="ch"><div class="ch-no">03 · VOCAL</div><div class="ch-name">Bennett Selby</div><div class="strip"><span class="l">mic</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">iem</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="ch"><div class="ch-no">04 · VOCAL</div><div class="ch-name">Aimee Cruz</div><div class="strip"><span class="l">mic</span><span class="v">KMS105</span></div><div class="strip"><span class="l">iem</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+      </div>
+      <div class="dv-side">
+        <div class="side-sec">
+          <div class="sec-label">Band</div>
+          <div class="list-row"><span class="pos">Drums</span><span class="nm">Louis Vore</span><span class="iem">Drum Pack</span></div>
+          <div class="list-row"><span class="pos">Gtr</span><span class="nm">Tanner White</span><span class="iem">EG Pack</span></div>
+          <div class="list-row"><span class="pos">Bass</span><span class="nm">Nick Post</span><span class="iem">Bass Pack</span></div>
+          <div class="list-row"><span class="pos">Keys</span><span class="nm">Pace · MD</span><span class="iem">Keys Pack</span></div>
+        </div>
+        <div class="side-sec">
+          <div class="sec-label">Handhelds</div>
+          <div class="list-row"><span class="pos">HH 1</span><span class="nm">Ben Graham</span><span class="iem"></span></div>
+          <div class="list-row"><span class="pos">HH 2</span><span class="nm">Marcus Phifer</span><span class="iem"></span></div>
+        </div>
+        <div class="side-sec run">
+          <div class="sec-label">Service Order</div>
+          <div class="r"><span class="n">01</span><span class="song">Walk-In Loop</span><span class="len">15m</span></div>
+          <div class="r"><span class="n">02</span><span class="song">A Forgiving God</span><span class="len">4m</span></div>
+          <div class="r"><span class="n">03</span><span class="song">Dwell</span><span class="len">5m</span></div>
+          <div class="r"><span class="n">04</span><span class="song">Goodness Of God</span><span class="len">6m</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mock-note">Signature: the numbered masthead + tabular rules. Ink-red marks the IEM and the sequence — the two things that carry meaning.</div>
+</section>
+
+<!-- ============ 3 · STAGE WASH ============ -->
+<section class="dir" id="sw">
+  <div class="dir-head"><span class="dir-no">03</span><span class="dir-name">Stage Wash</span><span class="dir-tag">warm dark · cinematic · lit</span></div>
+  <p class="dir-why">Grounded in the lit stage: a darkened-auditorium base with a warm light wash, cards that glow like they're under a spotlight, an elegant serif for names. Most atmospheric — highest reward, needs restraint so it doesn't get theatrical.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0b0a0f"></i>#0B0A0F house</div>
+    <div class="sw"><i style="background:#171320"></i>#171320 panel</div>
+    <div class="sw"><i style="background:#f2ece3"></i>#F2ECE3 warm white</div>
+    <div class="sw"><i style="background:#f0b45a"></i>#F0B45A stage amber</div>
+    <div class="sw"><i style="background:#c86b9a"></i>#C86B9A gel accent</div>
+    <div class="sw"><i style="background:#f2ece3"></i>Instrument Serif + Inter</div>
+  </div>
+  <div class="mock sw-dir">
+    <div class="dv">
+      <div class="dv-main">
+        <div class="dv-topbar">
+          <div><div class="kicker">Sunday Service</div><div class="svc-title">Fully Devoted</div></div>
+          <div class="svc-date">Jul 05 2026<br>09:00 &amp; 11:00</div>
+        </div>
+        <div class="voc-row">
+          <div class="ch"><div class="ch-glow"></div><div class="ch-no">Vocal 1</div><div class="ch-name">Hannah Jones</div><div class="strip"><span class="l">Mic</span><span class="v">KSM9</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 1 Pack</span></div></div>
+          <div class="ch"><div class="ch-glow"></div><div class="ch-no">Vocal 2</div><div class="ch-name">Marcus Donalson</div><div class="strip"><span class="l">Mic</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 2 Pack</span></div></div>
+          <div class="ch"><div class="ch-glow"></div><div class="ch-no">Vocal 3</div><div class="ch-name">Bennett Selby</div><div class="strip"><span class="l">Mic</span><span class="v">D:Facto</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 3 Pack</span></div></div>
+          <div class="ch"><div class="ch-glow"></div><div class="ch-no">Vocal 4</div><div class="ch-name">Aimee Cruz</div><div class="strip"><span class="l">Mic</span><span class="v">KMS105</span></div><div class="strip"><span class="l">IEM</span><span class="v iem">Vocal 4 Pack</span></div></div>
+        </div>
+      </div>
+      <div class="dv-side">
+        <div class="side-sec">
+          <div class="sec-label">Band</div>
+          <div class="list-row"><span class="pos">Drums</span><span class="nm">Louis Vore</span><span class="iem">Drum Pack</span></div>
+          <div class="list-row"><span class="pos">Gtr</span><span class="nm">Tanner White</span><span class="iem">EG Pack</span></div>
+          <div class="list-row"><span class="pos">Bass</span><span class="nm">Nick Post</span><span class="iem">Bass Pack</span></div>
+          <div class="list-row"><span class="pos">Keys</span><span class="nm">Pace · MD</span><span class="iem">Keys Pack</span></div>
+        </div>
+        <div class="side-sec">
+          <div class="sec-label">Handhelds</div>
+          <div class="list-row"><span class="pos">HH 1</span><span class="nm">Ben Graham</span><span class="iem"></span></div>
+          <div class="list-row"><span class="pos">HH 2</span><span class="nm">Marcus Phifer</span><span class="iem"></span></div>
+        </div>
+        <div class="side-sec run">
+          <div class="sec-label">Service Order</div>
+          <div class="r"><span class="n">01</span><span class="song">Walk-In Loop</span><span class="len">15m</span></div>
+          <div class="r"><span class="n">02</span><span class="song">A Forgiving God</span><span class="len">4m</span></div>
+          <div class="r"><span class="n">03</span><span class="song">Dwell</span><span class="len">5m</span></div>
+          <div class="r"><span class="n">04</span><span class="song">Goodness Of God</span><span class="len">6m</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mock-note">Signature: the soft amber underglow + spotlight gradient. Elegant serif names carry the warmth; everything else stays quiet.</div>
+</section>
+
+<div class="foot">
+  These are static mockups to choose a <b>direction</b> — spacing, motion, and every screen get refined when I build the real thing with the Frontend Design tool. Tell me which number, or mix (e.g. "Console structure, Call-Sheet light palette").
+</div>
+
+</body>
+</html>
