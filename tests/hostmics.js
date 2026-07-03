@@ -99,6 +99,27 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(c.length!==2||c[0].label!=='Pastor'||c[1].label!=='Host A') throw new Error('wizard did not apply host channels: '+JSON.stringify(c));
  });
 
+ // --- Daybreak rule: whoever is baptizing lands on HH 3, silently (no baptism flag/UI) ---
+ check('pco: the baptizing pastor is reserved to HH 3; welcome hosts skip past it', ()=>{
+   setup();
+   const roster=JSON.stringify({data:[
+     {id:'t1',attributes:{name:'Pastor Dave',team_position_name:'Speaker',status:'C'}},
+     {id:'t2',attributes:{name:'Mia',team_position_name:'Welcome Host',status:'C'}},
+     {id:'t3',attributes:{name:'Jon',team_position_name:'Welcome Host',status:'C'}},
+     {id:'t4',attributes:{name:'Pat',team_position_name:'Pastor Baptizing',status:'C'}}
+   ]});
+   ev(`applyPCOPlanData({attributes:{}}, ${roster}, {data:[],included:[]})`);
+   if(ev('state.hosts.h3')!=='Pat') throw new Error('baptizer should be on HH 3 (h3), got '+ev('state.hosts.h3'));
+   if(ev('state.hosts.h1')!=='Pastor Dave') throw new Error('speaker should be HH 1 (h1), got '+ev('state.hosts.h1'));
+   const around=[ev('state.hosts.h2'),ev('state.hosts.h4')].sort().join(',');
+   if(around!=='Jon,Mia') throw new Error('welcome hosts should fill h2+h4, skipping reserved h3; got '+around);
+ });
+
+ check('pco: baptism routing writes NO baptism flag/indication onto state', ()=>{
+   if(/baptis/i.test(ev('JSON.stringify(state.hosts)'))) throw new Error('state.hosts must carry no baptism text: '+ev('JSON.stringify(state.hosts)'));
+   if(ev('("hh3IsBaptismal" in state) || Object.keys(state.hosts).some(k=>/baptis/i.test(k))')) throw new Error('no baptism flag allowed on state');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

@@ -1769,7 +1769,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-02·c</div>
+<div id="buildStamp">build 2026-07-02·d</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -6827,8 +6827,9 @@ function classifyPosition(name) {
   // SHADOW positions don't get mics, get added to shadows list instead.
   if (n.includes('shadow')) return { kind:'shadow' };
 
-  // BAPTISMAL — ONLY "Pastor Baptizing" (or close variants) gets HH3.
-  // Other baptism roles (host, participant, facilities, door, etc.) are support staff — ignored.
+  // Whoever is baptizing (the pastor/officiant, not support roles) is routed to HH 3 by the
+  // placement rule in applyPCOPlanData — silently, with no baptism flag or UI. Other baptism
+  // roles (host, participant, facilities, door, etc.) are support staff — ignored.
   if (n === 'pastor baptizing' || n === 'baptizing pastor' ||
       n.includes('officiant') ||
       (n.includes('baptiz') && (n.includes('pastor') || n.includes('priest') || n.includes('elder')))) {
@@ -7007,16 +7008,27 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   });
   console.groupEnd();
 
-  // Fill host channels by POSITION: channel[0] = speaker/pastor, then welcome hosts (and any
-  // baptism host, now treated as a plain welcome) in order. Extra people beyond the configured
-  // channel count are dropped. Labels/count are user config; the ordering is the mapping.
+  // Fill host channels by POSITION: channel[0] = speaker/pastor, then welcome hosts fill the
+  // remaining channels in order. Daybreak rule: whoever is baptizing always takes HH 3 (the
+  // channel labelled "HH 3", else the 3rd channel) — it's reserved, so welcome hosts skip past
+  // it. There is no baptism flag or UI; it is purely a placement rule. Extra people beyond the
+  // configured channel count are dropped. Labels/count are user config; ordering is the mapping.
   {
-    const ordered = [];
-    if (speakerName) ordered.push(speakerName);
-    welcomeNames.forEach(n => ordered.push(n));
-    if (baptismalName) ordered.push(baptismalName);
+    const chs = hostChannels();
+    const baptismCh = baptismalName
+      ? (chs.find(ch => (ch.label || '').replace(/\s+/g, '').toLowerCase() === 'hh3') || chs[2] || null)
+      : null;
+    const queue = [];
+    if (speakerName) queue.push(speakerName);
+    welcomeNames.forEach(n => queue.push(n));
+    if (baptismalName && !baptismCh) queue.push(baptismalName);  // no HH 3 to reserve → next open channel
     state.hosts = {};
-    hostChannels().forEach((ch, i) => { if (ordered[i]) state.hosts[ch.id] = ordered[i]; });
+    if (baptismCh) state.hosts[baptismCh.id] = baptismalName;
+    let qi = 0;
+    chs.forEach(ch => {
+      if (baptismCh && ch.id === baptismCh.id) return;           // reserved for the baptizing pastor
+      if (qi < queue.length) state.hosts[ch.id] = queue[qi++];
+    });
   }
 
   // ----- DISTRIBUTE BAND BUCKETS INTO INSTRUMENT SLOTS -----
@@ -7736,9 +7748,8 @@ function renderPCOSettings() {
         • <span style="color:var(--text);">"Vocals", "Vocal Lead", "BGV"</span> → vocalist (lead flag if "lead" in name)<br>
         • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2 Pack)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
-        • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → Pastor handheld<br>
-        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → HH 1 / HH 2 (HH 3 only if 3+ welcome hosts)<br>
-        • <span style="color:#3a8bd5;">"Pastor Baptizing"</span> → HH 3 (flagged for baptism)<br>
+        • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → host channel 1<br>
+        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → next open host channels, in order<br>
         • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)<br>
         <br>
         <span style="color:var(--text-faint);">Ignored (no mic, never assigned):</span><br>
