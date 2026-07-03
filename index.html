@@ -1769,7 +1769,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·a</div>
+<div id="buildStamp">build 2026-07-03·b</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2170,12 +2170,15 @@ const SETUP_TEMPLATES = {
   md: { label:'Music Director / Tracks', groups:[
     { id:'rig', name:'Rig', type:'check', options:[
       { id:'md_tracks', text:'House tracks computer' },
+      { id:'md_user',   text:'Bringing user tracks computer' },
       { id:'md_dante',  text:'House Dante tracks rig' },
-      { id:'md_stand',  text:'Computer stand' },
+      { id:'md_iface',  text:'Needs interface' },
+      { id:'md_stand',  text:'Laptop stand' },
       { id:'md_talk',   text:'Talkback mic & opto gate' },
     ]},
     { id:'extras', name:'Extras', type:'check', options:[
       { id:'md_music', text:'Music stand' },
+      { id:'md_chans', text:'Confirm channels of tracks' },
     ]},
   ]},
   strings: { label:'Violin / Cello', groups:[
