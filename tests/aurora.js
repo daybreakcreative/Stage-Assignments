@@ -15,9 +15,9 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 window.addEventListener('load',()=>setTimeout(()=>{
  const html=doc.documentElement;
 
- check('defaults: look=classic, theme=dark, auroraMood=nebula', ()=>{
+ check('defaults: look=classic, theme=dark, auroraMood=graphite', ()=>{
    if(ev('state.look')!=='classic') throw new Error('look default not classic: '+ev('state.look'));
-   if(ev('state.auroraMood')!=='nebula') throw new Error('mood default not nebula: '+ev('state.auroraMood'));
+   if(ev('state.auroraMood')!=='graphite') throw new Error('mood default not graphite: '+ev('state.auroraMood'));
  });
 
  check('classic default leaves NO aurora attrs on <html> (beta-safe)', ()=>{
@@ -26,18 +26,18 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(html.getAttribute('data-mood')) throw new Error('classic must not set data-mood: '+html.getAttribute('data-mood'));
  });
 
- check('setLook("aurora") applies data-look + data-mood', ()=>{
+ check('setLook("aurora") applies data-look + data-mood (default graphite)', ()=>{
    ev('setLook("aurora")');
    if(html.getAttribute('data-look')!=='aurora') throw new Error('data-look not aurora');
-   if(html.getAttribute('data-mood')!=='nebula') throw new Error('data-mood not applied: '+html.getAttribute('data-mood'));
+   if(html.getAttribute('data-mood')!=='graphite') throw new Error('data-mood not applied: '+html.getAttribute('data-mood'));
  });
 
- check('setMood persists + applies; falls back to nebula for unknown', ()=>{
+ check('setMood persists + applies; falls back to graphite for unknown', ()=>{
    ev('setLook("aurora"); setMood("dusk")');
    if(ev('state.auroraMood')!=='dusk') throw new Error('mood not saved');
    if(html.getAttribute('data-mood')!=='dusk') throw new Error('data-mood attr not dusk');
    ev('setMood("nope")');
-   if(ev('state.auroraMood')!=='nebula') throw new Error('unknown mood should fall back to nebula');
+   if(ev('state.auroraMood')!=='graphite') throw new Error('unknown mood should fall back to graphite');
  });
 
  check('dark/light axis stays independent of look', ()=>{
@@ -67,7 +67,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const dusk=doc.querySelector('[data-mood-opt="dusk"]'); if(!dusk) throw new Error('no dusk chip');
    dusk.click();
    if(ev('state.auroraMood')!=='dusk') throw new Error('mood not set by UI');
-   ev('setLook("classic"); setMood("nebula")'); // restore defaults
+   ev('setLook("classic"); setMood("graphite")'); // restore defaults
  });
 
  check('print stylesheet is not scoped to a look (prints plain regardless)', ()=>{

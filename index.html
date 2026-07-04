@@ -1248,16 +1248,22 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
   --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
   --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
-/* moods (PROVISIONAL set — trim/confirm to Dillon's gallery picks) */
+/* moods — Dillon's picks (neutral → cool → warm). Mono moods carry a lower --mix. */
+[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%}
+[data-look="aurora"][data-mood="platinum"]{--c1:#eae4d8;--c2:#c9c0b0;--c3:#9a917f;--gd:#0b0a09;--mix:14%}
+[data-look="aurora"][data-mood="fog"]     {--c1:#a9cfcb;--c2:#8fb0be;--c3:#b7b0a0;--gd:#080d0d;--mix:22%}
+[data-look="aurora"][data-mood="ashrose"] {--c1:#d8b3c0;--c2:#b7a0c4;--c3:#c8b8ad;--gd:#0d0a0c;--mix:22%}
+[data-look="aurora"][data-mood="frost"]   {--c1:#a5f3fc;--c2:#7dd3fc;--c3:#cbd5ff;--gd:#070b12}
 [data-look="aurora"][data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
+[data-look="aurora"][data-mood="ocean"]   {--c1:#38bdf8;--c2:#4f7cff;--c3:#22d3ee;--gd:#050b16}
 [data-look="aurora"][data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
-[data-look="aurora"][data-mood="vesper"]  {--c1:#9a86f5;--c2:#e6b45a;--c3:#6a8cff;--gd:#0b0913}
-[data-look="aurora"][data-mood="ember"]   {--c1:#ffb865;--c2:#ff8fa3;--c3:#ffd98a;--gd:#130c09}
-[data-look="aurora"][data-mood="northern"]{--c1:#4ade80;--c2:#2dd4bf;--c3:#a78bfa;--gd:#060f0c}
-[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:15%}
-/* mono moods: near-white accent would vanish on light — keep IEM readable */
-[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-voc-line .val,
-[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail{color:var(--text)}
+[data-look="aurora"][data-mood="meadow"]  {--c1:#86d9a6;--c2:#e3cf7a;--c3:#8ecae6;--gd:#08110c}
+[data-look="aurora"][data-mood="rose"]    {--c1:#f9a8d4;--c2:#c4b5fd;--c3:#fbcfe8;--gd:#120b12}
+[data-look="aurora"][data-mood="molten"]  {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806}
+/* pale/mono moods: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
+[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail,
+[data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail,
+[data-look="aurora"][data-theme="light"][data-mood="frost"] .dv-list-item .detail{color:var(--text);text-shadow:none}
 /* drifting aurora backdrop on the app ground (dark + light both) */
 [data-look="aurora"] body{
   background:
@@ -2132,7 +2138,7 @@ const DEFAULT_STATE = {
   viewMode: 'setup',
   theme: 'dark',
   look: 'classic',        // 'classic' (current look) | 'aurora'
-  auroraMood: 'nebula'    // active Aurora color mood; ignored unless look==='aurora'
+  auroraMood: 'graphite'  // active Aurora color mood; ignored unless look==='aurora'
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -5498,7 +5504,7 @@ function renderLayoutEditor() {
       <button class="btn ghost${state.look==='aurora'?' primary':''}" data-look-opt="aurora">Aurora</button>
     </div>
     <div class="mood-picker" style="display:${state.look==='aurora'?'flex':'none'};gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-      ${AURORA_MOODS.map(m=>`<button class="btn ghost${state.auroraMood===m?' primary':''}" data-mood-opt="${m}" style="text-transform:capitalize;">${m}</button>`).join('')}
+      ${AURORA_MOODS.map(m=>`<button class="btn ghost${state.auroraMood===m?' primary':''}" data-mood-opt="${m}" style="text-transform:capitalize;">${MOOD_LABEL[m]||m}</button>`).join('')}
     </div>
     <p class="subtitle" style="margin:0 0 18px;font-size:11.5px;">Aurora is a luminous glass theme with color moods. Dark/light follows the ☾ button. (Moods here are provisional pending your picks.)</p>
 
@@ -8553,14 +8559,15 @@ function toggleTheme() {
 }
 
 // ---- Look + mood (Aurora is opt-in; classic = today's look, the default) ----
-// PROVISIONAL mood set so the switcher is reviewable; trim/confirm to Dillon's picks.
-const AURORA_MOODS = ['nebula','dusk','vesper','ember','northern','graphite'];
+// Dillon's chosen moods, ordered neutral → cool → warm.
+const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
+const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
 function applyLook() {
   const html = document.documentElement;
   const look = (state.look === 'aurora') ? 'aurora' : 'classic';
   html.setAttribute('data-look', look);
   if (look === 'aurora') {
-    const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'nebula';
+    const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
     html.setAttribute('data-mood', mood);
   } else {
     html.removeAttribute('data-mood');
@@ -8572,7 +8579,7 @@ function setLook(look) {
   if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
 }
 function setMood(mood) {
-  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'nebula';
+  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'graphite';
   applyLook(); saveState();
   if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
 }
