@@ -70,6 +70,30 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev('setLook("classic"); setMood("graphite")'); // restore defaults
  });
 
+ check('aurora clears the brand inline vars so its stylesheet tokens win', ()=>{
+   // Simulate applyBrand() having set the gold accent + Fraunces inline on <html>.
+   ev('document.documentElement.style.setProperty("--accent","#d4a147")');
+   ev("document.documentElement.style.setProperty('--ff-display', \"'Fraunces', Georgia, serif\")");
+   ev('setLook("aurora")');
+   if(ev('document.documentElement.style.getPropertyValue("--accent")')) throw new Error('aurora must clear inline --accent');
+   if(ev('document.documentElement.style.getPropertyValue("--ff-display")')) throw new Error('aurora must clear inline --ff-display');
+   if(ev('document.documentElement.style.getPropertyValue("--wl")')!=='var(--c2)') throw new Error('aurora should set --wl to var(--c2)');
+ });
+
+ check('switching back to Classic restores the brand palette', ()=>{
+   ev('state.brand={accent:"#d4a147",font:"Fraunces"}');
+   ev('setLook("classic")');
+   if(ev('document.documentElement.style.getPropertyValue("--accent")')!=='#d4a147') throw new Error('classic should restore brand --accent');
+   if(!/Fraunces/.test(ev('document.documentElement.style.getPropertyValue("--ff-display")'))) throw new Error('classic should restore brand font');
+   ev('state.brand={}; setLook("classic")');
+ });
+
+ check('applyBrand is a no-op while Aurora is active (no clobber)', ()=>{
+   ev('setLook("aurora"); state.brand={accent:"#d4a147"}; applyBrand()');
+   if(ev('document.documentElement.style.getPropertyValue("--accent")')) throw new Error('applyBrand must not set --accent under aurora');
+   ev('state.brand={}; setLook("classic")'); // restore
+ });
+
  check('print stylesheet is not scoped to a look (prints plain regardless)', ()=>{
    const css=ev('document.querySelector("style").textContent');
    const printIdx=css.indexOf('@media print');

@@ -1832,7 +1832,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-03·g</div>
+<div id="buildStamp">build 2026-07-04·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -8562,15 +8562,25 @@ function toggleTheme() {
 // Dillon's chosen moods, ordered neutral → cool → warm.
 const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
 const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
+// These are set INLINE on <html> by applyBrand(); inline wins over the [data-look="aurora"]
+// stylesheet, so Aurora must clear them (theme takes over) and Classic restores them.
+const BRAND_INLINE_VARS = ['--accent','--accent-2','--wl','--ff-display','--accent-dim','--accent-glow','--btn-primary-text'];
 function applyLook() {
   const html = document.documentElement;
   const look = (state.look === 'aurora') ? 'aurora' : 'classic';
   html.setAttribute('data-look', look);
+  BRAND_INLINE_VARS.forEach(p => html.style.removeProperty(p));
   if (look === 'aurora') {
     const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
     html.setAttribute('data-mood', mood);
+    // The [data-look="aurora"] block supplies --accent/--accent-2/--accent-dim/--ff-display/--ff-body.
+    // Fill the few it doesn't (these track the active mood's --c1/--c2):
+    html.style.setProperty('--wl', 'var(--c2)');
+    html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
+    html.style.setProperty('--btn-primary-text', '#0a0f16');
   } else {
     html.removeAttribute('data-mood');
+    if (typeof applyBrand === 'function') applyBrand(); // restore the brand palette inline
   }
 }
 function setLook(look) {
@@ -8585,6 +8595,9 @@ function setMood(mood) {
 }
 
 function applyBrand() {
+  // Aurora owns the accent + display font (via its mood tokens); don't let a brand edit
+  // clobber the theme. The brand palette is restored when the user switches back to Classic.
+  if (state.look === 'aurora') return;
   const b = state.brand || {};
   const root = document.documentElement;
   if (b.accent)  root.style.setProperty('--accent',  b.accent);
