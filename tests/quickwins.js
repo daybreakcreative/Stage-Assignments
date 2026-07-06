@@ -33,11 +33,12 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(document.body.classList.contains('display-mode')) throw new Error('did not exit display mode');
  });
 
- check('#1: Data tab renders a Submit-beta-test button', ()=>{
+ check('#1: Data tab renders a Report-a-bug button', ()=>{
+   // Upgraded 2026-07-06: the beta-submit button became the richer "Report a bug" form (#2).
    ev('renderDataEditor()');
-   const b=doc.getElementById('betaSubmitBtn');
-   if(!b) throw new Error('no #betaSubmitBtn in Data tab');
-   if(!/beta/i.test(b.textContent)) throw new Error('button text unexpected: '+b.textContent);
+   const b=doc.getElementById('reportBugBtn');
+   if(!b) throw new Error('no #reportBugBtn in Data tab');
+   if(!/bug/i.test(b.textContent)) throw new Error('button text unexpected: '+b.textContent);
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');

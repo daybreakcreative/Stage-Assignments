@@ -756,6 +756,12 @@ background-size:5% 10%}
 .pfx-sel:focus{border-color:var(--accent)}
 .pack-warn{background:rgba(184,97,74,.16);border:1px solid var(--danger);color:var(--danger);font-weight:600}
 .pack-warn:hover{background:rgba(184,97,74,.28)}
+.brf-field{display:flex;flex-direction:column;gap:5px}
+.brf-lbl{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted)}
+.brf-field textarea{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-family:var(--ff-body);font-size:13px;resize:vertical;outline:none}
+.brf-field textarea:focus{border-color:var(--accent)}
+.brf-thumb{max-width:100%;max-height:160px;border-radius:8px;border:1px solid var(--border)}
+.brf-note{font-size:11px;color:var(--text-faint)}
 .setup-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .setup-review-title{font-size:17px;font-weight:700}
 .setup-review-x{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px}
@@ -1857,7 +1863,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·f</div>
+<div id="buildStamp">build 2026-07-06·g</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -6454,9 +6460,9 @@ function renderDataEditor() {
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:18px;">Export your full configuration to a JSON file (good for backups or moving to another browser). Import overwrites everything currently in this browser.</p>
 
-    <div class="section-label" style="margin-bottom:10px;">🧪 Submit beta test</div>
-    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Hit a bug or something off? This downloads your current config and opens an email to Dillon — <strong>attach the downloaded file plus a screenshot</strong> and describe what happened.</p>
-    <button class="btn primary" id="betaSubmitBtn" style="margin-bottom:24px;">🧪 Submit beta test</button>
+    <div class="section-label" style="margin-bottom:10px;">🐞 Report a bug</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Something broken or off? Describe it, attach a screenshot — your current setup and app version are bundled automatically so it can be reproduced.</p>
+    <button class="btn primary" id="reportBugBtn" style="margin-bottom:24px;">🐞 Report a bug</button>
 
     <div class="section-label" style="margin-bottom:10px;">Export</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Saves a snapshot of everything in this browser: your team, instruments, mic inventory, preferences, brand, and PCO config. Current size: ${sizeStr}.</p>
@@ -6499,31 +6505,8 @@ function renderDataEditor() {
     URL.revokeObjectURL(url);
     toast('Downloaded ✓', 'success');
   });
-  const betaBtn = document.getElementById('betaSubmitBtn');
-  if (betaBtn) betaBtn.addEventListener('click', () => {
-    // 1. Download the config JSON so it can be attached to the report.
-    const data = JSON.stringify(state, null, 2);
-    const blob = new Blob([data], { type:'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const safe = (state.service.name || 'stageassign').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
-    const fname = `${safe}-${state.service.date || 'export'}.json`;
-    a.download = fname;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    // 2. Open a pre-filled email to Dillon (JSON is too big for a mail body, so it's attached).
-    const build = (document.getElementById('buildStamp') || {}).textContent || '';
-    const subject = encodeURIComponent('Stage·Assign beta report — ' + (state.service.date || ''));
-    const body = encodeURIComponent(
-      'What went wrong / what looks off:\n\n\n' +
-      'Steps, what you expected, what you saw:\n\n\n' +
-      '— Please attach the file that just downloaded (' + fname + ') and a screenshot. —\n' +
-      (build ? ('\n' + build) : '')
-    );
-    window.location.href = 'mailto:dillonthomas@daybreakchurch.org?subject=' + subject + '&body=' + body;
-    toast('JSON downloaded — attach it + a screenshot to the email', 'success');
-  });
+  const reportBtn = document.getElementById('reportBugBtn');
+  if (reportBtn) reportBtn.addEventListener('click', openBugReportModal);
   document.getElementById('copyJsonBtn').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
@@ -10612,6 +10595,85 @@ function openPackConflictDialog() {
   });
   actions.appendChild(later); actions.appendChild(apply); sheet.appendChild(actions);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+// --- Report a bug (v2) --------------------------------------------------------------
+// In-app form → downloads the config (+ screenshot) and opens a PRE-FILLED GitHub issue
+// (no token/backend: the logged-in user reviews + clicks Submit; the issue lands in the repo
+// where Claude reads it). A serverless proxy could later auto-attach files, but this needs
+// zero setup. sendBugReport() is the transport seam.
+const BUG_REPORT_REPO = 'daybreakcreative/Stage-Assignments';
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type: type || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function sendBugReport(r) {
+  const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
+  const dateStr = (state.service && state.service.date) || '';
+  const safe = (state.service && state.service.name ? state.service.name : 'stageassign').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  downloadBlob(JSON.stringify(state, null, 2), `${safe}-config.json`, 'application/json');
+  if (r.shotDataUrl) {
+    try {
+      const bin = atob(r.shotDataUrl.split(',')[1]); const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      downloadBlob(arr, r.shotName || 'screenshot.png', 'image/png');
+    } catch (e) { /* ignore a bad screenshot */ }
+  }
+  const title = 'Bug: ' + (r.desc.split('\n')[0] || 'report').slice(0, 70);
+  const body = [
+    r.desc, '', '---',
+    '**Build:** ' + (build || 'unknown'),
+    dateStr ? ('**Service date:** ' + dateStr) : '',
+    '', '📎 _Drag in the files that just downloaded: the config JSON' + (r.shotDataUrl ? ' and the screenshot' : '') + '._'
+  ].filter(Boolean).join('\n');
+  const url = `https://github.com/${BUG_REPORT_REPO}/issues/new?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  window.open(url, '_blank');
+  toast('Files downloaded — drag them into the GitHub issue and Submit', 'success');
+  return url;
+}
+function openBugReportModal() {
+  let shotDataUrl = '', shotName = '';
+  const overlay = document.createElement('div'); overlay.className = 'setup-review-modal show';
+  const sheet = document.createElement('div'); sheet.className = 'setup-review-sheet'; overlay.appendChild(sheet);
+  const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+  sheet.innerHTML = `
+    <div class="setup-review-head"><div class="setup-review-title">🐞 Report a bug</div><button type="button" class="setup-review-x" aria-label="Close">✕</button></div>
+    <p class="setup-review-sub">Describe what went wrong — your current setup + app version get bundled so it can be reproduced. Submitting opens a GitHub issue draft; drag the downloaded file(s) in and click Submit.</p>
+    <div class="setup-review-body" style="overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
+      <label class="brf-field"><span class="brf-lbl">What happened? What did you expect?</span>
+        <textarea id="brf_desc" rows="5" placeholder="e.g. After pulling the plan, the band IEM column on the display was blank…"></textarea></label>
+      <label class="brf-field"><span class="brf-lbl">Screenshot (optional)</span>
+        <input type="file" id="brf_shot" accept="image/*" /></label>
+      <div id="brf_shot_preview"></div>
+      <div class="brf-note">Bundled automatically: your setup JSON + ${esc(((document.getElementById('buildStamp') || {}).textContent) || 'build')}.</div>
+    </div>
+    <div class="setup-review-actions">
+      <button type="button" class="btn ghost" id="brf_cancel">Cancel</button>
+      <button type="button" class="btn primary" id="brf_send">Download &amp; open GitHub issue</button>
+    </div>`;
+  sheet.querySelector('.setup-review-x').addEventListener('click', close);
+  sheet.querySelector('#brf_cancel').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  sheet.querySelector('#brf_shot').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    const prev = sheet.querySelector('#brf_shot_preview');
+    if (!f) { shotDataUrl = ''; shotName = ''; prev.innerHTML = ''; return; }
+    shotName = f.name;
+    const reader = new FileReader();
+    reader.onload = ev => { shotDataUrl = ev.target.result; prev.innerHTML = `<img src="${shotDataUrl}" class="brf-thumb" alt="screenshot preview" />`; };
+    reader.readAsDataURL(f);
+  });
+  sheet.querySelector('#brf_send').addEventListener('click', () => {
+    const desc = (sheet.querySelector('#brf_desc').value || '').trim();
+    if (!desc) { toast('Add a short description first', 'warn'); return; }
+    sendBugReport({ desc, shotDataUrl, shotName });
+    close();
+  });
   document.body.appendChild(overlay);
   return overlay;
 }
