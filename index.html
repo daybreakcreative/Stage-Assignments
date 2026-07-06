@@ -288,6 +288,12 @@ body.stage-editing.dragging-slot .sp:not(.is-dragging){opacity:.5}
 /* Per-spec: in non-edit mode, slots stay non-draggable. Visual cursor is normal. */
 .stage-box{flex:1;position:relative;background:radial-gradient(ellipse 50% 80% at 50% 20%,rgba(212,161,71,.05),transparent 70%),linear-gradient(180deg,var(--bg-elev),var(--bg-inset));border:1px solid var(--border);border-radius:12px;padding:10px 12px 8px;overflow:hidden;display:flex;flex-direction:column;min-height:0;transition:border-color .2s}
 body.stage-editing .stage-box{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-dim) inset}
+/* Edit Layout = full-viewport takeover so positions are easy to place. Reuses the inline
+   stage (#stageWrap) + its reliable pointer drag — just enlarged. Fixes the collapse where a
+   114px toolbar squeezed the aspect-locked SVG down to a ~37px sliver in the half-width column. */
+body.stage-editing .corner.left{position:fixed;inset:0;z-index:180;background:var(--bg);padding:14px 22px 20px;overflow:hidden}
+body.stage-editing .corner.left .corner-head{display:none}
+body.stage-editing .stage-edit-toolbar{margin-bottom:12px}
 .stage-edit-modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center}
 .sem-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 .sem-panel{position:relative;z-index:1;background:var(--surface);border-radius:16px;width:min(95vw,900px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
