@@ -28,8 +28,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('no body.tv-mode CSS rule remains', ()=>{
    if(/body\.tv-mode\b/.test(html)) throw new Error('body.tv-mode CSS rule still present');
  });
- check('fullscreen button is present in the display chrome', ()=>{
-   if(!doc.getElementById('dvFullscreenBtn')) throw new Error('no #dvFullscreenBtn');
+ check('display auto-enters fullscreen; the redundant fullscreen cog is gone, Exit remains', ()=>{
+   // #5 (2026-07-06): entering display mode auto-requests fullscreen, so the separate
+   // fullscreen toggle was removed. Exit (displayBackBtn) leaves display + fullscreen.
+   if(doc.getElementById('dvFullscreenBtn')) throw new Error('fullscreen cog should be removed');
+   if(!doc.getElementById('displayBackBtn')) throw new Error('Exit button (displayBackBtn) missing');
  });
  check('Settings Display help now points to per-section hover scalers', ()=>{
    ev('renderLayoutEditor()');

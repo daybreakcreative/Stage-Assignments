@@ -1123,6 +1123,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-hover-tab-icon{font-size:12px;line-height:1;transform:rotate(45deg);display:inline-block}
 /* Section-label divider line — uses flex:1 to fill the gap; new button sits at the end */
 .dv-section-label::after{order:50;content:'';flex:1;height:1px;background:var(--border)}
+.dv-col-hint{order:60;font-family:var(--ff-mono);font-size:8.5px;font-weight:600;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase}
 .dv-hover-tab-inline{order:99;margin-left:8px}
 /* Reveal each section's scaler tab only when hovering that section. */
 .dv-header:hover .dv-hover-tab,.dv-vocalists-block:hover .dv-hover-tab{opacity:.8;pointer-events:auto}
@@ -1838,7 +1839,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·b</div>
+<div id="buildStamp">build 2026-07-06·c</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -1851,7 +1852,6 @@ body>*:not(.summary-overlay){display:none!important}
     <button class="lock-override-btn" id="lockOverrideBtn">Show display anyway</button>
   </div>
   <button class="display-cog" id="displayBackBtn" title="Exit display view (Esc)" style="width:auto;padding:0 14px;border-radius:18px;gap:6px;font-family:var(--ff-body);font-size:13px;font-weight:600;">✕ Exit</button>
-  <button class="display-cog" id="dvFullscreenBtn" title="Toggle fullscreen" style="right:96px;">⛶</button>
 
   <div class="dv-layout" id="dvLayout">
     <div class="dv-main" id="dvMain">
@@ -1929,7 +1929,7 @@ body>*:not(.summary-overlay){display:none!important}
 
         <div class="dv-side" id="dvSide">
           <div class="dv-side-block" id="dvBandBlock">
-            <div class="dv-section-label">Band</div>
+            <div class="dv-section-label">Band<span class="dv-col-hint">IEM Pack</span></div>
             <ul class="dv-list" id="dvBandList"></ul>
           </div>
           <!-- Divider: Band ↔ Hosts (horizontal drag handle, drag vertically) -->
@@ -6384,6 +6384,10 @@ function renderDataEditor() {
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:18px;">Export your full configuration to a JSON file (good for backups or moving to another browser). Import overwrites everything currently in this browser.</p>
 
+    <div class="section-label" style="margin-bottom:10px;">🧪 Submit beta test</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Hit a bug or something off? This downloads your current config and opens an email to Dillon — <strong>attach the downloaded file plus a screenshot</strong> and describe what happened.</p>
+    <button class="btn primary" id="betaSubmitBtn" style="margin-bottom:24px;">🧪 Submit beta test</button>
+
     <div class="section-label" style="margin-bottom:10px;">Export</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Saves a snapshot of everything in this browser: your team, instruments, mic inventory, preferences, brand, and PCO config. Current size: ${sizeStr}.</p>
     <div style="display:flex;gap:8px;margin-bottom:24px;">
@@ -6424,6 +6428,31 @@ function renderDataEditor() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('Downloaded ✓', 'success');
+  });
+  const betaBtn = document.getElementById('betaSubmitBtn');
+  if (betaBtn) betaBtn.addEventListener('click', () => {
+    // 1. Download the config JSON so it can be attached to the report.
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safe = (state.service.name || 'stageassign').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+    const fname = `${safe}-${state.service.date || 'export'}.json`;
+    a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    // 2. Open a pre-filled email to Dillon (JSON is too big for a mail body, so it's attached).
+    const build = (document.getElementById('buildStamp') || {}).textContent || '';
+    const subject = encodeURIComponent('Stage·Assign beta report — ' + (state.service.date || ''));
+    const body = encodeURIComponent(
+      'What went wrong / what looks off:\n\n\n' +
+      'Steps, what you expected, what you saw:\n\n\n' +
+      '— Please attach the file that just downloaded (' + fname + ') and a screenshot. —\n' +
+      (build ? ('\n' + build) : '')
+    );
+    window.location.href = 'mailto:dillonthomas@daybreakchurch.org?subject=' + subject + '&body=' + body;
+    toast('JSON downloaded — attach it + a screenshot to the email', 'success');
   });
   document.getElementById('copyJsonBtn').addEventListener('click', async () => {
     try {
@@ -8191,6 +8220,13 @@ function enterDisplayMode() {
   saveState();
   renderDisplayView();
   applyDvDividers();
+  // Auto-enter fullscreen. enterDisplayMode is called from the Display button click (a valid
+  // user gesture), so the request is honored; if it's ever blocked, we ignore it.
+  try {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req && !document.fullscreenElement) req.call(el);
+  } catch (e) { /* fullscreen blocked — ignore */ }
 }
 function exitDisplayMode() {
   document.body.classList.remove('display-mode');
@@ -8199,6 +8235,13 @@ function exitDisplayMode() {
   state.viewMode = 'setup';
   saveState();
   renderAll();
+  // Leaving display mode also drops out of fullscreen.
+  try {
+    if (document.fullscreenElement) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  } catch (e) { /* ignore */ }
 }
 function renderDisplayView() {
   const s = state.service;
@@ -12497,18 +12540,6 @@ function init() {
     enterDisplayMode();
   });
   document.getElementById('displayBackBtn').addEventListener('click', exitDisplayMode);
-  const fsBtn = document.getElementById('dvFullscreenBtn');
-  if (fsBtn) fsBtn.addEventListener('click', () => {
-    try {
-      if (!document.fullscreenElement) {
-        const r = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
-        if (r) r.call(document.documentElement);
-      } else {
-        const x = document.exitFullscreen || document.webkitExitFullscreen;
-        if (x) x.call(document);
-      }
-    } catch (e) { /* fullscreen may be blocked; ignore */ }
-  });
 
   // wireHoverSlider is defined at module scope (above init)
 
