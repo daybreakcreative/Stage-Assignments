@@ -748,6 +748,14 @@ background-size:5% 10%}
 .setup-review-modal{position:fixed;inset:0;background:rgba(5,5,7,.88);backdrop-filter:blur(10px);z-index:214;display:none;align-items:center;justify-content:center;padding:20px}
 .setup-review-modal.show{display:flex}
 .setup-review-sheet{background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:24px 28px;max-width:620px;width:100%;box-shadow:0 30px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow:hidden}
+.pack-fix-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.pfx-desc{font-size:13px;color:var(--text);flex:1;min-width:190px}
+.pfx-role{font-family:var(--ff-mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-left:5px}
+.pfx-move{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.pfx-sel{background:var(--surface);border:1px solid var(--border-2);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--ff-mono);outline:none}
+.pfx-sel:focus{border-color:var(--accent)}
+.pack-warn{background:rgba(184,97,74,.16);border:1px solid var(--danger);color:var(--danger);font-weight:600}
+.pack-warn:hover{background:rgba(184,97,74,.28)}
 .setup-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .setup-review-title{font-size:17px;font-weight:700}
 .setup-review-x{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px}
@@ -1553,6 +1561,7 @@ body>*:not(.summary-overlay){display:none!important}
     <input type="text" id="serviceName" placeholder="Event title (e.g. Sunday Morning, Christmas Eve)" style="min-width:240px;" />
   </div>
   <div class="actions">
+    <button class="btn pack-warn" id="packWarnBtn" title="IEM mix conflict — click to resolve" style="display:none;">⚠ <span id="packWarnLabel">Mix conflict</span></button>
     <button class="btn pco" id="pcoBtn" title="PCO: Not Connected"><span class="dot"></span> Planning Center</button>
     <button class="btn ghost" id="themeBtn" title="Toggle light/dark mode">☾</button>
     <button class="btn ghost" id="settingsBtn" title="Advanced Settings" aria-label="Advanced Settings">Advanced Settings</button>
@@ -1848,7 +1857,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·e</div>
+<div id="buildStamp">build 2026-07-06·f</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -3211,6 +3220,7 @@ function addShadow() {
   if (state.shadows.length >= MAX_SHADOWS) { toast(`Max ${MAX_SHADOWS} shadows`, 'warn'); return; }
   state.shadows.push({ id: 'sh_'+Math.random().toString(36).slice(2,8), name: '', pack: state.config.shadowPack || 'Misc 2' });
   saveState(); renderAll();
+  maybeResolvePackConflicts(); // a new shadow may collide with an existing mix (once named/on-IEM)
 }
 function removeShadow(id) {
   state.shadows = state.shadows.filter(s => s.id !== id);
@@ -7199,7 +7209,12 @@ async function pcoPullPlan(planId) {
     // last-minute merge-refresh adds, which don't go through this popup.)
     setTimeout(() => {
       try { pcoSeedAllAssignedSetup(); saveState(); updateSetupProgressBadge(); } catch(err) { console.warn('setup seed after pull failed:', err); }
-      try { openPostPullPopup({ planId }); } catch(err) { console.warn('post-pull popup failed:', err); }
+      // Post-pull prefs first; then check IEM-mix conflicts (after that popup closes, or
+      // right away if it had nothing to ask) so the two dialogs never stack.
+      try {
+        const opened = openPostPullPopup({ planId }, () => maybeResolvePackConflicts());
+        if (!opened) maybeResolvePackConflicts();
+      } catch(err) { console.warn('post-pull popup failed:', err); }
     }, 400);
   } catch (e) {
     setPCOStatus(e.message,'err');
@@ -8953,6 +8968,7 @@ function renderAll() {
   if (state.viewMode === 'display') renderDisplayView();
   if (state.viewMode === 'setup-items') renderSetupItemsView();
   updateSetupProgressBadge();
+  updatePackWarnBadge();
 }
 
 /* ===================== SETUP ITEMS ===================== */
@@ -10524,6 +10540,80 @@ function closePostPullPopup() {
   const cb = postPullState && postPullState.onClose;
   postPullState = null;
   if (cb) { try { cb(); } catch (err) { console.warn('post-pull onClose failed:', err); } }
+}
+
+// #9 Stage 3 — IEM mix conflict resolution. Reads findPackConflicts() and lets the user move
+// each colliding/unassigned position to an open mix (or add a new mix). Opened after a PCO pull
+// and by the live badge (Stage 4). Reuses the .setup-review-modal shell.
+function nextGeneralMixName() {
+  const mixes = (state.config && state.config.iemPackPresets) || [];
+  for (let i = 1; i <= 99; i++) { const n = 'Mix ' + i; if (!mixes.includes(n)) return n; }
+  return 'Mix';
+}
+function applyMixToPosition(pos, mix) {
+  if (!pos || !mix) return;
+  if (pos.kind === 'band') { const inst = instById(pos.id); if (inst) inst.pack = mix; }
+  else if (pos.kind === 'shadow') { const s = (state.shadows || []).find(x => x.id === pos.id); if (s) s.pack = mix; }
+}
+function maybeResolvePackConflicts() {
+  if (findPackConflicts().hasIssues) openPackConflictDialog();
+}
+// Live ⚠ badge in the topbar — shows whenever an IEM-mix conflict exists (catches manual edits).
+function updatePackWarnBadge() {
+  const btn = document.getElementById('packWarnBtn');
+  if (!btn) return;
+  const r = findPackConflicts();
+  if (r.hasIssues) {
+    const lbl = document.getElementById('packWarnLabel');
+    if (lbl) lbl.textContent = r.fixes.length === 1 ? 'Mix conflict' : r.fixes.length + ' mix conflicts';
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+function openPackConflictDialog() {
+  const r = findPackConflicts();
+  if (!r.hasIssues) return null;
+  const overlay = document.createElement('div'); overlay.className = 'setup-review-modal show';
+  const sheet = document.createElement('div'); sheet.className = 'setup-review-sheet'; overlay.appendChild(sheet);
+  const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+  const head = document.createElement('div'); head.className = 'setup-review-head';
+  const title = document.createElement('div'); title.className = 'setup-review-title'; title.textContent = 'IEM mix conflicts';
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'setup-review-x'; x.setAttribute('aria-label', 'Close'); x.textContent = '✕'; x.addEventListener('click', close);
+  head.appendChild(title); head.appendChild(x); sheet.appendChild(head);
+  const sub = document.createElement('p'); sub.className = 'setup-review-sub';
+  sub.textContent = 'Two people can’t share one IEM mix. Pick where to move each — off-stage shadows are moved first, and if you’re out of mixes you can add one.';
+  sheet.appendChild(sub);
+  const body = document.createElement('div'); body.className = 'setup-review-body'; body.style.overflow = 'auto'; body.style.flex = '1'; body.style.minHeight = '0';
+  sheet.appendChild(body);
+  const openMixes = r.openMixes.slice();
+  r.fixes.forEach((f, i) => {
+    const desc = f.kind === 'dup'
+      ? `<strong>${esc(f.position.name)}</strong> <span class="pfx-role">${esc(f.position.label)}</span> — sharing <em>${esc(f.currentMix)}</em> with ${esc(f.sharedWith.join(', '))}`
+      : `<strong>${esc(f.position.name)}</strong> <span class="pfx-role">${esc(f.position.label)}</span> — <em>no mix assigned</em>`;
+    const opts = openMixes.map(m => `<option value="${esc(m)}"${m === f.suggestTo ? ' selected' : ''}>${esc(m)}</option>`).join('')
+      + `<option value="__add__"${f.suggestTo ? '' : ' selected'}>＋ Add a new mix</option>`;
+    const row = document.createElement('div'); row.className = 'pack-fix-row';
+    row.innerHTML = `<div class="pfx-desc">${desc}</div><div class="pfx-move">move to <select class="pfx-sel" data-fix="${i}">${opts}</select></div>`;
+    body.appendChild(row);
+  });
+  const actions = document.createElement('div'); actions.className = 'setup-review-actions';
+  const later = document.createElement('button'); later.type = 'button'; later.className = 'btn ghost'; later.textContent = 'Later'; later.addEventListener('click', close);
+  const apply = document.createElement('button'); apply.type = 'button'; apply.className = 'btn primary'; apply.textContent = 'Apply';
+  apply.addEventListener('click', () => {
+    r.fixes.forEach((f, i) => {
+      const sel = body.querySelector(`.pfx-sel[data-fix="${i}"]`); if (!sel) return;
+      let mix = sel.value;
+      if (mix === '__add__') { mix = nextGeneralMixName(); if (!state.config.iemPackPresets.includes(mix)) state.config.iemPackPresets.push(mix); }
+      applyMixToPosition(f.position, mix);
+    });
+    saveState(); renderAll(); if (state.viewMode === 'display') renderDisplayView();
+    close();
+  });
+  actions.appendChild(later); actions.appendChild(apply); sheet.appendChild(actions);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+  return overlay;
 }
 
 // Consolidated review dialog for newly-added people.
@@ -12532,6 +12622,7 @@ function init() {
   document.getElementById('addVocLink').addEventListener('click', addVocalist);
   document.getElementById('resetBtn').addEventListener('click', resetAll);
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
+  document.getElementById('packWarnBtn').addEventListener('click', openPackConflictDialog);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);
   document.getElementById('displayBtn').addEventListener('click', () => {
     // Hard lock only when the user has opted in (Advanced Settings → Display). Off by default.
