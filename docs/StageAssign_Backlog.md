@@ -4,6 +4,36 @@ _Compiled from all our conversations (the project handoff doc, the three UX/bug 
 
 ---
 
+## Parked for discussion (after Aurora #8 + pack rework #9)
+
+### Competitive feature review vs sidestage.pro [DISCUSS]
+Requested 2026-07-06. A friend built a similar worship-team stage/assignment app at
+**https://www.sidestage.pro**. Task: research the site (+ anything findable about it),
+list features it has that Stage·Assign doesn't, then discuss with Dillon which (if any)
+to add. Purely a research + discussion item — nothing to build yet. Do this in a
+dedicated turn (web research on the marketing site + any docs/changelog/screenshots).
+
+### "Report a bug" feedback loop — v2 of the beta button [BIG][FEATURE]
+Requested 2026-07-06. Supersedes the `·c` "Submit beta test" button (which just
+downloads JSON + opens a mailto — a v1 stepping stone).
+
+Vision: a **"Report a bug"** button in Advanced Settings → opens an in-app form
+(free-text description + **screenshot upload**) → the feedback comes back so Claude
+can see it firsthand and advise Dillon on fixes (which adjustments to make, etc.).
+Email-to-Dillon is an acceptable transport if simpler; he'd relay. Wants it cohesive.
+
+Key constraint to resolve when we design it: the app is a **single static file on
+GitHub Pages, no backend**, so the feedback needs a destination. Options to weigh:
+- **Email/mailto** (no backend; Dillon pastes reports to Claude) — closest to today.
+- **Form service** (Formspree / Google Form / Airtable) — real inbox, screenshots,
+  no server to run.
+- **GitHub issue via API** — lands in the repo where Claude works, but needs a
+  scoped token embedded (public-repo risk) or a tiny proxy.
+Screenshot upload without a backend means either drag-into-email, a service that
+accepts files, or capturing the app's own DOM to an image client-side.
+
+---
+
 ## ✅ Already done (baseline — so the list below is only what's left)
 - Removed the Bézier pen tool; built the polygon outline editor.
 - Fixed the corner-drag bug (drag now follows the pointer).
