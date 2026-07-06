@@ -3473,6 +3473,55 @@ function iemPackFor(instOrId) {
   }
   return inst ? (inst.pack || inst.label) : '';
 }
+
+// #9 conflict engine — who wears an IEM belt pack this week, and where do they collide?
+// Consumers = unlinked band instruments + shadows on IEM. Vocalists use RESERVED vocal mixes
+// (one each) so they never collide and aren't in this set; a vocalist-linked instrument's player
+// uses their vocal mix, so that instrument isn't a separate consumer. A conflict is two consumers
+// on the same general mix, or a consumer with NO mix. Priority (lowest moves first / is left
+// without when mixes run short): off-stage-IEM shadow(0) < on-stage shadow(1) < optional inst(2)
+// < core inst(3). Returns { hasIssues, fixes:[{kind,position,currentMix,sharedWith,suggestTo}],
+// openMixes, needMore }. Pure — reused by the resolution dialog (Stage 3) + live badge (Stage 4).
+function findPackConflicts() {
+  const consumers = [];
+  (state.instruments || []).forEach(inst => {
+    if (!inst || inst.vocalistPlayer) return;
+    const name = (inst.assignedTo || '').trim();
+    if (!name) return;
+    consumers.push({ id: inst.id, name, kind: 'band', label: inst.label, mix: (inst.pack || '').trim(), priority: inst.optional ? 2 : 3 });
+  });
+  (state.shadows || []).forEach(s => {
+    if (!s || !(s.name || '').trim()) return;
+    if (!s.setup || shadowNeedsNoMix(s.setup)) return; // observing / off-stage / unset → no IEM
+    const off = s.setup === 'off-stage-iem';
+    consumers.push({ id: s.id, name: s.name.trim(), kind: 'shadow', label: off ? 'Shadow · off stage' : 'Shadow', mix: (s.pack || '').trim(), priority: off ? 0 : 1 });
+  });
+
+  const generalMixes = Array.isArray(state.config.iemPackPresets) ? state.config.iemPackPresets.slice() : [];
+  const used = new Set(consumers.map(c => c.mix).filter(Boolean));
+  const openMixes = generalMixes.filter(m => !used.has(m));
+
+  const byMix = {};
+  const fixes = [];
+  consumers.forEach(c => { if (c.mix) (byMix[c.mix] = byMix[c.mix] || []).push(c); });
+  consumers.filter(c => !c.mix).forEach(c => fixes.push({ kind: 'unassigned', position: c, currentMix: '', sharedWith: [] }));
+  Object.keys(byMix).forEach(mix => {
+    const g = byMix[mix];
+    if (g.length < 2) return;
+    // The highest-priority stays on the mix; everyone else must move (so N-share → N-1 fixes).
+    const ranked = g.slice().sort((a, b) => b.priority - a.priority);
+    for (let i = 1; i < ranked.length; i++) {
+      fixes.push({ kind: 'dup', position: ranked[i], currentMix: mix, sharedWith: g.filter(x => x !== ranked[i]).map(x => x.name) });
+    }
+  });
+
+  // Greedily suggest open mixes — highest-priority needs first, so if mixes run short the
+  // LOWEST-priority position (off-stage shadow) is the one left without a mix.
+  const pool = openMixes.slice();
+  fixes.sort((a, b) => b.position.priority - a.position.priority);
+  fixes.forEach(f => { f.suggestTo = pool.length ? pool.shift() : null; });
+  return { hasIssues: fixes.length > 0, fixes, openMixes, needMore: fixes.some(f => f.suggestTo === null) };
+}
 function getMD() { return state.musicDirectorId ? instById(state.musicDirectorId) : null; }
 
 function vocalistByName(name) {
