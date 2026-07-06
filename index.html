@@ -790,6 +790,12 @@ background-size:5% 10%}
 .wiz-stage-shape.selected{border-color:var(--accent);background:var(--accent-dim)}
 .wiz-stage-shape svg{margin-bottom:4px}
 .wiz-shape-label{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text)}
+/* Aurora mood preview swatches (settings + wizard) */
+.mood-picker{display:flex;gap:8px;flex-wrap:wrap}
+.mood-swatch{position:relative;width:88px;height:52px;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;padding:0;display:flex;align-items:flex-end;transition:transform .12s ease,border-color .12s ease}
+.mood-swatch:hover{transform:translateY(-2px)}
+.mood-swatch .lbl{width:100%;padding:3px 5px;background:rgba(10,12,18,.55);color:#fff;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:capitalize;text-align:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.mood-swatch.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35),0 6px 18px rgba(0,0,0,.4)}
 .wiz-shape-sub{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em}
 /* Palette grid */
 .wiz-display-sections{display:flex;flex-direction:column;gap:6px}
@@ -1272,7 +1278,10 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 [data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail,
 [data-look="aurora"][data-theme="light"][data-mood="frost"] .dv-list-item .detail{color:var(--text);text-shadow:none}
 /* drifting aurora backdrop on the app ground (dark + light both) */
-[data-look="aurora"] body{
+/* The drifting aurora ground. Also on .display-view — it's a fixed full-screen element with
+   its own bg that would otherwise paint over the body drift (why display "looked the same"). */
+[data-look="aurora"] body,
+[data-look="aurora"] .display-view{
   background:
     radial-gradient(52% 60% at 12% 6%, color-mix(in srgb,var(--c1) var(--mix),transparent), transparent 60%),
     radial-gradient(56% 66% at 90% 16%, color-mix(in srgb,var(--c2) var(--mix),transparent), transparent 62%),
@@ -1280,7 +1289,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
     var(--gd);
   background-attachment:fixed;background-size:200% 200%;animation:auroraDrift 22s ease-in-out infinite}
 @keyframes auroraDrift{0%,100%{background-position:0% 0%,100% 0%,50% 100%}50%{background-position:22% 26%,72% 12%,42% 82%}}
-@media (prefers-reduced-motion:reduce){[data-look="aurora"] body{animation:none}}
+@media (prefers-reduced-motion:reduce){[data-look="aurora"] body,[data-look="aurora"] .display-view{animation:none}}
 /* frosted glass for surfaces that were solid panels */
 [data-look="aurora"] .dv-voc-card,
 [data-look="aurora"] .dv-side-block,
@@ -1839,7 +1848,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·c</div>
+<div id="buildStamp">build 2026-07-06·d</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2144,8 +2153,8 @@ const DEFAULT_STATE = {
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark',
-  look: 'classic',        // 'classic' (current look) | 'aurora'
-  auroraMood: 'graphite'  // active Aurora color mood; ignored unless look==='aurora'
+  look: 'aurora',         // Aurora is the only look now ("the new classic")
+  auroraMood: 'graphite'  // active Aurora color mood
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -5505,15 +5514,11 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
-    <div class="section-label" style="margin-bottom:8px;">Look &amp; theme</div>
-    <div class="look-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-      <button class="btn ghost${state.look!=='aurora'?' primary':''}" data-look-opt="classic">Classic</button>
-      <button class="btn ghost${state.look==='aurora'?' primary':''}" data-look-opt="aurora">Aurora</button>
+    <div class="section-label" style="margin-bottom:8px;">Theme</div>
+    <div class="mood-picker">
+      ${AURORA_MOODS.map(m=>moodSwatchHtml(m, state.auroraMood===m)).join('')}
     </div>
-    <div class="mood-picker" style="display:${state.look==='aurora'?'flex':'none'};gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-      ${AURORA_MOODS.map(m=>`<button class="btn ghost${state.auroraMood===m?' primary':''}" data-mood-opt="${m}" style="text-transform:capitalize;">${MOOD_LABEL[m]||m}</button>`).join('')}
-    </div>
-    <p class="subtitle" style="margin:0 0 18px;font-size:11.5px;">Aurora is a luminous glass theme with color moods. Dark/light follows the ☾ button. (Moods here are provisional pending your picks.)</p>
+    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a color mood — the whole app + display recolor live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
 
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
@@ -5910,10 +5915,7 @@ function renderLayoutEditor() {
       if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
-  // Look & mood picker (Aurora is opt-in; re-render settings so the active chip + mood row update)
-  el.querySelectorAll('[data-look-opt]').forEach(b => b.addEventListener('click', e => {
-    setLook(e.currentTarget.dataset.lookOpt); renderLayoutEditor();
-  }));
+  // Mood swatches — recolor the whole app live, then re-render so the selected ring updates.
   el.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', e => {
     setMood(e.currentTarget.dataset.moodOpt); renderLayoutEditor();
   }));
@@ -8614,36 +8616,44 @@ function toggleTheme() {
   setTheme(state.theme === 'light' ? 'dark' : 'light');
 }
 
-// ---- Look + mood (Aurora is opt-in; classic = today's look, the default) ----
+// ---- Look + mood (Aurora is the only look; moods are the "which look" choice) ----
 // Dillon's chosen moods, ordered neutral → cool → warm.
 const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
 const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
+// c1·c2·c3 per mood — used to paint preview swatches (must mirror the [data-mood] CSS).
+const MOOD_COLORS = {
+  graphite:['#cbd3dd','#8b95a3','#5b6472'], platinum:['#eae4d8','#c9c0b0','#9a917f'],
+  fog:['#a9cfcb','#8fb0be','#b7b0a0'], ashrose:['#d8b3c0','#b7a0c4','#c8b8ad'],
+  frost:['#a5f3fc','#7dd3fc','#cbd5ff'], nebula:['#67e8f9','#b39cff','#f7a8d8'],
+  ocean:['#38bdf8','#4f7cff','#22d3ee'], dusk:['#8b9cff','#c08cff','#7fb0ff'],
+  meadow:['#86d9a6','#e3cf7a','#8ecae6'], rose:['#f9a8d4','#c4b5fd','#fbcfe8'],
+  molten:['#ff6b4a','#ffb020','#ff4d6d']
+};
+// One preview swatch button for a mood. Reused by the settings picker + the wizard step.
+function moodSwatchHtml(m, selected) {
+  const c = MOOD_COLORS[m] || ['#888','#888','#888'];
+  const grad = `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 52%, ${c[2]} 100%)`;
+  return `<button type="button" class="mood-swatch${selected ? ' sel' : ''}" data-mood-opt="${m}" title="${MOOD_LABEL[m] || m}" style="background:${grad};"><span class="lbl">${MOOD_LABEL[m] || m}</span></button>`;
+}
 // These are set INLINE on <html> by applyBrand(); inline wins over the [data-look="aurora"]
 // stylesheet, so Aurora must clear them (theme takes over) and Classic restores them.
 const BRAND_INLINE_VARS = ['--accent','--accent-2','--wl','--ff-display','--accent-dim','--accent-glow','--btn-primary-text'];
+// Aurora is the only look now ("the new classic") — always applied. This also migrates any
+// existing save that still says look:'classic'. The brand system sets --accent/--ff-display
+// INLINE (which would beat the [data-look="aurora"] stylesheet), so we clear those and supply
+// the few tokens the stylesheet doesn't; applyBrand() no-ops while aurora is active.
 function applyLook() {
   const html = document.documentElement;
-  const look = (state.look === 'aurora') ? 'aurora' : 'classic';
-  html.setAttribute('data-look', look);
+  state.look = 'aurora';
+  html.setAttribute('data-look', 'aurora');
+  const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
+  html.setAttribute('data-mood', mood);
   BRAND_INLINE_VARS.forEach(p => html.style.removeProperty(p));
-  if (look === 'aurora') {
-    const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
-    html.setAttribute('data-mood', mood);
-    // The [data-look="aurora"] block supplies --accent/--accent-2/--accent-dim/--ff-display/--ff-body.
-    // Fill the few it doesn't (these track the active mood's --c1/--c2):
-    html.style.setProperty('--wl', 'var(--c2)');
-    html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
-    html.style.setProperty('--btn-primary-text', '#0a0f16');
-  } else {
-    html.removeAttribute('data-mood');
-    if (typeof applyBrand === 'function') applyBrand(); // restore the brand palette inline
-  }
+  html.style.setProperty('--wl', 'var(--c2)');
+  html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
+  html.style.setProperty('--btn-primary-text', '#0a0f16');
 }
-function setLook(look) {
-  state.look = (look === 'aurora') ? 'aurora' : 'classic';
-  applyLook(); saveState();
-  if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
-}
+function setLook() { applyLook(); saveState(); } // retained for callers; aurora is unconditional
 function setMood(mood) {
   state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'graphite';
   applyLook(); saveState();
@@ -11505,41 +11515,18 @@ function renderWizardStepBody(step) {
         </div>`;
     }
     case 'look': {
-      const PALETTES = [
-        { key:'gold',   name:'Warm gold',     accent:'#d4a147', accent2:'#e8b857' },
-        { key:'blue',   name:'Cool blue',     accent:'#5b9bd5', accent2:'#80b6e8' },
-        { key:'green',  name:'Modern green',  accent:'#7ba968', accent2:'#9bc587' },
-        { key:'mono',   name:'Classic black', accent:'#d8d4cc', accent2:'#f0ece4' },
-        { key:'red',    name:'Deep red',      accent:'#c8554d', accent2:'#de7a72' },
-        { key:'purple', name:'Royal purple',  accent:'#8e7cc3', accent2:'#a698d4' }
-      ];
-      const FONT_OPTIONS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
       return `
         <div>
-          <div class="wiz-q-title">Look & feel</div>
-          <div class="wiz-q-help">Pick a color palette and font. You can fine-tune both, plus the secondary color and Worship Leader highlight, in Advanced Settings → Brand.</div>
+          <div class="wiz-q-title">Choose your look</div>
+          <div class="wiz-q-help">Stage·Assign uses the <strong>Aurora</strong> theme — a luminous glass look with color moods. Pick a mood and the whole app + the display recolor instantly. Change it anytime in Advanced Settings → Display.</div>
 
-          <div class="section-label" style="margin-bottom:10px;">Color palette</div>
-          <div class="wiz-palette-grid">
-            ${PALETTES.map(p => `
-              <button class="wiz-palette${wizardData.accentPreset === p.key ? ' selected' : ''}" data-wpalette="${p.key}" data-wpaccent="${p.accent}" data-wpaccent2="${p.accent2}">
-                <span class="wiz-palette-swatch" style="background:${p.accent};"></span>
-                <span class="wiz-palette-name">${esc(p.name)}</span>
-              </button>
-            `).join('')}
-            <button class="wiz-palette wiz-palette-custom${wizardData.accentPreset === 'custom' ? ' selected' : ''}" data-wpalette="custom">
-              <span class="wiz-palette-swatch" style="background:${esc(wizardData.accentColor)};border:2px dashed var(--border);"></span>
-              <span class="wiz-palette-name">Custom…</span>
-              <input type="color" id="wiz_custom_color" value="${esc(wizardData.accentColor)}" style="display:${wizardData.accentPreset === 'custom' ? 'inline-block' : 'none'};margin-left:8px;width:30px;height:24px;padding:0;border:none;background:transparent;cursor:pointer;" />
-            </button>
+          <div class="section-label" style="margin-bottom:10px;">Color mood</div>
+          <div class="mood-picker">
+            ${AURORA_MOODS.map(m => moodSwatchHtml(m, (state.auroraMood || 'graphite') === m)).join('')}
           </div>
 
-          <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Display font</div>
-          <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Used for vocalist names, section titles, and the display view. Each option is rendered in its own face.</p>
-          <div id="wiz_font_picker"></div>
-
-          <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Theme</div>
-          <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Pick light or dark mode. You can easily toggle this later from the header.</p>
+          <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Light or dark</div>
+          <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Dark suits a dim booth; light suits a bright room. Toggle anytime from the header (☾).</p>
           <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
             <button class="wiz-stage-shape${(state.theme||'dark') === 'dark' ? ' selected' : ''}" data-wtheme="dark">
               <div class="wiz-shape-label">☾ Dark</div>
@@ -11547,7 +11534,7 @@ function renderWizardStepBody(step) {
             </button>
             <button class="wiz-stage-shape${(state.theme||'dark') === 'light' ? ' selected' : ''}" data-wtheme="light">
               <div class="wiz-shape-label">☀ Light</div>
-              <div class="wiz-shape-sub">Brighter, classic look</div>
+              <div class="wiz-shape-sub">Brighter, for a lit room</div>
             </button>
           </div>
         </div>`;
@@ -12119,58 +12106,17 @@ function wireWizardStep(step) {
     });
   }
   if (step === 'look') {
-    // Helper to apply current wizard branding choices to state + DOM immediately
-    function previewLookNow() {
-      state.brand.accent  = wizardData.accentColor || state.brand.accent;
-      state.brand.accent2 = wizardData.accent2Color || wizardData.accentColor || state.brand.accent2;
-      state.brand.wl      = wizardData.accent2Color || wizardData.accentColor || state.brand.wl;
-      if (wizardData.fontFamily) state.brand.font = wizardData.fontFamily;
-      applyBrand();
-    }
-    body.querySelectorAll('[data-wpalette]').forEach(b => b.addEventListener('click', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-      wizardData.accentPreset = b.dataset.wpalette;
-      if (b.dataset.wpaccent) {
-        wizardData.accentColor = b.dataset.wpaccent;
-        wizardData.accent2Color = b.dataset.wpaccent2 || b.dataset.wpaccent;
-      }
-      previewLookNow();
+    // Aurora mood swatches — apply live so the whole wizard + app recolor instantly.
+    body.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', () => {
+      setMood(b.dataset.moodOpt);
       renderWizardStep();
     }));
-    const colorInput = body.querySelector('#wiz_custom_color');
-    if (colorInput) {
-      colorInput.addEventListener('input', e => {
-        wizardData.accentPreset = 'custom';
-        wizardData.accentColor = e.target.value;
-        wizardData.accent2Color = e.target.value;
-        previewLookNow();
-      });
-      colorInput.addEventListener('click', e => e.stopPropagation());
-    }
-    // Custom font picker (renders each font in its own face)
-    const fontPickerContainer = body.querySelector('#wiz_font_picker');
-    if (fontPickerContainer) {
-      renderFontPicker(fontPickerContainer, wizardData.fontFamily || 'Inter', (fontName) => {
-        wizardData.fontFamily = fontName;
-        ensureFontLoaded(fontName);
-        previewLookNow();
-      });
-    }
-    // Theme toggle (live preview)
-    body.querySelectorAll('[data-wtheme]').forEach(b => {
-      b.addEventListener('click', () => {
-        state.theme = b.dataset.wtheme;
-        setTheme(state.theme);
-        renderWizardStep();
-      });
-    });
-    // On first display of look step, apply current choices (in case user clicked Back here)
-    // Ensure font is loaded before previewing to avoid fallback font flash
-    if (wizardData.fontFamily) {
-      ensureFontLoaded(wizardData.fontFamily).then(() => previewLookNow());
-    } else {
-      previewLookNow();
-    }
+    // Light / dark toggle (live).
+    body.querySelectorAll('[data-wtheme]').forEach(b => b.addEventListener('click', () => {
+      state.theme = b.dataset.wtheme;
+      setTheme(state.theme);
+      renderWizardStep();
+    }));
   }
   if (step === 'display-layout') {
     if (!wizardData.displayLayout) wizardData.displayLayout = { showStage:true, showBand:true, showHosts:true, showShadows:true, showRunSheet:true, vocalistRows:'auto' };

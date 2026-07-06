@@ -1,5 +1,5 @@
-// Aurora theme: opt-in look/mood axis layered on the existing dark/light theme.
-// Classic (default) must be untouched; Aurora applies only via [data-look="aurora"].
+// Aurora is the only look now ("the new classic"): always applied via [data-look="aurora"],
+// with a color mood ([data-mood]) chosen in the wizard + settings. Dark/light is independent.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -15,83 +15,77 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 window.addEventListener('load',()=>setTimeout(()=>{
  const html=doc.documentElement;
 
- check('defaults: look=classic, theme=dark, auroraMood=graphite', ()=>{
-   if(ev('state.look')!=='classic') throw new Error('look default not classic: '+ev('state.look'));
+ check('defaults: look=aurora (applied), theme=dark, mood=graphite', ()=>{
+   if(ev('state.look')!=='aurora') throw new Error('look default not aurora: '+ev('state.look'));
    if(ev('state.auroraMood')!=='graphite') throw new Error('mood default not graphite: '+ev('state.auroraMood'));
+   if(html.getAttribute('data-look')!=='aurora') throw new Error('data-look not aurora on <html>');
+   if(html.getAttribute('data-mood')!=='graphite') throw new Error('data-mood not graphite');
  });
 
- check('classic default leaves NO aurora attrs on <html> (beta-safe)', ()=>{
-   ev('setLook("classic")');
-   if(html.getAttribute('data-look')!=='classic') throw new Error('data-look not classic');
-   if(html.getAttribute('data-mood')) throw new Error('classic must not set data-mood: '+html.getAttribute('data-mood'));
- });
-
- check('setLook("aurora") applies data-look + data-mood (default graphite)', ()=>{
-   ev('setLook("aurora")');
-   if(html.getAttribute('data-look')!=='aurora') throw new Error('data-look not aurora');
-   if(html.getAttribute('data-mood')!=='graphite') throw new Error('data-mood not applied: '+html.getAttribute('data-mood'));
+ check('applyLook is unconditional — migrates a legacy look:"classic" save to aurora', ()=>{
+   ev('state.look="classic"; applyLook()');
+   if(html.getAttribute('data-look')!=='aurora') throw new Error('classic save not migrated to aurora');
+   if(ev('state.look')!=='aurora') throw new Error('state.look not forced to aurora');
  });
 
  check('setMood persists + applies; falls back to graphite for unknown', ()=>{
-   ev('setLook("aurora"); setMood("dusk")');
+   ev('setMood("dusk")');
    if(ev('state.auroraMood')!=='dusk') throw new Error('mood not saved');
    if(html.getAttribute('data-mood')!=='dusk') throw new Error('data-mood attr not dusk');
    ev('setMood("nope")');
    if(ev('state.auroraMood')!=='graphite') throw new Error('unknown mood should fall back to graphite');
  });
 
- check('dark/light axis stays independent of look', ()=>{
-   ev('setLook("aurora"); setTheme("light")');
+ check('dark/light axis stays independent of aurora', ()=>{
+   ev('setTheme("light")');
    if(html.getAttribute('data-theme')!=='light') throw new Error('theme axis broke');
    if(html.getAttribute('data-look')!=='aurora') throw new Error('look lost on theme change');
    ev('setTheme("dark")');
  });
 
- check('settings renders a look picker with classic + aurora', ()=>{
+ check('settings renders mood SWATCHES and no Classic/Aurora look buttons', ()=>{
    ev('renderLayoutEditor()');
-   const opts=[...doc.querySelectorAll('[data-look-opt]')].map(b=>b.getAttribute('data-look-opt'));
-   if(!opts.includes('classic')||!opts.includes('aurora')) throw new Error('look options missing: '+JSON.stringify(opts));
+   const swatches=[...doc.querySelectorAll('.mood-picker [data-mood-opt]')];
+   if(swatches.length<11) throw new Error('expected 11 mood swatches, got '+swatches.length);
+   if(doc.querySelector('[data-look-opt]')) throw new Error('Classic/Aurora look buttons should be gone');
+   // swatch should carry a gradient preview (inline background)
+   if(!/gradient/.test(swatches[0].getAttribute('style')||'')) throw new Error('swatch missing gradient preview');
  });
 
- check('clicking the Aurora look option switches state.look via UI', ()=>{
-   ev('setLook("classic"); renderLayoutEditor()');
-   const a=doc.querySelector('[data-look-opt="aurora"]'); if(!a) throw new Error('no aurora option');
-   a.click();
-   if(ev('state.look')!=='aurora') throw new Error('look not switched by UI');
+ check('clicking a mood swatch sets the mood live', ()=>{
+   ev('renderLayoutEditor()');
+   const ocean=doc.querySelector('[data-mood-opt="ocean"]'); if(!ocean) throw new Error('no ocean swatch');
+   ocean.click();
+   if(ev('state.auroraMood')!=='ocean') throw new Error('mood not set by swatch click');
+   if(html.getAttribute('data-mood')!=='ocean') throw new Error('data-mood not applied live');
+   ev('setMood("graphite")'); // restore
  });
 
- check('mood picker shows chips when Aurora active; clicking sets the mood', ()=>{
-   ev('setLook("aurora"); renderLayoutEditor()');
-   const chips=[...doc.querySelectorAll('[data-mood-opt]')];
-   if(chips.length<2) throw new Error('expected mood chips, got '+chips.length);
-   const dusk=doc.querySelector('[data-mood-opt="dusk"]'); if(!dusk) throw new Error('no dusk chip');
-   dusk.click();
-   if(ev('state.auroraMood')!=='dusk') throw new Error('mood not set by UI');
-   ev('setLook("classic"); setMood("graphite")'); // restore defaults
+ check('wizard look step renders mood swatches + dark/light', ()=>{
+   ev('startWizard(); wizardStepIdx=WIZARD_STEPS.indexOf("look"); renderWizardStep();');
+   const sw=[...doc.querySelectorAll('#wizardBody .mood-picker [data-mood-opt], .mood-picker [data-mood-opt]')];
+   if(sw.length<11) throw new Error('wizard look step missing mood swatches, got '+sw.length);
+   if(!doc.querySelector('[data-wtheme]')) throw new Error('wizard look step missing dark/light toggle');
  });
 
  check('aurora clears the brand inline vars so its stylesheet tokens win', ()=>{
-   // Simulate applyBrand() having set the gold accent + Fraunces inline on <html>.
    ev('document.documentElement.style.setProperty("--accent","#d4a147")');
    ev("document.documentElement.style.setProperty('--ff-display', \"'Fraunces', Georgia, serif\")");
-   ev('setLook("aurora")');
+   ev('applyLook()');
    if(ev('document.documentElement.style.getPropertyValue("--accent")')) throw new Error('aurora must clear inline --accent');
    if(ev('document.documentElement.style.getPropertyValue("--ff-display")')) throw new Error('aurora must clear inline --ff-display');
    if(ev('document.documentElement.style.getPropertyValue("--wl")')!=='var(--c2)') throw new Error('aurora should set --wl to var(--c2)');
  });
 
- check('switching back to Classic restores the brand palette', ()=>{
-   ev('state.brand={accent:"#d4a147",font:"Fraunces"}');
-   ev('setLook("classic")');
-   if(ev('document.documentElement.style.getPropertyValue("--accent")')!=='#d4a147') throw new Error('classic should restore brand --accent');
-   if(!/Fraunces/.test(ev('document.documentElement.style.getPropertyValue("--ff-display")'))) throw new Error('classic should restore brand font');
-   ev('state.brand={}; setLook("classic")');
+ check('applyBrand is a no-op while Aurora is active (no clobber)', ()=>{
+   ev('state.brand={accent:"#d4a147"}; applyBrand()');
+   if(ev('document.documentElement.style.getPropertyValue("--accent")')) throw new Error('applyBrand must not set --accent under aurora');
+   ev('state.brand={}');
  });
 
- check('applyBrand is a no-op while Aurora is active (no clobber)', ()=>{
-   ev('setLook("aurora"); state.brand={accent:"#d4a147"}; applyBrand()');
-   if(ev('document.documentElement.style.getPropertyValue("--accent")')) throw new Error('applyBrand must not set --accent under aurora');
-   ev('state.brand={}; setLook("classic")'); // restore
+ check('display view carries the aurora drift background (dialed in)', ()=>{
+   const css=ev('document.querySelector("style").textContent');
+   if(!/\[data-look="aurora"\][^{]*\.display-view/.test(css)) throw new Error('aurora background not extended to .display-view');
  });
 
  check('print stylesheet is not scoped to a look (prints plain regardless)', ()=>{

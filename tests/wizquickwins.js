@@ -46,8 +46,10 @@ window.addEventListener('load', () => setTimeout(() => {
   check('look step renders + wires without a jsdomError', () => {
     if (jsdomErrors.length !== errCountBefore) throw new Error('jsdomError raised: ' + jsdomErrors.slice(errCountBefore).join('; '));
   });
-  check('look step wires a known control (font picker present)', () => {
-    if (!document.querySelector('#wiz_font_picker')) throw new Error('no #wiz_font_picker');
+  check('look step wires a known control (Aurora mood swatches present)', () => {
+    // #8 (2026-07-06): the look step is now Aurora mood swatches + dark/light (the old
+    // brand palette + font picker were retired when Aurora became the only look).
+    if (document.querySelectorAll('.mood-picker [data-mood-opt]').length < 11) throw new Error('no mood swatches in look step');
   });
 
   // --- Dead display-design step removed ---
