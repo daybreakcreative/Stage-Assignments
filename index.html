@@ -1848,7 +1848,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·d</div>
+<div id="buildStamp">build 2026-07-06·e</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2034,19 +2034,19 @@ const DEFAULT_PREFERENCES = {};
 const DEFAULT_VOCAL_DIRECTION = 'rtl';
 
 // IEM pack presets the user can pick from for any instrument
-const DEFAULT_IEM_PACK_PRESETS = ['Drum Pack','Bass Pack','EG Pack','Keys Pack','Acoustic Pack','Misc 1 Pack','Misc 2 Pack','Misc 3 Pack'];
+const DEFAULT_IEM_PACK_PRESETS = ['Drums','Bass','EG','Keys','Acoustic','Misc 1','Misc 2','Misc 3'];
 
 // Instruments are now objects in an array. Each has:
 //   id (stable), label (display), pack (IEM pack name), assignedTo (free-text name),
 //   vocalistPlayer (vocalist id or null — when set, this instrument is "covered by a vocalist"),
 //   tag (short label shown after vocal slot when covered, e.g. "AG" or "Keys")
 const DEFAULT_INSTRUMENTS = [
-  { id:'inst_drums', label:'Drums',      pack:'Drum Pack',     placeholder:'Drummer', tag:'Drums', assignedTo:'', vocalistPlayer:null, optional:false },
-  { id:'inst_bass',  label:'Bass',       pack:'Bass Pack',     placeholder:'Bass',    tag:'Bass',  assignedTo:'', vocalistPlayer:null, optional:false },
-  { id:'inst_eg2',   label:'Electric 2', pack:'Misc 1 Pack',   placeholder:'EG2',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:true },
-  { id:'inst_ag',    label:'Acoustic',   pack:'Acoustic Pack', placeholder:'AG',      tag:'AG',    assignedTo:'', vocalistPlayer:null, optional:true },
-  { id:'inst_eg1',   label:'Electric 1', pack:'EG Pack',       placeholder:'EG1',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:false },
-  { id:'inst_keys',  label:'Keys',       pack:'Keys Pack',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null, optional:false }
+  { id:'inst_drums', label:'Drums',      pack:'Drums',    placeholder:'Drummer', tag:'Drums', assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_bass',  label:'Bass',       pack:'Bass',     placeholder:'Bass',    tag:'Bass',  assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_eg2',   label:'Electric 2', pack:'Misc 1',   placeholder:'EG2',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:true },
+  { id:'inst_ag',    label:'Acoustic',   pack:'Acoustic', placeholder:'AG',      tag:'AG',    assignedTo:'', vocalistPlayer:null, optional:true },
+  { id:'inst_eg1',   label:'Electric 1', pack:'EG',       placeholder:'EG1',     tag:'EG',    assignedTo:'', vocalistPlayer:null, optional:false },
+  { id:'inst_keys',  label:'Keys',       pack:'Keys',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null, optional:false }
 ];
 
 const DEFAULT_STATE = {
@@ -2087,9 +2087,9 @@ const DEFAULT_STATE = {
     // Each: { id, type, label, x, y, w, h, rot } — x/y is the CENTER in viewBox units (0..800 / 0..380),
     // w/h in viewBox units, rot in degrees. Persists across services (venue-level).
     stageFeatures: [],
-    voxIemPacks: ['Vocal 1 Pack','Vocal 2 Pack','Vocal 3 Pack','Vocal 4 Pack','Vocal 5 Pack','Vocal 6 Pack','Vocal 7 Pack','Vocal 8 Pack'],
+    voxIemPacks: ['Vocal 1','Vocal 2','Vocal 3','Vocal 4','Vocal 5','Vocal 6','Vocal 7','Vocal 8'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
-    shadowPack: 'Misc 2 Pack',
+    shadowPack: 'Misc 2',
     enableShadows: true, // shadows are always processed; retained as a harmless legacy field
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
@@ -2335,6 +2335,14 @@ let pcoTokens = loadPCOTokens();
 let pcoServiceTypes = [];
 let pcoPlans = [];
 
+// IEM mixes no longer carry a redundant " Pack" suffix. Strip it from any stored name once
+// on load (migrates old saves like "Misc 2 Pack" → "Misc 2"). Never blanks a name.
+function stripPackName(n) {
+  if (typeof n !== 'string') return n;
+  const s = n.replace(/\s*pack\s*$/i, '').trim();
+  return s || n;
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -2361,6 +2369,7 @@ function loadState() {
           inst.optional = OPTIONAL_DEFAULTS[inst.id];
         }
         if (typeof inst.optional !== 'boolean') inst.optional = false;
+        inst.pack = stripPackName(inst.pack); // migrate "Drum Pack" → "Drum"
       });
       // Migrate legacy musicDirector ('keys') → musicDirectorId ('inst_keys')
       let mdId = p.musicDirectorId;
@@ -2392,7 +2401,7 @@ function loadState() {
         voxPacks = [];
         const old = loadedConfig.iemPacks || {};
         for (let i=1; i<=MAX_VOCALISTS; i++) {
-          voxPacks.push(old['vox'+i] || `Vocal ${i} Pack`);
+          voxPacks.push(old['vox'+i] || `Vocal ${i}`);
         }
       }
       while (voxPacks.length < MAX_VOCALISTS) voxPacks.push(`Vocal ${voxPacks.length+1} Pack`);
@@ -2406,9 +2415,9 @@ function loadState() {
         config: {
           ...DEFAULT_STATE.config,
           ...loadedConfig,
-          voxIemPacks: voxPacks,
-          iemPackPresets: loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS],
-          shadowPack: loadedConfig.shadowPack || 'Misc 2 Pack',
+          voxIemPacks: voxPacks.map(stripPackName),
+          iemPackPresets: (loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS]).map(stripPackName),
+          shadowPack: stripPackName(loadedConfig.shadowPack || 'Misc 2'),
           // Shadows are always processed now (no user toggle). Retained as a harmless
           // legacy field; force true so any lingering read stays consistent.
           enableShadows: true,
@@ -2439,7 +2448,7 @@ function loadState() {
         instruments,
         musicDirectorId: mdId,
         assignments,
-        shadows: Array.isArray(p.shadows) ? p.shadows : [],
+        shadows: (Array.isArray(p.shadows) ? p.shadows : []).map(s => ({ ...s, pack: stripPackName(s.pack) })),
         serviceOrder: p.serviceOrder || [],
         inventory: p.inventory || structuredClone(DEFAULT_INVENTORY),
         preferences: p.preferences || structuredClone(DEFAULT_PREFERENCES),
@@ -3200,7 +3209,7 @@ function resolveVocalistMics() { return false; }
 const MAX_SHADOWS = 6;
 function addShadow() {
   if (state.shadows.length >= MAX_SHADOWS) { toast(`Max ${MAX_SHADOWS} shadows`, 'warn'); return; }
-  state.shadows.push({ id: 'sh_'+Math.random().toString(36).slice(2,8), name: '', pack: state.config.shadowPack || 'Misc 2 Pack' });
+  state.shadows.push({ id: 'sh_'+Math.random().toString(36).slice(2,8), name: '', pack: state.config.shadowPack || 'Misc 2' });
   saveState(); renderAll();
 }
 function removeShadow(id) {
@@ -3352,7 +3361,7 @@ function renderVocalists() {
   const shadowsEnabled = true;
   if (shadowsEnabled) {
     const packPresets = (state.config.iemPackPresets && state.config.iemPackPresets.length)
-      ? state.config.iemPackPresets : ['Misc 2 Pack'];
+      ? state.config.iemPackPresets : ['Misc 2'];
     state.shadows.forEach(s => {
       const noMix = shadowNeedsNoMix(s.setup);
       const setupLabel = shadowSetupLabel(s.setup);
@@ -3462,7 +3471,7 @@ function iemPackFor(instOrId) {
   } else if (instOrId && typeof instOrId === 'object') {
     inst = instOrId;
   }
-  return inst ? (inst.pack || (inst.label + ' Pack')) : '';
+  return inst ? (inst.pack || inst.label) : '';
 }
 function getMD() { return state.musicDirectorId ? instById(state.musicDirectorId) : null; }
 
@@ -5396,7 +5405,7 @@ function renderLayoutEditor() {
       <button class="add-row-btn" id="resetInstrumentsBtn" style="margin-top:8px;flex:1;">Reset to defaults</button>
     </div>
 
-    <div class="section-label" style="margin-bottom:10px;">IEM Pack Presets</div>
+    <div class="section-label" style="margin-bottom:10px;">IEM Packs</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Edit the presets that show up in each instrument's pack dropdown above.</p>
     <div id="iemPresetList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
       ${c.iemPackPresets.map((p,i) => `
@@ -5406,7 +5415,7 @@ function renderLayoutEditor() {
         </div>
       `).join('')}
     </div>
-    <button class="add-row-btn" id="addPresetBtn" style="margin-top:6px;margin-bottom:24px;">+ Add IEM pack preset</button>
+    <button class="add-row-btn" id="addPresetBtn" style="margin-top:6px;margin-bottom:24px;">+ Add pack</button>
 
     <div class="section-label" style="margin-bottom:10px;">Vocal IEM Packs</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Pack names for each vocal slot.</p>
@@ -5423,7 +5432,7 @@ function renderLayoutEditor() {
     <p class="subtitle" style="margin-bottom:14px;font-size:12px;">Shadows are people learning a position (vocal or instrument). They always get asked, on each pull, what they need this week — a mic or just an IEM pack, and which pack. Add them with <strong>+ Shadow</strong> in the vocalist area or via a "Shadow" position in Planning Center.</p>
     <div class="iem-row" style="margin-bottom:24px;max-width:340px;">
       <span class="iem-lbl">Default Shadow IEM Pack</span>
-      <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2 Pack" />
+      <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2" />
     </div>
 
     <div class="section-label" style="margin-bottom:10px;">✓ Items checklist</div>
@@ -5676,7 +5685,7 @@ function renderLayoutEditor() {
     const newInst = {
       id: instUid(),
       label: 'New Instrument',
-      pack: c.iemPackPresets[0] || 'New Pack',
+      pack: c.iemPackPresets[0] || 'New mix',
       placeholder: 'Player',
       tag: '',
       assignedTo: '',
@@ -5749,7 +5758,7 @@ function renderLayoutEditor() {
     });
   });
   el.querySelector('#addPresetBtn').addEventListener('click', () => {
-    c.iemPackPresets.push('New Pack');
+    c.iemPackPresets.push('New mix');
     saveState(); renderLayoutEditor();
   });
 
@@ -5757,7 +5766,7 @@ function renderLayoutEditor() {
   el.querySelectorAll('[data-vox-pack-idx]').forEach(input => {
     input.addEventListener('change', e => {
       const idx = parseInt(e.target.dataset.voxPackIdx, 10);
-      c.voxIemPacks[idx] = e.target.value.trim() || `Vocal ${idx+1} Pack`;
+      c.voxIemPacks[idx] = e.target.value.trim() || `Vocal ${idx+1}`;
       saveState(); renderAll();
     });
   });
@@ -5766,7 +5775,7 @@ function renderLayoutEditor() {
   if (shadowInput) {
     shadowInput.addEventListener('change', e => {
       const oldPack = c.shadowPack;
-      const newPack = e.target.value.trim() || 'Misc 2 Pack';
+      const newPack = e.target.value.trim() || 'Misc 2';
       c.shadowPack = newPack;
       // Update any existing shadow that was using the old default pack
       state.shadows.forEach(s => { if (s.pack === oldPack) s.pack = newPack; });
@@ -7203,7 +7212,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
           id: 'sh_'+Math.random().toString(36).slice(2,8),
           name,
           position: positionName,
-          pack: state.config.shadowPack || 'Misc 2 Pack'
+          pack: state.config.shadowPack || 'Misc 2'
         });
       }
       return;
@@ -7634,7 +7643,7 @@ function pcoAddShadow(p) {
   // Shadows are always processed (no enable toggle).
   if (state.shadows.length >= (typeof MAX_SHADOWS !== 'undefined' ? MAX_SHADOWS : 6)) return;
   if (state.shadows.some(s => normFullName(s.name) === normFullName(p.name))) return;
-  state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, position: p.positionName || '', pack: state.config.shadowPack || 'Misc 2 Pack' });
+  state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, position: p.positionName || '', pack: state.config.shadowPack || 'Misc 2' });
 }
 
 function pcoAddPerson(p) {
@@ -7981,7 +7990,7 @@ function renderPCOSettings() {
       <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);line-height:1.7;">
         • <span style="color:var(--wl);">"Worship Leader"</span> → WL vocalist<br>
         • <span style="color:var(--text);">"Vocals", "Vocal Lead", "BGV"</span> → vocalist (lead flag if "lead" in name)<br>
-        • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2 Pack)<br>
+        • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
         • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → host channel 1<br>
         • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → next open host channels, in order<br>
@@ -8069,7 +8078,7 @@ function fillSummary() {
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
     const li = document.createElement('li');
     li.className = 's-item';
-    const packName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
+    const packName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1}`;
     li.innerHTML = `<span class="pos">${esc(packName)}</span><span class="name">${esc(v.name||'—')}</span><span class="detail"></span>`;
     iemList.appendChild(li);
   }
@@ -8186,7 +8195,7 @@ function copySummaryText() {
   for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
-    const packName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
+    const packName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1}`;
     lines.push(`  ${packName}: ${v.name||'—'}`);
   }
   state.shadows.forEach((sh, idx) => {
@@ -8436,7 +8445,7 @@ function renderDisplayView() {
     const card = document.createElement('div');
     // Display view intentionally does NOT highlight worship leaders (no is-wl badge/accent).
     card.className = 'dv-voc-card';
-    const iemPackName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1} Pack`;
+    const iemPackName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1}`;
     const showMic = state.config.showMicCapsules;
     const tags = vocalistInstrumentTags(v.id);
     const tagBadges = tags.map(t => `<span class="dv-voc-ag">🎸 ${esc(t)}</span>`).join('');
@@ -10645,9 +10654,9 @@ function renderPostPullStep() {
     // IEM pack picker — always asked for both vocal and instrument shadows. Pre-select the
     // shadow's current pack, else the church's default shadow pack.
     const shRec = step.shadowId ? state.shadows.find(s => s.id === step.shadowId) : null;
-    const curPack = (shRec && shRec.pack) || state.config.shadowPack || 'Misc 2 Pack';
+    const curPack = (shRec && shRec.pack) || state.config.shadowPack || 'Misc 2';
     const packPresets = (state.config.iemPackPresets && state.config.iemPackPresets.length)
-      ? state.config.iemPackPresets : ['Misc 2 Pack'];
+      ? state.config.iemPackPresets : ['Misc 2'];
     const packOptions = [
       ...packPresets.map(p => `<option value="${esc(p)}"${p === curPack ? ' selected' : ''}>${esc(p)}</option>`),
       (packPresets.indexOf(curPack) === -1 && curPack) ? `<option value="${esc(curPack)}" selected>${esc(curPack)} (custom)</option>` : ''
@@ -12242,14 +12251,13 @@ function applyWizardChoices() {
   for (let i = 1; i <= packCount; i++) {
     const key = `vocal:${i}`;
     // When the team opted out of IEMs, don't force wizard-chosen pack names — use plain defaults.
-    const rawName = (useIems && wizardData.iemAssignments && wizardData.iemAssignments[key]) || `Vocal ${i} Pack`;
-    const packName = rawName.endsWith(' Pack') ? rawName : rawName + ' Pack';
-    state.config.voxIemPacks.push(packName);
+    const rawName = (useIems && wizardData.iemAssignments && wizardData.iemAssignments[key]) || `Vocal ${i}`;
+    state.config.voxIemPacks.push(stripPackName(rawName));
   }
   // pad to at least 8 for safety with internal arrays
   while (state.config.voxIemPacks.length < 8) {
     const i = state.config.voxIemPacks.length + 1;
-    state.config.voxIemPacks.push(`Vocal ${i} Pack`);
+    state.config.voxIemPacks.push(`Vocal ${i}`);
   }
   // Pre-create empty vocalist slots from the count — FIRST-TIME setup only, so re-running the
   // wizard never overwrites an existing team (the Data tab promises re-run won't touch vocalists).
@@ -12273,14 +12281,14 @@ function applyWizardChoices() {
     if (shadowIEMKeys.length > 0) {
       // Use shadow:0 as the default shadowPack (covers the common single-shadow case)
       const first = wizardData.iemAssignments['shadow:0'];
-      if (first) state.config.shadowPack = first.endsWith(' Pack') ? first : first + ' Pack';
+      if (first) state.config.shadowPack = stripPackName(first);
       // Also pre-seed per-shadow packs into state.shadows if they already exist
       if (Array.isArray(state.shadows)) {
         shadowIEMKeys.forEach(k => {
           const si = parseInt(k.split(':')[1], 10);
           if (!isNaN(si) && state.shadows[si]) {
             const rawPack = wizardData.iemAssignments[k] || '';
-            if (rawPack) state.shadows[si].pack = rawPack.endsWith(' Pack') ? rawPack : rawPack + ' Pack';
+            if (rawPack) state.shadows[si].pack = stripPackName(rawPack);
           }
         });
       }
@@ -12313,7 +12321,7 @@ function applyWizardChoices() {
         state.shadows.push({
           id: 'sh_'+Math.random().toString(36).slice(2,8),
           name: '',
-          pack: state.config.shadowPack || 'Misc 2 Pack'
+          pack: state.config.shadowPack || 'Misc 2'
         });
       }
     }
