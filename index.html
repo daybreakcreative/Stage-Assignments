@@ -1838,7 +1838,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-04·a</div>
+<div id="buildStamp">build 2026-07-06·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -9974,14 +9974,36 @@ function renderSetupChecklist() {
     </div>
   `;
 
-  // Wire checkbox clicks
+  // Wire checkbox clicks. Update IN PLACE (toggle the row + recompute counts/progress) rather
+  // than re-rendering the whole view — a full innerHTML rebuild reset the scroll position to the
+  // top on every check-off. Done items aren't reordered, so in-place is visually identical.
   container.querySelectorAll('.scv-item').forEach(item => {
     item.addEventListener('click', () => {
       const k = item.dataset.itemKey;
       cs[k] = !cs[k];
       saveState();
+      const on = !!cs[k];
+      item.classList.toggle('done', on);
+      const box = item.querySelector('.scv-checkbox');
+      if (box) box.textContent = on ? '✓' : '';
+      // This person's count + all-done state
+      const personEl = item.closest('.scv-person');
+      if (personEl) {
+        const pRows = personEl.querySelectorAll('.scv-item');
+        const pDone = personEl.querySelectorAll('.scv-item.done').length;
+        const countEl = personEl.querySelector('.scv-person-count');
+        if (countEl) countEl.textContent = pDone + '/' + pRows.length;
+        personEl.classList.toggle('all-done', pRows.length > 0 && pDone === pRows.length);
+      }
+      // Global progress bar + label
+      const allRows = container.querySelectorAll('.scv-item').length;
+      const allDone = container.querySelectorAll('.scv-item.done').length;
+      const pctNow = allRows === 0 ? 0 : Math.round((allDone / allRows) * 100);
+      const fill = container.querySelector('.scv-progress-fill');
+      if (fill) fill.style.width = pctNow + '%';
+      const lbl = container.querySelector('.scv-progress-label');
+      if (lbl) lbl.textContent = allDone + ' / ' + allRows + ' items done';
       updateSetupProgressBadge();
-      renderSetupChecklist();
     });
   });
 

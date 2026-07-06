@@ -34,6 +34,23 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (total < 1) throw new Error('stable bucket has no items after edit');
  });
 
+ console.log('\n--- checklist check-off preserves scroll (updates in place, no full rebuild) ---');
+ check('clicking a checklist item does NOT rebuild the view (row node survives)', ()=>{
+   ev(`state.checklistState={}; state.setupItems={}; state.shadows=[]; state.instruments=[];`);
+   ev(`state.vocalists=[{id:'v1',name:'Amelia',isWL:true,micAssigned:''}]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='v1';`);
+   const k = ev(`stableSetupKey('Amelia','vocalist','vocals')`);
+   ev(`state.setupItems['${k}']={seeded:true,selections:{},customItems:[],items:[{id:'i1',text:'Straight mic stand',doneThisService:false},{id:'i2',text:'Music stand',doneThisService:false}]};`);
+   ev(`renderSetupChecklist();`);
+   const rows = ev(`document.querySelectorAll('#setupChecklistView .scv-item').length`);
+   if (rows < 2) throw new Error('expected >=2 checklist rows, got '+rows);
+   ev(`window.__row0 = document.querySelector('#setupChecklistView .scv-item');`);
+   ev(`window.__row0.click();`);
+   if (!ev(`document.getElementById('setupChecklistView').contains(window.__row0)`))
+     throw new Error('row node detached → full re-render happened (scroll would jump to top)');
+   if (!ev(`window.__row0.classList.contains('done')`))
+     throw new Error('clicked row did not get the done class in place');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
