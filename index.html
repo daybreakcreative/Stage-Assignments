@@ -1838,7 +1838,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-06·a</div>
+<div id="buildStamp">build 2026-07-06·b</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2047,6 +2047,7 @@ const DEFAULT_STATE = {
   shadows: [],
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
+  mdSoloName: null,              // MD who runs tracks but plays no instrument (rare); name-keyed md setup
   hosts: {},  // per-service person assignments, keyed by host channel id → name. Channels live in config.hostChannels.
   notes: '',
   serviceOrder: [],
@@ -7337,14 +7338,20 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
 
   if (mdNameCandidate) {
     // Find an instrument whose name matches MD candidate (after distribution)
+    let matched = false;
     for (const inst of state.instruments) {
       const playerName = inst.vocalistPlayer
         ? (state.vocalists.find(v => v.id === inst.vocalistPlayer)?.name || '')
         : (inst.assignedTo || '');
       if (playerName && normName(playerName) === normName(mdNameCandidate)) {
-        state.musicDirectorId = inst.id; break;
+        state.musicDirectorId = inst.id; matched = true; break;
       }
     }
+    // Solo MD: scheduled as Music Director but on no instrument. They still run tracks,
+    // so carry a name-keyed MD setup (enumerations emit a name|md|md bucket for it).
+    state.mdSoloName = matched ? null : mdNameCandidate;
+  } else {
+    state.mdSoloName = null;
   }
 
   // Process service order items (songs, headers, media, etc.) with their PCO "sequence" preserved
@@ -9069,6 +9076,7 @@ function enumerateSetupRoles() {
     Object.values(state.hosts).forEach(h => { if (typeof h === 'string') { const n = h.trim(); if (n) rosterNames.add(normFullName(n)); } });
   }
   (state.shadows || []).forEach(s => { const n = (s.name||'').trim(); if (n) rosterNames.add(normFullName(n)); });
+  if (state.mdSoloName) rosterNames.add(normFullName(state.mdSoloName));
   const onPlanFor = name => rosterNames.has(normFullName(name));
 
   const push = (name, role, typeKey, label) => {
@@ -9112,6 +9120,10 @@ function enumerateSetupRoles() {
     const mdInst = instById(state.musicDirectorId);
     const mdName = mdInst ? (mdInst.assignedTo||'').trim() : '';
     if (mdName && detectPresetKey(mdInst) !== 'md') push(mdName, 'md', 'md', 'MD');
+  }
+  // Solo MD (runs tracks, plays no instrument) — emit a name-keyed md bucket if not already covered.
+  if (state.mdSoloName && !rows.some(r => r.role === 'md' && normFullName(r.name) === normFullName(state.mdSoloName))) {
+    push(state.mdSoloName, 'md', 'md', 'MD');
   }
 
   return rows;
@@ -9258,6 +9270,21 @@ function getStageAreas() {
         }]
       });
     }
+  }
+  // Solo MD (runs tracks, no instrument) — its own MD area if not already covered above.
+  if (state.mdSoloName && !areas.some(a => a.people.some(p => p.typeKey === 'md' && normFullName(p.name) === normFullName(state.mdSoloName)))) {
+    areas.push({
+      id: 'area_md_solo',
+      name: 'MD',
+      icon: '🎛️',
+      people: [{
+        name: state.mdSoloName,
+        key: stableFor(state.mdSoloName, 'md', 'md'),
+        typeKey: 'md',
+        role: 'band',
+        instLabel: 'MD'
+      }]
+    });
   }
 
   // Compute total stats per area
