@@ -99,21 +99,21 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!/House tracks computer/.test(flatTexts)) throw new Error('md item text missing from checklist: '+flatTexts);
  });
 
- check('MD who also plays Keys: BOTH Keys items and MD items collected', ()=>{
+ check('MD who also plays Keys: ONE merged card with BOTH Keys and MD items', ()=>{
+   // Updated for #4 (2026-07-06): a person in two roles now merges into a single card
+   // (roleLabel "Keys · MD") carrying every item, instead of two separate cards.
    ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
    seedMdDefault();
    ev(`if(!state.config.setupDefaults) state.config.setupDefaults={}; state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};`);
    ev(`state.instruments=[{id:'inst_k2',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k2';`);
    const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
    const band=secs.find(s=>s.key==='band');
-   const people=band.people||[];
-   const daveGroups=people.filter(p=>p.name==='Dave Lee');
-   const keysGroup=daveGroups.find(p=>p.roleLabel==='Keys');
-   const mdGroup=daveGroups.find(p=>p.roleLabel==='MD');
-   if(!keysGroup) throw new Error('no Keys card for Dave: '+JSON.stringify(daveGroups));
-   if(!mdGroup) throw new Error('no MD card for Dave: '+JSON.stringify(daveGroups));
-   if(!keysGroup.items.some(i=>/Keyboard — House Keyboard/.test(i.itemText))) throw new Error('keys item missing: '+JSON.stringify(keysGroup.items));
-   if(!mdGroup.items.some(i=>/House tracks computer/.test(i.itemText))) throw new Error('md item missing: '+JSON.stringify(mdGroup.items));
+   const daveGroups=(band.people||[]).filter(p=>p.name==='Dave Lee');
+   if(daveGroups.length!==1) throw new Error('MD who plays Keys should be ONE merged card now, got '+daveGroups.length+': '+JSON.stringify(daveGroups));
+   const dave=daveGroups[0];
+   if(!/Keys/.test(dave.roleLabel)||!/MD/.test(dave.roleLabel)) throw new Error('merged roleLabel should mention Keys + MD: '+dave.roleLabel);
+   if(!dave.items.some(i=>/Keyboard — House Keyboard/.test(i.itemText))) throw new Error('keys item missing: '+JSON.stringify(dave.items));
+   if(!dave.items.some(i=>/House tracks computer/.test(i.itemText))) throw new Error('md item missing: '+JSON.stringify(dave.items));
  });
 
  // ---- Grouped-by-person rendering --------------------------------------------------

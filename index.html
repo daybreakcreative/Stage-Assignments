@@ -9757,26 +9757,53 @@ function collectChecklistItems() {
   // the person's name, their role/instrument label as a subheading, and their items.
   // The flat `items` array on each section is preserved (badge, lock screen, mark-all/
   // reset all iterate it) — `people` is the additive grouping the ✓ Items view renders.
-  const rows = enumerateSetupRoles();
-  const vocItems = [], bandItems = [];
-  const vocPeople = [], bandPeople = [];
+  // One card PER PERSON: merge every setup bucket that belongs to them — vocals, band,
+  // MD/Tracks, AND instruments LINKED to a vocalist (enumerateSetupRoles skips those, but a
+  // vocalist who also plays e.g. acoustic still needs that instrument's setup). Items are
+  // deduped by text (shared items like "Music stand" appear once). A person lands in the
+  // VOCALISTS section if any of their roles is vocal, else BAND. Role labels combine
+  // (e.g. "Vocals · Acoustic Guitar", "Keys · MD").
+  const rows = enumerateSetupRoles().slice();
+  (state.instruments || []).forEach(inst => {
+    if (!inst || !inst.vocalistPlayer) return;
+    const v = (state.vocalists || []).find(x => x.id === inst.vocalistPlayer);
+    const nm = v && (v.name || '').trim();
+    if (!nm) return;
+    const tk = detectPresetKey(inst);
+    const key = stableSetupKey(nm, 'band', tk);
+    seedPersonSetup(key, tk);
+    reconstructSetupBucket(key, tk);
+    rows.push({ name: nm, role: 'band', typeKey: tk, label: inst.label, stableKey: key });
+  });
+
+  const order = [];
+  const byPerson = new Map();
   rows.forEach(en => {
     const bucket = state.setupItems[en.stableKey];
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
-    const isVoc = en.role === 'vocalist';
-    const flatBucket = isVoc ? vocItems : bandItems;
-    const groupItems = [];
+    const nn = normFullName(en.name);
+    let p = byPerson.get(nn);
+    if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set() }; byPerson.set(nn, p); order.push(nn); }
+    if (en.role === 'vocalist') p.isVoc = true;
+    if (en.label && p.roles.indexOf(en.label) === -1) p.roles.push(en.label);
     items.forEach(it => {
-      const text = it.text || '';
+      const text = (it.text || '').trim();
       if (!text) return;
-      const rec = { personName: en.label + ' — ' + en.name, itemText: text, key: en.stableKey + '|' + it.id };
-      flatBucket.push(rec);
-      groupItems.push({ itemText: text, key: rec.key });
+      const tkey = text.toLowerCase();
+      if (p.seen.has(tkey)) return;
+      p.seen.add(tkey);
+      p.items.push({ itemText: text, key: en.stableKey + '|' + it.id });
     });
-    if (groupItems.length > 0) {
-      const person = { name: en.name, roleLabel: en.label, stableKey: en.stableKey, items: groupItems };
-      (isVoc ? vocPeople : bandPeople).push(person);
-    }
+  });
+
+  const vocItems = [], bandItems = [], vocPeople = [], bandPeople = [];
+  order.forEach(nn => {
+    const p = byPerson.get(nn);
+    if (!p.items.length) return;
+    const roleLabel = p.roles.join(' · ');
+    const flatBucket = p.isVoc ? vocItems : bandItems;
+    p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
+    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items });
   });
   if (vocItems.length > 0) {
     sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
