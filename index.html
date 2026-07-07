@@ -1703,7 +1703,6 @@ body>*:not(.summary-overlay){display:none!important}
     <div class="tabs">
       <button class="tab active" data-tab="inventory">Mics</button>
       <button class="tab" data-tab="layout">Display</button>
-      <button class="tab" data-tab="brand">Brand</button>
       <button class="tab" data-tab="setups">Setup Items</button>
       <button class="tab" data-tab="venues" style="display:none;">Venues</button>
       <button class="tab" data-tab="data">Data</button>
@@ -1718,9 +1717,6 @@ body>*:not(.summary-overlay){display:none!important}
     </div>
     <div class="tab-panel" id="tab-layout">
       <div id="layoutEdit"></div>
-    </div>
-    <div class="tab-panel" id="tab-brand">
-      <div id="brandEdit"></div>
     </div>
     <div class="tab-panel" id="tab-pco">
       <div id="pcoSettingsContent"></div>
@@ -1863,7 +1859,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-07·b</div>
+<div id="buildStamp">build 2026-07-07·c</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -5253,7 +5249,6 @@ function openSettings(tab='inventory') {
   renderPrefEditor();
   renderHostChannelEditor();
   renderLayoutEditor();
-  renderBrandEditor();
   renderPCOSettings();
   renderSetupManager();
   renderVenuesEditor();
@@ -5555,6 +5550,22 @@ function renderLayoutEditor() {
       </label>
     </div>
 
+    <div class="section-label" style="margin-bottom:8px;margin-top:0px;">Vocalist cards — Name format</div>
+    <p class="subtitle" style="margin-bottom:8px;font-size:11.5px;">How names appear in the Display View. Edit view always shows full names.</p>
+    <div class="name-fmt-grid" style="margin-bottom:18px;">
+      ${[
+        { key:'full',          title:'Full',     sample:'Carlos Brown' },
+        { key:'first-initial', title:'First L.', sample:'Marcus D.' },
+        { key:'first',         title:'First',    sample:'Marcus' },
+        { key:'initials',      title:'Initials', sample:'MD' }
+      ].map(opt => `
+        <button class="name-fmt-card${(state.config.displayNameFormat||'full') === opt.key ? ' active' : ''}" data-name-fmt="${opt.key}">
+          <div class="nfc-title">${opt.title}</div>
+          <div class="nfc-sample">${esc(opt.sample)}</div>
+        </button>
+      `).join('')}
+    </div>
+
     <div class="section-label" style="margin-bottom:8px;margin-top:0px;">Side panel order</div>
     <div class="reorder-list" id="sideOrderList">
       ${((c.display.sideOrder && Array.isArray(c.display.sideOrder)) ? c.display.sideOrder : ['band','hosts','shadows']).map(sec => {
@@ -5625,6 +5636,16 @@ function renderLayoutEditor() {
       <p class="subtitle" style="margin:6px 0 0 102px;font-size:11px;">Scales the Service Order text on the display view only. Edit view stays normal size.</p>
     </div>
   `;
+
+  // Display name format (relocated from the retired Brand tab — it's a display-view setting)
+  el.querySelectorAll('[data-name-fmt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.config.displayNameFormat = btn.dataset.nameFmt;
+      saveState();
+      el.querySelectorAll('[data-name-fmt]').forEach(b => b.classList.toggle('active', b === btn));
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
 
   // Curvature + Depth sliders (shared preview)
   const curvSlider = el.querySelector('#layoutCurvatureSlider');
@@ -6086,132 +6107,6 @@ function getDisplaySectionScale(section) {
 function applyRunSheetScale() { applyDisplaySectionScales(); }
 function applyStagePositionScale() { applyDisplaySectionScales(); }
 
-function renderBrandEditor() {
-  const el = document.getElementById('brandEdit');
-  const b = state.brand;
-  const FONT_OPTIONS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
-  el.innerHTML = `
-    <p class="subtitle" style="margin-bottom:16px;">Customize the app's look. Pick from common church-friendly palettes below or fine-tune your own.</p>
-    <div class="setup-steps" style="margin-bottom:18px;">
-      <strong style="display:block;margin-bottom:8px;">Quick presets</strong>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn" data-preset="mono">Mono (B&amp;W)</button>
-        <button class="btn" data-preset="warm-amber">Warm Amber</button>
-        <button class="btn" data-preset="forest">Forest</button>
-        <button class="btn" data-preset="navy">Navy &amp; Gold</button>
-        <button class="btn" data-preset="sage">Sage</button>
-      </div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Primary Accent Color</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="brandAccent" value="${esc(b.accent)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
-        <input type="text" id="brandAccentHex" class="field-input" value="${esc(b.accent)}" style="flex:1;" />
-      </div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Highlight Color (hover, lighter accent)</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="brandAccent2" value="${esc(b.accent2)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
-        <input type="text" id="brandAccent2Hex" class="field-input" value="${esc(b.accent2)}" style="flex:1;" />
-      </div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Worship Leader Color</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="brandWl" value="${esc(b.wl)}" style="width:50px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;" />
-        <input type="text" id="brandWlHex" class="field-input" value="${esc(b.wl)}" style="flex:1;" />
-      </div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Display Font</label>
-      <div id="brandFontPicker"></div>
-      <div class="field-help">All these are loaded from Google Fonts. Each option is rendered in its own face — pick the one that feels right.</div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Display Name Format</label>
-      <div class="field-help" style="margin-bottom:8px;">How names appear in the Display View (the green-room view). Edit view always shows full names.</div>
-      <div class="name-fmt-grid">
-        ${[
-          { key:'full',          title:'Full',         sample:'Carlos Brown' },
-          { key:'first-initial', title:'First L.',     sample:'Marcus D.' },
-          { key:'first',         title:'First',        sample:'Marcus' },
-          { key:'initials',      title:'Initials',     sample:'MD' }
-        ].map(opt => `
-          <button class="name-fmt-card${(state.config.displayNameFormat||'full') === opt.key ? ' active' : ''}" data-name-fmt="${opt.key}">
-            <div class="nfc-title">${opt.title}</div>
-            <div class="nfc-sample">${esc(opt.sample)}</div>
-          </button>
-        `).join('')}
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:18px;">
-      <button class="btn primary" id="brandSaveBtn">Apply Brand</button>
-      <button class="btn ghost" id="brandResetBtn">Reset to Defaults</button>
-    </div>
-  `;
-
-  const PRESETS = {
-    'mono':        { accent:'#2d2d2d', accent2:'#4a4a4a', wl:'#2d2d2d', font:'Inter' },
-    'warm-amber':  { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Fraunces' },
-    'forest':      { accent:'#5b7553', accent2:'#7a9968', wl:'#9bb377', font:'Lora' },
-    'navy':        { accent:'#c9a661', accent2:'#e0bc7c', wl:'#f0d490', font:'Playfair Display' },
-    'sage':        { accent:'#8aa888', accent2:'#a5c0a3', wl:'#b8d2b6', font:'Crimson Pro' }
-  };
-
-  el.querySelectorAll('[data-preset]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const p = PRESETS[btn.dataset.preset];
-      Object.assign(state.brand, p);
-      saveState();
-      renderBrandEditor();
-      applyBrand();
-      ensureFontLoaded(p.font);
-      toast('Brand applied','success');
-    });
-  });
-
-  function syncColor(colorEl, hexEl, key) {
-    colorEl.addEventListener('input', e => { hexEl.value = e.target.value; state.brand[key] = e.target.value; saveState(); applyBrand(); });
-    hexEl.addEventListener('change', e => {
-      const v = e.target.value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) { colorEl.value = v; state.brand[key] = v; saveState(); applyBrand(); }
-    });
-  }
-  syncColor(document.getElementById('brandAccent'),  document.getElementById('brandAccentHex'),  'accent');
-  syncColor(document.getElementById('brandAccent2'), document.getElementById('brandAccent2Hex'), 'accent2');
-  syncColor(document.getElementById('brandWl'),      document.getElementById('brandWlHex'),      'wl');
-  // Custom font picker (renders each font in its own face)
-  renderFontPicker(document.getElementById('brandFontPicker'), state.brand.font || 'Inter', (fontName) => {
-    state.brand.font = fontName;
-    saveState(); applyBrand();
-    ensureFontLoaded(fontName);
-  });
-  // Name format picker
-  el.querySelectorAll('[data-name-fmt]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const fmt = btn.dataset.nameFmt;
-      state.config.displayNameFormat = fmt;
-      saveState();
-      // Update the active state
-      el.querySelectorAll('[data-name-fmt]').forEach(b => b.classList.toggle('active', b === btn));
-      // Re-render display view if active so the change is visible right away
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-  });
-  document.getElementById('brandSaveBtn').addEventListener('click', () => {
-    applyBrand();
-    ensureFontLoaded(state.brand.font);
-    toast('Brand saved','success');
-  });
-  document.getElementById('brandResetBtn').addEventListener('click', () => {
-    state.brand = structuredClone(DEFAULT_STATE.brand);
-    saveState();
-    renderBrandEditor();
-    applyBrand();
-    toast('Reset to defaults', 'success');
-  });
-}
 
 // Human label for an arbitrary stable/legacy setup key, used to label orphan
 // buckets (people no longer in the plan) that enumerateSetupRoles() won't return.
@@ -6578,60 +6473,6 @@ function preloadAllFonts() {
 // containerEl: a parent element (will be emptied and re-populated)
 // currentFont: the currently selected font name
 // onChange: callback(fontName) when a new font is picked
-function renderFontPicker(containerEl, currentFont, onChange) {
-  if (!containerEl) return;
-  preloadAllFonts();
-  containerEl.innerHTML = '';
-  containerEl.classList.add('font-picker');
-
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'font-picker-button';
-  button.style.fontFamily = `'${currentFont}', serif`;
-  button.innerHTML = `<span class="font-picker-current">${esc(currentFont)}</span><span class="font-picker-caret">▾</span>`;
-  containerEl.appendChild(button);
-
-  const menu = document.createElement('div');
-  menu.className = 'font-picker-menu';
-  ALL_FONTS.forEach(f => {
-    const opt = document.createElement('button');
-    opt.type = 'button';
-    opt.className = 'font-picker-option' + (f === currentFont ? ' selected' : '');
-    opt.style.fontFamily = `'${f}', serif`;
-    opt.textContent = f;
-    opt.addEventListener('click', () => {
-      menu.classList.remove('open');
-      button.classList.remove('open');
-      if (f !== currentFont) {
-        onChange && onChange(f);
-        // Re-render picker so selection reflects
-        renderFontPicker(containerEl, f, onChange);
-      }
-    });
-    menu.appendChild(opt);
-  });
-  containerEl.appendChild(menu);
-
-  button.addEventListener('click', e => {
-    e.stopPropagation();
-    const isOpen = menu.classList.contains('open');
-    // Close any other open pickers
-    document.querySelectorAll('.font-picker-menu.open').forEach(m => m.classList.remove('open'));
-    document.querySelectorAll('.font-picker-button.open').forEach(b => b.classList.remove('open'));
-    if (!isOpen) {
-      menu.classList.add('open');
-      button.classList.add('open');
-    }
-  });
-  // Click outside closes the menu
-  if (!window._fontPickerClosed) {
-    window._fontPickerClosed = true;
-    document.addEventListener('click', () => {
-      document.querySelectorAll('.font-picker-menu.open').forEach(m => m.classList.remove('open'));
-      document.querySelectorAll('.font-picker-button.open').forEach(b => b.classList.remove('open'));
-    });
-  }
-}
 function renderInvEditor() {
   const el = document.getElementById('invEdit');
   el.innerHTML = '';
