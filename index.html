@@ -1347,6 +1347,8 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvWorldRoot[data-world="concrete"] .cw-stage svg{ width:100%; height:auto; display:block; }
 #dvWorldRoot[data-world="concrete"] .cw-stage .cw-floor{ fill:#ffffff08; stroke:none; }
 #dvWorldRoot[data-world="concrete"] .cw-stage .cw-edge{ fill:none; stroke:#dcdcd8; stroke-width:1.6; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-front{ fill:none; stroke:var(--cw-hot); stroke-width:4; stroke-linecap:round; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-frontlbl{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:10px; font-weight:700; fill:var(--cw-hot); letter-spacing:.14em; text-transform:uppercase; }
 #dvWorldRoot[data-world="concrete"] .cw-stage .cw-tick{ stroke:var(--cw-faint); stroke-width:1.4; }
 #dvWorldRoot[data-world="concrete"] .cw-stage .cw-dt{ fill:var(--cw-hot); }
 #dvWorldRoot[data-world="concrete"] .cw-stage .cw-pl{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:15px; font-weight:700; fill:#e7e7e4; text-transform:uppercase; }
@@ -1443,6 +1445,8 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvWorldRoot[data-world="molten"] .mw-stagewrap svg{ width:100%; height:auto; display:block; }
 #dvWorldRoot[data-world="molten"] .mw-floor{ fill:rgba(255,107,53,.05); stroke:none; }
 #dvWorldRoot[data-world="molten"] .mw-edge{ fill:none; stroke:var(--mw-hot); stroke-width:2; filter:drop-shadow(0 0 6px rgba(255,107,53,.7)); }
+#dvWorldRoot[data-world="molten"] .mw-front{ fill:none; stroke:var(--mw-hot); stroke-width:5; stroke-linecap:round; filter:drop-shadow(0 0 9px rgba(255,107,53,.95)); }
+#dvWorldRoot[data-world="molten"] .mw-frontlbl{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:12px; font-weight:600; fill:var(--mw-hot); letter-spacing:.14em; text-transform:uppercase; filter:drop-shadow(0 0 5px rgba(255,107,53,.8)); }
 #dvWorldRoot[data-world="molten"] .mw-dt{ fill:var(--mw-hot); filter:drop-shadow(0 0 5px rgba(255,107,53,.9)); }
 #dvWorldRoot[data-world="molten"] .mw-pl{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:16px; font-weight:600; fill:var(--mw-title); text-transform:uppercase; }
 #dvWorldRoot[data-world="molten"] .mw-plr{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:12px; fill:var(--mw-mut); text-transform:uppercase; }
@@ -2279,6 +2283,10 @@ const DEFAULT_STATE = {
     // Custom stage outline as a simple polygon (array of {x, y} corners in viewBox units). null = use slider shape.
     // (Replaces the old Bezier pen-tool data; the renderer always drew these as straight edges anyway.)
     customStagePoints: null,
+    // Which polygon edge is the "front" (where vocalists line up, facing the audience).
+    // Stored as the START-corner index of that edge into the stage polygon points (edge i = point i → point i+1).
+    // null = auto (the most-forward edge, i.e. the top/audience edge) — preserves legacy behavior.
+    stageFrontEdge: null,
     // Stage features (stairs, doors, risers, monitor wedges, etc.) placed on the stage.
     // Each: { id, type, label, x, y, w, h, rot } — x/y is the CENTER in viewBox units (0..800 / 0..380),
     // w/h in viewBox units, rot in degrees. Persists across services (venue-level).
@@ -2628,6 +2636,10 @@ function loadState() {
           customStagePoints: (Array.isArray(loadedConfig.customStagePoints) && loadedConfig.customStagePoints.length >= 3)
             ? loadedConfig.customStagePoints.map(roundStagePoint)
             : null,
+          // Front edge: a non-negative integer edge index, or null = auto. Absent/invalid old saves → null.
+          stageFrontEdge: (Number.isInteger(loadedConfig.stageFrontEdge) && loadedConfig.stageFrontEdge >= 0)
+            ? loadedConfig.stageFrontEdge
+            : null,
           stageFeatures: Array.isArray(loadedConfig.stageFeatures) ? loadedConfig.stageFeatures : [],
           personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           micPrefs: normalizeMicPrefs(loadedConfig, p),
@@ -2679,7 +2691,7 @@ function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(st
    ============================================================================ */
 const VENUE_CONFIG_KEYS = [
   'vocalDirection', 'stageShape', 'stageCurvature', 'stageDepth',
-  'customStagePositions', 'customStageEnabled', 'customStagePoints',
+  'customStagePositions', 'customStageEnabled', 'customStagePoints', 'stageFrontEdge',
   'stageFeatures', 'stageAreas',
   'voxIemPacks', 'iemPackPresets', 'shadowPack', 'enableShadows'
 ];
@@ -4178,6 +4190,26 @@ function roundStagePoint(p) {
   return np;
 }
 
+// The "front edge" of a polygon is the edge vocalists line up along. Resolve which edge index
+// to use: an explicit user choice (state.config.stageFrontEdge) when it's a valid edge for these
+// points, otherwise auto = the most-forward edge (smallest midpoint Y = closest to the audience
+// at top). Kept as a shared helper so the shape math + editor + display highlight all agree.
+function autoFrontEdgeIndex(pts) {
+  let fi = 0, bestY = Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    const my = (a.y + b.y) / 2;
+    if (my < bestY) { bestY = my; fi = i; }
+  }
+  return fi;
+}
+function resolveFrontEdgeIndex(pts) {
+  if (!pts || pts.length < 2) return 0;
+  const chosen = state.config && state.config.stageFrontEdge;
+  if (Number.isInteger(chosen) && chosen >= 0 && chosen < pts.length) return chosen;
+  return autoFrontEdgeIndex(pts);
+}
+
 function getStageShape() {
   // If a custom polygon has been drawn, use it for the floor path AND derive the front edge from it
   // (so we no longer draw the slider's curve on top — that was the "old curve still showing" bug).
@@ -4185,26 +4217,35 @@ function getStageShape() {
   if (customPts && customPts.length >= 3) {
     const pts = customPts;
     const pathD = polygonPathFromPoints(pts);
-    // Find the most-forward edge (smallest midpoint Y = closest to the audience at top).
-    let fi = 0, bestY = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i + 1) % pts.length];
-      const my = (a.y + b.y) / 2;
-      if (my < bestY) { bestY = my; fi = i; }
-    }
+    // The front edge is the one vocalists line up along — user-selected, else the most-forward edge.
+    const fi = resolveFrontEdgeIndex(pts);
     const ea = pts[fi], eb = pts[(fi + 1) % pts.length];
-    const right = ea.x >= eb.x ? ea : eb;   // P0 = stage-right end (larger x)
-    const left  = ea.x >= eb.x ? eb : ea;   // P2 = stage-left end
+    // P0 = stage-right end, P2 = stage-left end. For a horizontal-ish edge that's larger x;
+    // for a steep/vertical side edge, order by y instead so vocalists still spread along it.
+    const horizEdge = Math.abs(ea.x - eb.x) >= Math.abs(ea.y - eb.y);
+    let right, left;
+    if (horizEdge) { right = ea.x >= eb.x ? ea : eb; left = ea.x >= eb.x ? eb : ea; }
+    else           { right = ea.y <= eb.y ? ea : eb; left = ea.y <= eb.y ? eb : ea; }
     const ctrl  = (ea.c && typeof ea.c.x === 'number') ? ea.c : { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
     const edge = `M ${right.x} ${right.y} Q ${Math.round(ctrl.x)} ${Math.round(ctrl.y)} ${left.x} ${left.y}`;
     const ys = pts.map(p => p.y);
     const edgeY = Math.min.apply(null, ys);
     const backY = Math.max.apply(null, ys);
+    // Inward normal of the front edge, pointing toward the polygon centroid (so vocalists can be
+    // nudged "just inside" whichever edge is front — top, bottom, or a side).
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    const ex = eb.x - ea.x, ey = eb.y - ea.y;
+    let nx = -ey, ny = ex; // one perpendicular
+    const mx = (ea.x + eb.x) / 2, my = (ea.y + eb.y) / 2;
+    if ((cx - mx) * nx + (cy - my) * ny < 0) { nx = -nx; ny = -ny; } // flip to point inward
+    const nlen = Math.hypot(nx, ny) || 1;
     return {
       path: pathD,
       edge,
       P0: { x: right.x, y: right.y }, P1: { x: ctrl.x, y: ctrl.y }, P2: { x: left.x, y: left.y },
-      edgeY, backY, midY: ctrl.y
+      edgeY, backY, midY: ctrl.y,
+      frontEdgeIndex: fi, inward: { x: nx / nlen, y: ny / nlen }, centroid: { x: cx, y: cy }
     };
   }
   // Returns SVG path data for stage + bezier control points for vocalists.
@@ -4228,20 +4269,25 @@ function getStageShape() {
   // Back wall position: depth=100 puts it at y=360, depth=0 puts it at y=180 (shallow)
   const backY = 180 + (180 * td);
 
+  // Slider shape: the front is ALWAYS the top/audience edge, so inward = straight down (+y).
+  const sliderInward = { x: 0, y: 1 };
+  const sliderCentroid = { x: 400, y: (edgeY + backY) / 2 };
   if (tc === 0) {
     // Pure flat — straight line, not a quadratic curve
     return {
       path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} L 20 ${edgeY} Z`,
       edge: `M 780 ${edgeY} L 20 ${edgeY}`,
       P0: { x:780, y:edgeY + 25 }, P1: { x:400, y:edgeY + 25 }, P2: { x:20, y:edgeY + 25 },
-      edgeY, backY, midY
+      edgeY, backY, midY,
+      frontEdgeIndex: null, inward: sliderInward, centroid: sliderCentroid
     };
   }
   return {
     path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} Q 400 ${midY} 20 ${edgeY} Z`,
     edge: `M 780 ${edgeY} Q 400 ${midY} 20 ${edgeY}`,
     P0: { x:780, y:edgeY }, P1: { x:400, y:midY }, P2: { x:20, y:edgeY },
-    edgeY, backY, midY
+    edgeY, backY, midY,
+    frontEdgeIndex: null, inward: sliderInward, centroid: sliderCentroid
   };
 }
 function getVoxPositions(count) {
@@ -4249,6 +4295,10 @@ function getVoxPositions(count) {
   const { P0, P1, P2 } = shape;
   function bez(t) { const mt = 1-t; return { x:mt*mt*P0.x + 2*mt*t*P1.x + t*t*P2.x, y:mt*mt*P0.y + 2*mt*t*P1.y + t*t*P2.y }; }
   const MARGIN = 38;
+  // Offset vocalists "just inside" the front edge along its inward normal. For the slider shape
+  // inward = +y (straight down), which reproduces the historical `pt.y + MARGIN` exactly; for a
+  // custom polygon with an arbitrary front edge it pushes them the correct way into the stage.
+  const inward = (shape.inward && typeof shape.inward.y === 'number') ? shape.inward : { x: 0, y: 1 };
   const inset = Math.max(0.08, 0.5/count);
   const direction = (state.config && state.config.vocalDirection) || 'rtl';
   const customs = (state.config.customStageEnabled && state.config.customStagePositions) || null;
@@ -4267,10 +4317,177 @@ function getVoxPositions(count) {
     else if (direction === 'ltr') t = (1-inset) - (i/(count-1)) * (1-2*inset);
     else                          t = inset       + (i/(count-1)) * (1-2*inset);
     const pt = bez(t);
-    positions.push({ x:pt.x, y:pt.y + MARGIN });
+    positions.push({ x: pt.x + inward.x * MARGIN, y: pt.y + inward.y * MARGIN });
   }
   return positions;
 }
+
+// ---------------------------------------------------------------------------
+// STAGE LABEL COLLISION RESOLVER
+// People markers on the stage carry a name label (and a role line). When two people sit close
+// together their labels print on top of each other and become unreadable. This takes the markers
+// (each { x, y, name, role } in the 800×380 viewBox) and returns, per marker, a resolved layout:
+//   { x, y, name, role, labelX, labelY, dy, side, useLast, w, h }
+// where labelX/labelY is the top-center of the label box, dy is the vertical nudge applied
+// (relative to the dot), side is 'below'|'above', and useLast=true means the display shortened
+// the shown name to just the last word to reclaim horizontal room. Pure function (no DOM), so it
+// works identically for the default HTML display and the bespoke Concrete/Molten SVG renderers,
+// and is unit-testable. opts: { charW, lineH, gap, dotR, minY, maxY } (all in viewBox units).
+function resolveStageLabelLayout(marks, opts) {
+  opts = opts || {};
+  const charW = opts.charW || 7.4;     // approx glyph advance for the name line
+  const lineH = opts.lineH || 12;      // one text line's height
+  const gap   = opts.gap   || 3;       // min vertical gap between two label boxes
+  const dotR  = opts.dotR  || 7;       // marker dot radius (label starts just past it)
+  const minY  = opts.minY != null ? opts.minY : 6;
+  const maxY  = opts.maxY != null ? opts.maxY : 374;
+  // anchor 'below' (default): label box hangs just under the dot (SVG text renderers).
+  // anchor 'center': label box is centered on the dot (HTML .dv-sp cards centered on their point).
+  const anchor = opts.anchor || 'below';
+  const lastWord = (s) => { const p = String(s || '').trim().split(/\s+/); return p[p.length - 1] || String(s || ''); };
+  const measure = (txt) => Math.max(28, String(txt || '').length * charW);
+
+  // Build working boxes. Two label lines (role above name, or name above role — irrelevant to
+  // collision; we treat the whole label as one stacked box of height 2*lineH).
+  const items = marks.map((m, i) => {
+    const boxH = 2 * lineH + 2;
+    const top0 = anchor === 'center' ? (m.y - boxH / 2) : (m.y + dotR + 1);
+    return {
+      i, m,
+      name: m.name || '', role: m.role || '',
+      useLast: false,
+      w: measure(m.name), h: boxH,
+      side: 'below',
+      labelX: m.x, labelY: top0,
+      dy: top0 - m.y
+    };
+  });
+
+  // Two boxes overlap if their x-ranges and y-ranges both intersect (with the gap padding on y).
+  function overlaps(a, b) {
+    const ax0 = a.labelX - a.w / 2, ax1 = a.labelX + a.w / 2;
+    const bx0 = b.labelX - b.w / 2, bx1 = b.labelX + b.w / 2;
+    if (ax1 <= bx0 || bx1 <= ax0) return false;
+    const ay0 = a.labelY, ay1 = a.labelY + a.h;
+    const by0 = b.labelY, by1 = b.labelY + b.h;
+    return !(ay1 + gap <= by0 || by1 + gap <= ay0);
+  }
+
+  // Process top-to-bottom, left-to-right so earlier (higher) labels anchor the packing.
+  const order = items.slice().sort((a, b) => (a.m.y - b.m.y) || (a.m.x - b.m.x));
+  const placed = [];
+  order.forEach(it => {
+    const collidesAny = () => placed.some(p => overlaps(it, p));
+    if (collidesAny()) {
+      // 1) shorten to last name — reclaims horizontal room, often resolves side-by-side pairs.
+      const ln = lastWord(it.name);
+      if (ln && ln.length < it.name.length) { it.useLast = true; it.w = measure(ln); }
+    }
+    // 2) still colliding → push the label DOWN below the colliding boxes, in small steps.
+    let guard = 0;
+    while (collidesAny() && guard < 40) {
+      // find the lowest bottom among current collisions and drop just beneath it
+      let lowest = it.labelY;
+      placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.labelY + p.h + gap); });
+      it.labelY = Math.max(it.labelY + lineH * 0.5, lowest);
+      it.dy = it.labelY - it.m.y;
+      it.side = 'below';
+      guard++;
+    }
+    // 3) if we pushed off the bottom of the canvas, flip this label ABOVE its dot instead.
+    if (it.labelY + it.h > maxY) {
+      it.side = 'above';
+      it.labelY = (anchor === 'center' ? (it.m.y - it.h / 2) : (it.m.y - dotR - 1 - it.h));
+      it.dy = it.labelY - it.m.y;
+      let g2 = 0;
+      while (collidesAny() && g2 < 40) {
+        let highest = it.labelY;
+        placed.forEach(p => { if (overlaps(it, p)) highest = Math.min(highest, p.labelY - it.h - gap); });
+        it.labelY = Math.min(it.labelY - lineH * 0.5, highest);
+        it.dy = it.labelY - it.m.y;
+        g2++;
+      }
+      if (it.labelY < minY) it.labelY = minY;
+    }
+    placed.push(it);
+  });
+
+  // Return in the ORIGINAL marker order.
+  return items
+    .slice()
+    .sort((a, b) => a.i - b.i)
+    .map(it => ({
+      x: it.m.x, y: it.m.y,
+      name: it.useLast ? lastWord(it.name) : it.name,
+      role: it.role,
+      fullName: it.name,
+      labelX: it.labelX, labelY: it.labelY,
+      dy: it.dy, side: it.side, useLast: it.useLast,
+      w: it.w, h: it.h
+    }));
+}
+
+// Build SVG markup that highlights the FRONT edge of the stage (where vocalists line up).
+// Draws a thicker accent-colored stroke over shape.edge, plus an optional "FRONT" label nudged
+// inward from the edge midpoint. `pathClass`/`lblClass` pick the world's accent-colored classes.
+// opts: { label:true, pathClass, lblClass }.
+function frontEdgeHighlightSvg(shape, opts) {
+  opts = opts || {};
+  if (!shape || !shape.edge) return '';
+  const pathClass = opts.pathClass || 'dv-front-edge';
+  const lblClass = opts.lblClass || 'dv-front-edge-lbl';
+  let out = `<path class="${pathClass}" d="${shape.edge}" fill="none"/>`;
+  if (opts.label !== false) {
+    // Midpoint of the front edge ≈ the bezier control's midpoint; nudge inward so the text sits
+    // just inside the stage rather than off the apron.
+    const mx = shape.P1 ? shape.P1.x : 400;
+    const my = shape.P1 ? shape.P1.y : (shape.edgeY || 30);
+    const inw = (shape.inward && typeof shape.inward.y === 'number') ? shape.inward : { x: 0, y: 1 };
+    const lx = mx + inw.x * 20;
+    const ly = my + inw.y * 20 + 4;
+    out += `<text class="${lblClass}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">FRONT</text>`;
+  }
+  return out;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+// Upsert a highlighted FRONT-edge path (+ FRONT label) into a display stage <svg>, so the front
+// edge reads as a distinct thicker accent line on the default + summary display views. Uses the
+// SVG namespace so jsdom + browsers both keep it in the DOM.
+function upsertFrontEdgeHighlight(svg, shape) {
+  if (!svg) return;
+  let path = svg.querySelector('.dv-front-edge');
+  if (!path) {
+    path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('class', 'dv-front-edge');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'var(--accent)');
+    path.setAttribute('stroke-width', '5');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('opacity', '0.95');
+    svg.appendChild(path);
+  }
+  path.setAttribute('d', shape.edge);
+  let lbl = svg.querySelector('.dv-front-edge-lbl');
+  if (!lbl) {
+    lbl = document.createElementNS(SVG_NS, 'text');
+    lbl.setAttribute('class', 'dv-front-edge-lbl');
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('fill', 'var(--accent)');
+    lbl.setAttribute('font-family', "'JetBrains Mono', ui-monospace, monospace");
+    lbl.setAttribute('font-size', '11');
+    lbl.setAttribute('font-weight', '700');
+    lbl.setAttribute('letter-spacing', '2');
+    lbl.textContent = 'FRONT';
+    svg.appendChild(lbl);
+  }
+  const mx = shape.P1 ? shape.P1.x : 400;
+  const my = shape.P1 ? shape.P1.y : (shape.edgeY || 30);
+  const inw = (shape.inward && typeof shape.inward.y === 'number') ? shape.inward : { x: 0, y: 1 };
+  lbl.setAttribute('x', (mx + inw.x * 20).toFixed(1));
+  lbl.setAttribute('y', (my + inw.y * 20 + 4).toFixed(1));
+}
+
 function renderStageShape() {
   // Update the SVG path for both setup and display views whenever the stage shape config changes
   const shape = getStageShape();
@@ -4278,9 +4495,14 @@ function renderStageShape() {
     if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
     else el.setAttribute('d', shape.path);
   });
-  document.querySelectorAll('.dv-stage-svg path').forEach((el) => {
-    if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
-    else el.setAttribute('d', shape.path);
+  document.querySelectorAll('.dv-stage-svg').forEach((svg) => {
+    svg.querySelectorAll('path').forEach((el) => {
+      // Skip our managed highlight path (it has its own class) so we don't overwrite it here.
+      if (el.classList && el.classList.contains('dv-front-edge')) return;
+      if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
+      else el.setAttribute('d', shape.path);
+    });
+    upsertFrontEdgeHighlight(svg, shape);
   });
 }
 function vocalistInstrumentTags(vId) {
@@ -4513,6 +4735,7 @@ function captureStageSnapshot(source) {
   if (source === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
     return {
       points: (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? structuredClone(wizardData.customStagePoints) : null,
+      frontEdge: Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null,
       curvature: (typeof wizardData.stageCurvature === 'number') ? wizardData.stageCurvature : DEFAULT_STAGE_CURVATURE,
       depth: (typeof wizardData.stageDepth === 'number') ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH,
       vocalDirection: wizardData.vocalDirection || DEFAULT_VOCAL_DIRECTION,
@@ -4522,6 +4745,7 @@ function captureStageSnapshot(source) {
   const c = state.config;
   return {
     points: (Array.isArray(c.customStagePoints) && c.customStagePoints.length >= 3) ? structuredClone(c.customStagePoints) : null,
+    frontEdge: Number.isInteger(c.stageFrontEdge) ? c.stageFrontEdge : null,
     curvature: (typeof c.stageCurvature === 'number') ? c.stageCurvature : DEFAULT_STAGE_CURVATURE,
     depth: (typeof c.stageDepth === 'number') ? c.stageDepth : DEFAULT_STAGE_DEPTH,
     vocalDirection: c.vocalDirection || DEFAULT_VOCAL_DIRECTION,
@@ -4541,11 +4765,13 @@ function applySavedStage(id, target) {
   if (!s) return false;
   if (target === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
     wizardData.customStagePoints = s.points ? structuredClone(s.points) : null;
+    wizardData.stageFrontEdge = (s.points && Number.isInteger(s.frontEdge)) ? s.frontEdge : null;
     wizardData.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
     wizardData.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
     if (s.vocalDirection) wizardData.vocalDirection = s.vocalDirection;
   } else {
     state.config.customStagePoints = s.points ? structuredClone(s.points) : null;
+    state.config.stageFrontEdge = (s.points && Number.isInteger(s.frontEdge)) ? s.frontEdge : null;
     state.config.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
     state.config.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
     if (s.vocalDirection) state.config.vocalDirection = s.vocalDirection;
@@ -4617,6 +4843,11 @@ function openPolygonStageEditor(opts) {
   pts = (Array.isArray(pts) && pts.length >= 3) ? pts.map(roundStagePoint) : seedFn();
   let snap = false;
   let selIdx = -1;
+  // Which edge is the FRONT (vocalists line up here). Seeded from the resolved front edge so the
+  // highlight matches the live stage; tracked locally and kept stable as corners are added/removed.
+  let frontIdx = (opts.getInitialFront && opts.getInitialFront());
+  if (!Number.isInteger(frontIdx) || frontIdx < 0 || frontIdx >= pts.length) frontIdx = autoFrontEdgeIndex(pts);
+  let frontMode = false; // when true, clicking an edge marks it as the front
 
   const modal = document.createElement('div');
   modal.id = 'saPolyModal'; modal.className = 'sa-modal';
@@ -4624,12 +4855,14 @@ function openPolygonStageEditor(opts) {
     <div class="sa-panel">
       <div class="sa-header">
         <span class="sa-title">Edit stage outline</span>
+        <button class="draw-tool-btn" id="saPolyFront">&#x2691; Front edge</button>
         <button class="draw-tool-btn" id="saPolySnap">&#x22A1; Snap to grid</button>
         <button class="draw-tool-btn" id="saPolyReset">&#x21bb; Reset to rectangle</button>
         <button class="sa-close" id="saPolyClose" title="Close">&#x2715;</button>
       </div>
       <div class="sa-body">
-        <div class="sa-hint"><b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it (drag it back to the middle to straighten) &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it. Your changes are kept unless you hit Discard.</div>
+        <div class="sa-hint" id="saPolyHint"><b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it (drag it back to the middle to straighten) &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it. Your changes are kept unless you hit Discard.</div>
+        <div class="sa-hint" style="color:var(--accent);"><b>Front</b> = where vocalists line up, facing the audience.</div>
         <div class="sa-canvas-wrap"><svg id="saPolySvg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet"></svg></div>
       </div>
       <div class="sa-footer">
@@ -4670,6 +4903,27 @@ function openPolygonStageEditor(opts) {
     h += `<text x="400" y="372" text-anchor="middle" style="${lbl}">BACK &#x2193;</text>`;
     // Curve-aware filled outline
     h += `<path d="${polygonPathFromPoints(pts)}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.85)" stroke-width="2" stroke-linejoin="round"/>`;
+    // ALWAYS highlight the current FRONT edge (thicker accent stroke over just that edge).
+    if (Number.isInteger(frontIdx) && frontIdx >= 0 && frontIdx < pts.length) {
+      const a = pts[frontIdx], b = pts[(frontIdx + 1) % pts.length];
+      const fd = (a.c && typeof a.c.x === 'number')
+        ? `M ${a.x} ${a.y} Q ${a.c.x} ${a.c.y} ${b.x} ${b.y}`
+        : `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+      h += `<path class="poly-front" d="${fd}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" opacity="0.95" pointer-events="none"/>`;
+      const fmx = (a.x + b.x) / 2, fmy = (a.y + b.y) / 2;
+      h += `<text x="${fmx.toFixed(1)}" y="${(fmy).toFixed(1)}" text-anchor="middle" style="font-family:monospace;font-size:11px;font-weight:700;fill:var(--accent);letter-spacing:0.14em" pointer-events="none">FRONT</text>`;
+    }
+    // In Front-edge mode, overlay fat transparent click targets on every edge so the user can
+    // click the edge they want to make the front.
+    if (frontMode) {
+      pts.forEach((p, i) => {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        const ed = (a.c && typeof a.c.x === 'number')
+          ? `M ${a.x} ${a.y} Q ${a.c.x} ${a.c.y} ${b.x} ${b.y}`
+          : `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+        h += `<path class="poly-frontpick" data-frontedge="${i}" d="${ed}" fill="none" stroke="rgba(212,161,71,0.001)" stroke-width="24" stroke-linecap="round" pointer-events="stroke" style="cursor:pointer;"/>`;
+      });
+    }
     // Edge handles (dot at the apex) — TAP to add a corner, DRAG to curve the edge
     pts.forEach((p, i) => {
       const ap = edgeApex(i);
@@ -4700,6 +4954,12 @@ function openPolygonStageEditor(opts) {
   let drag = null; // { kind:'corner'|'curve', idx, moved, pid }
   svg.addEventListener('pointerdown', e => {
     const t = e.target;
+    // Front-edge mode: a tap on an edge picks it as the front. No corner/curve dragging here.
+    if (frontMode) {
+      const fe = t.closest && t.closest('[data-frontedge]');
+      if (fe) { e.preventDefault(); frontIdx = parseInt(fe.dataset.frontedge, 10); frontMode = false; syncFrontBtn(); render(); }
+      return;
+    }
     if (t.closest && t.closest('[data-del]')) return; // delete handled on click
     const cornerEl = t.closest && t.closest('[data-corner]');
     if (cornerEl) { e.preventDefault(); drag = { kind:'corner', idx: parseInt(cornerEl.dataset.corner,10), moved:false, pid:e.pointerId }; selIdx = drag.idx; try{ svg.setPointerCapture(e.pointerId);}catch(_){ } render(); return; }
@@ -4740,6 +5000,8 @@ function openPolygonStageEditor(opts) {
       pts[i] = { x:a.x, y:a.y };
       pts.splice(i + 1, 0, { x: Math.round((a.x + b.x) / 2), y: Math.round((a.y + b.y) / 2) });
       selIdx = i + 1;
+      // Keep the FRONT selection on the same physical edge: inserting before it shifts its index.
+      if (Number.isInteger(frontIdx) && i + 1 <= frontIdx) frontIdx += 1;
     }
     render();
   }
@@ -4749,16 +5011,38 @@ function openPolygonStageEditor(opts) {
     const delEl = e.target.closest && e.target.closest('[data-del]');
     if (delEl && pts.length > 3) {
       e.stopPropagation();
-      pts.splice(parseInt(delEl.dataset.del, 10), 1);
+      const di = parseInt(delEl.dataset.del, 10);
+      pts.splice(di, 1);
+      // Keep FRONT valid/stable after a corner removal.
+      if (Number.isInteger(frontIdx)) {
+        if (di < frontIdx) frontIdx -= 1;
+        if (frontIdx >= pts.length) frontIdx = pts.length - 1;
+        if (frontIdx < 0) frontIdx = 0;
+      }
       selIdx = -1; render();
     }
   });
 
+  // Reset to rectangle re-seeds points → front index no longer meaningful; recompute auto.
+  const syncFrontBtn = () => { const b = modal.querySelector('#saPolyFront'); if (b) b.classList.toggle('active', frontMode); };
+  modal.querySelector('#saPolyFront').addEventListener('click', () => {
+    frontMode = !frontMode;
+    // Deselect any corner + show a mode hint while picking.
+    if (frontMode) selIdx = -1;
+    const hint = modal.querySelector('#saPolyHint');
+    if (hint) hint.innerHTML = frontMode
+      ? '<b>Click the edge</b> vocalists line up along to mark it as the front. Click <b>Front edge</b> again to cancel.'
+      : '<b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it.';
+    syncFrontBtn(); render();
+  });
   modal.querySelector('#saPolySnap').addEventListener('click', () => { snap = !snap; render(); });
-  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; render(); });
+  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; frontIdx = autoFrontEdgeIndex(pts); frontMode = false; syncFrontBtn(); render(); });
   const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
   const commit = () => {
-    if (pts.length >= 3 && opts.onSave) opts.onSave(pts.map(roundStagePoint));
+    if (pts.length >= 3 && opts.onSave) {
+      const fi = (Number.isInteger(frontIdx) && frontIdx >= 0 && frontIdx < pts.length) ? frontIdx : autoFrontEdgeIndex(pts);
+      opts.onSave(pts.map(roundStagePoint), fi);
+    }
     close();
   };
   function onKey(e) { if (e.key === 'Escape') commit(); }
@@ -5895,7 +6179,8 @@ function renderLayoutEditor() {
     if (outlineBtn) outlineBtn.addEventListener('click', () => {
       openPolygonStageEditor({
         getInitial: () => c.customStagePoints,
-        onSave: (pts) => { c.customStagePoints = pts; saveState(); refresh(); }
+        getInitialFront: () => c.stageFrontEdge,
+        onSave: (pts, frontIdx) => { c.customStagePoints = pts; c.stageFrontEdge = (Number.isInteger(frontIdx) ? frontIdx : null); saveState(); refresh(); }
       });
     });
     if (featuresBtn) featuresBtn.addEventListener('click', () => {
@@ -5904,6 +6189,7 @@ function renderLayoutEditor() {
     if (resetOutlineBtn) resetOutlineBtn.addEventListener('click', () => {
       if (!confirm('Remove the custom outline and reset the stage shape to the default sliders?')) return;
       c.customStagePoints = null;
+      c.stageFrontEdge = null;
       c.stageCurvature = DEFAULT_STAGE_CURVATURE;
       c.stageDepth = DEFAULT_STAGE_DEPTH;
       saveState(); refresh();
@@ -8201,21 +8487,17 @@ function fillSummaryStage() {
   renderStageFeatures('#s_stageFeatures', { interactive: false });
   people.innerHTML = '';
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
-  // Band (skip vocalist-played positions and empty slots — same rule as the display)
+  // Collect band + vocal markers, resolve label collisions, then position (matches the display).
   const bandPositions = getBandStagePositions();
+  const sMarks = [];
   state.instruments.forEach(inst => {
     if (inst.vocalistPlayer) return;
     const name = (inst.assignedTo || '').trim();
     if (!name) return;
     const pos = bandPositions[inst.id]; if (!pos) return;
     const isMD = state.musicDirectorId === inst.id;
-    const el = document.createElement('div');
-    el.className = 'dv-sp occupied';
-    const css = toPct(pos); el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="dv-sp-role">${esc(shortInstLabel(inst.label))}${isMD?' · MD':''}</div><div class="dv-sp-name">${esc(formatDisplayName(name))}</div>`;
-    people.appendChild(el);
+    sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(name), role: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), kind: 'band', isWL: false });
   });
-  // Vocalists
   const count = state.assignments.filter(a => a !== null).length;
   if (count > 0) {
     const voxPositions = getVoxPositions(count);
@@ -8224,15 +8506,21 @@ function fillSummaryStage() {
       const id = state.assignments[i]; if (!id) continue;
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[pi++];
-      const el = document.createElement('div');
-      el.className = 'dv-sp' + (v.isWL ? ' is-wl' : '');
-      const css = toPct(pos); el.style.left = css.left; el.style.top = css.top;
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
-      el.innerHTML = `<div class="dv-sp-role">VOCAL ${i+1}${tagSuffix}</div><div class="dv-sp-name">${esc(formatDisplayName(v.name) || '—')}</div>`;
-      people.appendChild(el);
+      sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal', isWL: !!v.isWL });
     }
   }
+  const sLayout = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0 });
+  sMarks.forEach((m, k) => {
+    const L = sLayout[k];
+    const el = document.createElement('div');
+    el.className = 'dv-sp' + (m.kind === 'band' ? ' occupied' : (m.isWL ? ' is-wl' : ''));
+    const centerY = L.labelY + L.h / 2;
+    const css = toPct({ x: m.x, y: centerY }); el.style.left = css.left; el.style.top = css.top;
+    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
+    people.appendChild(el);
+  });
 }
 function copySummaryText() {
   const s = state.service;
@@ -8509,18 +8797,17 @@ function renderDisplayView() {
   renderStageFeatures('#dvStageFeatures', { interactive: false });
   const bandPositions = getBandStagePositions();
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
+  // Collect every marker first (band + vocals) so we can resolve label collisions across the
+  // whole stage before positioning cards — otherwise two people who sit close together print
+  // their name cards on top of each other.
+  const dvMarks = [];
   state.instruments.forEach(inst => {
     if (inst.vocalistPlayer) return; // covered by vocalist — gets a /TAG instead
     const name = (inst.assignedTo || '').trim();
     if (!name) return; // Display: only show positions that are actually filled
     const pos = bandPositions[inst.id]; if (!pos) return;
     const isMD = state.musicDirectorId === inst.id;
-    const el = document.createElement('div');
-    el.className = 'dv-sp ' + (name ? 'occupied' : 'empty');
-    const css = toPct(pos);
-    el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="dv-sp-role">${esc(shortInstLabel(inst.label))}${isMD?' · MD':''}</div><div class="dv-sp-name">${name?esc(formatDisplayName(name)):esc(inst.placeholder || inst.label)}</div>`;
-    wrap.appendChild(el);
+    dvMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(name), role: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), kind: 'band' });
   });
   const filledIds = state.assignments.filter(a => a !== null);
   const count = filledIds.length;
@@ -8531,17 +8818,23 @@ function renderDisplayView() {
       const id = state.assignments[i]; if (!id) continue;
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[posIdx++];
-      const el = document.createElement('div');
-      // Display view intentionally does NOT highlight worship leaders (no is-wl).
-      el.className = 'dv-sp';
-      const css = toPct(pos);
-      el.style.left = css.left; el.style.top = css.top;
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
-      el.innerHTML = `<div class="dv-sp-role">VOCAL ${i+1}${tagSuffix}</div><div class="dv-sp-name">${esc(formatDisplayName(v.name) || '—')}</div>`;
-      wrap.appendChild(el);
+      dvMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal' });
     }
   }
+  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0 });
+  dvMarks.forEach((m, k) => {
+    const L = dvLayout2[k];
+    const el = document.createElement('div');
+    el.className = 'dv-sp' + (m.kind === 'band' ? ' occupied' : '');
+    // labelY is the resolved box TOP; the card is centered, so its center = labelY + h/2.
+    const centerY = L.labelY + L.h / 2;
+    const css = toPct({ x: m.x, y: centerY });
+    el.style.left = css.left; el.style.top = css.top;
+    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
+    wrap.appendChild(el);
+  });
 
   // Vocalist cards
   const vocGrid = document.getElementById('dvVocGrid');
@@ -8810,15 +9103,24 @@ function renderDisplay_concrete() {
         marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
       }
     }
-    // Dots + upright mono labels. Labels flip to the left near the SR edge so they don't clip.
-    const dots = marks.map(m => {
+    // Dots + upright mono labels. Labels flip to the left near the SR edge so they don't clip,
+    // and a collision resolver separates labels that would otherwise print on top of each other.
+    const layout = resolveStageLabelLayout(
+      marks.map(m => ({ x: m.x, y: m.y, name: m.name || '', role: m.label || '' })),
+      { anchor: 'center', charW: 9, lineH: 15, gap: 4, dotR: 6 }
+    );
+    const dots = marks.map((m, k) => {
+      const L = layout[k];
       const anchor = m.x > 640 ? 'end' : 'start';
       const dx = m.x > 640 ? -6 : 6;
-      const nm = esc((m.name || '').toUpperCase());
+      const nm = esc((L.name || '').toUpperCase());
       const rl = esc((m.label || '').toUpperCase());
+      // Box-relative baselines: with no collision this reproduces the original name@(y-3)/role@(y+12).
+      const nameY = L.labelY + 13;
+      const roleY = nameY + 15;
       return `<circle class="cw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="6"/>`
-        + `<text class="cw-pl" x="${(m.x + dx).toFixed(1)}" y="${(m.y - 3).toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
-        + `<text class="cw-plr" x="${(m.x + dx).toFixed(1)}" y="${(m.y + 12).toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+        + `<text class="cw-pl" x="${(m.x + dx).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="cw-plr" x="${(m.x + dx).toFixed(1)}" y="${roleY.toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
     }).join('');
     // Dimension ticks across the front apron (blueprint flavor).
     const ey = (shape.edgeY != null ? shape.edgeY : 146);
@@ -8829,6 +9131,7 @@ function renderDisplay_concrete() {
       + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
       + `<path class="cw-floor" d="${shape.path}"/>`
       + `<path class="cw-edge" d="${shape.edge}"/>`
+      + frontEdgeHighlightSvg(shape, { pathClass: 'cw-front', lblClass: 'cw-frontlbl', label: true })
       + `<line class="cw-tick" x1="20" y1="${(ey - 14).toFixed(1)}" x2="20" y2="${(ey + 2).toFixed(1)}"/>`
       + `<line class="cw-tick" x1="400" y1="10" x2="400" y2="26"/>`
       + `<line class="cw-tick" x1="780" y1="${(ey - 14).toFixed(1)}" x2="780" y2="${(ey + 2).toFixed(1)}"/>`
@@ -9049,15 +9352,24 @@ function renderDisplay_molten() {
         marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
       }
     }
-    // Glowing dots + upright Oswald labels; labels flip left near the SR edge so they don't clip.
-    const dots = marks.map(m => {
+    // Glowing dots + upright Oswald labels; labels flip left near the SR edge so they don't clip,
+    // and a collision resolver separates labels that would otherwise print on top of each other.
+    const layout = resolveStageLabelLayout(
+      marks.map(m => ({ x: m.x, y: m.y, name: m.name || '', role: m.label || '' })),
+      { anchor: 'center', charW: 9.5, lineH: 16, gap: 4, dotR: 7 }
+    );
+    const dots = marks.map((m, k) => {
+      const L = layout[k];
       const anchor = m.x > 640 ? 'end' : 'start';
       const dx = m.x > 640 ? -8 : 8;
-      const nm = esc((m.name || '').toUpperCase());
+      const nm = esc((L.name || '').toUpperCase());
       const rl = esc((m.label || '').toUpperCase());
+      // Box-relative baselines: with no collision this reproduces the original name@(y-4)/role@(y+12).
+      const nameY = L.labelY + 13;
+      const roleY = nameY + 16;
       return `<circle class="mw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="7"/>`
-        + `<text class="mw-pl" x="${(m.x + dx).toFixed(1)}" y="${(m.y - 4).toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
-        + `<text class="mw-plr" x="${(m.x + dx).toFixed(1)}" y="${(m.y + 12).toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+        + `<text class="mw-pl" x="${(m.x + dx).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="mw-plr" x="${(m.x + dx).toFixed(1)}" y="${roleY.toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
     }).join('');
     // The .mw-stagewrap is already a warm bordered box, so it IS the stage panel (no extra
     // .mw-panel border). The wrapping .mw-panel-stage div just carries margin-top:auto to drop
@@ -9069,6 +9381,7 @@ function renderDisplay_molten() {
       + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
       + `<path class="mw-floor" d="${shape.path}"/>`
       + `<path class="mw-edge" d="${shape.edge}"/>`
+      + frontEdgeHighlightSvg(shape, { pathClass: 'mw-front', lblClass: 'mw-frontlbl', label: true })
       + `<text class="mw-caption" x="400" y="372" text-anchor="middle">↑ AUDIENCE</text>`
       + dots
       + `</svg>`
@@ -10851,6 +11164,7 @@ function startWizard() {
     stageShape: 'curved', // legacy; not used after slider migration
     stageCurvature: DEFAULT_STAGE_CURVATURE,
     stageDepth: DEFAULT_STAGE_DEPTH,
+    stageFrontEdge: null, // front edge index for a custom outline (null = auto)
     vocalDirection: 'rtl', // 'rtl' (SR→SL) or 'ltr' (SL→SR)
     // Branding (final step)
     accentPreset: 'gold',  // 'gold' | 'blue' | 'green' | 'mono' | 'custom'
@@ -12668,8 +12982,9 @@ function wireWizardStep(step) {
             if (tc < 0.05) return [fl, fr, br, bl];
             return [fl, { x: 400, y: Math.max(12, Math.round(edgeY - 300 * tc)) }, fr, br, bl];
           },
-          onSave: (pts) => { wizardData.customStagePoints = pts; renderWizardStep(); },
-          onClear: () => { wizardData.customStagePoints = null; renderWizardStep(); }
+          getInitialFront: () => wizardData.stageFrontEdge,
+          onSave: (pts, frontIdx) => { wizardData.customStagePoints = pts; wizardData.stageFrontEdge = (Number.isInteger(frontIdx) ? frontIdx : null); renderWizardStep(); },
+          onClear: () => { wizardData.customStagePoints = null; wizardData.stageFrontEdge = null; renderWizardStep(); }
         });
       });
     })();
@@ -12678,14 +12993,16 @@ function wireWizardStep(step) {
     // showing the wizard's in-progress shape as the backdrop while placing fixtures.
     const wizFeatBtn = body.querySelector('#wizFeaturesBtn');
     if (wizFeatBtn) wizFeatBtn.addEventListener('click', () => {
-      const saved = { curv: state.config.stageCurvature, depth: state.config.stageDepth, pts: state.config.customStagePoints, dir: state.config.vocalDirection };
+      const saved = { curv: state.config.stageCurvature, depth: state.config.stageDepth, pts: state.config.customStagePoints, dir: state.config.vocalDirection, front: state.config.stageFrontEdge };
       if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
       if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
       state.config.customStagePoints = wizardData.customStagePoints || null;
+      state.config.stageFrontEdge = Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
       if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
       openStageFeaturesEditor(() => {
         state.config.stageCurvature = saved.curv; state.config.stageDepth = saved.depth;
         state.config.customStagePoints = saved.pts; state.config.vocalDirection = saved.dir;
+        state.config.stageFrontEdge = saved.front;
         saveState(); renderWizardStep();
       });
     });
@@ -12708,6 +13025,7 @@ function wireWizardStep(step) {
     if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
     state.config.customStageEnabled = false;
     state.config.customStagePoints = (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? wizardData.customStagePoints.slice() : null;
+    state.config.stageFrontEdge = state.config.customStagePoints && Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
 
     // Update SVG paths
     const shape = getStageShape();
@@ -13041,6 +13359,7 @@ function applyWizardChoices() {
   // Stage layout — custom stage shape from wizard draw tool
   if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
     state.config.customStagePoints = wizardData.customStagePoints.slice();
+    state.config.stageFrontEdge = Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
     state.config.stageShape = 'custom';
   }
   // Stage layout — custom positions from drag step
