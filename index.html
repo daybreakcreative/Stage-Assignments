@@ -2414,7 +2414,7 @@ function loadState() {
 
       return { ...DEFAULT_STATE, ...p,
         // World migration: ignore legacy look/auroraMood (any old save → Molten); honor a real saved world.
-        world: (p.world && typeof WORLDS !== 'undefined' && WORLDS[p.world]) ? p.world : 'molten',
+        world: (typeof p.world === 'string' && p.world) ? p.world : 'molten',
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: migrateHosts(p),
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
@@ -8534,7 +8534,7 @@ function worldSwatchHtml(id, selected) {
   const w = WORLDS[id]; if (!w) return '';
   const c = w.swatch;
   const grad = `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 52%, ${c[2]} 100%)`;
-  return `<button type="button" class="world-swatch${selected ? ' sel' : ''}" data-world-opt="${id}" title="${w.label}" style="--sw:${grad};font-family:${w.fonts.display},system-ui,sans-serif;">`
+  return `<button type="button" class="world-swatch${selected ? ' sel' : ''}" data-world-opt="${id}" title="${w.label}" style="font-family:${w.fonts.display},system-ui,sans-serif;">`
     + `<span class="ws-chip" style="background:${grad};"></span>`
     + `<span class="ws-name">${w.emoji} ${w.label}</span></button>`;
 }

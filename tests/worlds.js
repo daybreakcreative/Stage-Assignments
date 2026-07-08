@@ -14,7 +14,29 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 }});
 const{window}=dom;const ev=c=>window.eval(c);const doc=window.document;
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
-window.addEventListener('load',()=>setTimeout(()=>{
+
+// Boot a FRESH, isolated jsdom with `seed` already in localStorage BEFORE the script runs, so the
+// top-level `let state = loadState()` runs with that save present. This is the only way to exercise
+// the boot-time path where the WORLDS const is still in its temporal dead zone — an eval'd
+// loadState() after load can't, because WORLDS is fully initialized by then. Returns the boot state.
+function bootWithSeed(seed) {
+  return new Promise((resolve, reject) => {
+    const d = new JSDOM(html, {runScripts:'dangerously',pretendToBeVisual:true,url:'http://localhost/',beforeParse(w){
+      w.localStorage.setItem('stageAssign.v3', JSON.stringify(seed));
+      w.structuredClone=w.structuredClone||(v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)));
+      w.matchMedia=w.matchMedia||(()=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}}));
+      w.scrollTo=()=>{};w.Element.prototype.getBoundingClientRect=function(){return{left:0,top:0,width:800,height:380,right:800,bottom:380,x:0,y:0,toJSON(){}}};
+      w.Element.prototype.setPointerCapture=function(){};w.Element.prototype.releasePointerCapture=function(){};
+      w.confirm=()=>true;w.prompt=()=>'';
+    }});
+    d.window.addEventListener('load',()=>setTimeout(()=>{
+      try { resolve(d.window.eval('JSON.parse(JSON.stringify({ world:state.world, service:state.service, firstRun:!!state._firstRun, vocalists:state.vocalists }))')); }
+      catch(e){ reject(e); }
+    },150));
+  });
+}
+
+window.addEventListener('load',()=>(async()=>{await new Promise(r=>setTimeout(r,150));
 
  check('WORLDS registry: 6 worlds in order, each with fonts + swatch', () => {
    const order = ev('WORLD_ORDER');
@@ -62,6 +84,23 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (ev('state.world') !== 'molten') throw new Error('legacy save should migrate to DEFAULT_WORLD molten, got '+ev('state.world'));
  });
 
+ // A save written by THIS build carries a `world` key. `let state = loadState()` runs at top level
+ // thousands of lines before `const WORLDS = {…}`, so a `typeof WORLDS` in the migration hits the
+ // temporal dead zone and THROWS ReferenceError (it does NOT return 'undefined'); loadState's catch
+ // swallows it and returns a fresh first-run state, wiping the user's data. We can only exercise that
+ // boot-time path by booting a fresh jsdom with the save pre-seeded (an eval'd loadState() after load
+ // sees WORLDS already initialized, so it can't reproduce the bug).
+ let bootErr=null, boot=null;
+ try { boot = await bootWithSeed({ world:'orbit', service:{name:'KEEPME'}, vocalists:[{id:'v1',name:'Amy'}] }); }
+ catch(e){ bootErr = e; }
+ check('boot loadState survives a save with a world key (no TDZ throw → no data loss)', () => {
+   if (bootErr) throw new Error('boot threw: '+bootErr.message);
+   if (boot.world !== 'orbit') throw new Error('saved world not preserved, got '+boot.world);
+   if (!boot.service || boot.service.name !== 'KEEPME') throw new Error('service wiped on boot, got '+(boot.service&&boot.service.name));
+   if (boot.firstRun) throw new Error('boot fell back to a fresh first-run state (data loss)');
+   if (!Array.isArray(boot.vocalists) || boot.vocalists.length !== 1) throw new Error('vocalists wiped, got '+(boot.vocalists&&boot.vocalists.length));
+ });
+
  check('Settings Display tab renders world swatches and applies on click', () => {
    // Stub the live re-render so the click handler doesn't do a full display paint, but SAVE +
    // RESTORE the real renderDisplayView (it's a window-level function-declaration binding, so a
@@ -100,4 +139,4 @@ window.addEventListener('load',()=>setTimeout(()=>{
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
-},150));
+})());
