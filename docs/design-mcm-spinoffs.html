@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mid-Century spin-offs — Palm Springs · Googie · Harvest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Rubik:wght@400;500;700&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Rubik',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:16px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+  .grain{ position:absolute; inset:0; pointer-events:none; opacity:.15; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .stage svg{ width:100%; height:auto; display:block; }
+  .ord .row{ display:flex; justify-content:space-between; padding:8px 0; font-size:14px; }
+
+  /* ============================================================
+     PALM SPRINGS — bright desert modern. cream + turquoise + coral,
+     breeze-block pattern, airy, Outfit.
+  ============================================================ */
+  .palm{ background:#f4eddb; color:#28403f; font-family:'Outfit',sans-serif; padding:26px 30px; position:relative; }
+  .palm .breeze{ position:absolute; inset:0; pointer-events:none; opacity:.16;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%232fa9a6' stroke-width='2'%3E%3Ccircle cx='30' cy='30' r='17'/%3E%3Cpath d='M30,5 L55,30 L30,55 L5,30 Z'/%3E%3C/g%3E%3C/svg%3E"); background-size:60px 60px; }
+  .palm > *{ position:relative; z-index:1; }
+  .palm .p-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:18px; }
+  .palm .p-title{ font-family:'Outfit'; font-weight:600; font-size:32px; letter-spacing:-.01em; color:#e2683f; }
+  .palm .p-meta{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#2fa9a6; text-align:right; font-weight:500; }
+  .palm .p-body{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; }
+  .palm .p-label{ font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#579c99; margin-bottom:12px; font-weight:600; }
+  .palm .p-voices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .palm .vc{ background:#fffaf0; border:2px solid #2fa9a6; border-radius:16px; padding:13px 15px; position:relative; }
+  .palm .vc .vn{ font-weight:600; font-size:17px; color:#243f3e; }
+  .palm .vc .vr{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#7aa; margin-top:4px; }
+  .palm .vc .vm{ position:absolute; top:12px; right:13px; font-weight:700; font-size:12px; color:#fff; background:#e2683f; border-radius:20px; padding:2px 9px; }
+  .palm .p-stage{ background:#2fa9a6; border-radius:16px; padding:14px; }
+  .palm .p-stage .ln{ fill:none; stroke:#fffaf0; stroke-width:2; }
+  .palm .p-stage .dt{ fill:#ffd24a; }  .palm .p-stage .pl{ font-family:'Outfit'; font-size:8px; fill:#eafcfb; }
+  .palm .ord{ margin-top:14px; }
+  .palm .ord .row{ border-bottom:1px solid rgba(47,169,166,.25); }  .palm .ord .row .tm{ color:#579c99; }
+  .palm .p-btns{ display:flex; gap:10px; margin-top:16px; }
+  .palm .p-btn{ font-family:'Outfit'; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; border:2px solid #2fa9a6; background:transparent; color:#2fa9a6; border-radius:30px; padding:8px 16px; cursor:default; }
+  .palm .p-btn.pri{ background:#e2683f; border-color:#e2683f; color:#fffaf0; }
+
+  /* ============================================================
+     GOOGIE — space-age retro-futurist. petrol-teal + orange, atomic
+     orbits, boomerangs, angled shapes, Jost bold.
+  ============================================================ */
+  .googie{ background:radial-gradient(120% 90% at 80% -10%, #16484c, #0b2427 70%); color:#eaf3ef; font-family:'Jost',sans-serif; padding:26px 30px; position:relative; }
+  .googie > *{ position:relative; z-index:1; }
+  .googie .g-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; position:relative; }
+  .googie .g-orbit{ position:absolute; right:0; top:-6px; width:120px; height:60px; pointer-events:none; }
+  .googie .g-title{ font-family:'Jost'; font-weight:700; font-size:33px; letter-spacing:.01em; text-transform:uppercase; color:#ff8a3c; transform:skewX(-6deg); }
+  .googie .g-meta{ font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#5fd0c8; text-align:right; }
+  .googie .g-body{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; }
+  .googie .g-label{ font-family:'Jost'; font-weight:600; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#5fd0c8; margin-bottom:12px; }
+  .googie .g-voices{ display:flex; flex-direction:column; gap:10px; }
+  .googie .gc{ display:flex; align-items:center; justify-content:space-between; background:#0e3438; border-left:4px solid #ff8a3c; padding:12px 16px; transform:skewX(-6deg); }
+  .googie .gc > *{ transform:skewX(6deg); }
+  .googie .gc .gn{ font-family:'Jost'; font-weight:600; font-size:18px; }
+  .googie .gc .gr{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#7fb; opacity:.7; }
+  .googie .gc .gm{ font-family:'Jost'; font-weight:700; font-size:13px; color:#0b2427; background:#ff8a3c; border-radius:3px; padding:3px 10px; }
+  .googie .g-stage{ background:#0e3438; padding:14px; position:relative; }
+  .googie .g-stage .ln{ fill:none; stroke:#5fd0c8; stroke-width:2; }
+  .googie .g-stage .dt{ fill:#ff8a3c; }  .googie .g-stage .pl{ font-family:'Jost'; font-size:8px; fill:#cfeee9; }
+  .googie .ord{ margin-top:14px; }
+  .googie .ord .row{ border-bottom:1px solid rgba(95,208,200,.2); font-family:'Jost'; }  .googie .ord .row .tm{ color:#5fd0c8; }
+  .googie .g-btns{ display:flex; gap:10px; margin-top:16px; }
+  .googie .g-btn{ font-family:'Jost'; font-weight:600; font-size:12px; text-transform:uppercase; transform:skewX(-6deg); border:2px solid #5fd0c8; background:transparent; color:#5fd0c8; padding:8px 16px; cursor:default; }
+  .googie .g-btn.pri{ background:#ff8a3c; border-color:#ff8a3c; color:#0b2427; }
+
+  /* ============================================================
+     HARVEST — cozy '70s. gold + avocado + rust + walnut, retro floral,
+     Fredoka, warm.
+  ============================================================ */
+  .harvest{ background:#eadfc2; color:#4a3320; font-family:'Rubik',sans-serif; padding:26px 30px; position:relative; }
+  .harvest .floral{ position:absolute; inset:0; pointer-events:none; opacity:.14;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg%3E%3Ccircle cx='37' cy='37' r='6' fill='%23b5502e'/%3E%3Cg fill='%236b7440'%3E%3Cellipse cx='37' cy='18' rx='6' ry='12'/%3E%3Cellipse cx='37' cy='56' rx='6' ry='12'/%3E%3Cellipse cx='18' cy='37' rx='12' ry='6'/%3E%3Cellipse cx='56' cy='37' rx='12' ry='6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); background-size:74px 74px; }
+  .harvest > *{ position:relative; z-index:1; }
+  .harvest .h-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:18px; }
+  .harvest .h-title{ font-family:'Fredoka'; font-weight:600; font-size:32px; color:#b5502e; }
+  .harvest .h-meta{ font-family:'Fredoka'; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#6b7440; text-align:right; }
+  .harvest .h-body{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; }
+  .harvest .h-label{ font-family:'Fredoka'; font-weight:600; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#8a5a2b; margin-bottom:12px; }
+  .harvest .h-voices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .harvest .hc{ border-radius:14px; padding:14px; color:#3a2a18; position:relative; }
+  .harvest .hc:nth-child(1){ background:#d99a2b; }
+  .harvest .hc:nth-child(2){ background:#8a9a55; }
+  .harvest .hc:nth-child(3){ background:#c9743e; color:#f6ecd8; }
+  .harvest .hc:nth-child(4){ background:#cbb377; }
+  .harvest .hc .hn{ font-family:'Fredoka'; font-weight:600; font-size:17px; line-height:1; }
+  .harvest .hc .hr{ font-family:'Fredoka'; font-size:10px; letter-spacing:.1em; text-transform:uppercase; opacity:.78; margin-top:6px; }
+  .harvest .hc .hm{ position:absolute; top:12px; right:13px; font-family:'Fredoka'; font-weight:600; font-size:12px; background:rgba(74,51,32,.22); border-radius:20px; padding:2px 9px; }
+  .harvest .h-stage{ background:#efe6cf; border-radius:14px; padding:14px; border:2px solid #b5502e33; }
+  .harvest .h-stage .ln{ fill:none; stroke:#8a5a2b; stroke-width:2; }
+  .harvest .h-stage .dt{ fill:#b5502e; }  .harvest .h-stage .pl{ font-family:'Rubik'; font-size:8px; fill:#5a4028; }
+  .harvest .ord{ margin-top:14px; }
+  .harvest .ord .row{ border-bottom:1px solid rgba(90,60,30,.2); font-family:'Fredoka'; }  .harvest .ord .row .tm{ color:#8a5a2b; }
+  .harvest .h-btns{ display:flex; gap:10px; margin-top:16px; }
+  .harvest .h-btn{ font-family:'Fredoka'; font-weight:600; font-size:12px; text-transform:uppercase; border:2px solid #8a5a2b; background:transparent; color:#6e4626; border-radius:30px; padding:8px 16px; cursor:default; }
+  .harvest .h-btn.pri{ background:#b5502e; border-color:#b5502e; color:#f6ecd8; }
+
+  @media (max-width:820px){ .palm .p-body,.googie .g-body,.harvest .h-body{ grid-template-columns:1fr !important; } .palm .p-voices,.harvest .h-voices{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Mid-century, three ways</h1>
+    <p>Three spin-offs of the Atomic direction you liked — same flat-graphic MCM spirit, three distinct moods: bright desert (Palm Springs), space-age futurist (Googie), cozy '70s (Harvest). All grained, all equal voices.</p>
+    <p class="note">Static mockups. Scroll: 🌴 Palm Springs → 🛸 Googie → 🌻 Harvest.</p>
+  </div>
+
+  <!-- PALM SPRINGS -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🌴 Palm Springs</span><span class="emotion">bright desert modern, airy</span><span class="changed">Outfit · cream + turquoise + coral · breeze-block · light</span></div>
+    <div class="disp palm">
+      <div class="breeze"></div><div class="grain"></div>
+      <div class="p-head"><div class="p-title">Sunday Service</div><div class="p-meta">Sunday · July 5<br>Main Auditorium</div></div>
+      <div class="p-body">
+        <div>
+          <div class="p-label">Voices</div>
+          <div class="p-voices">
+            <div class="vc"><span class="vm">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Vocal 1</div></div>
+            <div class="vc"><span class="vm">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+            <div class="vc"><span class="vm">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div>
+            <div class="vc"><span class="vm">HH 4</span><div class="vn">Sophia Davis</div><div class="vr">Vocal 4</div></div>
+          </div>
+          <div class="p-btns"><button class="p-btn">↻ Refresh</button><button class="p-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="p-label">Stage</div>
+          <div class="p-stage stage"><svg viewBox="0 0 300 116"><path class="ln" d="M16,108 L16,46 Q150,14 284,46 L284,108"/><circle class="dt" cx="104" cy="54" r="3"/><text class="pl" x="110" y="56">John R.</text><circle class="dt" cx="196" cy="50" r="3"/><text class="pl" x="202" y="52">Emma J.</text><circle class="dt" cx="150" cy="80" r="3"/><text class="pl" x="156" y="82">Ben R.</text></svg></div>
+          <div class="p-label" style="margin-top:16px;">Service Order</div>
+          <div class="ord"><div class="row"><span>Keep Praise</span><span class="tm">5:12</span></div><div class="row"><span>Great Are You</span><span class="tm">4:40</span></div><div class="row"><span>Welcome</span><span class="tm">2:00</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOGIE -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🛸 Googie</span><span class="emotion">space-age futurist (Incredibles)</span><span class="changed">Jost · petrol-teal + orange · orbits · boomerang · angled</span></div>
+    <div class="disp googie">
+      <div class="grain"></div>
+      <div class="g-head">
+        <svg class="g-orbit" viewBox="0 0 120 60"><g fill="none" stroke="#ff8a3c" stroke-width="1.5" opacity="0.7"><ellipse cx="60" cy="30" rx="52" ry="18"/><ellipse cx="60" cy="30" rx="30" ry="30"/></g><circle cx="60" cy="30" r="4" fill="#5fd0c8"/></svg>
+        <div class="g-title">Sunday Service</div><div class="g-meta">Sunday · July 5<br>Main Auditorium</div>
+      </div>
+      <div class="g-body">
+        <div>
+          <div class="g-label">Voices</div>
+          <div class="g-voices">
+            <div class="gc"><div><div class="gn">Amelia Garcia</div><div class="gr">Vocal 1</div></div><span class="gm">HH 1</span></div>
+            <div class="gc"><div><div class="gn">Emma Johnson</div><div class="gr">Vocal 2</div></div><span class="gm">HH 2</span></div>
+            <div class="gc"><div><div class="gn">Jake Williams</div><div class="gr">Vocal 3</div></div><span class="gm">HH 3</span></div>
+            <div class="gc"><div><div class="gn">Sophia Davis</div><div class="gr">Vocal 4</div></div><span class="gm">HH 4</span></div>
+          </div>
+          <div class="g-btns"><button class="g-btn">↻ Refresh</button><button class="g-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="g-label">Stage</div>
+          <div class="g-stage stage"><svg viewBox="0 0 300 116"><path class="ln" d="M16,108 L16,46 Q150,14 284,46 L284,108"/><circle class="dt" cx="104" cy="54" r="3"/><text class="pl" x="110" y="56">John R.</text><circle class="dt" cx="196" cy="50" r="3"/><text class="pl" x="202" y="52">Emma J.</text><circle class="dt" cx="150" cy="80" r="3"/><text class="pl" x="156" y="82">Ben R.</text></svg></div>
+          <div class="g-label" style="margin-top:16px;">Service Order</div>
+          <div class="ord"><div class="row"><span>Keep Praise</span><span class="tm">5:12</span></div><div class="row"><span>Great Are You</span><span class="tm">4:40</span></div><div class="row"><span>Welcome</span><span class="tm">2:00</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HARVEST -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🌻 Harvest</span><span class="emotion">cozy '70s, warm</span><span class="changed">Fredoka · gold + avocado + rust + walnut · retro floral · wood-warm</span></div>
+    <div class="disp harvest">
+      <div class="floral"></div><div class="grain"></div>
+      <div class="h-head"><div class="h-title">Sunday Service</div><div class="h-meta">Sunday · July 5<br>Main Auditorium</div></div>
+      <div class="h-body">
+        <div>
+          <div class="h-label">Voices</div>
+          <div class="h-voices">
+            <div class="hc"><span class="hm">HH 1</span><div class="hn">Amelia Garcia</div><div class="hr">Vocal 1</div></div>
+            <div class="hc"><span class="hm">HH 2</span><div class="hn">Emma Johnson</div><div class="hr">Vocal 2</div></div>
+            <div class="hc"><span class="hm">HH 3</span><div class="hn">Jake Williams</div><div class="hr">Vocal 3</div></div>
+            <div class="hc"><span class="hm">HH 4</span><div class="hn">Sophia Davis</div><div class="hr">Vocal 4</div></div>
+          </div>
+          <div class="h-btns"><button class="h-btn">↻ Refresh</button><button class="h-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="h-label">Stage</div>
+          <div class="h-stage stage"><svg viewBox="0 0 300 116"><path class="ln" d="M16,108 L16,46 Q150,14 284,46 L284,108"/><circle class="dt" cx="104" cy="54" r="3"/><text class="pl" x="110" y="56">John R.</text><circle class="dt" cx="196" cy="50" r="3"/><text class="pl" x="202" y="52">Emma J.</text><circle class="dt" cx="150" cy="80" r="3"/><text class="pl" x="156" y="82">Ben R.</text></svg></div>
+          <div class="h-label" style="margin-top:16px;">Service Order</div>
+          <div class="ord"><div class="row"><span>Keep Praise</span><span class="tm">5:12</span></div><div class="row"><span>Great Are You</span><span class="tm">4:40</span></div><div class="row"><span>Welcome</span><span class="tm">2:00</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

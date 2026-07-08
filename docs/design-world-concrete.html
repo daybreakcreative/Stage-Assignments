@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Concrete — B&W brutalist / blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Archivo',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:14px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+
+  /* ============================================================
+     CONCRETE — B&W brutalist. Hard modular grid, exposed rules,
+     heavy grotesk + Space Mono, poured-concrete grain, blueprint stage.
+  ============================================================ */
+  .conc{ background:#191a1c; color:#e7e7e4; font-family:'Archivo',sans-serif; position:relative; }
+  .conc::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.14; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .conc > *{ position:relative; z-index:1; }
+  .conc .k-head{ display:flex; justify-content:space-between; align-items:flex-end; padding:18px 22px; border-bottom:2px solid #3c3c3f; }
+  .conc .k-title{ font-weight:800; font-size:30px; text-transform:uppercase; letter-spacing:.005em; line-height:.95; }
+  .conc .k-meta{ font-family:'Space Mono'; font-size:11px; letter-spacing:.08em; color:#9a9a97; text-align:right; line-height:1.6; }
+  .conc .k-body{ display:grid; grid-template-columns:1.35fr 1.25fr; }
+  .conc .k-col{ padding:20px 22px; }
+  .conc .k-col + .k-col{ border-left:2px solid #3c3c3f; }
+  .conc .k-label{ font-family:'Space Mono'; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#8c8c89; margin-bottom:12px; display:flex; justify-content:space-between; }
+  /* roster: hard modular grid of cells */
+  .conc .k-grid{ display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #3c3c3f; border-left:1px solid #3c3c3f; }
+  .conc .k-cell{ border-right:1px solid #3c3c3f; border-bottom:1px solid #3c3c3f; padding:14px; }
+  .conc .k-cell .idx{ font-family:'Space Mono'; font-size:11px; color:#76766f; }
+  .conc .k-cell .nm{ font-weight:700; font-size:17px; text-transform:uppercase; margin-top:4px; line-height:1.05; }
+  .conc .k-cell .rl{ font-family:'Space Mono'; font-size:10px; color:#9a9a97; margin-top:8px; letter-spacing:.06em; text-transform:uppercase; }
+  .conc .k-cell .mc{ font-family:'Space Mono'; font-size:13px; color:#fff; margin-top:2px; font-weight:700; }
+  /* blueprint stage */
+  .conc .k-stage{ border:1px solid #3c3c3f; background:#141416;
+    background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);
+    background-size:22px 22px; padding:8px; }
+  .conc .k-stage svg{ width:100%; height:auto; display:block; }
+  .conc .k-stage .ln{ stroke:#dcdcd8; stroke-width:1.2; fill:none; }
+  .conc .k-stage .tick{ stroke:#76766f; stroke-width:1; }
+  .conc .k-stage .dt{ fill:#fff; }
+  .conc .k-stage .pl{ font-family:'Space Mono'; font-size:7px; fill:#cfcfca; text-transform:uppercase; }
+  .conc .k-stage .dim{ font-family:'Space Mono'; font-size:6px; fill:#76766f; }
+  /* run sheet manifest */
+  .conc .k-order{ margin-top:20px; }
+  .conc .k-order .row{ font-family:'Space Mono'; display:grid; grid-template-columns:auto 1fr auto; gap:12px; padding:9px 0; border-bottom:1px solid #2c2c2e; font-size:12px; }
+  .conc .k-order .row .no{ color:#76766f; }
+  .conc .k-order .row .du{ color:#9a9a97; }
+  .conc .k-actions{ display:flex; gap:10px; margin-top:20px; }
+  .conc .k-btn{ font-family:'Space Mono'; text-transform:uppercase; font-size:11px; letter-spacing:.06em; border:1px solid #6a6a6c; background:transparent; color:#e7e7e4; padding:9px 16px; cursor:default; }
+  .conc .k-btn.pri{ background:#e7e7e4; color:#191a1c; border-color:#e7e7e4; font-weight:700; }
+
+  @media (max-width:820px){ .conc .k-body{ grid-template-columns:1fr !important; } .conc .k-col + .k-col{ border-left:none; border-top:2px solid #3c3c3f; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Concrete — B&amp;W, textured, brutalist</h1>
+    <p>Swapped in for Speedway. Deliberately <em>not</em> "Corporate in grey" — different skeleton: a hard modular grid with exposed hairline rules, heavy grotesk + Space Mono type, poured-concrete grain, and the stage drawn as a <strong>blueprint</strong> (grid underlay, dimension ticks, mono labels). Cold, dense, tactile, monochrome. Shown in its dark face; the light face is pale poured-concrete / paper.</p>
+    <p class="note">Static mockup. Compare its structure to Corporate — same data, different bones.</p>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🪨 Concrete</span><span class="emotion">brutalist, raw, industrial</span><span class="changed">Archivo heavy + Space Mono · modular grid · concrete grain · blueprint stage · pure B&amp;W</span></div>
+    <div class="disp conc">
+      <div class="k-head">
+        <div class="k-title">Sunday<br>Service</div>
+        <div class="k-meta">07.05.2026<br>09:00 / 11:00<br>AUD—01</div>
+      </div>
+      <div class="k-body">
+        <div class="k-col">
+          <div class="k-label"><span>Vocalists</span><span>04</span></div>
+          <div class="k-grid">
+            <div class="k-cell"><div class="idx">01</div><div class="nm">Amelia Garcia</div><div class="rl">Worship Leader</div><div class="mc">HH-1</div></div>
+            <div class="k-cell"><div class="idx">02</div><div class="nm">Emma Johnson</div><div class="rl">Vocal 2</div><div class="mc">HH-2</div></div>
+            <div class="k-cell"><div class="idx">03</div><div class="nm">Jake Williams</div><div class="rl">Vocal 3</div><div class="mc">HH-3</div></div>
+            <div class="k-cell"><div class="idx">04</div><div class="nm">Sophia Davis</div><div class="rl">Vocal 4</div><div class="mc">HH-4</div></div>
+          </div>
+          <div class="k-actions"><button class="k-btn">↻ Refresh</button><button class="k-btn pri">⤢ Display</button></div>
+        </div>
+        <div class="k-col">
+          <div class="k-label"><span>Stage — Plan</span><span>800×380</span></div>
+          <div class="k-stage"><svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+            <path class="ln" d="M16,140 L16,56 Q150,16 284,56 L284,140"/>
+            <line class="tick" x1="16" y1="146" x2="284" y2="146"/><text class="dim" x="140" y="152">STAGE W.</text>
+            <circle class="dt" cx="104" cy="66" r="3"/><text class="pl" x="110" y="68">JOHN R.</text>
+            <circle class="dt" cx="196" cy="62" r="3"/><text class="pl" x="202" y="64">EMMA J.</text>
+            <circle class="dt" cx="66" cy="114" r="3"/><text class="pl" x="72" y="116">BEN R.</text>
+            <circle class="dt" cx="228" cy="112" r="3"/><text class="pl" x="234" y="114">CARLOS M.</text>
+          </svg></div>
+          <div class="k-label" style="margin-top:20px;"><span>Run Sheet — Manifest</span><span>04</span></div>
+          <div class="k-order">
+            <div class="row"><span class="no">01</span><span>KEEP PRAISE</span><span class="du">5:12</span></div>
+            <div class="row"><span class="no">02</span><span>GREAT ARE YOU</span><span class="du">4:40</span></div>
+            <div class="row"><span class="no">03</span><span>WELCOME</span><span class="du">2:00</span></div>
+            <div class="row"><span class="no">04</span><span>OFFERING</span><span class="du">3:30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

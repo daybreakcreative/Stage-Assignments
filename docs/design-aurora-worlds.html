@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aurora moods — "each preset is a world" preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ color-scheme:dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:#0a0a0c; color:#e8e8ee;
+    font-family:'Manrope',system-ui,sans-serif;
+    padding:40px clamp(16px,4vw,64px) 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .doc-head{ max-width:1100px; margin:0 auto 36px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,34px); letter-spacing:-.01em; }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:760px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:14px; }
+
+  .mood-block{ max-width:1100px; margin:0 auto 30px; border-radius:20px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:16px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; border-radius:20px 20px 0 0; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:18px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:14px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12.5px; }
+
+  /* ------- shared display-view mock layout ------- */
+  .disp{ padding:22px; }
+  .disp-head{ text-align:center; margin-bottom:20px; }
+  .disp-title{ font-size:22px; letter-spacing:.01em; }
+  .disp-sub{ font-size:11px; letter-spacing:.28em; text-transform:uppercase; opacity:.6; margin-top:4px; }
+  .disp-grid{ display:grid; grid-template-columns:1.15fr 1.5fr .95fr; gap:16px; }
+  .col-label{ font-size:10px; letter-spacing:.24em; text-transform:uppercase; opacity:.55; margin-bottom:8px; }
+
+  .vcard{ padding:12px 14px; border-radius:12px; margin-bottom:10px; }
+  .vcard .vn{ font-size:16px; font-weight:600; }
+  .vcard .vr{ font-size:11px; opacity:.62; margin-top:2px; }
+  .vcard .vtag{ float:right; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; }
+
+  .stagewrap{ border-radius:14px; padding:16px; height:100%; display:flex; flex-direction:column; }
+  .stagewrap svg{ width:100%; height:auto; display:block; }
+  .namepill{ font-size:9.5px; font-weight:600; }
+
+  .rail{ border-radius:12px; padding:14px; }
+  .rail .ri{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; }
+  .rail .ri:last-child{ border-bottom:none; }
+  .rail .ri .rt{ opacity:.55; font-size:11px; }
+
+  /* =====================================================================
+     MOLTEN — forged / fiery. Ember glow from below, condensed type, warm
+     glowing accents, warm grain.
+  ===================================================================== */
+  .disp.molten{
+    font-family:'Archivo',sans-serif;
+    background:
+      radial-gradient(130% 80% at 50% 112%, rgba(255,94,40,.30), transparent 58%),
+      radial-gradient(120% 60% at 50% -12%, rgba(255,140,70,.10), transparent 60%),
+      linear-gradient(180deg,#170c07,#0c0605);
+    position:relative;
+  }
+  .disp.molten::after{ /* warm grain */
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .disp.molten .disp-title{ font-family:'Oswald'; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#ffd9c2; text-shadow:0 0 22px rgba(255,107,53,.4); }
+  .disp.molten .disp-sub{ font-family:'Oswald'; color:#ff8a5c; }
+  .disp.molten .col-label{ font-family:'Oswald'; color:#ff8a5c; letter-spacing:.28em; }
+  .disp.molten .vcard{ background:linear-gradient(160deg, rgba(74,32,20,.58), rgba(34,16,11,.46)); border:1px solid rgba(255,120,70,.24); backdrop-filter:blur(12px); box-shadow:inset 0 1px 0 rgba(255,190,150,.14), 0 6px 20px rgba(0,0,0,.3); }
+  .disp.molten .vtag{ background:rgba(255,107,53,.16); color:#ff9d6b; box-shadow:0 0 12px rgba(255,107,53,.35); }
+  .disp.molten .stagewrap{ background:linear-gradient(160deg, rgba(50,22,14,.5), rgba(24,12,8,.4)); border:1px solid rgba(255,120,70,.2); }
+  .disp.molten .stage-line{ stroke:#ff6b35; filter:drop-shadow(0 0 6px rgba(255,107,53,.7)); }
+  .disp.molten .namepill{ fill:#ffd9c2; }
+  .disp.molten .name-dot{ fill:#ff6b35; filter:drop-shadow(0 0 5px rgba(255,107,53,.9)); }
+  .disp.molten .rail{ background:linear-gradient(160deg, rgba(50,22,14,.5), rgba(24,12,8,.38)); border:1px solid rgba(255,120,70,.2); }
+  .disp.molten .rail .rn{ color:#ffb492; }
+
+  /* =====================================================================
+     FROST — crisp / cold / precise. Lighter cool ground, top light, sharp
+     low-blur surfaces, bright thin borders, sharp cyan (NO glow), clarity.
+  ===================================================================== */
+  .disp.frost{
+    font-family:'Manrope',sans-serif;
+    background:
+      radial-gradient(120% 62% at 50% -14%, rgba(150,222,255,.14), transparent 60%),
+      linear-gradient(168deg,#1a2833 0%,#101b24 55%,#132029 100%);
+  }
+  .disp.frost .disp-title{ font-family:'Sora'; font-weight:600; letter-spacing:-.01em; color:#eaf7ff; }
+  .disp.frost .disp-sub{ font-family:'Sora'; color:#8fd4f0; }
+  .disp.frost .col-label{ font-family:'Sora'; color:#8fd4f0; }
+  .disp.frost .vcard{ background:rgba(34,52,66,.42); border:1px solid rgba(150,220,255,.3); backdrop-filter:blur(3px); }
+  .disp.frost .vn{ color:#f2fbff; }
+  .disp.frost .vtag{ background:rgba(127,216,255,.14); color:#9fe0ff; border:1px solid rgba(127,216,255,.3); }
+  .disp.frost .stagewrap{ background:rgba(28,44,56,.4); border:1px solid rgba(150,220,255,.24); }
+  .disp.frost .stage-line{ stroke:#7fd8ff; }
+  .disp.frost .namepill{ fill:#eaf7ff; }
+  .disp.frost .name-dot{ fill:#7fd8ff; }
+  .disp.frost .rail{ background:rgba(28,44,56,.36); border:1px solid rgba(150,220,255,.22); }
+  .disp.frost .rail .rn{ color:#bfe9ff; }
+
+  /* =====================================================================
+     NEBULA — deep space / dreamy. Violet depth from the top, faint stars,
+     rounded cosmic type, soft glowing lavender accents, deep glass.
+  ===================================================================== */
+  .disp.nebula{
+    font-family:'Manrope',sans-serif;
+    background:
+      radial-gradient(130% 92% at 50% -22%, rgba(128,92,224,.26), transparent 62%),
+      radial-gradient(90% 70% at 82% 8%, rgba(210,120,220,.12), transparent 55%),
+      linear-gradient(180deg,#0b0818,#06040d);
+    position:relative;
+  }
+  .disp.nebula::after{ /* starfield */
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:
+      radial-gradient(1.4px 1.4px at 12% 22%, rgba(255,255,255,.9), transparent),
+      radial-gradient(1px 1px at 30% 68%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.6px 1.6px at 62% 34%, rgba(255,255,255,.85), transparent),
+      radial-gradient(1px 1px at 78% 76%, rgba(210,190,255,.8), transparent),
+      radial-gradient(1.2px 1.2px at 88% 18%, rgba(255,255,255,.8), transparent),
+      radial-gradient(1px 1px at 46% 88%, rgba(255,255,255,.6), transparent);
+  }
+  .disp.nebula > *{ position:relative; z-index:1; }
+  .disp.nebula .disp-title{ font-family:'Unbounded'; font-weight:700; letter-spacing:-.01em; color:#efe9ff; text-shadow:0 0 24px rgba(179,156,255,.45); }
+  .disp.nebula .disp-sub{ font-family:'Unbounded'; color:#b39cff; }
+  .disp.nebula .col-label{ font-family:'Unbounded'; color:#b39cff; letter-spacing:.2em; }
+  .disp.nebula .vcard{ background:linear-gradient(160deg, rgba(44,32,78,.52), rgba(22,15,44,.44)); border:1px solid rgba(170,145,255,.26); backdrop-filter:blur(14px); box-shadow:0 0 32px rgba(128,92,224,.1); }
+  .disp.nebula .vtag{ background:rgba(179,156,255,.16); color:#c9b8ff; box-shadow:0 0 12px rgba(179,156,255,.35); }
+  .disp.nebula .stagewrap{ background:linear-gradient(160deg, rgba(38,28,70,.5), rgba(18,12,38,.4)); border:1px solid rgba(170,145,255,.22); }
+  .disp.nebula .stage-line{ stroke:#b39cff; filter:drop-shadow(0 0 6px rgba(179,156,255,.7)); }
+  .disp.nebula .namepill{ fill:#efe9ff; }
+  .disp.nebula .name-dot{ fill:#b39cff; filter:drop-shadow(0 0 5px rgba(179,156,255,.9)); }
+  .disp.nebula .rail{ background:linear-gradient(160deg, rgba(38,28,70,.5), rgba(18,12,38,.38)); border:1px solid rgba(170,145,255,.22); }
+  .disp.nebula .rail .rn{ color:#c9b8ff; }
+
+  @media (max-width:820px){ .disp-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Aurora moods — each preset as a world</h1>
+    <p>The problem: today every mood is the <em>same</em> dark-glass app with a different accent hue — so it changes color, not feeling. Here are three moods rebuilt to <strong>evoke emotion</strong>: the background atmosphere, the typeface, the surface treatment, the accent glow, and the texture all change per mood. Backgrounds stay smooth (edge-anchored glows, not center blobs), so we keep this morning's fix.</p>
+    <p class="note">Static mockup for direction only — not the live app. If you like it, I roll this treatment across all 11 moods and wire it in. Scroll: 🔥 Molten → ❄️ Frost → 🌌 Nebula.</p>
+  </div>
+
+  <!-- MOLTEN -->
+  <div class="mood-block">
+    <div class="mood-cap">
+      <span class="name">🔥 Molten</span>
+      <span class="emotion">forged, hot, high-energy</span>
+      <span class="changed">Oswald · ember-from-below · glowing accents · warm grain</span>
+    </div>
+    <div class="disp molten">
+      <div class="disp-head"><div class="disp-title">Sunday Service</div><div class="disp-sub">Sunday, July 5</div></div>
+      <div class="disp-grid">
+        <div>
+          <div class="col-label">Vocals</div>
+          <div class="vcard"><span class="vtag">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Worship Leader</div></div>
+          <div class="vcard"><span class="vtag">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+          <div class="vcard"><span class="vtag">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div>
+        </div>
+        <div>
+          <div class="col-label">Stage</div>
+          <div class="stagewrap">
+            <svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg">
+              <path class="stage-line" d="M20,140 L20,60 Q160,10 300,60 L300,140" fill="none" stroke-width="2"/>
+              <g><circle class="name-dot" cx="110" cy="70" r="4"/><text class="namepill" x="118" y="73">John R.</text></g>
+              <g><circle class="name-dot" cx="205" cy="66" r="4"/><text class="namepill" x="213" y="69">Emma J.</text></g>
+              <g><circle class="name-dot" cx="70" cy="118" r="4"/><text class="namepill" x="78" y="121">Ben R.</text></g>
+              <g><circle class="name-dot" cx="235" cy="116" r="4"/><text class="namepill" x="243" y="119">Carlos M.</text></g>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Service Order</div>
+          <div class="rail">
+            <div class="ri"><span class="rn">Keep Praise</span><span class="rt">5:12</span></div>
+            <div class="ri"><span class="rn">Great Are You</span><span class="rt">4:40</span></div>
+            <div class="ri"><span class="rn">Welcome</span><span class="rt">2:00</span></div>
+            <div class="ri"><span class="rn">Offering</span><span class="rt">3:30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FROST -->
+  <div class="mood-block">
+    <div class="mood-cap">
+      <span class="name">❄️ Frost</span>
+      <span class="emotion">crisp, calm, cold-clean</span>
+      <span class="changed">Sora · cool top-light · sharp flat surfaces · no glow</span>
+    </div>
+    <div class="disp frost">
+      <div class="disp-head"><div class="disp-title">Sunday Service</div><div class="disp-sub">Sunday, July 5</div></div>
+      <div class="disp-grid">
+        <div>
+          <div class="col-label">Vocals</div>
+          <div class="vcard"><span class="vtag">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Worship Leader</div></div>
+          <div class="vcard"><span class="vtag">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+          <div class="vcard"><span class="vtag">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div>
+        </div>
+        <div>
+          <div class="col-label">Stage</div>
+          <div class="stagewrap">
+            <svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg">
+              <path class="stage-line" d="M20,140 L20,60 Q160,10 300,60 L300,140" fill="none" stroke-width="2"/>
+              <g><circle class="name-dot" cx="110" cy="70" r="4"/><text class="namepill" x="118" y="73">John R.</text></g>
+              <g><circle class="name-dot" cx="205" cy="66" r="4"/><text class="namepill" x="213" y="69">Emma J.</text></g>
+              <g><circle class="name-dot" cx="70" cy="118" r="4"/><text class="namepill" x="78" y="121">Ben R.</text></g>
+              <g><circle class="name-dot" cx="235" cy="116" r="4"/><text class="namepill" x="243" y="119">Carlos M.</text></g>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Service Order</div>
+          <div class="rail">
+            <div class="ri"><span class="rn">Keep Praise</span><span class="rt">5:12</span></div>
+            <div class="ri"><span class="rn">Great Are You</span><span class="rt">4:40</span></div>
+            <div class="ri"><span class="rn">Welcome</span><span class="rt">2:00</span></div>
+            <div class="ri"><span class="rn">Offering</span><span class="rt">3:30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEBULA -->
+  <div class="mood-block">
+    <div class="mood-cap">
+      <span class="name">🌌 Nebula</span>
+      <span class="emotion">vast, dreamy, cosmic</span>
+      <span class="changed">Unbounded · violet depth + stars · soft-glow lavender · deep glass</span>
+    </div>
+    <div class="disp nebula">
+      <div class="disp-head"><div class="disp-title">Sunday Service</div><div class="disp-sub">Sunday, July 5</div></div>
+      <div class="disp-grid">
+        <div>
+          <div class="col-label">Vocals</div>
+          <div class="vcard"><span class="vtag">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Worship Leader</div></div>
+          <div class="vcard"><span class="vtag">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+          <div class="vcard"><span class="vtag">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div>
+        </div>
+        <div>
+          <div class="col-label">Stage</div>
+          <div class="stagewrap">
+            <svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg">
+              <path class="stage-line" d="M20,140 L20,60 Q160,10 300,60 L300,140" fill="none" stroke-width="2"/>
+              <g><circle class="name-dot" cx="110" cy="70" r="4"/><text class="namepill" x="118" y="73">John R.</text></g>
+              <g><circle class="name-dot" cx="205" cy="66" r="4"/><text class="namepill" x="213" y="69">Emma J.</text></g>
+              <g><circle class="name-dot" cx="70" cy="118" r="4"/><text class="namepill" x="78" y="121">Ben R.</text></g>
+              <g><circle class="name-dot" cx="235" cy="116" r="4"/><text class="namepill" x="243" y="119">Carlos M.</text></g>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Service Order</div>
+          <div class="rail">
+            <div class="ri"><span class="rn">Keep Praise</span><span class="rt">5:12</span></div>
+            <div class="ri"><span class="rn">Great Are You</span><span class="rt">4:40</span></div>
+            <div class="ri"><span class="rn">Welcome</span><span class="rt">2:00</span></div>
+            <div class="ri"><span class="rn">Offering</span><span class="rt">3:30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

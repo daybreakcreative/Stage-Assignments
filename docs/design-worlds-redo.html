@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redo — Deco v2, Atomic (MCM), Molten v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600;700&family=Rubik:wght@400;500;700&family=Oswald:wght@400;500;600;700&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Rubik',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:16px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+  .grain{ position:absolute; inset:0; pointer-events:none; opacity:.16; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* ============================================================
+     DECO v2 — gold on charcoal, the FAN pattern, no green.
+  ============================================================ */
+  .deco{ background:radial-gradient(120% 95% at 50% -10%,#2a251c,#100e0a 72%); color:#ecdfc0; font-family:'Cormorant Garamond',serif; padding:26px; position:relative; }
+  .deco .fan{ position:absolute; inset:0; pointer-events:none; opacity:.32;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='60' viewBox='0 0 104 60'%3E%3Cg fill='none' stroke='%23c9a24b' stroke-width='1'%3E%3Cpath d='M8,60 A44,44 0 0 1 96,60'/%3E%3Cpath d='M24,60 A28,28 0 0 1 80,60'/%3E%3Cpath d='M38,60 A14,14 0 0 1 66,60'/%3E%3Cpath d='M52,60 L52,14'/%3E%3Cpath d='M52,60 L26,24'/%3E%3Cpath d='M52,60 L78,24'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:104px 60px; }
+  .deco .frame{ border:2px solid #c9a24b; padding:24px 32px; position:relative; z-index:1; background:rgba(16,14,10,.55); backdrop-filter:blur(1px); }
+  .deco .frame::before{ content:""; position:absolute; inset:7px; border:1px solid rgba(201,162,75,.45); pointer-events:none; }
+  .deco .d-head{ text-align:center; position:relative; padding-top:4px; }
+  .deco .d-sun{ position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:250px; height:110px; pointer-events:none; opacity:.6;
+    background:repeating-conic-gradient(from 90deg at 50% 100%, rgba(201,162,75,.24) 0 3deg, transparent 3deg 11deg); }
+  .deco .d-title{ font-family:'Cinzel'; font-weight:700; font-size:33px; letter-spacing:.16em; text-transform:uppercase; color:#eccd7f; position:relative; }
+  .deco .d-date{ font-style:italic; font-size:15px; color:#c9a24b; position:relative; }
+  .deco .d-rule{ display:flex; align-items:center; justify-content:center; gap:12px; margin:12px 0 16px; }
+  .deco .d-rule::before,.deco .d-rule::after{ content:""; height:1px; width:120px; background:linear-gradient(90deg,transparent,#c9a24b); }
+  .deco .d-rule::after{ background:linear-gradient(90deg,#c9a24b,transparent); }
+  .deco .d-rule span{ color:#c9a24b; transform:rotate(45deg); font-size:9px; }
+  .deco .d-stage{ width:62%; margin:0 auto 20px; border:1.5px solid #c9a24b; padding:8px; position:relative; }
+  .deco .d-stage::before{ content:""; position:absolute; inset:3px; border:1px solid rgba(201,162,75,.4); }
+  .deco .d-stage svg{ width:100%; height:auto; display:block; }
+  .deco .d-stage .ln{ fill:none; stroke:#c9a24b; stroke-width:1.2; }
+  .deco .d-stage .dt{ fill:#eccd7f; }  .deco .d-stage .pl{ font-family:'Cinzel'; font-size:7px; fill:#ecdfc0; }
+  .deco .d-cols{ display:grid; grid-template-columns:1fr 1px 1fr; gap:26px; }
+  .deco .d-spine{ background:linear-gradient(#c9a24b,rgba(201,162,75,.12)); }
+  .deco .d-label{ font-family:'Cinzel'; text-align:center; font-size:11px; letter-spacing:.26em; color:#c9a24b; text-transform:uppercase; margin-bottom:10px; }
+  .deco .cast .row{ display:grid; grid-template-columns:1fr auto 1fr; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid rgba(201,162,75,.18); }
+  .deco .cast .row .rl{ text-align:left; font-family:'Cinzel'; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:#a88a4f; }
+  .deco .cast .row .nm{ text-align:center; font-size:19px; font-weight:500; color:#f4ead1; white-space:nowrap; }
+  .deco .cast .row .mc{ text-align:right; font-family:'Cinzel'; font-size:12px; color:#eccd7f; }
+  .deco .prog .row{ display:flex; align-items:baseline; padding:8px 0; border-bottom:1px solid rgba(201,162,75,.18); font-size:17px; }
+  .deco .prog .row .rn{ font-family:'Cinzel'; color:#c9a24b; font-size:12px; width:34px; }
+  .deco .prog .row .pn{ flex:1; }  .deco .prog .row .tm{ font-family:'Cinzel'; font-size:12px; color:#a88a4f; }
+  .deco .d-actions{ text-align:center; margin-top:18px; }
+  .deco .d-btn{ font-family:'Cinzel'; font-size:11px; letter-spacing:.14em; text-transform:uppercase; border:1px solid #c9a24b; background:transparent; color:#eccd7f; padding:9px 20px; margin:0 5px; cursor:default; }
+  .deco .d-btn.pri{ background:linear-gradient(180deg,#dcb75f,#b8912f); color:#12100b; border:none; font-weight:600; }
+
+  /* ============================================================
+     ATOMIC — mid-century modern / SHAG. Warm flat color-blocks,
+     starburst, retro shapes, Jost (Futura-era). Graphic, not glass.
+  ============================================================ */
+  .atomic{ background:#efe2c8; color:#2c2620; font-family:'Rubik',sans-serif; position:relative; }
+  .atomic .a-head{ background:#2c2925; color:#efe2c8; padding:20px 26px; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; }
+  .atomic .a-head .burst{ position:absolute; right:-30px; top:-30px; width:150px; height:150px; opacity:.8;
+    background:repeating-conic-gradient(from 0deg at 50% 50%, #d99a2b 0 8deg, transparent 8deg 16deg); border-radius:50%; }
+  .atomic .a-title{ font-family:'Jost'; font-weight:600; font-size:30px; letter-spacing:.02em; position:relative; z-index:1; }
+  .atomic .a-meta{ font-family:'Jost'; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#d99a2b; position:relative; z-index:1; text-align:right; }
+  .atomic .a-body{ display:grid; grid-template-columns:1.4fr 1fr; gap:0; }
+  .atomic .a-col{ padding:22px 26px; }
+  .atomic .a-col.left{ background:#efe2c8; }
+  .atomic .a-col.right{ background:#e2d4b6; }
+  .atomic .a-label{ font-family:'Jost'; font-weight:600; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#8a5a2b; margin-bottom:14px; }
+  .atomic .a-voices{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .atomic .vpill{ border-radius:14px; padding:14px 16px; color:#241f18; position:relative; }
+  .atomic .vpill:nth-child(1){ background:#c1502e; color:#fbeede; }
+  .atomic .vpill:nth-child(2){ background:#6b7440; color:#f3efdd; }
+  .atomic .vpill:nth-child(3){ background:#d99a2b; }
+  .atomic .vpill:nth-child(4){ background:#3f6f72; color:#eef6f2; }
+  .atomic .vpill .vn{ font-family:'Jost'; font-weight:600; font-size:18px; line-height:1; }
+  .atomic .vpill .vr{ font-family:'Jost'; font-size:10px; letter-spacing:.12em; text-transform:uppercase; opacity:.8; margin-top:6px; }
+  .atomic .vpill .vm{ position:absolute; top:12px; right:14px; font-family:'Jost'; font-weight:700; font-size:12px; background:rgba(0,0,0,.18); border-radius:20px; padding:2px 9px; }
+  .atomic .a-stage{ background:#efe2c8; border-radius:16px; padding:14px; }
+  .atomic .a-stage svg{ width:100%; height:auto; display:block; }
+  .atomic .a-stage .ln{ fill:none; stroke:#7a4f2a; stroke-width:2; }
+  .atomic .a-stage .dt{ fill:#c1502e; }  .atomic .a-stage .pl{ font-family:'Jost'; font-size:8px; fill:#4a3a28; }
+  .atomic .a-order{ margin-top:16px; }
+  .atomic .a-order .row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(90,60,30,.2); font-family:'Jost'; font-size:14px; }
+  .atomic .a-order .row .tm{ color:#8a5a2b; }
+  .atomic .a-btns{ display:flex; gap:10px; margin-top:16px; }
+  .atomic .a-btn{ font-family:'Jost'; font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; border:2px solid #2c2925; background:transparent; color:#2c2925; border-radius:30px; padding:8px 16px; cursor:default; }
+  .atomic .a-btn.pri{ background:#c1502e; border-color:#c1502e; color:#fbeede; }
+
+  /* ============================================================
+     MOLTEN v2 — equal "lineup" (no hero / no WL emphasis).
+  ============================================================ */
+  .molten{ color:#ffe7d6; font-family:'Archivo',sans-serif; padding:26px 30px; position:relative;
+    background:
+      radial-gradient(130% 80% at 50% 114%, rgba(255,94,40,.32), transparent 58%),
+      linear-gradient(180deg,#170c07,#0c0605); }
+  .molten .m-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:16px; position:relative; z-index:1; }
+  .molten .m-title{ font-family:'Oswald'; font-weight:600; font-size:34px; text-transform:uppercase; letter-spacing:.05em; color:#ffd9c2; text-shadow:0 0 22px rgba(255,107,53,.45); line-height:.9; }
+  .molten .m-meta{ font-family:'Oswald'; font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:#ff8a5c; text-align:right; }
+  .molten .m-body{ display:grid; grid-template-columns:1.5fr 1fr; gap:20px; position:relative; z-index:1; }
+  .molten .m-label{ font-family:'Oswald'; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:#ff8a5c; margin-bottom:8px; }
+  /* equal lineup — big condensed names, no hero */
+  .molten .lineup .lrow{ display:flex; align-items:baseline; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,120,70,.2); }
+  .molten .lineup .lrow .ln{ font-family:'Oswald'; font-weight:600; font-size:30px; text-transform:uppercase; letter-spacing:.02em; color:#ffeaddee; line-height:.95; }
+  .molten .lineup .lrow .lr{ font-family:'Oswald'; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#c98c6e; margin-left:12px; }
+  .molten .lineup .lrow .lm{ font-family:'Oswald'; font-weight:600; font-size:15px; color:#1a0d07; background:linear-gradient(180deg,#ff8a4c,#e8551f); border-radius:7px; padding:3px 11px; box-shadow:0 0 12px rgba(255,107,53,.4); }
+  .molten .m-side .stagewrap{ background:linear-gradient(160deg, rgba(50,22,14,.5), rgba(24,12,8,.4)); border:1px solid rgba(255,120,70,.2); border-radius:12px; padding:12px; }
+  .molten .m-side .stagewrap svg{ width:100%; height:auto; display:block; }
+  .molten .m-side .stage-line{ stroke:#ff6b35; filter:drop-shadow(0 0 6px rgba(255,107,53,.7)); fill:none; }
+  .molten .m-side .dt{ fill:#ff6b35; filter:drop-shadow(0 0 5px rgba(255,107,53,.9)); }
+  .molten .m-side .pl{ font-family:'Oswald'; font-size:8px; fill:#ffd9c2; }
+  .molten .m-order{ margin-top:16px; }
+  .molten .m-order .row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,120,70,.16); font-size:14px; }
+  .molten .m-order .row .tm{ font-family:'Oswald'; color:#c98c6e; font-size:12px; }
+  .molten .m-btns{ display:flex; gap:10px; margin-top:14px; }
+  .molten .m-btn{ font-family:'Oswald'; font-size:12px; letter-spacing:.06em; text-transform:uppercase; border:1px solid rgba(255,120,70,.45); background:rgba(255,107,53,.12); color:#ffb492; border-radius:8px; padding:8px 15px; cursor:default; }
+  .molten .m-btn.pri{ background:linear-gradient(180deg,#ff7a45,#e8551f); color:#1a0d07; border:none; font-weight:600; box-shadow:0 0 16px rgba(255,107,53,.5); }
+
+  @media (max-width:820px){ .deco .d-cols,.atomic .a-body,.molten .m-body{ grid-template-columns:1fr !important; } .atomic .a-voices{ grid-template-columns:1fr; } .deco .d-spine{ display:none; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Redo — Deco v2 · Atomic · Molten v2</h1>
+    <p>Deco with the green gone (gold on charcoal + the fan pattern you liked). A new <strong>Atomic</strong> mid-century-modern option for that slot (SHAG / Incredibles — warm flat color, starburst, Jost). And Molten with the worship-leader hero removed — all voices equal. Grain cranked on all three; I'll apply the same texture pass to the other worlds.</p>
+    <p class="note">Static mockups. Scroll: 🎭 Deco v2 → 🛰 Atomic → 🔥 Molten v2. Pick Deco v2 OR Atomic for the sixth slot.</p>
+  </div>
+
+  <!-- DECO v2 -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🎭 Deco v2</span><span class="emotion">deco glamour — gold, no green</span><span class="changed">fan pattern · gold on charcoal · Cinzel · symmetric · grain</span></div>
+    <div class="disp deco">
+      <div class="fan"></div><div class="grain"></div>
+      <div class="frame">
+        <div class="d-head"><div class="d-sun"></div><div class="d-title">Sunday Service</div><div class="d-date">Sunday, the Fifth of July · Main Auditorium</div><div class="d-rule"><span>◆</span></div></div>
+        <div class="d-stage"><svg viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg">
+          <path class="ln" d="M18,84 L18,42 Q150,12 282,42 L282,84"/>
+          <circle class="dt" cx="110" cy="48" r="2.6"/><text class="pl" x="115" y="50">John R.</text>
+          <circle class="dt" cx="196" cy="46" r="2.6"/><text class="pl" x="201" y="48">Emma J.</text>
+          <circle class="dt" cx="150" cy="68" r="2.6"/><text class="pl" x="155" y="70">Ben R.</text>
+        </svg></div>
+        <div class="d-cols">
+          <div class="cast">
+            <div class="d-label">Voices</div>
+            <div class="row"><span class="rl">Vocal I</span><span class="nm">Amelia Garcia</span><span class="mc">HH 1</span></div>
+            <div class="row"><span class="rl">Vocal II</span><span class="nm">Emma Johnson</span><span class="mc">HH 2</span></div>
+            <div class="row"><span class="rl">Vocal III</span><span class="nm">Jake Williams</span><span class="mc">HH 3</span></div>
+            <div class="row"><span class="rl">Vocal IV</span><span class="nm">Sophia Davis</span><span class="mc">HH 4</span></div>
+          </div>
+          <div class="d-spine"></div>
+          <div class="prog">
+            <div class="d-label">Programme</div>
+            <div class="row"><span class="rn">I.</span><span class="pn">Keep Praise</span><span class="tm">5:12</span></div>
+            <div class="row"><span class="rn">II.</span><span class="pn">Great Are You</span><span class="tm">4:40</span></div>
+            <div class="row"><span class="rn">III.</span><span class="pn">Welcome</span><span class="tm">2:00</span></div>
+            <div class="row"><span class="rn">IV.</span><span class="pn">Offering</span><span class="tm">3:30</span></div>
+          </div>
+        </div>
+        <div class="d-actions"><button class="d-btn">Refresh</button><button class="d-btn pri">Enter Display</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATOMIC -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🛰 Atomic</span><span class="emotion">mid-century modern — SHAG / Incredibles</span><span class="changed">Jost · warm flat color-blocks · starburst · graphic · grain</span></div>
+    <div class="disp atomic">
+      <div class="grain"></div>
+      <div class="a-head"><div class="burst"></div><div class="a-title">Sunday Service</div><div class="a-meta">Sunday · July 5<br>Main Auditorium</div></div>
+      <div class="a-body">
+        <div class="a-col left">
+          <div class="a-label">Voices</div>
+          <div class="a-voices">
+            <div class="vpill"><span class="vm">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Vocal 1</div></div>
+            <div class="vpill"><span class="vm">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+            <div class="vpill"><span class="vm">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div>
+            <div class="vpill"><span class="vm">HH 4</span><div class="vn">Sophia Davis</div><div class="vr">Vocal 4</div></div>
+          </div>
+          <div class="a-btns"><button class="a-btn">↻ Refresh</button><button class="a-btn pri">⤢ Display</button></div>
+        </div>
+        <div class="a-col right">
+          <div class="a-label">Stage</div>
+          <div class="a-stage"><svg viewBox="0 0 300 116" xmlns="http://www.w3.org/2000/svg">
+            <path class="ln" d="M16,108 L16,46 Q150,14 284,46 L284,108"/>
+            <circle class="dt" cx="104" cy="54" r="3"/><text class="pl" x="110" y="56">John R.</text>
+            <circle class="dt" cx="196" cy="50" r="3"/><text class="pl" x="202" y="52">Emma J.</text>
+            <circle class="dt" cx="150" cy="80" r="3"/><text class="pl" x="156" y="82">Ben R.</text>
+          </svg></div>
+          <div class="a-label" style="margin-top:16px;">Service Order</div>
+          <div class="a-order">
+            <div class="row"><span>Keep Praise</span><span class="tm">5:12</span></div>
+            <div class="row"><span>Great Are You</span><span class="tm">4:40</span></div>
+            <div class="row"><span>Welcome</span><span class="tm">2:00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOLTEN v2 -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🔥 Molten v2</span><span class="emotion">warm, bold — equal lineup, no hero</span><span class="changed">Oswald lineup · all voices equal · ember · grain</span></div>
+    <div class="disp molten">
+      <div class="grain"></div>
+      <div class="m-head"><div class="m-title">Sunday<br>Service</div><div class="m-meta">Sunday · July 5<br>Main Auditorium</div></div>
+      <div class="m-body">
+        <div>
+          <div class="m-label">On the Mic</div>
+          <div class="lineup">
+            <div class="lrow"><span><span class="ln">Amelia Garcia</span><span class="lr">Vocal 1</span></span><span class="lm">HH 1</span></div>
+            <div class="lrow"><span><span class="ln">Emma Johnson</span><span class="lr">Vocal 2</span></span><span class="lm">HH 2</span></div>
+            <div class="lrow"><span><span class="ln">Jake Williams</span><span class="lr">Vocal 3</span></span><span class="lm">HH 3</span></div>
+            <div class="lrow"><span><span class="ln">Sophia Davis</span><span class="lr">Vocal 4</span></span><span class="lm">HH 4</span></div>
+          </div>
+        </div>
+        <div class="m-side">
+          <div class="m-label">Stage</div>
+          <div class="stagewrap"><svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+            <path class="stage-line" d="M16,112 L16,48 Q150,14 284,48 L284,112" stroke-width="2"/>
+            <circle class="dt" cx="104" cy="56" r="3"/><text class="pl" x="110" y="58">John R.</text>
+            <circle class="dt" cx="196" cy="52" r="3"/><text class="pl" x="202" y="54">Emma J.</text>
+            <circle class="dt" cx="150" cy="82" r="3"/><text class="pl" x="156" y="84">Ben R.</text>
+          </svg></div>
+          <div class="m-label" style="margin-top:16px;">Service Order</div>
+          <div class="m-order">
+            <div class="row"><span>Keep Praise</span><span class="tm">5:12</span></div>
+            <div class="row"><span>Great Are You</span><span class="tm">4:40</span></div>
+            <div class="row"><span>Welcome</span><span class="tm">2:00</span></div>
+          </div>
+          <div class="m-btns"><button class="m-btn">↻ Refresh</button><button class="m-btn pri">⤢ Display</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

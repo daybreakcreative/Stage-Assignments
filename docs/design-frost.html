@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Frost — crystalline / calm / premium (dark + light)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{ color-scheme:dark; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#08080b; color:#e8e8ee; font-family:'Sora',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 34px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:800px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:14px; }
+
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:20px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+
+  /* airy + crisp shared */
+  .disp{ padding:34px; --rad:3px; position:relative; }
+  .disp-head{ text-align:center; margin-bottom:28px; }
+  .disp-title{ font-size:25px; font-weight:600; letter-spacing:-.01em; }
+  .disp-sub{ font-size:10.5px; letter-spacing:.34em; text-transform:uppercase; margin-top:8px; }
+  .disp-actions{ display:flex; gap:10px; justify-content:center; margin-top:16px; }
+  .mbtn{ font-size:11.5px; font-weight:500; padding:7px 17px; border-radius:var(--rad); cursor:default; border:1px solid transparent; background:transparent; }
+  .disp-grid{ display:grid; grid-template-columns:1.15fr 1.5fr .95fr; gap:24px; }
+  .col-label{ font-size:10px; letter-spacing:.3em; text-transform:uppercase; margin-bottom:10px; font-weight:500; }
+  .vcard{ padding:16px; border-radius:var(--rad); margin-bottom:12px; }
+  .vcard .vn{ font-size:16px; font-weight:500; }
+  .vcard .vr{ font-size:11px; opacity:.6; margin-top:3px; }
+  .vcard .vtag{ float:right; font-size:11px; font-weight:500; padding:3px 10px; border-radius:var(--rad); }
+  .stagewrap{ border-radius:var(--rad); padding:18px; height:100%; }
+  .stagewrap svg{ width:100%; height:auto; display:block; }
+  .namepill{ font-size:9.5px; font-weight:500; }
+  .rail{ border-radius:var(--rad); padding:16px; }
+  .rail .ri{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; font-size:13px; }
+  .rail .ri .rt{ opacity:.55; font-size:11px; }
+
+  /* faint frost grain */
+  .disp::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.035; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .disp > *{ position:relative; z-index:1; }
+
+  /* ---- FROST DARK — deep glacier ---- */
+  .disp.frostD{ font-family:'Sora',sans-serif;
+    background:
+      radial-gradient(120% 60% at 50% -14%, rgba(150,222,255,.16), transparent 58%),
+      linear-gradient(168deg,#101f2a 0%,#0b1620 55%,#0d1a24 100%); }
+  .disp.frostD .disp-title{ color:#eef8ff; }
+  .disp.frostD .disp-sub,.disp.frostD .col-label{ color:#8fd4f0; }
+  .disp.frostD .mbtn{ border-color:rgba(150,220,255,.4); color:#bfeaff; }
+  .disp.frostD .mbtn.primary{ background:rgba(127,216,255,.16); border-color:rgba(127,216,255,.6); color:#eaf7ff; }
+  .disp.frostD .vcard{ background:rgba(36,56,70,.4); border:1px solid rgba(150,220,255,.3); }
+  .disp.frostD .vn{ color:#f3fbff; }
+  .disp.frostD .vr{ color:#a9cddd; }
+  .disp.frostD .vtag{ background:transparent; color:#9fe0ff; border:1px solid rgba(127,216,255,.45); }
+  .disp.frostD .stagewrap{ background:rgba(30,48,60,.36); border:1px solid rgba(150,220,255,.26); }
+  .disp.frostD .stage-line{ stroke:#7fd8ff; stroke-width:1.5; }
+  .disp.frostD .namepill{ fill:#eef8ff; }  .disp.frostD .name-dot{ fill:#7fd8ff; }
+  .disp.frostD .rail{ background:rgba(30,48,60,.32); border:1px solid rgba(150,220,255,.24); }
+  .disp.frostD .rail .ri{ border-bottom:1px solid rgba(150,220,255,.12); }
+  .disp.frostD .rail .ri:last-child{ border-bottom:none; }
+  .disp.frostD .rail .rn{ color:#dcf1fb; font-weight:500; }
+
+  /* ---- FROST LIGHT — bright ice ---- */
+  .disp.frostL{ font-family:'Sora',sans-serif; color:#1b2c38;
+    background:
+      radial-gradient(120% 60% at 50% -14%, rgba(120,200,240,.35), transparent 60%),
+      linear-gradient(168deg,#eff7fc 0%,#dcecf5 100%); }
+  .disp.frostL .disp-title{ color:#12232f; }
+  .disp.frostL .disp-sub,.disp.frostL .col-label{ color:#2f8fbf; }
+  .disp.frostL .mbtn{ border-color:rgba(47,143,191,.45); color:#236a8f; }
+  .disp.frostL .mbtn.primary{ background:#2f9fd4; border-color:#2f9fd4; color:#fff; }
+  .disp.frostL .vcard{ background:rgba(255,255,255,.7); border:1px solid rgba(30,90,120,.2); }
+  .disp.frostL .vn{ color:#12232f; }
+  .disp.frostL .vr{ color:#5a7684; opacity:1; }
+  .disp.frostL .vtag{ background:transparent; color:#2680aa; border:1px solid rgba(47,143,191,.4); }
+  .disp.frostL .stagewrap{ background:rgba(255,255,255,.55); border:1px solid rgba(30,90,120,.18); }
+  .disp.frostL .stage-line{ stroke:#2f9fd4; stroke-width:1.5; }
+  .disp.frostL .namepill{ fill:#12232f; }  .disp.frostL .name-dot{ fill:#2f9fd4; }
+  .disp.frostL .rail{ background:rgba(255,255,255,.55); border:1px solid rgba(30,90,120,.18); }
+  .disp.frostL .rail .ri{ border-bottom:1px solid rgba(30,90,120,.1); }
+  .disp.frostL .rail .ri:last-child{ border-bottom:none; }
+  .disp.frostL .rail .rn{ color:#12232f; font-weight:500; }
+
+  @media (max-width:820px){ .disp-grid{ grid-template-columns:1fr !important; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Frost — is it a keeper?</h1>
+    <p>Reframed: not "clinical/sterile" but <strong>crystalline, calm, premium</strong> — clean glass, generous space, crisp hairlines, geometric Sora type, ice-cyan accents, no glow. It's the one cool/minimal world in a set that's otherwise warm (Molten, Vintage, Surf), neutral (Concrete), or cosmic (Nebula). Both faces below — the bright-ice light one is often the winner.</p>
+    <p class="note">Static mockup. Scroll: ❄️ Frost Dark → ☀️ Frost Light. Keep it, or cut to a tight 5?</p>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">❄️ Frost · Dark</span><span class="emotion">deep glacier, calm</span><span class="changed">Sora · airy · sharp r3 · crisp hairlines · no glow</span></div>
+    <div class="disp frostD">
+      <div class="disp-head"><div class="disp-title">Sunday Service</div><div class="disp-sub">Sunday · July 5</div><div class="disp-actions"><button class="mbtn">↻ Refresh</button><button class="mbtn primary">⤢ Display</button></div></div>
+      <div class="disp-grid">
+        <div><div class="col-label">Vocals</div>
+          <div class="vcard"><span class="vtag">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Worship Leader</div></div>
+          <div class="vcard"><span class="vtag">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+          <div class="vcard"><span class="vtag">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div></div>
+        <div><div class="col-label">Stage</div><div class="stagewrap"><svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg"><path class="stage-line" d="M20,140 L20,60 Q160,10 300,60 L300,140" fill="none" stroke-width="2"/><g><circle class="name-dot" cx="110" cy="70" r="4"/><text class="namepill" x="118" y="73">John R.</text></g><g><circle class="name-dot" cx="205" cy="66" r="4"/><text class="namepill" x="213" y="69">Emma J.</text></g><g><circle class="name-dot" cx="70" cy="118" r="4"/><text class="namepill" x="78" y="121">Ben R.</text></g><g><circle class="name-dot" cx="235" cy="116" r="4"/><text class="namepill" x="243" y="119">Carlos M.</text></g></svg></div></div>
+        <div><div class="col-label">Service Order</div><div class="rail"><div class="ri"><span class="rn">Keep Praise</span><span class="rt">5:12</span></div><div class="ri"><span class="rn">Great Are You</span><span class="rt">4:40</span></div><div class="ri"><span class="rn">Welcome</span><span class="rt">2:00</span></div><div class="ri"><span class="rn">Offering</span><span class="rt">3:30</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">☀️ Frost · Light</span><span class="emotion">bright ice, pristine</span><span class="changed">same world, light face — often the more striking one</span></div>
+    <div class="disp frostL">
+      <div class="disp-head"><div class="disp-title">Sunday Service</div><div class="disp-sub">Sunday · July 5</div><div class="disp-actions"><button class="mbtn">↻ Refresh</button><button class="mbtn primary">⤢ Display</button></div></div>
+      <div class="disp-grid">
+        <div><div class="col-label">Vocals</div>
+          <div class="vcard"><span class="vtag">HH 1</span><div class="vn">Amelia Garcia</div><div class="vr">Worship Leader</div></div>
+          <div class="vcard"><span class="vtag">HH 2</span><div class="vn">Emma Johnson</div><div class="vr">Vocal 2</div></div>
+          <div class="vcard"><span class="vtag">HH 3</span><div class="vn">Jake Williams</div><div class="vr">Vocal 3</div></div></div>
+        <div><div class="col-label">Stage</div><div class="stagewrap"><svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg"><path class="stage-line" d="M20,140 L20,60 Q160,10 300,60 L300,140" fill="none" stroke-width="2"/><g><circle class="name-dot" cx="110" cy="70" r="4"/><text class="namepill" x="118" y="73">John R.</text></g><g><circle class="name-dot" cx="205" cy="66" r="4"/><text class="namepill" x="213" y="69">Emma J.</text></g><g><circle class="name-dot" cx="70" cy="118" r="4"/><text class="namepill" x="78" y="121">Ben R.</text></g><g><circle class="name-dot" cx="235" cy="116" r="4"/><text class="namepill" x="243" y="119">Carlos M.</text></g></svg></div></div>
+        <div><div class="col-label">Service Order</div><div class="rail"><div class="ri"><span class="rn">Keep Praise</span><span class="rt">5:12</span></div><div class="ri"><span class="rn">Great Are You</span><span class="rt">4:40</span></div><div class="ri"><span class="rn">Welcome</span><span class="rt">2:00</span></div><div class="ri"><span class="rn">Offering</span><span class="rt">3:30</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

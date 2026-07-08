@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Worlds, fresh — different LAYOUTS, not recolors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Archivo:wght@400;500;600;700&family=Racing+Sans+One&family=Saira+Condensed:wght@400;500;600;700;800&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Archivo',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1160px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1160px; margin:0 auto 30px; border-radius:18px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+
+  /* ============================================================
+     WORLD 1 — CORPORATE (editorial / gallery).  A typographic LIST,
+     not cards. Huge whitespace. Thin-line stage. Asymmetric 2-col.
+  ============================================================ */
+  .corp{ background:#f4f1ea; color:#1a1712; font-family:'Newsreader',serif; padding:44px 48px; }
+  .corp .c-head{ display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid #1a1712; padding-bottom:18px; }
+  .corp .c-title{ font-size:40px; font-weight:400; letter-spacing:-.01em; line-height:1; }
+  .corp .c-meta{ text-align:right; font-family:'Archivo'; font-size:10px; letter-spacing:.24em; text-transform:uppercase; line-height:1.8; color:#6b6155; }
+  .corp .c-body{ display:grid; grid-template-columns:1.7fr 1fr; gap:56px; margin-top:34px; }
+  .corp .c-label{ font-family:'Archivo'; font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:#8a7f70; margin-bottom:6px; }
+  .corp .c-row{ display:grid; grid-template-columns:1fr auto auto; align-items:baseline; gap:20px; padding:15px 0; border-bottom:1px solid rgba(26,23,18,.14); }
+  .corp .c-row .nm{ font-size:23px; font-weight:400; }
+  .corp .c-row .rl{ font-family:'Archivo'; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#8a7f70; }
+  .corp .c-row .mc{ font-family:'Archivo'; font-size:12px; letter-spacing:.14em; color:#a8410f; min-width:52px; text-align:right; }
+  .corp .c-sub{ margin-bottom:30px; }
+  .corp .c-stage svg{ width:100%; height:auto; }
+  .corp .c-stage .ln{ stroke:#1a1712; stroke-width:1; fill:none; }
+  .corp .c-stage .dt{ fill:#a8410f; }
+  .corp .c-stage .pl{ font-family:'Archivo'; font-size:7px; letter-spacing:.12em; fill:#1a1712; text-transform:uppercase; }
+  .corp .c-order{ list-style:none; }
+  .corp .c-order li{ display:flex; justify-content:space-between; font-family:'Archivo'; font-size:12px; padding:8px 0; border-bottom:1px solid rgba(26,23,18,.1); color:#3a342c; }
+  .corp .c-order li .t{ color:#a89a86; }
+  .corp .c-actions{ margin-top:26px; display:flex; gap:20px; }
+  .corp .c-btn{ font-family:'Archivo'; font-size:11px; letter-spacing:.18em; text-transform:uppercase; background:none; border:none; border-bottom:1px solid #1a1712; padding:4px 0; color:#1a1712; cursor:default; }
+  .corp .c-btn.pri{ color:#a8410f; border-color:#a8410f; }
+
+  /* ============================================================
+     WORLD 2 — SPEEDWAY (vintage NASCAR).  Number-plate roster,
+     oval-track stage, timing-tower run sheet. Loud, italic, striped.
+  ============================================================ */
+  .speed{ background:#0d0d0f; color:#fff; font-family:'Saira Condensed',sans-serif; position:relative; }
+  .speed .s-checker{ height:14px; background:
+    repeating-conic-gradient(#fff 0 25%, #0d0d0f 0 50%) 0 0/28px 28px; }
+  .speed .s-head{ background:linear-gradient(90deg,#e01020,#a50c18); padding:16px 22px; position:relative; overflow:hidden; }
+  .speed .s-head::after{ content:""; position:absolute; inset:0; background:repeating-linear-gradient(115deg, transparent 0 26px, rgba(0,0,0,.12) 26px 30px); }
+  .speed .s-title{ font-family:'Racing Sans One'; font-size:34px; font-style:normal; transform:skewX(-8deg); text-transform:uppercase; letter-spacing:.01em; position:relative; z-index:1; text-shadow:2px 2px 0 rgba(0,0,0,.35); }
+  .speed .s-meta{ font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:11px; transform:skewX(-8deg); position:relative; z-index:1; opacity:.9; }
+  .speed .s-body{ padding:20px 22px; display:grid; grid-template-columns:1.5fr 1.2fr; gap:20px; }
+  .speed .s-sec{ font-family:'Racing Sans One'; color:#ffd400; font-size:14px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:12px; transform:skewX(-6deg); }
+  .speed .s-plates{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .speed .s-plate{ display:flex; align-items:center; gap:12px; background:#fff; color:#0d0d0f; border:3px solid #0d0d0f; box-shadow:4px 4px 0 #e01020; padding:8px 10px; }
+  .speed .s-plate .no{ font-family:'Racing Sans One'; font-size:30px; line-height:.9; font-style:italic; color:#e01020; min-width:44px; text-align:center; }
+  .speed .s-plate .info .nm{ font-weight:800; text-transform:uppercase; font-size:15px; letter-spacing:.02em; line-height:1; }
+  .speed .s-plate .info .rl{ font-weight:600; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#6b6b6b; }
+  .speed .s-plate .info .mc{ font-weight:700; font-size:11px; color:#0044cc; letter-spacing:.08em; }
+  .speed .s-track svg{ width:100%; height:auto; }
+  .speed .s-track .oval{ fill:none; stroke:#fff; stroke-width:10; opacity:.28; }
+  .speed .s-track .oval2{ fill:none; stroke:#ffd400; stroke-width:2; stroke-dasharray:6 8; }
+  .speed .s-track .car{ fill:#e01020; stroke:#fff; stroke-width:1.5; }
+  .speed .s-track .lbl{ font-family:'Racing Sans One'; font-size:9px; fill:#fff; text-transform:uppercase; }
+  .speed .s-tower{ margin-top:16px; }
+  .speed .s-tower .row{ display:flex; align-items:center; gap:10px; border-bottom:1px solid #262626; padding:7px 0; }
+  .speed .s-tower .row .p{ font-family:'Racing Sans One'; color:#ffd400; font-size:15px; min-width:26px; }
+  .speed .s-tower .row .n{ font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:14px; flex:1; }
+  .speed .s-tower .row .t{ font-weight:600; color:#9a9a9a; font-size:13px; }
+  .speed .s-actions{ display:flex; gap:10px; margin-top:16px; }
+  .speed .s-btn{ font-family:'Racing Sans One'; font-size:12px; text-transform:uppercase; transform:skewX(-8deg); padding:8px 16px; border:2px solid #fff; background:transparent; color:#fff; cursor:default; }
+  .speed .s-btn.pri{ background:#ffd400; color:#0d0d0f; border-color:#ffd400; }
+
+  @media (max-width:820px){ .corp .c-body,.speed .s-body{ grid-template-columns:1fr !important; } .speed .s-plates{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Two worlds, opposite extremes — proving it's the LAYOUT, not the color</h1>
+    <p>Same data (4 vocals, a stage, a run sheet). Completely different skeletons: <strong>Corporate</strong> throws out cards for a quiet typographic list with a hairline-thin stage; <strong>Speedway</strong> turns the roster into number-plate patches, the stage into an oval track, and the run sheet into a timing tower. This is the level of difference every world will have.</p>
+    <p class="note">Static mockups. Scroll: 🏛 Corporate → 🏁 Speedway.</p>
+  </div>
+
+  <!-- CORPORATE -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🏛 Corporate</span><span class="emotion">editorial, premium, quiet</span><span class="changed">Newsreader · list not cards · huge whitespace · thin-line stage · clay accent</span></div>
+    <div class="disp corp">
+      <div class="c-head">
+        <div class="c-title">Sunday Service</div>
+        <div class="c-meta">July 5, 2026<br>9:00 &amp; 11:00 AM<br>Main Auditorium</div>
+      </div>
+      <div class="c-body">
+        <div>
+          <div class="c-label">Vocalists</div>
+          <div class="c-row"><span class="nm">Amelia Garcia</span><span class="rl">Worship Leader</span><span class="mc">HH 1</span></div>
+          <div class="c-row"><span class="nm">Emma Johnson</span><span class="rl">Vocal 2</span><span class="mc">HH 2</span></div>
+          <div class="c-row"><span class="nm">Jake Williams</span><span class="rl">Vocal 3</span><span class="mc">HH 3</span></div>
+          <div class="c-row"><span class="nm">Sophia Davis</span><span class="rl">Vocal 4</span><span class="mc">HH 4</span></div>
+          <div class="c-actions"><button class="c-btn">Refresh</button><button class="c-btn pri">Enter Display</button></div>
+        </div>
+        <div>
+          <div class="c-sub">
+            <div class="c-label">Stage</div>
+            <div class="c-stage"><svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+              <path class="ln" d="M14,142 L14,54 Q150,14 286,54 L286,142"/>
+              <circle class="dt" cx="104" cy="64" r="3"/><text class="pl" x="111" y="66">John R.</text>
+              <circle class="dt" cx="196" cy="60" r="3"/><text class="pl" x="203" y="62">Emma J.</text>
+              <circle class="dt" cx="66" cy="112" r="3"/><text class="pl" x="73" y="114">Ben R.</text>
+              <circle class="dt" cx="228" cy="110" r="3"/><text class="pl" x="235" y="112">Carlos M.</text>
+            </svg></div>
+          </div>
+          <div>
+            <div class="c-label">Run of Service</div>
+            <ul class="c-order">
+              <li><span>I. Keep Praise</span><span class="t">5:12</span></li>
+              <li><span>II. Great Are You</span><span class="t">4:40</span></li>
+              <li><span>III. Welcome</span><span class="t">2:00</span></li>
+              <li><span>IV. Offering</span><span class="t">3:30</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPEEDWAY -->
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🏁 Speedway</span><span class="emotion">vintage NASCAR, loud, fast</span><span class="changed">Racing Sans One · number-plate roster · oval-track stage · timing tower · checkers</span></div>
+    <div class="disp speed">
+      <div class="s-checker"></div>
+      <div class="s-head"><div class="s-title">Sunday Service</div><div class="s-meta">Round 27 · July 5 · Main Auditorium</div></div>
+      <div class="s-body">
+        <div>
+          <div class="s-sec">Starting Lineup</div>
+          <div class="s-plates">
+            <div class="s-plate"><div class="no">1</div><div class="info"><div class="nm">Amelia Garcia</div><div class="rl">Worship Leader</div><div class="mc">HH 1</div></div></div>
+            <div class="s-plate"><div class="no">2</div><div class="info"><div class="nm">Emma Johnson</div><div class="rl">Vocal 2</div><div class="mc">HH 2</div></div></div>
+            <div class="s-plate"><div class="no">3</div><div class="info"><div class="nm">Jake Williams</div><div class="rl">Vocal 3</div><div class="mc">HH 3</div></div></div>
+            <div class="s-plate"><div class="no">4</div><div class="info"><div class="nm">Sophia Davis</div><div class="rl">Vocal 4</div><div class="mc">HH 4</div></div></div>
+          </div>
+          <div class="s-actions"><button class="s-btn">↻ Refresh</button><button class="s-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="s-sec">The Track</div>
+          <div class="s-track"><svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+            <ellipse class="oval" cx="150" cy="78" rx="130" ry="56"/>
+            <ellipse class="oval2" cx="150" cy="78" rx="130" ry="56"/>
+            <text class="lbl" x="118" y="20">◤ Grandstand ◢</text>
+            <circle class="car" cx="80" cy="30" r="5"/><circle class="car" cx="215" cy="28" r="5"/>
+            <circle class="car" cx="38" cy="86" r="5"/><circle class="car" cx="262" cy="86" r="5"/>
+          </svg></div>
+          <div class="s-sec" style="margin-top:14px;">Race Card</div>
+          <div class="s-tower">
+            <div class="row"><span class="p">1</span><span class="n">Keep Praise</span><span class="t">5:12</span></div>
+            <div class="row"><span class="p">2</span><span class="n">Great Are You</span><span class="t">4:40</span></div>
+            <div class="row"><span class="p">3</span><span class="n">Welcome</span><span class="t">2:00</span></div>
+            <div class="row"><span class="p">4</span><span class="n">Offering</span><span class="t">3:30</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-checker"></div>
+    </div>
+  </div>
+
+</body>
+</html>

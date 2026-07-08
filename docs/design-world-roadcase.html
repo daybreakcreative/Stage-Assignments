@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Road Case — backstage / touring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Saira+Condensed:wght@400;500;600;700;800&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Saira Condensed',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:14px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:15px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:17px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+
+  /* ============================================================
+     ROAD CASE — flight-case / touring. Charcoal metal panel, corner
+     brackets, stencil type, gaffer tape, hazard stripes. Utilitarian.
+  ============================================================ */
+  .case{ background:linear-gradient(180deg,#242427,#191919); color:#e9e7df; font-family:'Saira Condensed',sans-serif; padding:34px 38px; position:relative; }
+  .case::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .case::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 2px, transparent 2px 6px); }
+  .case > *{ position:relative; z-index:1; }
+  /* metal corner brackets */
+  .case .cnr{ position:absolute; width:26px; height:26px; border:3px solid #6b6b70; z-index:2; }
+  .case .cnr.tl{ top:12px; left:12px; border-right:none; border-bottom:none; }
+  .case .cnr.tr{ top:12px; right:12px; border-left:none; border-bottom:none; }
+  .case .cnr.bl{ bottom:12px; left:12px; border-right:none; border-top:none; }
+  .case .cnr.br{ bottom:12px; right:12px; border-left:none; border-top:none; }
+  .case .c-head{ display:flex; align-items:center; justify-content:space-between; }
+  .case .c-stencil{ font-family:'Saira Stencil One'; font-size:38px; text-transform:uppercase; color:#ecebe4; letter-spacing:.02em; line-height:.9; text-shadow:0 1px 0 #000; }
+  .case .tape{ background:#111; color:#e9e7df; font-family:'Saira Condensed'; font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 16px; transform:rotate(-2.5deg); box-shadow:0 3px 8px rgba(0,0,0,.5); border-top:1px solid #333; border-bottom:1px solid #000; }
+  .case .hazard{ height:9px; margin:16px 0 20px; background:repeating-linear-gradient(45deg,#f2c015 0 11px,#1a1a1a 11px 22px); }
+  .case .c-body{ display:grid; grid-template-columns:1.35fr 1fr; gap:26px; }
+  .case .c-label{ font-family:'Saira Stencil One'; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#f2c015; margin-bottom:12px; }
+  .case .plates{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .case .plate{ background:#242428; border:1px solid #56565c; border-left:5px solid #f2c015; padding:11px 13px; position:relative; }
+  .case .plate .pn{ font-weight:700; font-size:18px; text-transform:uppercase; letter-spacing:.02em; line-height:1; color:#efeee7; }
+  .case .plate .pr{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#9a9a95; margin-top:5px; }
+  .case .plate .pm{ position:absolute; top:10px; right:11px; font-family:'Saira Stencil One'; font-size:13px; color:#0d0d0d; background:#f2c015; padding:1px 8px; }
+  .case .c-stage{ background:#1a1a1c; border:1px dashed #6b6b70; padding:12px; }
+  .case .c-stage svg{ width:100%; height:auto; display:block; }
+  .case .c-stage .ln{ fill:none; stroke:#cfcdc4; stroke-width:1.4; stroke-dasharray:5 4; }
+  .case .c-stage .dt{ fill:#f2c015; }  .case .c-stage .pl{ font-family:'Saira Condensed'; font-weight:600; font-size:8px; fill:#cfcdc4; text-transform:uppercase; }
+  .case .cue{ margin-top:16px; }
+  .case .cue .row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #3a3a3e; font-size:15px; text-transform:uppercase; letter-spacing:.03em; }
+  .case .cue .row .no{ font-family:'Saira Stencil One'; color:#f2c015; font-size:12px; margin-right:8px; }
+  .case .cue .row .nm{ flex:1; }
+  .case .cue .row .tm{ color:#9a9a95; font-weight:600; }
+  .case .c-btns{ display:flex; gap:10px; margin-top:18px; }
+  .case .c-btn{ font-family:'Saira Stencil One'; font-size:13px; text-transform:uppercase; border:2px solid #6b6b70; background:transparent; color:#e9e7df; padding:8px 18px; cursor:default; }
+  .case .c-btn.pri{ background:#f2c015; border-color:#f2c015; color:#141414; }
+
+  @media (max-width:820px){ .case .c-body{ grid-template-columns:1fr !important; } .case .plates{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>Road Case — a re-aim toward what's landed</h1>
+    <p>Dark, bold, heavily textured — the lane your favorites (Molten, Concrete) live in. This one's also literally the stage-crew world: a flight-case panel with metal corner brackets, spray-stencil type, a strip of gaffer tape, hazard stripes, and equipment-label voice plates. Utilitarian, tactile, backstage.</p>
+    <p class="note">Static mockup. See the pitch below it for a few more directions.</p>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">🛞 Road Case</span><span class="emotion">backstage / touring / utilitarian</span><span class="changed">Saira Stencil · flight-case metal · gaffer tape · hazard stripes · label plates</span></div>
+    <div class="disp case">
+      <span class="cnr tl"></span><span class="cnr tr"></span><span class="cnr bl"></span><span class="cnr br"></span>
+      <div class="c-head"><div class="c-stencil">Sunday<br>Service</div><div class="tape">Sun · Jul 5 · Aud-01</div></div>
+      <div class="hazard"></div>
+      <div class="c-body">
+        <div>
+          <div class="c-label">▮ Voices</div>
+          <div class="plates">
+            <div class="plate"><span class="pm">HH1</span><div class="pn">Amelia Garcia</div><div class="pr">Vocal 1</div></div>
+            <div class="plate"><span class="pm">HH2</span><div class="pn">Emma Johnson</div><div class="pr">Vocal 2</div></div>
+            <div class="plate"><span class="pm">HH3</span><div class="pn">Jake Williams</div><div class="pr">Vocal 3</div></div>
+            <div class="plate"><span class="pm">HH4</span><div class="pn">Sophia Davis</div><div class="pr">Vocal 4</div></div>
+          </div>
+          <div class="c-btns"><button class="c-btn">↻ Refresh</button><button class="c-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="c-label">▮ Stage Plot</div>
+          <div class="c-stage"><svg viewBox="0 0 300 116"><path class="ln" d="M16,108 L16,46 Q150,14 284,46 L284,108"/><circle class="dt" cx="104" cy="54" r="3"/><text class="pl" x="110" y="56">John R.</text><circle class="dt" cx="196" cy="50" r="3"/><text class="pl" x="202" y="52">Emma J.</text><circle class="dt" cx="150" cy="80" r="3"/><text class="pl" x="156" y="82">Ben R.</text></svg></div>
+          <div class="c-label" style="margin-top:16px;">▮ Cue Sheet</div>
+          <div class="cue">
+            <div class="row"><span class="no">01</span><span class="nm">Keep Praise</span><span class="tm">5:12</span></div>
+            <div class="row"><span class="no">02</span><span class="nm">Great Are You</span><span class="tm">4:40</span></div>
+            <div class="row"><span class="no">03</span><span class="nm">Welcome</span><span class="tm">2:00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
