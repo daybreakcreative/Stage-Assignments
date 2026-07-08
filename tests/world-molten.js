@@ -1,11 +1,8 @@
-// Bespoke display — CONCRETE (the first per-world layout). Added 2026-07-08.
-// Verifies: renderDisplayView() with state.world='concrete' delegates to renderDisplay_concrete,
-// builds into #dvWorldRoot (voice cells + a blueprint stage <svg> + run-sheet manifest rows) from
-// the REAL data, hides the default #dvLayout, and — critically — switching to a non-bespoke
-// world (corporate) re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: this round-trip used to switch to molten, but molten is now itself a bespoke world
-// (renderDisplay_molten), so it no longer restores #dvLayout. Use corporate — still a default-
-// skeleton fallback — to exercise the bespoke→default restore path.
+// Bespoke display — MOLTEN (the DEFAULT world; second per-world layout). Added 2026-07-08.
+// Verifies: renderDisplayView() with state.world='molten' delegates to renderDisplay_molten,
+// builds into #dvWorldRoot (an EQUAL lineup row per assigned vocalist + an ember stage <svg> +
+// warm service-order rows) from the REAL data, hides the default #dvLayout, and — critically —
+// switching to a NON-bespoke world (corporate) re-shows #dvLayout and retires #dvWorldRoot.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -21,7 +18,7 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}; toast=function(){}; saveState=function(){};');
- // Seed REAL data: 3 vocalists (assigned), 2 band instruments, hosts, a service order.
+ // Seed REAL data: 3 vocalists (assigned), 2 band instruments, a host, a service order.
  ev(`
    state.viewMode='display';
    state.vocalists=[{id:'v1',name:'Amelia Garcia',micAssigned:'HH-1'},{id:'v2',name:'Emma Johnson',micAssigned:'HH-2'},{id:'v3',name:'Jake Williams',micAssigned:'HH-3'}];
@@ -37,71 +34,80 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.config.display.runSheetPosition='right';
  `);
 
- check('WORLDS.concrete.renderDisplay is wired to a function', ()=>{
-   if (ev("typeof WORLDS.concrete.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
+ check('WORLDS.molten.renderDisplay is wired to a function', ()=>{
+   if (ev("typeof WORLDS.molten.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
  });
 
- check('renderDisplayView() with world=concrete runs without throwing', ()=>{
-   ev("state.world='concrete'; applyWorld(); renderDisplayView();");
+ check('renderDisplayView() with world=molten runs without throwing', ()=>{
+   ev("state.world='molten'; applyWorld(); renderDisplayView();");
  });
 
- check('#dvWorldRoot exists, is shown, and carries data-world=concrete', ()=>{
+ check('#dvWorldRoot exists, is shown, and carries data-world=molten', ()=>{
    const root = doc.getElementById('dvWorldRoot');
    if (!root) throw new Error('#dvWorldRoot not created');
-   if (root.getAttribute('data-world') !== 'concrete') throw new Error('data-world not concrete');
+   if (root.getAttribute('data-world') !== 'molten') throw new Error('data-world not molten');
    if (root.style.display === 'none') throw new Error('#dvWorldRoot is hidden');
  });
 
- check('#dvLayout (default layout) is hidden while Concrete is active', ()=>{
+ check('#dvLayout (default layout) is hidden while Molten is active', ()=>{
    const lay = doc.getElementById('dvLayout');
    if (!lay) throw new Error('#dvLayout missing');
    if (lay.style.display !== 'none') throw new Error('#dvLayout not hidden, got "'+lay.style.display+'"');
  });
 
- check('Concrete renders a voice cell per assigned vocalist (3), with names', ()=>{
+ check('Molten renders one EQUAL lineup row per assigned vocalist (3), with names', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const cells = root.querySelectorAll('.cw-cell');
-   if (cells.length !== 3) throw new Error('expected 3 voice cells, got '+cells.length);
+   const lrows = root.querySelectorAll('.mw-lineup .mw-lrow');
+   if (lrows.length !== 3) throw new Error('expected 3 lineup rows, got '+lrows.length);
    if (!/AMELIA GARCIA/i.test(root.textContent)) throw new Error('vocalist name missing');
    if (!/VOCAL 1/i.test(root.textContent)) throw new Error('VOCAL n role label missing');
+   // Every voice equal — no worship-leader emphasis (no is-wl / hero markup).
+   if (root.querySelector('.is-wl, .mw-hero')) throw new Error('unexpected worship-leader emphasis in Molten lineup');
  });
 
- check('Concrete renders the blueprint stage <svg> with real people dots', ()=>{
+ check('Molten shows the mic badge from real data', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const svg = root.querySelector('.cw-stage svg');
+   const badges = root.querySelectorAll('.mw-lbadge');
+   if (!badges.length) throw new Error('no mic/iem badges rendered');
+   if (!/HH-1/i.test(root.textContent)) throw new Error('mic assignment missing');
+ });
+
+ check('Molten renders the ember stage <svg> with real people dots', ()=>{
+   const root = doc.getElementById('dvWorldRoot');
+   const svg = root.querySelector('.mw-stagewrap svg');
    if (!svg) throw new Error('no stage svg');
-   if (!svg.querySelector('path.cw-edge')) throw new Error('no stage edge path');
-   const dots = svg.querySelectorAll('circle.cw-dt');
+   if (!svg.querySelector('path.mw-edge')) throw new Error('no stage edge path');
+   const dots = svg.querySelectorAll('circle.mw-dt');
    // 2 band + 3 vocalists = 5 markers
    if (dots.length < 5) throw new Error('expected >=5 people dots, got '+dots.length);
    if (!/BEN ROSS/i.test(root.textContent)) throw new Error('band member not on stage');
  });
 
- check('Concrete renders band + run-sheet manifest rows from real data', ()=>{
+ check('Molten renders band + service-order rows from real data', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const rows = root.querySelectorAll('.cw-manifest .cw-mrow');
-   if (rows.length < 3) throw new Error('expected manifest rows, got '+rows.length);
-   if (!/KEEP PRAISE/i.test(root.textContent)) throw new Error('run sheet item missing');
-   if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('run sheet duration missing');
-   if (!/CARLOS M/i.test(root.textContent)) throw new Error('MD band member missing from manifest');
+   const rows = root.querySelectorAll('.mw-rows .mw-row');
+   if (rows.length < 3) throw new Error('expected warm rows, got '+rows.length);
+   if (!/Keep Praise/i.test(root.textContent)) throw new Error('service-order item missing');
+   if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('service-order duration missing');
+   if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band rows');
  });
 
- check('honors display toggles — showBand:false drops the band manifest', ()=>{
+ check('honors display toggles — showBand:false drops the band rows', ()=>{
    ev("state.config.display.showBand=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   if (/Band — Manifest/i.test(root.textContent)) throw new Error('band manifest shown despite showBand:false');
+   const labels = Array.from(root.querySelectorAll('.mw-label')).map(n=>n.textContent);
+   if (labels.some(t=>/^Band$/i.test(t.trim()))) throw new Error('band section shown despite showBand:false');
    ev("state.config.display.showBand=true;");
  });
 
- check('honors display toggles — showStage:false drops the blueprint stage', ()=>{
+ check('honors display toggles — showStage:false drops the ember stage', ()=>{
    ev("state.config.display.showStage=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   if (root.querySelector('.cw-stage svg')) throw new Error('stage svg shown despite showStage:false');
+   if (root.querySelector('.mw-stagewrap svg')) throw new Error('stage svg shown despite showStage:false');
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to a non-bespoke world (corporate) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // molten is now bespoke too, so we switch to corporate (a default-skeleton fallback) here.
+ check('switching to corporate (non-bespoke) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
    ev("state.world='corporate'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
@@ -110,11 +116,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for corporate');
  });
 
- check('switching back to concrete re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
-   ev("state.world='concrete'; applyWorld(); renderDisplayView();");
+ check('switching back to molten re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
+   ev("state.world='molten'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!root || root.querySelectorAll('.cw-cell').length !== 3) throw new Error('#dvWorldRoot not re-populated');
+   if (!root || root.querySelectorAll('.mw-lineup .mw-lrow').length !== 3) throw new Error('#dvWorldRoot not re-populated');
    if (!lay || lay.style.display !== 'none') throw new Error('#dvLayout not re-hidden');
  });
 
