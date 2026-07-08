@@ -804,12 +804,12 @@ background-size:5% 10%}
 .wiz-stage-shape.selected{border-color:var(--accent);background:var(--accent-dim)}
 .wiz-stage-shape svg{margin-bottom:4px}
 .wiz-shape-label{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text)}
-/* Aurora mood preview swatches (settings + wizard) */
-.mood-picker{display:flex;gap:8px;flex-wrap:wrap}
-.mood-swatch{position:relative;width:88px;height:52px;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;padding:0;display:flex;align-items:flex-end;transition:transform .12s ease,border-color .12s ease}
-.mood-swatch:hover{transform:translateY(-2px)}
-.mood-swatch .lbl{width:100%;padding:3px 5px;background:rgba(10,12,18,.55);color:#fff;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:capitalize;text-align:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.mood-swatch.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35),0 6px 18px rgba(0,0,0,.4)}
+/* World preview tiles (settings + wizard) */
+.world-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.world-swatch{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;text-align:left}
+.world-swatch.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.world-swatch .ws-chip{width:26px;height:26px;border-radius:7px;flex:0 0 auto}
+.world-swatch .ws-name{font-weight:600;letter-spacing:.01em}
 .wiz-shape-sub{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em}
 /* Palette grid */
 .wiz-display-sections{display:flex;flex-direction:column;gap:6px}
@@ -1257,10 +1257,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-content{grid-template-columns:1fr}
 }
 
-/* ===================== AURORA LOOK — opt-in via [data-look="aurora"] =====================
-   Classic (default, no data-look or data-look=classic) is unaffected. Aurora re-defines the
-   core tokens so existing var(--…) usages recolor; mood rules set --c1/--c2/--c3/--gd. */
-[data-look="aurora"]{
+/* ===================== WORLDS — the whole app theme, keyed by [data-world] =====================
+   Every world re-defines the core tokens so existing var(--…) usages recolor + re-font. The
+   shared base derives --bg/--surface/--text/--accent from each world's --c1/--c2/--c3/--gd;
+   each [data-world="…"] block below sets those three colors, the ground, and its font pair. */
+[data-world]{
   --ff-display:'Bricolage Grotesque',system-ui,sans-serif;
   --ff-body:'Familjen Grotesk',system-ui,sans-serif;
   --mix:24%;
@@ -1269,51 +1270,46 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --border:rgba(255,255,255,.13);--border-2:rgba(255,255,255,.2);
   --text:#eef2ff;--text-muted:#9aa3c4;--text-faint:#5c6488;
   --accent:var(--c1);--accent-2:var(--c2);--accent-dim:color-mix(in srgb,var(--c1) 16%,transparent)}
-[data-look="aurora"][data-theme="light"]{
+[data-world][data-theme="light"]{
   --mix:36%;--gd:#eef1f8;
   --bg-elev:rgba(255,255,255,.6);--bg-inset:rgba(255,255,255,.5);
   --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
   --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
   --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
-/* moods — Dillon's picks (neutral → cool → warm). Mono moods carry a lower --mix. */
-[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%}
-[data-look="aurora"][data-mood="platinum"]{--c1:#eae4d8;--c2:#c9c0b0;--c3:#9a917f;--gd:#0b0a09;--mix:14%}
-[data-look="aurora"][data-mood="fog"]     {--c1:#a9cfcb;--c2:#8fb0be;--c3:#b7b0a0;--gd:#080d0d;--mix:22%}
-[data-look="aurora"][data-mood="ashrose"] {--c1:#d8b3c0;--c2:#b7a0c4;--c3:#c8b8ad;--gd:#0d0a0c;--mix:22%}
-[data-look="aurora"][data-mood="frost"]   {--c1:#a5f3fc;--c2:#7dd3fc;--c3:#cbd5ff;--gd:#070b12}
-[data-look="aurora"][data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
-[data-look="aurora"][data-mood="ocean"]   {--c1:#38bdf8;--c2:#4f7cff;--c3:#22d3ee;--gd:#050b16}
-[data-look="aurora"][data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
-[data-look="aurora"][data-mood="meadow"]  {--c1:#86d9a6;--c2:#e3cf7a;--c3:#8ecae6;--gd:#08110c}
-[data-look="aurora"][data-mood="rose"]    {--c1:#f9a8d4;--c2:#c4b5fd;--c3:#fbcfe8;--gd:#120b12}
-[data-look="aurora"][data-mood="molten"]  {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806}
-/* pale/mono moods: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
-[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="frost"] .dv-list-item .detail{color:var(--text);text-shadow:none}
-/* drifting aurora backdrop on the app ground (dark + light both) */
-/* The Aurora ground: a single monotonic diagonal wash — a subtle mood tint (top-left) → the
+/* worlds — each sets its palette (--c1/--c2/--c3), ground (--gd), and font pair
+   (--ff-display/--ff-body). Phase 0 = recolor + refont via the shared derivation above;
+   bespoke per-world layouts/textures arrive in the follow-up per-world phases. */
+[data-world="molten"]   {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806;--ff-display:'Oswald',system-ui,sans-serif;--ff-body:'Archivo',system-ui,sans-serif}
+[data-world="concrete"] {--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%;--ff-display:'Archivo',system-ui,sans-serif;--ff-body:'Space Mono',ui-monospace,monospace}
+[data-world="corporate"]{--c1:#c9a27a;--c2:#9a8468;--c3:#6f5d48;--gd:#0d0b09;--mix:16%;--ff-display:'Syne',system-ui,sans-serif;--ff-body:'Archivo',system-ui,sans-serif}
+[data-world="terra"]    {--c1:#9cc27a;--c2:#c9a24b;--c3:#8ab0a0;--gd:#0c1109;--mix:20%;--ff-display:'Spectral',Georgia,serif;--ff-body:'Mulish',system-ui,sans-serif}
+[data-world="orbit"]    {--c1:#b39cff;--c2:#8a6fe0;--c3:#67e8f9;--gd:#080b16;--ff-display:'Unbounded',system-ui,sans-serif;--ff-body:'Manrope',system-ui,sans-serif}
+[data-world="atomic"]   {--c1:#e2683f;--c2:#d99a2b;--c3:#3f6f72;--gd:#12100e;--mix:24%;--ff-display:'Jost',system-ui,sans-serif;--ff-body:'Jost',system-ui,sans-serif}
+/* concrete is our only pale/mono world: in LIGHT mode a near-white accent would vanish — keep IEM on ink */
+[data-world="concrete"][data-theme="light"] .dv-list-item .detail{color:var(--text);text-shadow:none}
+/* drifting backdrop on the app ground (dark + light both) — shared baseline for every world */
+/* The ground: a single monotonic diagonal wash — a subtle tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
    form a lump/disc like overlapping radial blobs did. Also on .display-view, which has its own
    bg that would otherwise cover the body wash. Colors are mixed INTO --gd (no transparency
-   stacking), which keeps it perfectly smooth. */
-[data-look="aurora"] body,
-[data-look="aurora"] .display-view{
+   stacking), which keeps it perfectly smooth. Per-world bespoke backgrounds come in later phases. */
+[data-world] body,
+[data-world] .display-view{
   background:linear-gradient(158deg,
     color-mix(in srgb, var(--c1) 16%, var(--gd)) 0%,
     var(--gd) 55%,
     color-mix(in srgb, var(--c2) 12%, var(--gd)) 100%);
   background-attachment:fixed}
-/* frosted glass for surfaces that were solid panels */
-[data-look="aurora"] .dv-voc-card,
-[data-look="aurora"] .dv-side-block,
-[data-look="aurora"] .voc-card,
-[data-look="aurora"] .setup-review-sheet{
+/* frosted glass for surfaces that were solid panels (shared baseline; worlds may override later) */
+[data-world] .dv-voc-card,
+[data-world] .dv-side-block,
+[data-world] .voc-card,
+[data-world] .setup-review-sheet{
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 34px rgba(0,0,0,.22)}
 /* glowing IEM + gradient section labels (the signature) */
-[data-look="aurora"][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
-[data-look="aurora"] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+[data-world][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
+[data-world] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
 
 @media print{
 @page{size:letter;margin:.5in}
@@ -1859,7 +1855,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-07·c</div>
+<div id="buildStamp">build 2026-07-08·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2164,8 +2160,7 @@ const DEFAULT_STATE = {
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark',
-  look: 'aurora',         // Aurora is the only look now ("the new classic")
-  auroraMood: 'graphite'  // active Aurora color mood
+  world: 'molten'         // active world (the 6-world engine replaced the 11 color moods)
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -2418,6 +2413,8 @@ function loadState() {
       while (voxPacks.length < MAX_VOCALISTS) voxPacks.push(`Vocal ${voxPacks.length+1} Pack`);
 
       return { ...DEFAULT_STATE, ...p,
+        // World migration: ignore legacy look/auroraMood (any old save → Molten); honor a real saved world.
+        world: (p.world && typeof WORLDS !== 'undefined' && WORLDS[p.world]) ? p.world : 'molten',
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: migrateHosts(p),
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
@@ -5599,11 +5596,11 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
-    <div class="section-label" style="margin-bottom:8px;">Theme</div>
-    <div class="mood-picker">
-      ${AURORA_MOODS.map(m=>moodSwatchHtml(m, state.auroraMood===m)).join('')}
+    <div class="section-label" style="margin-bottom:8px;">World</div>
+    <div class="world-picker">
+      ${WORLD_ORDER.map(id=>worldSwatchHtml(id, state.world===id)).join('')}
     </div>
-    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a color mood — the whole app + display recolor live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
+    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a world — the whole app + display recolor and re-font live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
 
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
@@ -6010,9 +6007,9 @@ function renderLayoutEditor() {
       if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
-  // Mood swatches — recolor the whole app live, then re-render so the selected ring updates.
-  el.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', e => {
-    setMood(e.currentTarget.dataset.moodOpt); renderLayoutEditor();
+  // World swatches — recolor + re-font the whole app live, then re-render so the selected ring updates.
+  el.querySelectorAll('[data-world-opt]').forEach(b => b.addEventListener('click', e => {
+    setWorld(e.currentTarget.dataset.worldOpt); renderLayoutEditor();
   }));
   // Run sheet sub-toggles
   el.querySelectorAll('[data-rs]').forEach(cb => {
@@ -8143,6 +8140,10 @@ function exitDisplayMode() {
   } catch (e) { /* ignore */ }
 }
 function renderDisplayView() {
+  // World dispatcher: a world may define its own bespoke display renderer (later phases).
+  // If it does, delegate entirely; otherwise fall through to the default layout below.
+  const __world = WORLDS[state.world] || WORLDS[DEFAULT_WORLD];
+  if (__world && typeof __world.renderDisplay === 'function') { __world.renderDisplay(); return; }
   const s = state.service;
   document.getElementById('dv_title').textContent = s.name || 'Service';
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString(undefined, {weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
@@ -8513,71 +8514,61 @@ function toggleTheme() {
   setTheme(state.theme === 'light' ? 'dark' : 'light');
 }
 
-// ---- Look + mood (Aurora is the only look; moods are the "which look" choice) ----
-// Dillon's chosen moods, ordered neutral → cool → warm.
-const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
-const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
-// c1·c2·c3 per mood — used to paint preview swatches (must mirror the [data-mood] CSS).
-const MOOD_COLORS = {
-  graphite:['#cbd3dd','#8b95a3','#5b6472'], platinum:['#eae4d8','#c9c0b0','#9a917f'],
-  fog:['#a9cfcb','#8fb0be','#b7b0a0'], ashrose:['#d8b3c0','#b7a0c4','#c8b8ad'],
-  frost:['#a5f3fc','#7dd3fc','#cbd5ff'], nebula:['#67e8f9','#b39cff','#f7a8d8'],
-  ocean:['#38bdf8','#4f7cff','#22d3ee'], dusk:['#8b9cff','#c08cff','#7fb0ff'],
-  meadow:['#86d9a6','#e3cf7a','#8ecae6'], rose:['#f9a8d4','#c4b5fd','#fbcfe8'],
-  molten:['#ff6b4a','#ffb020','#ff4d6d']
+// ---- Worlds (the "which look" choice; replaces the 11 color-only moods) ----
+// Each world recolors + re-fonts the whole app via the token derivation in the CSS
+// [data-world="…"] blocks; `swatch` mirrors that block's --c1/--c2/--c3 for previews.
+// `fonts` are loaded on demand (ensureFontLoaded). Bespoke per-world display layouts
+// attach later as WORLDS[id].renderDisplay (see renderDisplayView dispatcher).
+const WORLDS = {
+  molten:   { label:'Molten',    emoji:'🔥', fonts:{display:'Oswald',    body:'Archivo'},    swatch:['#ff6b4a','#ffb020','#ff4d6d'] },
+  concrete: { label:'Concrete',  emoji:'🪨', fonts:{display:'Archivo',   body:'Space Mono'}, swatch:['#cbd3dd','#8b95a3','#5b6472'] },
+  corporate:{ label:'Corporate', emoji:'🏛', fonts:{display:'Syne',      body:'Archivo'},    swatch:['#c9a27a','#9a8468','#6f5d48'] },
+  terra:    { label:'Terra',     emoji:'🌿', fonts:{display:'Spectral',  body:'Mulish'},     swatch:['#9cc27a','#c9a24b','#8ab0a0'] },
+  orbit:    { label:'Orbit',     emoji:'🪐', fonts:{display:'Unbounded', body:'Manrope'},    swatch:['#b39cff','#8a6fe0','#67e8f9'] },
+  atomic:   { label:'Atomic',    emoji:'🛰', fonts:{display:'Jost',      body:'Jost'},       swatch:['#e2683f','#d99a2b','#3f6f72'] },
 };
-// One preview swatch button for a mood. Reused by the settings picker + the wizard step.
-function moodSwatchHtml(m, selected) {
-  const c = MOOD_COLORS[m] || ['#888','#888','#888'];
+const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit','atomic'];
+const DEFAULT_WORLD = 'molten';
+// One preview tile for a world. Reused by the Settings picker + the wizard step.
+function worldSwatchHtml(id, selected) {
+  const w = WORLDS[id]; if (!w) return '';
+  const c = w.swatch;
   const grad = `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 52%, ${c[2]} 100%)`;
-  return `<button type="button" class="mood-swatch${selected ? ' sel' : ''}" data-mood-opt="${m}" title="${MOOD_LABEL[m] || m}" style="background:${grad};"><span class="lbl">${MOOD_LABEL[m] || m}</span></button>`;
+  return `<button type="button" class="world-swatch${selected ? ' sel' : ''}" data-world-opt="${id}" title="${w.label}" style="--sw:${grad};font-family:${w.fonts.display},system-ui,sans-serif;">`
+    + `<span class="ws-chip" style="background:${grad};"></span>`
+    + `<span class="ws-name">${w.emoji} ${w.label}</span></button>`;
 }
-// These are set INLINE on <html> by applyBrand(); inline wins over the [data-look="aurora"]
-// stylesheet, so Aurora must clear them (theme takes over) and Classic restores them.
+// These may have been set INLINE on <html> by a legacy applyBrand(); inline wins over the
+// [data-world] stylesheet, so the world engine clears them (the world's tokens take over).
 const BRAND_INLINE_VARS = ['--accent','--accent-2','--wl','--ff-display','--accent-dim','--accent-glow','--btn-primary-text'];
-// Aurora is the only look now ("the new classic") — always applied. This also migrates any
-// existing save that still says look:'classic'. The brand system sets --accent/--ff-display
-// INLINE (which would beat the [data-look="aurora"] stylesheet), so we clear those and supply
-// the few tokens the stylesheet doesn't; applyBrand() no-ops while aurora is active.
-function applyLook() {
+// Apply the active world: set data-world, ensure its fonts are loaded, clear the legacy
+// look/mood attributes + brand inline vars. Theme (data-theme) is a separate axis (setTheme).
+function applyWorld() {
   const html = document.documentElement;
-  state.look = 'aurora';
-  html.setAttribute('data-look', 'aurora');
-  const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
-  html.setAttribute('data-mood', mood);
+  const id = WORLDS[state.world] ? state.world : DEFAULT_WORLD;
+  state.world = id;
+  html.setAttribute('data-world', id);
+  html.removeAttribute('data-look');
+  html.removeAttribute('data-mood');
   BRAND_INLINE_VARS.forEach(p => html.style.removeProperty(p));
   html.style.setProperty('--wl', 'var(--c2)');
   html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
   html.style.setProperty('--btn-primary-text', '#0a0f16');
+  const f = WORLDS[id].fonts;
+  ensureFontLoaded(f.display); ensureFontLoaded(f.body);
 }
-function setLook() { applyLook(); saveState(); } // retained for callers; aurora is unconditional
-function setMood(mood) {
-  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'graphite';
-  applyLook(); saveState();
+function setWorld(id) {
+  state.world = WORLDS[id] ? id : DEFAULT_WORLD;
+  applyWorld(); saveState();
   if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
 }
+// Back-compat shim: older code/tests may still call applyLook(); route it to applyWorld().
+function applyLook() { applyWorld(); }
 
 function applyBrand() {
-  // Aurora owns the accent + display font (via its mood tokens); don't let a brand edit
-  // clobber the theme. The brand palette is restored when the user switches back to Classic.
-  if (state.look === 'aurora') return;
-  const b = state.brand || {};
-  const root = document.documentElement;
-  if (b.accent)  root.style.setProperty('--accent',  b.accent);
-  if (b.accent2) root.style.setProperty('--accent-2', b.accent2);
-  if (b.wl)      root.style.setProperty('--wl', b.wl);
-  if (b.font)    root.style.setProperty('--ff-display', `'${b.font}', Georgia, serif`);
-  // Re-derive accent-dim and pick readable button text color based on luminance
-  if (b.accent) {
-    const r = parseInt(b.accent.slice(1,3),16);
-    const g = parseInt(b.accent.slice(3,5),16);
-    const bl= parseInt(b.accent.slice(5,7),16);
-    root.style.setProperty('--accent-dim', `rgba(${r},${g},${bl},0.12)`);
-    root.style.setProperty('--accent-glow', `rgba(${r},${g},${bl},0.35)`);
-    // Relative luminance — pick white text on dark accents, dark text on light accents
-    const luma = (0.299*r + 0.587*g + 0.114*bl);
-    root.style.setProperty('--btn-primary-text', luma < 130 ? '#ffffff' : '#1a1408');
-  }
+  // No-op. Worlds are the only theming path now — the active world owns the accent + display
+  // font via its [data-world] tokens (applyWorld). A brand edit must never clobber that, so this
+  // is kept as an inert stub (rather than deleted) to keep any legacy caller/state harmless.
 }
 
 /* ===================== RESET / RENDER ALL ===================== */
@@ -11568,12 +11559,12 @@ function renderWizardStepBody(step) {
     case 'look': {
       return `
         <div>
-          <div class="wiz-q-title">Choose your look</div>
-          <div class="wiz-q-help">Stage·Assign uses the <strong>Aurora</strong> theme — a luminous glass look with color moods. Pick a mood and the whole app + the display recolor instantly. Change it anytime in Advanced Settings → Display.</div>
+          <div class="wiz-q-title">Pick your look (world)</div>
+          <div class="wiz-q-help">Each <strong>world</strong> gives the whole app + the display its own palette and fonts. Pick one and everything recolors and re-fonts instantly. Change it anytime in Advanced Settings → Display.</div>
 
-          <div class="section-label" style="margin-bottom:10px;">Color mood</div>
-          <div class="mood-picker">
-            ${AURORA_MOODS.map(m => moodSwatchHtml(m, (state.auroraMood || 'graphite') === m)).join('')}
+          <div class="section-label" style="margin-bottom:10px;">World</div>
+          <div class="world-picker">
+            ${WORLD_ORDER.map(id => worldSwatchHtml(id, (state.world || 'molten') === id)).join('')}
           </div>
 
           <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Light or dark</div>
@@ -12157,9 +12148,9 @@ function wireWizardStep(step) {
     });
   }
   if (step === 'look') {
-    // Aurora mood swatches — apply live so the whole wizard + app recolor instantly.
-    body.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', () => {
-      setMood(b.dataset.moodOpt);
+    // World swatches — apply live so the whole wizard + app recolor + re-font instantly.
+    body.querySelectorAll('[data-world-opt]').forEach(b => b.addEventListener('click', () => {
+      setWorld(b.dataset.worldOpt);
       renderWizardStep();
     }));
     // Light / dark toggle (live).
