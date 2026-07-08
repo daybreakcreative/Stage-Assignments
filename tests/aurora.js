@@ -15,15 +15,15 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 const{window}=dom;const ev=c=>window.eval(c);const doc=window.document;
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
 window.addEventListener('load',()=>setTimeout(()=>{
- check('default world molten applied to <html>', () => {
-   ev("setWorld('molten')");
-   if (doc.documentElement.getAttribute('data-world')!=='molten') throw new Error('data-world not set');
+ check('default world concrete applied to <html>', () => {
+   ev("setWorld('concrete')");
+   if (doc.documentElement.getAttribute('data-world')!=='concrete') throw new Error('data-world not set');
    if (doc.documentElement.getAttribute('data-look')) throw new Error('legacy data-look present');
  });
  check('dark/light axis is independent of world', () => {
    ev("setTheme('light')");
    if (doc.documentElement.getAttribute('data-theme')!=='light') throw new Error('theme not light');
-   if (doc.documentElement.getAttribute('data-world')!=='molten') throw new Error('world changed with theme');
+   if (doc.documentElement.getAttribute('data-world')!=='concrete') throw new Error('world changed with theme');
    ev("setTheme('dark')");
  });
  check('applyBrand is a no-op under a world (no --accent inline clobber)', () => {

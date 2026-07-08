@@ -1284,7 +1284,6 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 [data-world="corporate"]{--c1:#c9a27a;--c2:#9a8468;--c3:#6f5d48;--gd:#0d0b09;--mix:16%;--ff-display:'Syne',system-ui,sans-serif;--ff-body:'Archivo',system-ui,sans-serif}
 [data-world="terra"]    {--c1:#9cc27a;--c2:#c9a24b;--c3:#8ab0a0;--gd:#0c1109;--mix:20%;--ff-display:'Spectral',Georgia,serif;--ff-body:'Mulish',system-ui,sans-serif}
 [data-world="orbit"]    {--c1:#b39cff;--c2:#8a6fe0;--c3:#67e8f9;--gd:#080b16;--ff-display:'Unbounded',system-ui,sans-serif;--ff-body:'Manrope',system-ui,sans-serif}
-[data-world="atomic"]   {--c1:#e2683f;--c2:#d99a2b;--c3:#3f6f72;--gd:#12100e;--mix:24%;--ff-display:'Jost',system-ui,sans-serif;--ff-body:'Jost',system-ui,sans-serif}
 /* concrete is our only pale/mono world: in LIGHT mode a near-white accent would vanish — keep IEM on ink */
 [data-world="concrete"][data-theme="light"] .dv-list-item .detail{color:var(--text);text-shadow:none}
 
@@ -1314,17 +1313,21 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvWorldRoot[data-world="concrete"] .cw-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding:clamp(18px,2.6vh,30px) clamp(20px,3vw,40px); border-bottom:3px solid var(--cw-line); }
 #dvWorldRoot[data-world="concrete"] .cw-title{ font-weight:800; font-size:clamp(30px,5.5vw,68px); line-height:.92; text-transform:uppercase; letter-spacing:.004em; }
 #dvWorldRoot[data-world="concrete"] .cw-meta{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(11px,1.3vw,15px); letter-spacing:.08em; color:var(--cw-mut); text-align:right; line-height:1.6; white-space:nowrap; }
-/* body: hard two-column split with an exposed rule between */
-#dvWorldRoot[data-world="concrete"] .cw-body{ display:grid; grid-template-columns:1.15fr 1fr; align-items:start; }
+/* body: two columns. LEFT stacks Vocalists (top) → Stage (bottom-left); RIGHT holds the
+   manifests (band / hosts / shadows / run sheet). Each section is its own bordered panel so
+   the flat monochrome reads as distinct blocks. */
+#dvWorldRoot[data-world="concrete"] .cw-body{ display:grid; grid-template-columns:1.15fr 1fr; align-items:stretch; }
 #dvWorldRoot[data-world="concrete"] .cw-body.cw-body-solo{ grid-template-columns:1fr; }
-#dvWorldRoot[data-world="concrete"] .cw-col{ padding:clamp(16px,2.4vh,26px) clamp(20px,3vw,40px) 40px; min-width:0; }
+#dvWorldRoot[data-world="concrete"] .cw-col{ display:flex; flex-direction:column; gap:clamp(14px,2vh,22px); padding:clamp(16px,2.4vh,26px) clamp(20px,3vw,40px) 40px; min-width:0; }
 #dvWorldRoot[data-world="concrete"] .cw-col-r{ border-left:3px solid var(--cw-line); }
 @media (max-width:900px){ #dvWorldRoot[data-world="concrete"] .cw-body{ grid-template-columns:1fr; } #dvWorldRoot[data-world="concrete"] .cw-col-r{ border-left:none; border-top:3px solid var(--cw-line); } }
-/* section label — mono, tracked, with an index at the right */
-#dvWorldRoot[data-world="concrete"] .cw-panel-lbl{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); letter-spacing:.2em; text-transform:uppercase; color:var(--cw-faint); margin:0 0 12px; }
-#dvWorldRoot[data-world="concrete"] .cw-panel-lbl + .cw-panel-lbl,
-#dvWorldRoot[data-world="concrete"] .cw-manifest + .cw-panel-lbl,
-#dvWorldRoot[data-world="concrete"] .cw-stage + .cw-panel-lbl{ margin-top:clamp(18px,2.6vh,28px); }
+/* the stage panel sits at the BOTTOM of the left column; it grows to fill reclaimed space */
+#dvWorldRoot[data-world="concrete"] .cw-col .cw-panel-stage{ margin-top:auto; }
+/* each section = a bordered box with its own header, so blocks are clearly delineated */
+#dvWorldRoot[data-world="concrete"] .cw-panel{ border:1px solid var(--cw-line); background:var(--cw-panel); padding:clamp(12px,1.8vh,18px) clamp(14px,2vw,20px); }
+#dvWorldRoot[data-world="concrete"] .cw-panel > :last-child{ margin-bottom:0; }
+/* section label — mono, tracked, with an index at the right; a hard rule under it seals the header */
+#dvWorldRoot[data-world="concrete"] .cw-panel-lbl{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); letter-spacing:.2em; text-transform:uppercase; color:var(--cw-ink); margin:0 0 12px; padding-bottom:9px; border-bottom:2px solid var(--cw-line); }
 /* roster: hard modular grid of boxed voice cells */
 #dvWorldRoot[data-world="concrete"] .cw-grid{ display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--cw-line); border-left:1px solid var(--cw-line); }
 @media (max-width:560px){ #dvWorldRoot[data-world="concrete"] .cw-grid{ grid-template-columns:1fr; } }
@@ -1336,8 +1339,9 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvWorldRoot[data-world="concrete"] .cw-cell-iem{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); color:var(--cw-mut); margin-top:2px; }
 #dvWorldRoot[data-world="concrete"] .cw-cell-iem span{ color:var(--cw-faint); }
 #dvWorldRoot[data-world="concrete"] .cw-empty{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:13px; letter-spacing:.14em; color:var(--cw-faint); border:1px solid var(--cw-line); padding:30px; text-align:center; }
-/* blueprint stage: grid underlay + hairline outline + dimension ticks + mono labels */
-#dvWorldRoot[data-world="concrete"] .cw-stage{ position:relative; border:1px solid var(--cw-line); background:var(--cw-panel);
+/* blueprint stage: grid underlay + dimension ticks + mono labels. The bordered .cw-panel wrapper
+   supplies the outer box + header now, so the stage itself is borderless (just the blueprint grid). */
+#dvWorldRoot[data-world="concrete"] .cw-stage{ position:relative;
   background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);
   background-size:22px 22px; padding:8px; }
 #dvWorldRoot[data-world="concrete"] .cw-stage svg{ width:100%; height:auto; display:block; }
@@ -1409,14 +1413,21 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvWorldRoot[data-world="molten"] .mw-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:clamp(18px,2.6vh,30px) clamp(20px,3vw,40px) clamp(12px,2vh,18px); }
 #dvWorldRoot[data-world="molten"] .mw-title{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-weight:600; font-size:clamp(30px,5.4vw,60px); text-transform:uppercase; letter-spacing:.05em; color:var(--mw-title); text-shadow:0 0 22px rgba(255,107,53,.45); line-height:.9; }
 #dvWorldRoot[data-world="molten"] .mw-meta{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(11px,1.3vw,14px); letter-spacing:.24em; text-transform:uppercase; color:var(--mw-ember); text-align:right; line-height:1.5; white-space:nowrap; }
-/* body: lineup (the heart) on the left, ember stage + service order on the right */
-#dvWorldRoot[data-world="molten"] .mw-body{ display:grid; grid-template-columns:1.5fr 1fr; gap:clamp(16px,3vw,30px); align-items:start; padding:0 clamp(20px,3vw,40px) 40px; }
+/* body: LEFT column stacks the lineup (the heart, top) → ember stage (bottom-left); RIGHT column
+   holds band / hosts / shadows / service order. Each section is a warm bordered panel. */
+#dvWorldRoot[data-world="molten"] .mw-body{ display:grid; grid-template-columns:1.5fr 1fr; gap:clamp(16px,3vw,30px); align-items:stretch; padding:0 clamp(20px,3vw,40px) 40px; }
 #dvWorldRoot[data-world="molten"] .mw-body.mw-body-solo{ grid-template-columns:1fr; }
-#dvWorldRoot[data-world="molten"] .mw-col{ min-width:0; }
+#dvWorldRoot[data-world="molten"] .mw-col{ min-width:0; display:flex; flex-direction:column; gap:clamp(14px,2.2vh,22px); }
 @media (max-width:820px){ #dvWorldRoot[data-world="molten"] .mw-body{ grid-template-columns:1fr; } }
-/* section label — tracked Oswald ember caps */
-#dvWorldRoot[data-world="molten"] .mw-label{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(10px,1.1vw,12px); letter-spacing:.28em; text-transform:uppercase; color:var(--mw-ember); margin:0 0 10px; }
-#dvWorldRoot[data-world="molten"] .mw-label.mw-label-sub{ margin-top:clamp(16px,2.4vh,24px); }
+/* the stage panel sits at the BOTTOM of the left column; it grows to fill reclaimed space */
+#dvWorldRoot[data-world="molten"] .mw-col .mw-panel-stage{ margin-top:auto; }
+/* each section = a warm rounded panel with a subtle ember tint, so blocks read as distinct */
+#dvWorldRoot[data-world="molten"] .mw-panel{ border:1px solid var(--mw-line); border-radius:12px; background:linear-gradient(160deg,var(--mw-panel-a),var(--mw-panel-b)); padding:clamp(14px,2vh,20px) clamp(16px,2.2vw,22px); }
+#dvWorldRoot[data-world="molten"] .mw-panel > :last-child{ margin-bottom:0; }
+/* section label — tracked Oswald ember caps; a hairline rule under it seals the panel header */
+#dvWorldRoot[data-world="molten"] .mw-label{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(10px,1.1vw,12px); letter-spacing:.28em; text-transform:uppercase; color:var(--mw-ember); margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--mw-line); }
+/* stacked sections inside one panel (e.g. band + hosts + shadows) get breathing room between them */
+#dvWorldRoot[data-world="molten"] .mw-label.mw-label-sub{ margin-top:clamp(14px,2vh,20px); }
 /* EQUAL lineup — big condensed names, "Vocal N", glowing ember mic badge. No hero. */
 #dvWorldRoot[data-world="molten"] .mw-lineup{ display:flex; flex-direction:column; }
 #dvWorldRoot[data-world="molten"] .mw-lrow{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:clamp(9px,1.4vh,14px) 0; border-bottom:1px solid var(--mw-line); }
@@ -2338,7 +2349,7 @@ const DEFAULT_STATE = {
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark',
-  world: 'molten'         // active world (the 6-world engine replaced the 11 color moods)
+  world: 'concrete'       // active world (the world engine replaced the 11 color moods)
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -2591,8 +2602,8 @@ function loadState() {
       while (voxPacks.length < MAX_VOCALISTS) voxPacks.push(`Vocal ${voxPacks.length+1} Pack`);
 
       return { ...DEFAULT_STATE, ...p,
-        // World migration: ignore legacy look/auroraMood (any old save → Molten); honor a real saved world.
-        world: (typeof p.world === 'string' && p.world) ? p.world : 'molten',
+        // World migration: ignore legacy look/auroraMood (any old save → Concrete); honor a real saved world.
+        world: (typeof p.world === 'string' && p.world) ? p.world : 'concrete',
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: migrateHosts(p),
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
@@ -5554,6 +5565,12 @@ function renderLayoutEditor() {
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:18px;">Configure stage shape, vocal direction, instruments &amp; IEM packs, and display options.</p>
 
+    <div class="section-label" style="margin-bottom:8px;">Theme</div>
+    <div class="world-picker">
+      ${WORLD_ORDER.map(id=>worldSwatchHtml(id, state.world===id)).join('')}
+    </div>
+    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a theme — the whole app + display recolor and re-font live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
+
     <div class="section-label" style="margin-bottom:10px;">Stage Shape</div>
     ${hasCustomOutline ? `<div class="subtitle" style="font-size:11.5px;color:var(--accent);margin:-2px 0 10px;line-height:1.5;">&#9873; A custom outline is active &mdash; the preview shows your shape. The shape sliders are hidden while a custom outline is in use. Edit it or reset to the default shape under &ldquo;Stage outline &amp; features&rdquo; below.</div>` : ''}
     <div class="curvature-row">
@@ -5773,12 +5790,6 @@ function renderLayoutEditor() {
         <label class="cfg-toggle"><input type="checkbox" data-display="${k}" ${c.display[k]?'checked':''} /><span>${label}</span></label>
       `).join('')}
     </div>
-
-    <div class="section-label" style="margin-bottom:8px;">World</div>
-    <div class="world-picker">
-      ${WORLD_ORDER.map(id=>worldSwatchHtml(id, state.world===id)).join('')}
-    </div>
-    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a world — the whole app + display recolor and re-font live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
 
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
@@ -8812,6 +8823,7 @@ function renderDisplay_concrete() {
     // Dimension ticks across the front apron (blueprint flavor).
     const ey = (shape.edgeY != null ? shape.edgeY : 146);
     stageHtml = ''
+      + `<div class="cw-panel cw-panel-stage">`
       + `<div class="cw-panel-lbl"><span>STAGE — PLAN</span><span>800×380</span></div>`
       + `<div class="cw-stage">`
       + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
@@ -8826,7 +8838,8 @@ function renderDisplay_concrete() {
       + dots
       + `</svg>`
       + `<div class="cw-stage-feats" id="cwStageFeatures"></div>`
-      + `</div>`;
+      + `</div>`   // .cw-stage
+      + `</div>`;  // .cw-panel.cw-panel-stage
   }
 
   // ---- Manifest: band / hosts / shadows -----------------------------------
@@ -8850,8 +8863,8 @@ function renderDisplay_concrete() {
       ));
     });
     if (!rows.length) rows.push(manifestRow('—', 'NO BAND ASSIGNED', ''));
-    bandHtml = `<div class="cw-panel-lbl"><span>Band — Manifest</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
-      + `<div class="cw-manifest">${rows.join('')}</div>`;
+    bandHtml = `<div class="cw-panel"><div class="cw-panel-lbl"><span>Band — Manifest</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+      + `<div class="cw-manifest">${rows.join('')}</div></div>`;
   }
 
   let hostsHtml = '';
@@ -8863,8 +8876,8 @@ function renderDisplay_concrete() {
       rows.push(manifestRow(esc(ch.label), esc((formatDisplayName(name) || '').toUpperCase()), ''));
     });
     if (rows.length) {
-      hostsHtml = `<div class="cw-panel-lbl"><span>Handhelds</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
-        + `<div class="cw-manifest">${rows.join('')}</div>`;
+      hostsHtml = `<div class="cw-panel"><div class="cw-panel-lbl"><span>Handhelds</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+        + `<div class="cw-manifest">${rows.join('')}</div></div>`;
     }
   }
 
@@ -8880,8 +8893,8 @@ function renderDisplay_concrete() {
       rows.push(manifestRow('SH ' + (idx + 1), esc((formatDisplayName(sh.name) || '—').toUpperCase()), esc(bits.join(' · '))));
     });
     if (rows.length) {
-      shadowsHtml = `<div class="cw-panel-lbl"><span>Shadows</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
-        + `<div class="cw-manifest">${rows.join('')}</div>`;
+      shadowsHtml = `<div class="cw-panel"><div class="cw-panel-lbl"><span>Shadows</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+        + `<div class="cw-manifest">${rows.join('')}</div></div>`;
     }
   }
 
@@ -8908,14 +8921,21 @@ function renderDisplay_concrete() {
         + `<span class="cw-mdt">${dur}</span></div>`;
     }).join('');
     const songCount = visibleItems.filter(i => i.kind !== 'header').length;
-    runHtml = `<div class="cw-panel-lbl"><span>Run Sheet — Manifest</span><span>${String(songCount).padStart(2, '0')}</span></div>`
-      + `<div class="cw-manifest">${rows}</div>`;
+    runHtml = `<div class="cw-panel"><div class="cw-panel-lbl"><span>Run Sheet — Manifest</span><span>${String(songCount).padStart(2, '0')}</span></div>`
+      + `<div class="cw-manifest">${rows}</div></div>`;
   }
 
   // ---- Assemble the two-column brutalist body -----------------------------
-  // Left column: vocalist grid (the heart). Right column: blueprint stage + manifests.
-  // If a whole column would be empty (all right-side toggles off), the grid collapses to 1fr.
-  const rightHtml = [stageHtml, bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  // LEFT column: Vocalists panel (top) → Stage panel (bottom-left, pushed down to fill the
+  // reclaimed space). RIGHT column: the manifests (band / hosts / shadows / run sheet), each a
+  // bordered panel. If the right column would be empty, the grid collapses to a single column
+  // (vocalists + stage still stack).
+  const vocPanelHtml = `<div class="cw-panel">`
+    + `<div class="cw-panel-lbl"><span>Vocalists</span><span>${String(vocCount).padStart(2, '0')}</span></div>`
+    + vocGridHtml
+    + `</div>`;
+  const leftHtml = vocPanelHtml + stageHtml;         // stage panel (if any) drops to the bottom
+  const rightHtml = [bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
   const bodyClass = rightHtml ? 'cw-body' : 'cw-body cw-body-solo';
 
   root.innerHTML = ''
@@ -8924,10 +8944,7 @@ function renderDisplay_concrete() {
     +   `<div class="cw-meta">${metaLines}</div>`
     + `</div>`
     + `<div class="${bodyClass}">`
-    +   `<div class="cw-col">`
-    +     `<div class="cw-panel-lbl"><span>Vocalists</span><span>${String(vocCount).padStart(2, '0')}</span></div>`
-    +     vocGridHtml
-    +   `</div>`
+    +   `<div class="cw-col">${leftHtml}</div>`
     +   (rightHtml ? `<div class="cw-col cw-col-r">${rightHtml}</div>` : '')
     + `</div>`;
 
@@ -9042,7 +9059,11 @@ function renderDisplay_molten() {
         + `<text class="mw-pl" x="${(m.x + dx).toFixed(1)}" y="${(m.y - 4).toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
         + `<text class="mw-plr" x="${(m.x + dx).toFixed(1)}" y="${(m.y + 12).toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
     }).join('');
+    // The .mw-stagewrap is already a warm bordered box, so it IS the stage panel (no extra
+    // .mw-panel border). The wrapping .mw-panel-stage div just carries margin-top:auto to drop
+    // the stage to the bottom of the left column.
     stageHtml = ''
+      + `<div class="mw-panel-stage">`
       + `<div class="mw-label">Stage</div>`
       + `<div class="mw-stagewrap">`
       + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
@@ -9052,7 +9073,8 @@ function renderDisplay_molten() {
       + dots
       + `</svg>`
       + `<div class="mw-stage-feats" id="mwStageFeatures"></div>`
-      + `</div>`;
+      + `</div>`   // .mw-stagewrap
+      + `</div>`;  // .mw-panel-stage
   }
 
   // ---- Warm rows: band / hosts / shadows / service order ------------------
@@ -9072,7 +9094,7 @@ function renderDisplay_molten() {
       r.push(row(esc(shortInstLabel(inst.label)) + (isMD ? ' ·MD' : ''), esc(formatDisplayName(name) || '—'), esc(iemPackFor(inst))));
     });
     if (!r.length) r.push(row('—', 'No band assigned', ''));
-    bandHtml = `<div class="mw-label mw-label-sub">Band</div><div class="mw-rows">${r.join('')}</div>`;
+    bandHtml = `<div class="mw-panel"><div class="mw-label">Band</div><div class="mw-rows">${r.join('')}</div></div>`;
   }
 
   let hostsHtml = '';
@@ -9083,7 +9105,7 @@ function renderDisplay_molten() {
       if (!name) return;
       r.push(row(esc(ch.label), esc(formatDisplayName(name) || ''), ''));
     });
-    if (r.length) hostsHtml = `<div class="mw-label mw-label-sub">Hosts</div><div class="mw-rows">${r.join('')}</div>`;
+    if (r.length) hostsHtml = `<div class="mw-panel"><div class="mw-label">Hosts</div><div class="mw-rows">${r.join('')}</div></div>`;
   }
 
   let shadowsHtml = '';
@@ -9097,7 +9119,7 @@ function renderDisplay_molten() {
       if (sh.mic) bits.push('🎤 ' + sh.mic);
       r.push(row('SH ' + (idx + 1), esc(formatDisplayName(sh.name) || '—'), esc(bits.join(' · '))));
     });
-    if (r.length) shadowsHtml = `<div class="mw-label mw-label-sub">Shadows</div><div class="mw-rows">${r.join('')}</div>`;
+    if (r.length) shadowsHtml = `<div class="mw-panel"><div class="mw-label">Shadows</div><div class="mw-rows">${r.join('')}</div></div>`;
   }
 
   // ---- Service order -------------------------------------------------------
@@ -9122,12 +9144,16 @@ function renderDisplay_molten() {
         + `<span class="mw-rnm">${esc(it.title || '—')}${metaHtml}${desc}</span>`
         + `<span class="mw-rdt">${dur}</span></div>`;
     }).join('');
-    runHtml = `<div class="mw-label mw-label-sub">Service Order</div><div class="mw-rows">${r}</div>`;
+    runHtml = `<div class="mw-panel"><div class="mw-label">Service Order</div><div class="mw-rows">${r}</div></div>`;
   }
 
-  // ---- Assemble: lineup (left) + stage/rows (right). Collapse to 1fr if the
-  // whole right column would be empty (all right-side toggles off). ----------
-  const rightHtml = [stageHtml, bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  // ---- Assemble: LEFT column = lineup panel (the heart, top) → ember stage (bottom-left, pushed
+  // down to fill the reclaimed space). RIGHT column = band / hosts / shadows / service order, each a
+  // warm panel. Collapse to a single column if the right side would be empty (lineup + stage still
+  // stack). ------------------------------------------------------------------
+  const lineupPanelHtml = `<div class="mw-panel"><div class="mw-label">On the Mic</div>${lineupHtml}</div>`;
+  const leftHtml = lineupPanelHtml + stageHtml;      // stage panel (if any) drops to the bottom
+  const rightHtml = [bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
   const bodyClass = rightHtml ? 'mw-body' : 'mw-body mw-body-solo';
 
   root.innerHTML = ''
@@ -9136,10 +9162,7 @@ function renderDisplay_molten() {
     +   `<div class="mw-meta">${metaLines}</div>`
     + `</div>`
     + `<div class="${bodyClass}">`
-    +   `<div class="mw-col">`
-    +     `<div class="mw-label">On the Mic</div>`
-    +     lineupHtml
-    +   `</div>`
+    +   `<div class="mw-col">${leftHtml}</div>`
     +   (rightHtml ? `<div class="mw-col mw-col-r">${rightHtml}</div>` : '')
     + `</div>`;
 
@@ -9173,12 +9196,11 @@ const WORLDS = {
   corporate:{ label:'Corporate', emoji:'🏛', fonts:{display:'Syne',      body:'Archivo'},    swatch:['#c9a27a','#9a8468','#6f5d48'] },
   terra:    { label:'Terra',     emoji:'🌿', fonts:{display:'Spectral',  body:'Mulish'},     swatch:['#9cc27a','#c9a24b','#8ab0a0'] },
   orbit:    { label:'Orbit',     emoji:'🪐', fonts:{display:'Unbounded', body:'Manrope'},    swatch:['#b39cff','#8a6fe0','#67e8f9'] },
-  atomic:   { label:'Atomic',    emoji:'🛰', fonts:{display:'Jost',      body:'Jost'},       swatch:['#e2683f','#d99a2b','#3f6f72'] },
 };
-const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit','atomic'];
-const DEFAULT_WORLD = 'molten';
+const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit'];
+const DEFAULT_WORLD = 'concrete';
 // Bespoke per-world display renderers. These are hoisted function declarations, so they're
-// defined by the time any render runs. Molten (the DEFAULT world) + Concrete each have their own
+// defined by the time any render runs. Concrete (the DEFAULT world) + Molten each have their own
 // display layout; the remaining worlds fall back to the default skeleton.
 WORLDS.molten.renderDisplay   = renderDisplay_molten;
 WORLDS.concrete.renderDisplay = renderDisplay_concrete;
@@ -12212,12 +12234,12 @@ function renderWizardStepBody(step) {
     case 'look': {
       return `
         <div>
-          <div class="wiz-q-title">Pick your look (world)</div>
-          <div class="wiz-q-help">Each <strong>world</strong> gives the whole app + the display its own palette and fonts. Pick one and everything recolors and re-fonts instantly. Change it anytime in Advanced Settings → Display.</div>
+          <div class="wiz-q-title">Pick your theme</div>
+          <div class="wiz-q-help">Each <strong>theme</strong> gives the whole app + the display its own palette and fonts. Pick one and everything recolors and re-fonts instantly. Change it anytime in Advanced Settings → Display.</div>
 
-          <div class="section-label" style="margin-bottom:10px;">World</div>
+          <div class="section-label" style="margin-bottom:10px;">Theme</div>
           <div class="world-picker">
-            ${WORLD_ORDER.map(id => worldSwatchHtml(id, (state.world || 'molten') === id)).join('')}
+            ${WORLD_ORDER.map(id => worldSwatchHtml(id, (state.world || 'concrete') === id)).join('')}
           </div>
 
           <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Light or dark</div>

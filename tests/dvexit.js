@@ -60,7 +60,8 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   check('display view does NOT highlight worship leaders on the vocal cards', ()=>{
     // A WL vocalist rendered in display mode must not get the is-wl accent/badge.
     // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvVocGrid cards;
-    // the default world (molten) now has a bespoke display (equal lineup, no .dv-voc-card).
+    // the bespoke worlds (concrete=default, molten) have their own displays (equal lineup, no
+    // .dv-voc-card); corporate/terra/orbit fall back to this default skeleton.
     ev("state.vocalists=[{id:'v1',name:'Grace',isWL:true}]; state.assignments=['v1'];");
     ev("state.world='corporate'; applyWorld();");
     ev("state.viewMode='display'; renderDisplayView();");

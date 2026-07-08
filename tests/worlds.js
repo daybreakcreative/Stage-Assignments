@@ -38,10 +38,10 @@ function bootWithSeed(seed) {
 
 window.addEventListener('load',()=>(async()=>{await new Promise(r=>setTimeout(r,150));
 
- check('WORLDS registry: 6 worlds in order, each with fonts + swatch', () => {
+ check('WORLDS registry: 5 worlds in order, each with fonts + swatch', () => {
    const order = ev('WORLD_ORDER');
-   if (!Array.isArray(order) || order.length !== 6) throw new Error('expected 6 worlds, got '+(order&&order.length));
-   const expected = ['molten','concrete','corporate','terra','orbit','atomic'];
+   if (!Array.isArray(order) || order.length !== 5) throw new Error('expected 5 worlds, got '+(order&&order.length));
+   const expected = ['molten','concrete','corporate','terra','orbit'];
    if (order.join(',') !== expected.join(',')) throw new Error('order mismatch: '+order.join(','));
    order.forEach(id => {
      const w = ev(`WORLDS['${id}']`);
@@ -64,24 +64,24 @@ window.addEventListener('load',()=>(async()=>{await new Promise(r=>setTimeout(r,
    if (ev("document.documentElement.getAttribute('data-look')")) throw new Error('data-look should be cleared');
    if (ev("document.documentElement.getAttribute('data-mood')")) throw new Error('data-mood should be cleared');
  });
- check('setWorld falls back to DEFAULT_WORLD on a bad id', () => {
+ check('setWorld falls back to DEFAULT_WORLD (concrete) on a bad id', () => {
    ev("setWorld('nonsense')");
-   if (ev('state.world') !== 'molten') throw new Error('bad id should fall back to molten');
+   if (ev('state.world') !== 'concrete') throw new Error('bad id should fall back to concrete');
  });
 
  check('worldSwatchHtml renders a labeled, selectable tile per world', () => {
-   const html = ev("worldSwatchHtml('atomic', true)");
-   if (!/data-world-opt="atomic"/.test(html)) throw new Error('missing data-world-opt');
-   if (!/Atomic/.test(html)) throw new Error('missing label');
+   const html = ev("worldSwatchHtml('orbit', true)");
+   if (!/data-world-opt="orbit"/.test(html)) throw new Error('missing data-world-opt');
+   if (!/Orbit/.test(html)) throw new Error('missing label');
    if (!/\bsel\b/.test(html)) throw new Error('selected class not applied');
  });
 
- check('DEFAULT_STATE.world is molten; legacy look/mood migrate to a world', () => {
-   if (ev('DEFAULT_STATE.world') !== 'molten') throw new Error('default world not molten');
+ check('DEFAULT_STATE.world is concrete; legacy look/mood migrate to a world', () => {
+   if (ev('DEFAULT_STATE.world') !== 'concrete') throw new Error('default world not concrete');
    // simulate a legacy save (v3 mood era) and reload state via loadState
    ev("localStorage.setItem('stageAssign.v3', JSON.stringify({ look:'aurora', auroraMood:'nebula', service:{name:'x'} }))");
    ev('state = loadState()');
-   if (ev('state.world') !== 'molten') throw new Error('legacy save should migrate to DEFAULT_WORLD molten, got '+ev('state.world'));
+   if (ev('state.world') !== 'concrete') throw new Error('legacy save should migrate to DEFAULT_WORLD concrete, got '+ev('state.world'));
  });
 
  // A save written by THIS build carries a `world` key. `let state = loadState()` runs at top level
@@ -109,7 +109,7 @@ window.addEventListener('load',()=>(async()=>{await new Promise(r=>setTimeout(r,
    const picker = doc.querySelector('#layoutEdit .world-picker');
    if (!picker) { ev('renderDisplayView=window.__origRDV'); throw new Error('no .world-picker in Display tab'); }
    const tiles = picker.querySelectorAll('[data-world-opt]');
-   if (tiles.length !== 6) { ev('renderDisplayView=window.__origRDV'); throw new Error('expected 6 world tiles, got '+tiles.length); }
+   if (tiles.length !== 5) { ev('renderDisplayView=window.__origRDV'); throw new Error('expected 5 world tiles, got '+tiles.length); }
    const orbit = picker.querySelector('[data-world-opt="orbit"]');
    orbit.click();
    const w = ev('state.world');
@@ -122,7 +122,7 @@ window.addEventListener('load',()=>(async()=>{await new Promise(r=>setTimeout(r,
    ev("startWizard(); wizardStepIdx = WIZARD_STEPS.indexOf('look'); renderWizardStep();");
    const picker = doc.querySelector('#wizardBody .world-picker, .wizard-body .world-picker, .world-picker');
    if (!picker) throw new Error('wizard look step has no .world-picker');
-   if (picker.querySelectorAll('[data-world-opt]').length !== 6) throw new Error('expected 6 world tiles in wizard');
+   if (picker.querySelectorAll('[data-world-opt]').length !== 5) throw new Error('expected 5 world tiles in wizard');
  });
 
  check('renderDisplayView delegates to a world renderer when present', () => {
