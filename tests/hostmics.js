@@ -67,6 +67,9 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
  check('display: host row shows label + name only (never a mic capsule)', ()=>{
    setup(); ev('hostChannels()[0].capsule="SM58"');   // capsule set, but display must not show it
+   // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvHostsBlock list;
+   // the default world (molten) now has a bespoke display (warm .mw-rows, no #dvHostsBlock).
+   ev('state.world="corporate"; applyWorld();');
    ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup"');
    const block=doc.querySelector('#displayView #dvHostsBlock') || doc.getElementById('dvHostsBlock');
    const list=block && block.querySelector('.dv-list');

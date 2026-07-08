@@ -16,6 +16,9 @@ window.addEventListener('load',()=>setTimeout(()=>{
  // ---- Edit 1: no WL highlight on display-view stage people ----
  check('renderDisplayView adds no .is-wl highlight to stage people (.dv-sp)', ()=>{
    ev('state.viewMode="display"');
+   // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvLayout skeleton
+   // it asserts against. The default world (molten) now has a bespoke display (.mw-*, no .dv-sp).
+   ev('state.world="corporate"; applyWorld();');
    ev('state.vocalists=[{id:"v1",name:"Alice",isWL:true,leadsSongs:true,micAssigned:""},{id:"v2",name:"Bob",isWL:false,leadsSongs:false,micAssigned:""}]');
    ev('state.assignments=["v1","v2"].concat(new Array(MAX_VOCALISTS-2).fill(null))');
    ev('renderDisplayView()');

@@ -804,12 +804,12 @@ background-size:5% 10%}
 .wiz-stage-shape.selected{border-color:var(--accent);background:var(--accent-dim)}
 .wiz-stage-shape svg{margin-bottom:4px}
 .wiz-shape-label{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text)}
-/* Aurora mood preview swatches (settings + wizard) */
-.mood-picker{display:flex;gap:8px;flex-wrap:wrap}
-.mood-swatch{position:relative;width:88px;height:52px;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;padding:0;display:flex;align-items:flex-end;transition:transform .12s ease,border-color .12s ease}
-.mood-swatch:hover{transform:translateY(-2px)}
-.mood-swatch .lbl{width:100%;padding:3px 5px;background:rgba(10,12,18,.55);color:#fff;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:capitalize;text-align:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.mood-swatch.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35),0 6px 18px rgba(0,0,0,.4)}
+/* World preview tiles (settings + wizard) */
+.world-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.world-swatch{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;text-align:left}
+.world-swatch.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.world-swatch .ws-chip{width:26px;height:26px;border-radius:7px;flex:0 0 auto}
+.world-swatch .ws-name{font-weight:600;letter-spacing:.01em}
 .wiz-shape-sub{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em}
 /* Palette grid */
 .wiz-display-sections{display:flex;flex-direction:column;gap:6px}
@@ -1257,10 +1257,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-content{grid-template-columns:1fr}
 }
 
-/* ===================== AURORA LOOK — opt-in via [data-look="aurora"] =====================
-   Classic (default, no data-look or data-look=classic) is unaffected. Aurora re-defines the
-   core tokens so existing var(--…) usages recolor; mood rules set --c1/--c2/--c3/--gd. */
-[data-look="aurora"]{
+/* ===================== WORLDS — the whole app theme, keyed by [data-world] =====================
+   Every world re-defines the core tokens so existing var(--…) usages recolor + re-font. The
+   shared base derives --bg/--surface/--text/--accent from each world's --c1/--c2/--c3/--gd;
+   each [data-world="…"] block below sets those three colors, the ground, and its font pair. */
+[data-world]{
   --ff-display:'Bricolage Grotesque',system-ui,sans-serif;
   --ff-body:'Familjen Grotesk',system-ui,sans-serif;
   --mix:24%;
@@ -1269,51 +1270,224 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --border:rgba(255,255,255,.13);--border-2:rgba(255,255,255,.2);
   --text:#eef2ff;--text-muted:#9aa3c4;--text-faint:#5c6488;
   --accent:var(--c1);--accent-2:var(--c2);--accent-dim:color-mix(in srgb,var(--c1) 16%,transparent)}
-[data-look="aurora"][data-theme="light"]{
+[data-world][data-theme="light"]{
   --mix:36%;--gd:#eef1f8;
   --bg-elev:rgba(255,255,255,.6);--bg-inset:rgba(255,255,255,.5);
   --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
   --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
   --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
-/* moods — Dillon's picks (neutral → cool → warm). Mono moods carry a lower --mix. */
-[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%}
-[data-look="aurora"][data-mood="platinum"]{--c1:#eae4d8;--c2:#c9c0b0;--c3:#9a917f;--gd:#0b0a09;--mix:14%}
-[data-look="aurora"][data-mood="fog"]     {--c1:#a9cfcb;--c2:#8fb0be;--c3:#b7b0a0;--gd:#080d0d;--mix:22%}
-[data-look="aurora"][data-mood="ashrose"] {--c1:#d8b3c0;--c2:#b7a0c4;--c3:#c8b8ad;--gd:#0d0a0c;--mix:22%}
-[data-look="aurora"][data-mood="frost"]   {--c1:#a5f3fc;--c2:#7dd3fc;--c3:#cbd5ff;--gd:#070b12}
-[data-look="aurora"][data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
-[data-look="aurora"][data-mood="ocean"]   {--c1:#38bdf8;--c2:#4f7cff;--c3:#22d3ee;--gd:#050b16}
-[data-look="aurora"][data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
-[data-look="aurora"][data-mood="meadow"]  {--c1:#86d9a6;--c2:#e3cf7a;--c3:#8ecae6;--gd:#08110c}
-[data-look="aurora"][data-mood="rose"]    {--c1:#f9a8d4;--c2:#c4b5fd;--c3:#fbcfe8;--gd:#120b12}
-[data-look="aurora"][data-mood="molten"]  {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806}
-/* pale/mono moods: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
-[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="frost"] .dv-list-item .detail{color:var(--text);text-shadow:none}
-/* drifting aurora backdrop on the app ground (dark + light both) */
-/* The Aurora ground: a single monotonic diagonal wash — a subtle mood tint (top-left) → the
+/* worlds — each sets its palette (--c1/--c2/--c3), ground (--gd), and font pair
+   (--ff-display/--ff-body). Phase 0 = recolor + refont via the shared derivation above;
+   bespoke per-world layouts/textures arrive in the follow-up per-world phases. */
+[data-world="molten"]   {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806;--ff-display:'Oswald',system-ui,sans-serif;--ff-body:'Archivo',system-ui,sans-serif}
+[data-world="concrete"] {--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%;--ff-display:'Archivo',system-ui,sans-serif;--ff-body:'Space Mono',ui-monospace,monospace}
+[data-world="corporate"]{--c1:#c9a27a;--c2:#9a8468;--c3:#6f5d48;--gd:#0d0b09;--mix:16%;--ff-display:'Syne',system-ui,sans-serif;--ff-body:'Archivo',system-ui,sans-serif}
+[data-world="terra"]    {--c1:#9cc27a;--c2:#c9a24b;--c3:#8ab0a0;--gd:#0c1109;--mix:20%;--ff-display:'Spectral',Georgia,serif;--ff-body:'Mulish',system-ui,sans-serif}
+[data-world="orbit"]    {--c1:#b39cff;--c2:#8a6fe0;--c3:#67e8f9;--gd:#080b16;--ff-display:'Unbounded',system-ui,sans-serif;--ff-body:'Manrope',system-ui,sans-serif}
+[data-world="atomic"]   {--c1:#e2683f;--c2:#d99a2b;--c3:#3f6f72;--gd:#12100e;--mix:24%;--ff-display:'Jost',system-ui,sans-serif;--ff-body:'Jost',system-ui,sans-serif}
+/* concrete is our only pale/mono world: in LIGHT mode a near-white accent would vanish — keep IEM on ink */
+[data-world="concrete"][data-theme="light"] .dv-list-item .detail{color:var(--text);text-shadow:none}
+
+/* ============================================================
+   BESPOKE DISPLAY — CONCRETE (brutalist / blueprint).
+   Scoped to #dvWorldRoot[data-world="concrete"] so nothing leaks into the editor.
+   Source of truth: docs/design-world-concrete.html. DARK = the mockup (charcoal);
+   LIGHT = pale poured-concrete / paper (gated on [data-theme="light"]).
+   Token names use --cw-* to stay independent of the shared world --c*/--text tokens
+   (this world is deliberately monochrome). Full texture is intended on the display.
+============================================================ */
+#dvWorldRoot[data-world="concrete"]{
+  --cw-bg:#191a1c; --cw-panel:#141416; --cw-ink:#e7e7e4; --cw-line:#3c3c3f;
+  --cw-hair:#2c2c2e; --cw-mut:#9a9a97; --cw-faint:#76766f; --cw-hot:#ffffff;
+  position:absolute; inset:0; overflow:auto;
+  background:var(--cw-bg); color:var(--cw-ink);
+  font-family:var(--ff-display,'Archivo',system-ui,sans-serif);
+  -webkit-font-smoothing:antialiased;
+}
+/* poured-concrete grain — full drama on the display */
+#dvWorldRoot[data-world="concrete"]::after{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.14; mix-blend-mode:overlay; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#dvWorldRoot[data-world="concrete"] > *{ position:relative; z-index:1; }
+/* header: heavy grotesk title + mono meta, hard bottom rule */
+#dvWorldRoot[data-world="concrete"] .cw-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding:clamp(18px,2.6vh,30px) clamp(20px,3vw,40px); border-bottom:3px solid var(--cw-line); }
+#dvWorldRoot[data-world="concrete"] .cw-title{ font-weight:800; font-size:clamp(30px,5.5vw,68px); line-height:.92; text-transform:uppercase; letter-spacing:.004em; }
+#dvWorldRoot[data-world="concrete"] .cw-meta{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(11px,1.3vw,15px); letter-spacing:.08em; color:var(--cw-mut); text-align:right; line-height:1.6; white-space:nowrap; }
+/* body: hard two-column split with an exposed rule between */
+#dvWorldRoot[data-world="concrete"] .cw-body{ display:grid; grid-template-columns:1.15fr 1fr; align-items:start; }
+#dvWorldRoot[data-world="concrete"] .cw-body.cw-body-solo{ grid-template-columns:1fr; }
+#dvWorldRoot[data-world="concrete"] .cw-col{ padding:clamp(16px,2.4vh,26px) clamp(20px,3vw,40px) 40px; min-width:0; }
+#dvWorldRoot[data-world="concrete"] .cw-col-r{ border-left:3px solid var(--cw-line); }
+@media (max-width:900px){ #dvWorldRoot[data-world="concrete"] .cw-body{ grid-template-columns:1fr; } #dvWorldRoot[data-world="concrete"] .cw-col-r{ border-left:none; border-top:3px solid var(--cw-line); } }
+/* section label — mono, tracked, with an index at the right */
+#dvWorldRoot[data-world="concrete"] .cw-panel-lbl{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); letter-spacing:.2em; text-transform:uppercase; color:var(--cw-faint); margin:0 0 12px; }
+#dvWorldRoot[data-world="concrete"] .cw-panel-lbl + .cw-panel-lbl,
+#dvWorldRoot[data-world="concrete"] .cw-manifest + .cw-panel-lbl,
+#dvWorldRoot[data-world="concrete"] .cw-stage + .cw-panel-lbl{ margin-top:clamp(18px,2.6vh,28px); }
+/* roster: hard modular grid of boxed voice cells */
+#dvWorldRoot[data-world="concrete"] .cw-grid{ display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--cw-line); border-left:1px solid var(--cw-line); }
+@media (max-width:560px){ #dvWorldRoot[data-world="concrete"] .cw-grid{ grid-template-columns:1fr; } }
+#dvWorldRoot[data-world="concrete"] .cw-cell{ border-right:1px solid var(--cw-line); border-bottom:1px solid var(--cw-line); padding:clamp(12px,1.8vh,18px); }
+#dvWorldRoot[data-world="concrete"] .cw-cell-idx{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); color:var(--cw-faint); }
+#dvWorldRoot[data-world="concrete"] .cw-cell-nm{ font-weight:700; font-size:clamp(16px,2.1vw,24px); text-transform:uppercase; line-height:1.04; margin-top:4px; }
+#dvWorldRoot[data-world="concrete"] .cw-cell-rl{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(9px,1vw,11px); letter-spacing:.06em; text-transform:uppercase; color:var(--cw-mut); margin-top:8px; }
+#dvWorldRoot[data-world="concrete"] .cw-cell-mc{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-weight:700; font-size:clamp(12px,1.4vw,15px); color:var(--cw-hot); margin-top:3px; }
+#dvWorldRoot[data-world="concrete"] .cw-cell-iem{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:clamp(10px,1.1vw,12px); color:var(--cw-mut); margin-top:2px; }
+#dvWorldRoot[data-world="concrete"] .cw-cell-iem span{ color:var(--cw-faint); }
+#dvWorldRoot[data-world="concrete"] .cw-empty{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:13px; letter-spacing:.14em; color:var(--cw-faint); border:1px solid var(--cw-line); padding:30px; text-align:center; }
+/* blueprint stage: grid underlay + hairline outline + dimension ticks + mono labels */
+#dvWorldRoot[data-world="concrete"] .cw-stage{ position:relative; border:1px solid var(--cw-line); background:var(--cw-panel);
+  background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);
+  background-size:22px 22px; padding:8px; }
+#dvWorldRoot[data-world="concrete"] .cw-stage svg{ width:100%; height:auto; display:block; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-floor{ fill:#ffffff08; stroke:none; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-edge{ fill:none; stroke:#dcdcd8; stroke-width:1.6; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-tick{ stroke:var(--cw-faint); stroke-width:1.4; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-dt{ fill:var(--cw-hot); }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-pl{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:15px; font-weight:700; fill:#e7e7e4; text-transform:uppercase; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-plr{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:12px; fill:var(--cw-mut); text-transform:uppercase; }
+#dvWorldRoot[data-world="concrete"] .cw-stage .cw-dim{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:12px; fill:var(--cw-faint); letter-spacing:.1em; }
+/* stage feature overlays (monitors, DI, risers) — reuse the shared .stage-feature engine, tint mono */
+#dvWorldRoot[data-world="concrete"] .cw-stage-feats{ position:absolute; inset:8px; pointer-events:none; color:var(--cw-mut); }
+#dvWorldRoot[data-world="concrete"] .cw-stage-feats .stage-feature{ position:absolute; }
+#dvWorldRoot[data-world="concrete"] .cw-stage-feats .stage-feature svg{ width:100%; height:100%; display:block; }
+#dvWorldRoot[data-world="concrete"] .cw-stage-feats .sf-label{ position:absolute; transform:translate(-50%,-50%); font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--cw-mut); white-space:nowrap; }
+/* manifest rows (band / hosts / shadows / run sheet) — mono, ruled */
+#dvWorldRoot[data-world="concrete"] .cw-manifest{ font-family:var(--ff-body,'Space Mono',ui-monospace,monospace); }
+#dvWorldRoot[data-world="concrete"] .cw-mrow{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--cw-hair); font-size:clamp(11px,1.3vw,14px); }
+#dvWorldRoot[data-world="concrete"] .cw-mno{ color:var(--cw-faint); }
+#dvWorldRoot[data-world="concrete"] .cw-mnm{ color:var(--cw-ink); min-width:0; }
+#dvWorldRoot[data-world="concrete"] .cw-mdt{ color:var(--cw-mut); text-align:right; white-space:nowrap; }
+#dvWorldRoot[data-world="concrete"] .cw-mrow.cw-mhead .cw-mnm{ color:var(--cw-faint); letter-spacing:.16em; font-size:.85em; border-top:1px solid var(--cw-line); padding-top:12px; margin-top:4px; }
+#dvWorldRoot[data-world="concrete"] .cw-key{ border:1px solid var(--cw-line); padding:1px 6px; font-size:.85em; margin-left:6px; }
+#dvWorldRoot[data-world="concrete"] .cw-lead{ color:var(--cw-mut); font-size:.85em; margin-left:6px; }
+#dvWorldRoot[data-world="concrete"] .cw-rsdesc{ color:var(--cw-mut); font-size:.85em; margin-top:4px; white-space:normal; }
+/* ---- LIGHT FACE: pale poured-concrete / paper (data-theme lives on <html>) ---- */
+[data-theme="light"] #dvWorldRoot[data-world="concrete"]{
+  --cw-bg:#e6e4de; --cw-panel:#eeece6; --cw-ink:#1b1c1d; --cw-line:#b7b4ac;
+  --cw-hair:#c8c5bd; --cw-mut:#5f5e58; --cw-faint:#8b887f; --cw-hot:#000000;
+}
+[data-theme="light"] #dvWorldRoot[data-world="concrete"]::after{ opacity:.10; mix-blend-mode:multiply; }
+[data-theme="light"] #dvWorldRoot[data-world="concrete"] .cw-stage{ background-image:linear-gradient(#0000000a 1px,transparent 1px),linear-gradient(90deg,#0000000a 1px,transparent 1px); }
+[data-theme="light"] #dvWorldRoot[data-world="concrete"] .cw-stage .cw-floor{ fill:#0000000a; }
+[data-theme="light"] #dvWorldRoot[data-world="concrete"] .cw-stage .cw-edge{ stroke:#2a2a28; }
+[data-theme="light"] #dvWorldRoot[data-world="concrete"] .cw-stage .cw-dt{ fill:#000; }
+[data-theme="light"] #dvWorldRoot[data-world="concrete"] .cw-stage .cw-pl{ fill:#1b1c1d; }
+
+/* ============================================================
+   BESPOKE DISPLAY — MOLTEN (the DEFAULT world). Equal-lineup layout.
+   Scoped to #dvWorldRoot[data-world="molten"] so nothing leaks into the editor.
+   Source of truth: docs/design-worlds-redo.html panel .molten ("Molten v2").
+   DARK  = ember-from-below on near-black (the mockup); warm film grain.
+   LIGHT = "forge-bright": sunlit steel / warm cream + molten-orange (gated on
+   [data-theme="light"]). Big condensed Oswald names, EVERY voice equal (no
+   worship-leader emphasis / no hero). --mw-* tokens keep it independent of the
+   shared world --c*/--text tokens; fonts are the world's Oswald + Archivo.
+============================================================ */
+#dvWorldRoot[data-world="molten"]{
+  --mw-ink:#ffe7d6; --mw-name:#ffeadd; --mw-title:#ffd9c2; --mw-hot:#ff6b35;
+  --mw-ember:#ff8a5c; --mw-mut:#c98c6e; --mw-line:rgba(255,120,70,.2);
+  --mw-hair:rgba(255,120,70,.16); --mw-panel-a:rgba(50,22,14,.5); --mw-panel-b:rgba(24,12,8,.4);
+  --mw-badge-a:#ff8a4c; --mw-badge-b:#e8551f; --mw-badge-ink:#1a0d07;
+  position:absolute; inset:0; overflow:auto;
+  color:var(--mw-ink);
+  font-family:var(--ff-body,'Archivo',system-ui,sans-serif);
+  -webkit-font-smoothing:antialiased;
+  /* ember-from-below: a warm glow rising off the bottom-center over near-black */
+  background:
+    radial-gradient(130% 80% at 50% 114%, rgba(255,94,40,.32), transparent 58%),
+    linear-gradient(180deg,#170c07,#0c0605);
+}
+/* warm film grain — full drama on the display */
+#dvWorldRoot[data-world="molten"]::after{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.16; mix-blend-mode:overlay; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#dvWorldRoot[data-world="molten"] > *{ position:relative; z-index:1; }
+/* header: glowing Oswald title + tracked ember meta */
+#dvWorldRoot[data-world="molten"] .mw-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:clamp(18px,2.6vh,30px) clamp(20px,3vw,40px) clamp(12px,2vh,18px); }
+#dvWorldRoot[data-world="molten"] .mw-title{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-weight:600; font-size:clamp(30px,5.4vw,60px); text-transform:uppercase; letter-spacing:.05em; color:var(--mw-title); text-shadow:0 0 22px rgba(255,107,53,.45); line-height:.9; }
+#dvWorldRoot[data-world="molten"] .mw-meta{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(11px,1.3vw,14px); letter-spacing:.24em; text-transform:uppercase; color:var(--mw-ember); text-align:right; line-height:1.5; white-space:nowrap; }
+/* body: lineup (the heart) on the left, ember stage + service order on the right */
+#dvWorldRoot[data-world="molten"] .mw-body{ display:grid; grid-template-columns:1.5fr 1fr; gap:clamp(16px,3vw,30px); align-items:start; padding:0 clamp(20px,3vw,40px) 40px; }
+#dvWorldRoot[data-world="molten"] .mw-body.mw-body-solo{ grid-template-columns:1fr; }
+#dvWorldRoot[data-world="molten"] .mw-col{ min-width:0; }
+@media (max-width:820px){ #dvWorldRoot[data-world="molten"] .mw-body{ grid-template-columns:1fr; } }
+/* section label — tracked Oswald ember caps */
+#dvWorldRoot[data-world="molten"] .mw-label{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(10px,1.1vw,12px); letter-spacing:.28em; text-transform:uppercase; color:var(--mw-ember); margin:0 0 10px; }
+#dvWorldRoot[data-world="molten"] .mw-label.mw-label-sub{ margin-top:clamp(16px,2.4vh,24px); }
+/* EQUAL lineup — big condensed names, "Vocal N", glowing ember mic badge. No hero. */
+#dvWorldRoot[data-world="molten"] .mw-lineup{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="molten"] .mw-lrow{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:clamp(9px,1.4vh,14px) 0; border-bottom:1px solid var(--mw-line); }
+#dvWorldRoot[data-world="molten"] .mw-lname-wrap{ min-width:0; display:flex; align-items:baseline; flex-wrap:wrap; }
+#dvWorldRoot[data-world="molten"] .mw-lname{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-weight:600; font-size:clamp(22px,3.4vw,34px); text-transform:uppercase; letter-spacing:.02em; color:var(--mw-name); line-height:.95; }
+#dvWorldRoot[data-world="molten"] .mw-lrole{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.16em; text-transform:uppercase; color:var(--mw-mut); margin-left:12px; }
+#dvWorldRoot[data-world="molten"] .mw-lbadge{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-weight:600; font-size:clamp(12px,1.5vw,15px); color:var(--mw-badge-ink); background:linear-gradient(180deg,var(--mw-badge-a),var(--mw-badge-b)); border-radius:7px; padding:3px 11px; box-shadow:0 0 12px rgba(255,107,53,.4); white-space:nowrap; }
+#dvWorldRoot[data-world="molten"] .mw-lbadge.mw-lbadge-iem{ background:none; color:var(--mw-mut); box-shadow:none; font-weight:400; letter-spacing:.06em; padding:3px 0; }
+#dvWorldRoot[data-world="molten"] .mw-lmeta{ display:flex; align-items:baseline; gap:12px; }
+#dvWorldRoot[data-world="molten"] .mw-empty{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); letter-spacing:.14em; text-transform:uppercase; color:var(--mw-mut); border:1px solid var(--mw-line); border-radius:12px; padding:30px; text-align:center; }
+/* ember stage — glowing orange outline + glowing people dots, real geometry */
+#dvWorldRoot[data-world="molten"] .mw-stagewrap{ position:relative; background:linear-gradient(160deg,var(--mw-panel-a),var(--mw-panel-b)); border:1px solid var(--mw-line); border-radius:12px; padding:12px; }
+#dvWorldRoot[data-world="molten"] .mw-stagewrap svg{ width:100%; height:auto; display:block; }
+#dvWorldRoot[data-world="molten"] .mw-floor{ fill:rgba(255,107,53,.05); stroke:none; }
+#dvWorldRoot[data-world="molten"] .mw-edge{ fill:none; stroke:var(--mw-hot); stroke-width:2; filter:drop-shadow(0 0 6px rgba(255,107,53,.7)); }
+#dvWorldRoot[data-world="molten"] .mw-dt{ fill:var(--mw-hot); filter:drop-shadow(0 0 5px rgba(255,107,53,.9)); }
+#dvWorldRoot[data-world="molten"] .mw-pl{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:16px; font-weight:600; fill:var(--mw-title); text-transform:uppercase; }
+#dvWorldRoot[data-world="molten"] .mw-plr{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:12px; fill:var(--mw-mut); text-transform:uppercase; }
+#dvWorldRoot[data-world="molten"] .mw-caption{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:12px; fill:var(--mw-mut); letter-spacing:.12em; }
+/* stage feature overlays (monitors, DI, risers) — reuse the shared engine, tint warm */
+#dvWorldRoot[data-world="molten"] .mw-stage-feats{ position:absolute; inset:12px; pointer-events:none; color:var(--mw-mut); }
+#dvWorldRoot[data-world="molten"] .mw-stage-feats .stage-feature{ position:absolute; }
+#dvWorldRoot[data-world="molten"] .mw-stage-feats .stage-feature svg{ width:100%; height:100%; display:block; }
+#dvWorldRoot[data-world="molten"] .mw-stage-feats .sf-label{ position:absolute; transform:translate(-50%,-50%); font-family:var(--ff-display,'Oswald',system-ui,sans-serif); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--mw-mut); white-space:nowrap; }
+/* warm rows: band / hosts / shadows / service order */
+#dvWorldRoot[data-world="molten"] .mw-rows{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="molten"] .mw-row{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--mw-hair); font-size:clamp(12px,1.4vw,15px); }
+#dvWorldRoot[data-world="molten"] .mw-rno{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); color:var(--mw-mut); font-size:.85em; letter-spacing:.06em; }
+#dvWorldRoot[data-world="molten"] .mw-rnm{ color:var(--mw-ink); min-width:0; }
+#dvWorldRoot[data-world="molten"] .mw-rdt{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); color:var(--mw-mut); font-size:.85em; text-align:right; white-space:nowrap; }
+#dvWorldRoot[data-world="molten"] .mw-row.mw-rhead .mw-rnm{ font-family:var(--ff-display,'Oswald',system-ui,sans-serif); color:var(--mw-ember); letter-spacing:.2em; text-transform:uppercase; font-size:.8em; padding-top:10px; }
+#dvWorldRoot[data-world="molten"] .mw-key{ border:1px solid var(--mw-line); border-radius:4px; padding:1px 6px; font-size:.85em; margin-left:6px; color:var(--mw-ember); }
+#dvWorldRoot[data-world="molten"] .mw-lead{ color:var(--mw-mut); font-size:.85em; margin-left:6px; }
+#dvWorldRoot[data-world="molten"] .mw-rsdesc{ color:var(--mw-mut); font-size:.85em; margin-top:3px; white-space:normal; }
+/* ---- LIGHT FACE: "forge-bright" — sunlit steel / warm cream + molten-orange ---- */
+[data-theme="light"] #dvWorldRoot[data-world="molten"]{
+  --mw-ink:#3a2417; --mw-name:#2a1710; --mw-title:#b8431a; --mw-hot:#e8551f;
+  --mw-ember:#c0491d; --mw-mut:#9a6b4f; --mw-line:rgba(200,80,30,.22);
+  --mw-hair:rgba(200,80,30,.16); --mw-panel-a:rgba(255,255,255,.55); --mw-panel-b:rgba(255,240,230,.4);
+  --mw-badge-a:#ff8a4c; --mw-badge-b:#e8551f; --mw-badge-ink:#fff3ec;
+  background:
+    radial-gradient(130% 82% at 50% 114%, rgba(255,140,80,.28), transparent 60%),
+    linear-gradient(180deg,#f7ede3,#efe0d2);
+}
+[data-theme="light"] #dvWorldRoot[data-world="molten"]::after{ opacity:.09; mix-blend-mode:multiply; }
+[data-theme="light"] #dvWorldRoot[data-world="molten"] .mw-title{ text-shadow:none; }
+[data-theme="light"] #dvWorldRoot[data-world="molten"] .mw-floor{ fill:rgba(232,85,31,.06); }
+
+/* drifting backdrop on the app ground (dark + light both) — shared baseline for every world */
+/* The ground: a single monotonic diagonal wash — a subtle tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
    form a lump/disc like overlapping radial blobs did. Also on .display-view, which has its own
    bg that would otherwise cover the body wash. Colors are mixed INTO --gd (no transparency
-   stacking), which keeps it perfectly smooth. */
-[data-look="aurora"] body,
-[data-look="aurora"] .display-view{
+   stacking), which keeps it perfectly smooth. Per-world bespoke backgrounds come in later phases. */
+[data-world] body,
+[data-world] .display-view{
   background:linear-gradient(158deg,
     color-mix(in srgb, var(--c1) 16%, var(--gd)) 0%,
     var(--gd) 55%,
     color-mix(in srgb, var(--c2) 12%, var(--gd)) 100%);
   background-attachment:fixed}
-/* frosted glass for surfaces that were solid panels */
-[data-look="aurora"] .dv-voc-card,
-[data-look="aurora"] .dv-side-block,
-[data-look="aurora"] .voc-card,
-[data-look="aurora"] .setup-review-sheet{
+/* frosted glass for surfaces that were solid panels (shared baseline; worlds may override later) */
+[data-world] .dv-voc-card,
+[data-world] .dv-side-block,
+[data-world] .voc-card,
+[data-world] .setup-review-sheet{
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 34px rgba(0,0,0,.22)}
 /* glowing IEM + gradient section labels (the signature) */
-[data-look="aurora"][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
-[data-look="aurora"] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+[data-world][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
+[data-world] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
 
 @media print{
 @page{size:letter;margin:.5in}
@@ -1859,7 +2033,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-07·c</div>
+<div id="buildStamp">build 2026-07-08·b</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2164,8 +2338,7 @@ const DEFAULT_STATE = {
   checklistState: {},
   viewMode: 'setup',
   theme: 'dark',
-  look: 'aurora',         // Aurora is the only look now ("the new classic")
-  auroraMood: 'graphite'  // active Aurora color mood
+  world: 'molten'         // active world (the 6-world engine replaced the 11 color moods)
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -2418,6 +2591,8 @@ function loadState() {
       while (voxPacks.length < MAX_VOCALISTS) voxPacks.push(`Vocal ${voxPacks.length+1} Pack`);
 
       return { ...DEFAULT_STATE, ...p,
+        // World migration: ignore legacy look/auroraMood (any old save → Molten); honor a real saved world.
+        world: (typeof p.world === 'string' && p.world) ? p.world : 'molten',
         service: { ...DEFAULT_STATE.service, ...(p.service||{}) },
         hosts: migrateHosts(p),
         pcoConfig: { ...DEFAULT_STATE.pcoConfig, ...(p.pcoConfig||{}) },
@@ -5599,11 +5774,11 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
-    <div class="section-label" style="margin-bottom:8px;">Theme</div>
-    <div class="mood-picker">
-      ${AURORA_MOODS.map(m=>moodSwatchHtml(m, state.auroraMood===m)).join('')}
+    <div class="section-label" style="margin-bottom:8px;">World</div>
+    <div class="world-picker">
+      ${WORLD_ORDER.map(id=>worldSwatchHtml(id, state.world===id)).join('')}
     </div>
-    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a color mood — the whole app + display recolor live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
+    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a world — the whole app + display recolor and re-font live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
 
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
@@ -6010,9 +6185,9 @@ function renderLayoutEditor() {
       if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
-  // Mood swatches — recolor the whole app live, then re-render so the selected ring updates.
-  el.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', e => {
-    setMood(e.currentTarget.dataset.moodOpt); renderLayoutEditor();
+  // World swatches — recolor + re-font the whole app live, then re-render so the selected ring updates.
+  el.querySelectorAll('[data-world-opt]').forEach(b => b.addEventListener('click', e => {
+    setWorld(e.currentTarget.dataset.worldOpt); renderLayoutEditor();
   }));
   // Run sheet sub-toggles
   el.querySelectorAll('[data-rs]').forEach(cb => {
@@ -8142,7 +8317,41 @@ function exitDisplayMode() {
     }
   } catch (e) { /* ignore */ }
 }
+// Toggle between the DEFAULT display layout (#dvLayout) and a bespoke per-world root
+// (#dvWorldRoot). Bespoke renderers own #dvWorldRoot; the default path owns #dvLayout.
+// `active=true`  → show #dvWorldRoot (created lazily), hide #dvLayout. Returns the root.
+// `active=false` → show #dvLayout, hide + empty #dvWorldRoot (so molten↔concrete swaps cleanly).
+function dvSetWorldRoot(active) {
+  const view = document.getElementById('displayView');
+  if (!view) return null;
+  let root = document.getElementById('dvWorldRoot');
+  const dvLayout = document.getElementById('dvLayout');
+  if (active) {
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'dvWorldRoot';
+      // Insert right before the default layout so it occupies the same slot in the flow.
+      if (dvLayout && dvLayout.parentNode === view) view.insertBefore(root, dvLayout);
+      else view.appendChild(root);
+    }
+    root.style.display = '';
+    if (dvLayout) dvLayout.style.display = 'none';
+    return root;
+  }
+  // Default path: restore the default layout, retire any bespoke root.
+  if (dvLayout) dvLayout.style.display = '';
+  if (root) { root.style.display = 'none'; root.innerHTML = ''; root.removeAttribute('data-world'); }
+  return null;
+}
+
 function renderDisplayView() {
+  // World dispatcher: a world may define its own bespoke display renderer.
+  // If it does, delegate entirely (it renders into #dvWorldRoot); otherwise fall through to
+  // the default layout below — but first re-show #dvLayout / retire #dvWorldRoot so that
+  // switching back from a bespoke world (e.g. Concrete → Molten) restores the default view.
+  const __world = WORLDS[state.world] || WORLDS[DEFAULT_WORLD];
+  if (__world && typeof __world.renderDisplay === 'function') { __world.renderDisplay(); return; }
+  dvSetWorldRoot(false);
   const s = state.service;
   document.getElementById('dv_title').textContent = s.name || 'Service';
   const dateStr = s.date ? new Date(s.date+'T00:00').toLocaleDateString(undefined, {weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
@@ -8501,6 +8710,446 @@ function renderDisplayView() {
   );
 }
 
+// ============================================================================
+// BESPOKE DISPLAY — CONCRETE (brutalist / blueprint). The first per-world layout.
+// Renders into #dvWorldRoot (NOT #dvLayout). Reuses the REAL data + geometry helpers
+// (getStageShape / getBandStagePositions / getVoxPositions / renderStageFeatures,
+// formatDisplayName, vocalistInstrumentTags, shortInstLabel, iemPackFor, hostChannels,
+// hostName, shadowNeedsNoMix, fmtDuration) and honors state.config.display toggles.
+// Visual source of truth: docs/design-world-concrete.html.
+// ============================================================================
+function renderDisplay_concrete() {
+  const root = dvSetWorldRoot(true);
+  if (!root) return;
+  root.setAttribute('data-world', 'concrete');
+  const d = state.config.display || {};
+  const s = state.service;
+
+  // ---- Header: title + mono meta (date / times / auditorium) --------------
+  const title = esc(s.name || 'Service');
+  const dateStr = s.date
+    ? new Date(s.date + 'T00:00').toLocaleDateString(undefined, { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '.')
+    : '';
+  const timeStr = esc(s.time || '');
+  const metaLines = [dateStr, timeStr].filter(Boolean).map(t => esc(t)).join('<br>');
+
+  // ---- Toggles (mirror the default view) ----------------------------------
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  const showStage   = d.showStage !== false;
+  const showBand    = d.showBand !== false;
+  const showHosts   = d.showHosts !== false;
+  const showShadows = d.showShadows !== false && hasShadows;
+  const rsPos = d.runSheetPosition || 'right';
+  const showRS = d.showServiceOrder !== false && state.serviceOrder && state.serviceOrder.length > 0 && rsPos !== 'hidden';
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  const showMic = state.config.showMicCapsules;
+
+  // ---- Vocalist cells (index number, name, VOCAL n, mic + IEM pack) --------
+  // All voices equal — no worship-leader emphasis (matches default view).
+  const cells = [];
+  let vocCount = 0;
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    vocCount++;
+    const nm = esc(formatDisplayName(v.name) || '—');
+    const tags = vocalistInstrumentTags(v.id);
+    const tagStr = tags.length ? ' / ' + esc(tags.join(', ')) : '';
+    const iemPackName = esc((state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1)));
+    const micVal = (d.vocShowMic !== false && showMic)
+      ? `<div class="cw-cell-mc">${esc(v.micAssigned || '—')}</div>` : '';
+    const iemVal = (d.vocShowIem !== false)
+      ? `<div class="cw-cell-iem"><span>IEM</span> ${iemPackName}</div>` : '';
+    cells.push(
+      `<div class="cw-cell">`
+      + `<div class="cw-cell-idx">${String(i + 1).padStart(2, '0')}</div>`
+      + `<div class="cw-cell-nm">${nm}</div>`
+      + `<div class="cw-cell-rl">VOCAL ${i + 1}${tagStr}</div>`
+      + micVal + iemVal
+      + `</div>`
+    );
+  }
+  const vocGridHtml = cells.length
+    ? `<div class="cw-grid">${cells.join('')}</div>`
+    : `<div class="cw-empty">NO VOCALISTS SET</div>`;
+
+  // ---- Blueprint stage (real geometry, audience at top) -------------------
+  let stageHtml = '';
+  if (showStage) {
+    const shape = getStageShape();
+    // People markers as {x,y,role,name} in the 0..800 × 0..380 stage space.
+    const marks = [];
+    const bandPositions = getBandStagePositions();
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;            // covered by a vocalist cell
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const pos = bandPositions[inst.id]; if (!pos) return;
+      const isMD = state.musicDirectorId === inst.id;
+      marks.push({ x: pos.x, y: pos.y, label: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), name: formatDisplayName(name) });
+    });
+    const filled = state.assignments.filter(a => a !== null);
+    if (filled.length > 0) {
+      const voxPositions = getVoxPositions(filled.length);
+      let pi = 0;
+      for (let i = 0; i < MAX_VOCALISTS; i++) {
+        const id = state.assignments[i]; if (!id) continue;
+        const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+        const pos = voxPositions[pi++]; if (!pos) continue;
+        marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
+      }
+    }
+    // Dots + upright mono labels. Labels flip to the left near the SR edge so they don't clip.
+    const dots = marks.map(m => {
+      const anchor = m.x > 640 ? 'end' : 'start';
+      const dx = m.x > 640 ? -6 : 6;
+      const nm = esc((m.name || '').toUpperCase());
+      const rl = esc((m.label || '').toUpperCase());
+      return `<circle class="cw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="6"/>`
+        + `<text class="cw-pl" x="${(m.x + dx).toFixed(1)}" y="${(m.y - 3).toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="cw-plr" x="${(m.x + dx).toFixed(1)}" y="${(m.y + 12).toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+    }).join('');
+    // Dimension ticks across the front apron (blueprint flavor).
+    const ey = (shape.edgeY != null ? shape.edgeY : 146);
+    stageHtml = ''
+      + `<div class="cw-panel-lbl"><span>STAGE — PLAN</span><span>800×380</span></div>`
+      + `<div class="cw-stage">`
+      + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+      + `<path class="cw-floor" d="${shape.path}"/>`
+      + `<path class="cw-edge" d="${shape.edge}"/>`
+      + `<line class="cw-tick" x1="20" y1="${(ey - 14).toFixed(1)}" x2="20" y2="${(ey + 2).toFixed(1)}"/>`
+      + `<line class="cw-tick" x1="400" y1="10" x2="400" y2="26"/>`
+      + `<line class="cw-tick" x1="780" y1="${(ey - 14).toFixed(1)}" x2="780" y2="${(ey + 2).toFixed(1)}"/>`
+      + `<text class="cw-dim" x="400" y="372" text-anchor="middle">↑ AUDIENCE · BACK ↓</text>`
+      + `<text class="cw-dim" x="24" y="${(ey - 4).toFixed(1)}">SL</text>`
+      + `<text class="cw-dim" x="776" y="${(ey - 4).toFixed(1)}" text-anchor="end">SR</text>`
+      + dots
+      + `</svg>`
+      + `<div class="cw-stage-feats" id="cwStageFeatures"></div>`
+      + `</div>`;
+  }
+
+  // ---- Manifest: band / hosts / shadows -----------------------------------
+  const manifestRow = (no, name, detail) =>
+    `<div class="cw-mrow"><span class="cw-mno">${no}</span>`
+    + `<span class="cw-mnm">${name}</span>`
+    + `<span class="cw-mdt">${detail || ''}</span></div>`;
+
+  let bandHtml = '';
+  if (showBand) {
+    const rows = [];
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const isMD = state.musicDirectorId === inst.id;
+      rows.push(manifestRow(
+        esc(shortInstLabel(inst.label)) + (isMD ? ' ·MD' : ''),
+        esc((formatDisplayName(name) || '—').toUpperCase()),
+        esc(iemPackFor(inst))
+      ));
+    });
+    if (!rows.length) rows.push(manifestRow('—', 'NO BAND ASSIGNED', ''));
+    bandHtml = `<div class="cw-panel-lbl"><span>Band — Manifest</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+      + `<div class="cw-manifest">${rows.join('')}</div>`;
+  }
+
+  let hostsHtml = '';
+  if (showHosts) {
+    const rows = [];
+    hostChannels().forEach(ch => {
+      const name = hostName(ch.id);
+      if (!name) return;
+      rows.push(manifestRow(esc(ch.label), esc((formatDisplayName(name) || '').toUpperCase()), ''));
+    });
+    if (rows.length) {
+      hostsHtml = `<div class="cw-panel-lbl"><span>Handhelds</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+        + `<div class="cw-manifest">${rows.join('')}</div>`;
+    }
+  }
+
+  let shadowsHtml = '';
+  if (showShadows) {
+    const rows = [];
+    state.shadows.forEach((sh, idx) => {
+      if (!sh.name && !sh.pack) return;
+      const bits = [];
+      if (shadowNeedsNoMix(sh.setup)) bits.push('no IEM');
+      else if (sh.pack) bits.push(sh.pack);
+      if (sh.mic) bits.push('🎤 ' + sh.mic);
+      rows.push(manifestRow('SH ' + (idx + 1), esc((formatDisplayName(sh.name) || '—').toUpperCase()), esc(bits.join(' · '))));
+    });
+    if (rows.length) {
+      shadowsHtml = `<div class="cw-panel-lbl"><span>Shadows</span><span>${String(rows.length).padStart(2, '0')}</span></div>`
+        + `<div class="cw-manifest">${rows.join('')}</div>`;
+    }
+  }
+
+  // ---- Run sheet manifest --------------------------------------------------
+  let runHtml = '';
+  if (showRS) {
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    const rows = visibleItems.map(it => {
+      const trueIdx = state.serviceOrder.indexOf(it);
+      if (it.kind === 'header') {
+        return `<div class="cw-mrow cw-mhead"><span class="cw-mno"></span><span class="cw-mnm">${esc((it.title || '—').toUpperCase())}</span><span class="cw-mdt"></span></div>`;
+      }
+      const no = it.kind === 'song' ? '♪' : String(trueIdx + 1).padStart(2, '0');
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key) inlineMeta.push(`<span class="cw-key">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="cw-lead">${esc(it.leader)}</span>`);
+      const metaHtml = inlineMeta.length ? ` <span class="cw-rsmeta">${inlineMeta.join('')}</span>` : '';
+      const dur = rsCfg.showDuration !== false ? esc(fmtDuration(it.length)) : '';
+      const desc = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="cw-rsdesc">${esc(it.notes).replace(/\n/g, '<br>')}</div>` : '';
+      return `<div class="cw-mrow"><span class="cw-mno">${no}</span>`
+        + `<span class="cw-mnm">${esc((it.title || '—').toUpperCase())}${metaHtml}${desc}</span>`
+        + `<span class="cw-mdt">${dur}</span></div>`;
+    }).join('');
+    const songCount = visibleItems.filter(i => i.kind !== 'header').length;
+    runHtml = `<div class="cw-panel-lbl"><span>Run Sheet — Manifest</span><span>${String(songCount).padStart(2, '0')}</span></div>`
+      + `<div class="cw-manifest">${rows}</div>`;
+  }
+
+  // ---- Assemble the two-column brutalist body -----------------------------
+  // Left column: vocalist grid (the heart). Right column: blueprint stage + manifests.
+  // If a whole column would be empty (all right-side toggles off), the grid collapses to 1fr.
+  const rightHtml = [stageHtml, bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  const bodyClass = rightHtml ? 'cw-body' : 'cw-body cw-body-solo';
+
+  root.innerHTML = ''
+    + `<div class="cw-head">`
+    +   `<div class="cw-title">${title}</div>`
+    +   `<div class="cw-meta">${metaLines}</div>`
+    + `</div>`
+    + `<div class="${bodyClass}">`
+    +   `<div class="cw-col">`
+    +     `<div class="cw-panel-lbl"><span>Vocalists</span><span>${String(vocCount).padStart(2, '0')}</span></div>`
+    +     vocGridHtml
+    +   `</div>`
+    +   (rightHtml ? `<div class="cw-col cw-col-r">${rightHtml}</div>` : '')
+    + `</div>`;
+
+  // Stage features (monitors, DI/power, risers, etc.) at their real positions.
+  if (showStage) {
+    const featLayer = root.querySelector('#cwStageFeatures');
+    if (featLayer) renderStageFeatures(featLayer, { interactive: false });
+  }
+}
+
+// ============================================================================
+// BESPOKE DISPLAY — MOLTEN (the DEFAULT world). Equal-lineup layout — every voice
+// equal, NO worship-leader emphasis / no hero. Renders into #dvWorldRoot (NOT
+// #dvLayout). Reuses the REAL data + geometry helpers (getStageShape /
+// getBandStagePositions / getVoxPositions / renderStageFeatures, formatDisplayName,
+// vocalistInstrumentTags, shortInstLabel, iemPackFor, hostChannels, hostName,
+// shadowNeedsNoMix, fmtDuration) and honors state.config.display toggles — the same
+// contract as Concrete. Visual source of truth: docs/design-worlds-redo.html panel
+// .molten ("Molten v2"). Dark = ember; light = "forge-bright" (see CSS).
+// ============================================================================
+function renderDisplay_molten() {
+  const root = dvSetWorldRoot(true);
+  if (!root) return;
+  root.setAttribute('data-world', 'molten');
+  const d = state.config.display || {};
+  const s = state.service;
+
+  // ---- Header: title + tracked ember meta (date / auditorium) -------------
+  const title = esc(s.name || 'Service');
+  const dateStr = s.date
+    ? new Date(s.date + 'T00:00').toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })
+    : '';
+  const timeStr = esc(s.time || '');
+  const metaLines = [dateStr, timeStr].filter(Boolean).map(t => esc(t)).join('<br>');
+
+  // ---- Toggles (mirror the default + Concrete views) ----------------------
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  const showStage   = d.showStage !== false;
+  const showBand    = d.showBand !== false;
+  const showHosts   = d.showHosts !== false;
+  const showShadows = d.showShadows !== false && hasShadows;
+  const rsPos = d.runSheetPosition || 'right';
+  const showRS = d.showServiceOrder !== false && state.serviceOrder && state.serviceOrder.length > 0 && rsPos !== 'hidden';
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  const showMic = state.config.showMicCapsules;
+
+  // ---- Equal lineup of voices (the heart) ---------------------------------
+  // Big condensed Oswald name + "Vocal N" + a glowing ember mic badge. ALL EQUAL —
+  // no worship-leader highlight (matches the default view + the mockup).
+  const rows = [];
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    const nm = esc(formatDisplayName(v.name) || '—');
+    const tags = vocalistInstrumentTags(v.id);
+    const tagStr = tags.length ? ' / ' + esc(tags.join(', ')) : '';
+    const iemPackName = esc((state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1)));
+    // Mic badge is the glowing ember pill (the mockup's `lm`). IEM shown as a quiet
+    // secondary badge when the mic capsule is hidden or off, so the toggle still lands somewhere.
+    const badges = [];
+    if (d.vocShowMic !== false && showMic) {
+      badges.push(`<span class="mw-lbadge">${esc(v.micAssigned || '—')}</span>`);
+    }
+    if (d.vocShowIem !== false) {
+      badges.push(`<span class="mw-lbadge mw-lbadge-iem">${iemPackName}</span>`);
+    }
+    const meta = badges.length ? `<span class="mw-lmeta">${badges.join('')}</span>` : '';
+    rows.push(
+      `<div class="mw-lrow">`
+      + `<span class="mw-lname-wrap"><span class="mw-lname">${nm}</span>`
+      + `<span class="mw-lrole">VOCAL ${i + 1}${tagStr}</span></span>`
+      + meta
+      + `</div>`
+    );
+  }
+  const lineupHtml = rows.length
+    ? `<div class="mw-lineup">${rows.join('')}</div>`
+    : `<div class="mw-empty">No vocalists set yet.</div>`;
+
+  // ---- Ember stage (real geometry, audience at top) -----------------------
+  let stageHtml = '';
+  if (showStage) {
+    const shape = getStageShape();
+    const marks = [];
+    const bandPositions = getBandStagePositions();
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;            // covered by a voice row
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const pos = bandPositions[inst.id]; if (!pos) return;
+      const isMD = state.musicDirectorId === inst.id;
+      marks.push({ x: pos.x, y: pos.y, label: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), name: formatDisplayName(name) });
+    });
+    const filled = state.assignments.filter(a => a !== null);
+    if (filled.length > 0) {
+      const voxPositions = getVoxPositions(filled.length);
+      let pi = 0;
+      for (let i = 0; i < MAX_VOCALISTS; i++) {
+        const id = state.assignments[i]; if (!id) continue;
+        const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+        const pos = voxPositions[pi++]; if (!pos) continue;
+        marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
+      }
+    }
+    // Glowing dots + upright Oswald labels; labels flip left near the SR edge so they don't clip.
+    const dots = marks.map(m => {
+      const anchor = m.x > 640 ? 'end' : 'start';
+      const dx = m.x > 640 ? -8 : 8;
+      const nm = esc((m.name || '').toUpperCase());
+      const rl = esc((m.label || '').toUpperCase());
+      return `<circle class="mw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="7"/>`
+        + `<text class="mw-pl" x="${(m.x + dx).toFixed(1)}" y="${(m.y - 4).toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="mw-plr" x="${(m.x + dx).toFixed(1)}" y="${(m.y + 12).toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+    }).join('');
+    stageHtml = ''
+      + `<div class="mw-label">Stage</div>`
+      + `<div class="mw-stagewrap">`
+      + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+      + `<path class="mw-floor" d="${shape.path}"/>`
+      + `<path class="mw-edge" d="${shape.edge}"/>`
+      + `<text class="mw-caption" x="400" y="372" text-anchor="middle">↑ AUDIENCE</text>`
+      + dots
+      + `</svg>`
+      + `<div class="mw-stage-feats" id="mwStageFeatures"></div>`
+      + `</div>`;
+  }
+
+  // ---- Warm rows: band / hosts / shadows / service order ------------------
+  const row = (no, name, detail) =>
+    `<div class="mw-row"><span class="mw-rno">${no}</span>`
+    + `<span class="mw-rnm">${name}</span>`
+    + `<span class="mw-rdt">${detail || ''}</span></div>`;
+
+  let bandHtml = '';
+  if (showBand) {
+    const r = [];
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const isMD = state.musicDirectorId === inst.id;
+      r.push(row(esc(shortInstLabel(inst.label)) + (isMD ? ' ·MD' : ''), esc(formatDisplayName(name) || '—'), esc(iemPackFor(inst))));
+    });
+    if (!r.length) r.push(row('—', 'No band assigned', ''));
+    bandHtml = `<div class="mw-label mw-label-sub">Band</div><div class="mw-rows">${r.join('')}</div>`;
+  }
+
+  let hostsHtml = '';
+  if (showHosts) {
+    const r = [];
+    hostChannels().forEach(ch => {
+      const name = hostName(ch.id);
+      if (!name) return;
+      r.push(row(esc(ch.label), esc(formatDisplayName(name) || ''), ''));
+    });
+    if (r.length) hostsHtml = `<div class="mw-label mw-label-sub">Hosts</div><div class="mw-rows">${r.join('')}</div>`;
+  }
+
+  let shadowsHtml = '';
+  if (showShadows) {
+    const r = [];
+    state.shadows.forEach((sh, idx) => {
+      if (!sh.name && !sh.pack) return;
+      const bits = [];
+      if (shadowNeedsNoMix(sh.setup)) bits.push('no IEM');
+      else if (sh.pack) bits.push(sh.pack);
+      if (sh.mic) bits.push('🎤 ' + sh.mic);
+      r.push(row('SH ' + (idx + 1), esc(formatDisplayName(sh.name) || '—'), esc(bits.join(' · '))));
+    });
+    if (r.length) shadowsHtml = `<div class="mw-label mw-label-sub">Shadows</div><div class="mw-rows">${r.join('')}</div>`;
+  }
+
+  // ---- Service order -------------------------------------------------------
+  let runHtml = '';
+  if (showRS) {
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    const r = visibleItems.map(it => {
+      const trueIdx = state.serviceOrder.indexOf(it);
+      if (it.kind === 'header') {
+        return `<div class="mw-row mw-rhead"><span class="mw-rno"></span><span class="mw-rnm">${esc(it.title || '—')}</span><span class="mw-rdt"></span></div>`;
+      }
+      const no = it.kind === 'song' ? '♪' : String(trueIdx + 1).padStart(2, '0');
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key) inlineMeta.push(`<span class="mw-key">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="mw-lead">${esc(it.leader)}</span>`);
+      const metaHtml = inlineMeta.length ? ` ${inlineMeta.join('')}` : '';
+      const dur = rsCfg.showDuration !== false ? esc(fmtDuration(it.length)) : '';
+      const desc = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="mw-rsdesc">${esc(it.notes).replace(/\n/g, '<br>')}</div>` : '';
+      return `<div class="mw-row"><span class="mw-rno">${no}</span>`
+        + `<span class="mw-rnm">${esc(it.title || '—')}${metaHtml}${desc}</span>`
+        + `<span class="mw-rdt">${dur}</span></div>`;
+    }).join('');
+    runHtml = `<div class="mw-label mw-label-sub">Service Order</div><div class="mw-rows">${r}</div>`;
+  }
+
+  // ---- Assemble: lineup (left) + stage/rows (right). Collapse to 1fr if the
+  // whole right column would be empty (all right-side toggles off). ----------
+  const rightHtml = [stageHtml, bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  const bodyClass = rightHtml ? 'mw-body' : 'mw-body mw-body-solo';
+
+  root.innerHTML = ''
+    + `<div class="mw-head">`
+    +   `<div class="mw-title">${title}</div>`
+    +   `<div class="mw-meta">${metaLines}</div>`
+    + `</div>`
+    + `<div class="${bodyClass}">`
+    +   `<div class="mw-col">`
+    +     `<div class="mw-label">On the Mic</div>`
+    +     lineupHtml
+    +   `</div>`
+    +   (rightHtml ? `<div class="mw-col mw-col-r">${rightHtml}</div>` : '')
+    + `</div>`;
+
+  // Stage features (monitors, DI/power, risers, etc.) at their real positions.
+  if (showStage) {
+    const featLayer = root.querySelector('#mwStageFeatures');
+    if (featLayer) renderStageFeatures(featLayer, { interactive: false });
+  }
+}
+
 function setTheme(theme) {
   if (theme !== 'light' && theme !== 'dark') theme = 'dark';
   state.theme = theme;
@@ -8513,71 +9162,66 @@ function toggleTheme() {
   setTheme(state.theme === 'light' ? 'dark' : 'light');
 }
 
-// ---- Look + mood (Aurora is the only look; moods are the "which look" choice) ----
-// Dillon's chosen moods, ordered neutral → cool → warm.
-const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
-const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
-// c1·c2·c3 per mood — used to paint preview swatches (must mirror the [data-mood] CSS).
-const MOOD_COLORS = {
-  graphite:['#cbd3dd','#8b95a3','#5b6472'], platinum:['#eae4d8','#c9c0b0','#9a917f'],
-  fog:['#a9cfcb','#8fb0be','#b7b0a0'], ashrose:['#d8b3c0','#b7a0c4','#c8b8ad'],
-  frost:['#a5f3fc','#7dd3fc','#cbd5ff'], nebula:['#67e8f9','#b39cff','#f7a8d8'],
-  ocean:['#38bdf8','#4f7cff','#22d3ee'], dusk:['#8b9cff','#c08cff','#7fb0ff'],
-  meadow:['#86d9a6','#e3cf7a','#8ecae6'], rose:['#f9a8d4','#c4b5fd','#fbcfe8'],
-  molten:['#ff6b4a','#ffb020','#ff4d6d']
+// ---- Worlds (the "which look" choice; replaces the 11 color-only moods) ----
+// Each world recolors + re-fonts the whole app via the token derivation in the CSS
+// [data-world="…"] blocks; `swatch` mirrors that block's --c1/--c2/--c3 for previews.
+// `fonts` are loaded on demand (ensureFontLoaded). Bespoke per-world display layouts
+// attach later as WORLDS[id].renderDisplay (see renderDisplayView dispatcher).
+const WORLDS = {
+  molten:   { label:'Molten',    emoji:'🔥', fonts:{display:'Oswald',    body:'Archivo'},    swatch:['#ff6b4a','#ffb020','#ff4d6d'] },
+  concrete: { label:'Concrete',  emoji:'🪨', fonts:{display:'Archivo',   body:'Space Mono'}, swatch:['#cbd3dd','#8b95a3','#5b6472'] },
+  corporate:{ label:'Corporate', emoji:'🏛', fonts:{display:'Syne',      body:'Archivo'},    swatch:['#c9a27a','#9a8468','#6f5d48'] },
+  terra:    { label:'Terra',     emoji:'🌿', fonts:{display:'Spectral',  body:'Mulish'},     swatch:['#9cc27a','#c9a24b','#8ab0a0'] },
+  orbit:    { label:'Orbit',     emoji:'🪐', fonts:{display:'Unbounded', body:'Manrope'},    swatch:['#b39cff','#8a6fe0','#67e8f9'] },
+  atomic:   { label:'Atomic',    emoji:'🛰', fonts:{display:'Jost',      body:'Jost'},       swatch:['#e2683f','#d99a2b','#3f6f72'] },
 };
-// One preview swatch button for a mood. Reused by the settings picker + the wizard step.
-function moodSwatchHtml(m, selected) {
-  const c = MOOD_COLORS[m] || ['#888','#888','#888'];
+const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit','atomic'];
+const DEFAULT_WORLD = 'molten';
+// Bespoke per-world display renderers. These are hoisted function declarations, so they're
+// defined by the time any render runs. Molten (the DEFAULT world) + Concrete each have their own
+// display layout; the remaining worlds fall back to the default skeleton.
+WORLDS.molten.renderDisplay   = renderDisplay_molten;
+WORLDS.concrete.renderDisplay = renderDisplay_concrete;
+// One preview tile for a world. Reused by the Settings picker + the wizard step.
+function worldSwatchHtml(id, selected) {
+  const w = WORLDS[id]; if (!w) return '';
+  const c = w.swatch;
   const grad = `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 52%, ${c[2]} 100%)`;
-  return `<button type="button" class="mood-swatch${selected ? ' sel' : ''}" data-mood-opt="${m}" title="${MOOD_LABEL[m] || m}" style="background:${grad};"><span class="lbl">${MOOD_LABEL[m] || m}</span></button>`;
+  return `<button type="button" class="world-swatch${selected ? ' sel' : ''}" data-world-opt="${id}" title="${w.label}" style="font-family:${w.fonts.display},system-ui,sans-serif;">`
+    + `<span class="ws-chip" style="background:${grad};"></span>`
+    + `<span class="ws-name">${w.emoji} ${w.label}</span></button>`;
 }
-// These are set INLINE on <html> by applyBrand(); inline wins over the [data-look="aurora"]
-// stylesheet, so Aurora must clear them (theme takes over) and Classic restores them.
+// These may have been set INLINE on <html> by a legacy applyBrand(); inline wins over the
+// [data-world] stylesheet, so the world engine clears them (the world's tokens take over).
 const BRAND_INLINE_VARS = ['--accent','--accent-2','--wl','--ff-display','--accent-dim','--accent-glow','--btn-primary-text'];
-// Aurora is the only look now ("the new classic") — always applied. This also migrates any
-// existing save that still says look:'classic'. The brand system sets --accent/--ff-display
-// INLINE (which would beat the [data-look="aurora"] stylesheet), so we clear those and supply
-// the few tokens the stylesheet doesn't; applyBrand() no-ops while aurora is active.
-function applyLook() {
+// Apply the active world: set data-world, ensure its fonts are loaded, clear the legacy
+// look/mood attributes + brand inline vars. Theme (data-theme) is a separate axis (setTheme).
+function applyWorld() {
   const html = document.documentElement;
-  state.look = 'aurora';
-  html.setAttribute('data-look', 'aurora');
-  const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
-  html.setAttribute('data-mood', mood);
+  const id = WORLDS[state.world] ? state.world : DEFAULT_WORLD;
+  state.world = id;
+  html.setAttribute('data-world', id);
+  html.removeAttribute('data-look');
+  html.removeAttribute('data-mood');
   BRAND_INLINE_VARS.forEach(p => html.style.removeProperty(p));
   html.style.setProperty('--wl', 'var(--c2)');
   html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
   html.style.setProperty('--btn-primary-text', '#0a0f16');
+  const f = WORLDS[id].fonts;
+  ensureFontLoaded(f.display); ensureFontLoaded(f.body);
 }
-function setLook() { applyLook(); saveState(); } // retained for callers; aurora is unconditional
-function setMood(mood) {
-  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'graphite';
-  applyLook(); saveState();
+function setWorld(id) {
+  state.world = WORLDS[id] ? id : DEFAULT_WORLD;
+  applyWorld(); saveState();
   if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
 }
+// Back-compat shim: older code/tests may still call applyLook(); route it to applyWorld().
+function applyLook() { applyWorld(); }
 
 function applyBrand() {
-  // Aurora owns the accent + display font (via its mood tokens); don't let a brand edit
-  // clobber the theme. The brand palette is restored when the user switches back to Classic.
-  if (state.look === 'aurora') return;
-  const b = state.brand || {};
-  const root = document.documentElement;
-  if (b.accent)  root.style.setProperty('--accent',  b.accent);
-  if (b.accent2) root.style.setProperty('--accent-2', b.accent2);
-  if (b.wl)      root.style.setProperty('--wl', b.wl);
-  if (b.font)    root.style.setProperty('--ff-display', `'${b.font}', Georgia, serif`);
-  // Re-derive accent-dim and pick readable button text color based on luminance
-  if (b.accent) {
-    const r = parseInt(b.accent.slice(1,3),16);
-    const g = parseInt(b.accent.slice(3,5),16);
-    const bl= parseInt(b.accent.slice(5,7),16);
-    root.style.setProperty('--accent-dim', `rgba(${r},${g},${bl},0.12)`);
-    root.style.setProperty('--accent-glow', `rgba(${r},${g},${bl},0.35)`);
-    // Relative luminance — pick white text on dark accents, dark text on light accents
-    const luma = (0.299*r + 0.587*g + 0.114*bl);
-    root.style.setProperty('--btn-primary-text', luma < 130 ? '#ffffff' : '#1a1408');
-  }
+  // No-op. Worlds are the only theming path now — the active world owns the accent + display
+  // font via its [data-world] tokens (applyWorld). A brand edit must never clobber that, so this
+  // is kept as an inert stub (rather than deleted) to keep any legacy caller/state harmless.
 }
 
 /* ===================== RESET / RENDER ALL ===================== */
@@ -11568,12 +12212,12 @@ function renderWizardStepBody(step) {
     case 'look': {
       return `
         <div>
-          <div class="wiz-q-title">Choose your look</div>
-          <div class="wiz-q-help">Stage·Assign uses the <strong>Aurora</strong> theme — a luminous glass look with color moods. Pick a mood and the whole app + the display recolor instantly. Change it anytime in Advanced Settings → Display.</div>
+          <div class="wiz-q-title">Pick your look (world)</div>
+          <div class="wiz-q-help">Each <strong>world</strong> gives the whole app + the display its own palette and fonts. Pick one and everything recolors and re-fonts instantly. Change it anytime in Advanced Settings → Display.</div>
 
-          <div class="section-label" style="margin-bottom:10px;">Color mood</div>
-          <div class="mood-picker">
-            ${AURORA_MOODS.map(m => moodSwatchHtml(m, (state.auroraMood || 'graphite') === m)).join('')}
+          <div class="section-label" style="margin-bottom:10px;">World</div>
+          <div class="world-picker">
+            ${WORLD_ORDER.map(id => worldSwatchHtml(id, (state.world || 'molten') === id)).join('')}
           </div>
 
           <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Light or dark</div>
@@ -12157,9 +12801,9 @@ function wireWizardStep(step) {
     });
   }
   if (step === 'look') {
-    // Aurora mood swatches — apply live so the whole wizard + app recolor instantly.
-    body.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', () => {
-      setMood(b.dataset.moodOpt);
+    // World swatches — apply live so the whole wizard + app recolor + re-font instantly.
+    body.querySelectorAll('[data-world-opt]').forEach(b => b.addEventListener('click', () => {
+      setWorld(b.dataset.worldOpt);
       renderWizardStep();
     }));
     // Light / dark toggle (live).

@@ -46,10 +46,10 @@ window.addEventListener('load', () => setTimeout(() => {
   check('look step renders + wires without a jsdomError', () => {
     if (jsdomErrors.length !== errCountBefore) throw new Error('jsdomError raised: ' + jsdomErrors.slice(errCountBefore).join('; '));
   });
-  check('look step wires a known control (Aurora mood swatches present)', () => {
-    // #8 (2026-07-06): the look step is now Aurora mood swatches + dark/light (the old
-    // brand palette + font picker were retired when Aurora became the only look).
-    if (document.querySelectorAll('.mood-picker [data-mood-opt]').length < 11) throw new Error('no mood swatches in look step');
+  check('look step wires a known control (world swatches present)', () => {
+    // 2026-07-08: the 11 mood swatches were replaced by the 6-world picker (see worlds.js).
+    // The look step now renders .world-picker with exactly 6 [data-world-opt] tiles + dark/light.
+    if (document.querySelectorAll('.world-picker [data-world-opt]').length !== 6) throw new Error('expected 6 world swatches in look step');
   });
 
   // --- Dead display-design step removed ---
