@@ -7236,7 +7236,10 @@ function ensureFontLoaded(fontName) {
   const link = document.createElement('link');
   link.id = id;
   link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap`;
+  // 400+700 are available for every Google family; requesting an unavailable weight/axis
+  // (e.g. italic on Syne/Unbounded/Manrope, which have none) makes the CSS2 endpoint 400 →
+  // the font silently fails to load. Keep the request minimal + universally valid.
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;700&display=swap`;
   document.head.appendChild(link);
   return Promise.resolve();
 }
