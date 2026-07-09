@@ -16,13 +16,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
  // ---- Edit 1: no WL highlight on display-view stage people ----
  check('renderDisplayView adds no .is-wl highlight to stage people (.dv-sp)', ()=>{
    ev('state.viewMode="display"');
-   // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvLayout skeleton
-   // it asserts against. The bespoke worlds (concrete=default, molten) have their own displays
-   // (.cw-*/.mw-*, no .dv-sp); corporate/terra/orbit fall back to this default skeleton.
-   ev('state.world="corporate"; applyWorld();');
+   // This asserts against the DEFAULT #dvLayout skeleton (.dv-sp). EVERY world is bespoke now
+   // (concrete=default, molten, corporate, terra, orbit — each with .cw-*/.mw-*/.pw-*/.tw-*/.ow-*,
+   // no .dv-sp), so there is no non-bespoke world to pin. Force the default path directly: null the
+   // active world's renderer so renderDisplayView() falls through to the default skeleton, then restore.
    ev('state.vocalists=[{id:"v1",name:"Alice",isWL:true,leadsSongs:true,micAssigned:""},{id:"v2",name:"Bob",isWL:false,leadsSongs:false,micAssigned:""}]');
    ev('state.assignments=["v1","v2"].concat(new Array(MAX_VOCALISTS-2).fill(null))');
-   ev('renderDisplayView()');
+   ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
    const wlPeople=doc.querySelectorAll('#dvStagePeople .dv-sp.is-wl');
    if(wlPeople.length!==0) throw new Error('found '+wlPeople.length+' WL-highlighted .dv-sp in display view');
    // sanity: people were actually rendered

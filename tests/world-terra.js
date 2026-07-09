@@ -1,11 +1,11 @@
-// Bespoke display — MOLTEN (the DEFAULT world; second per-world layout). Added 2026-07-08.
-// Verifies: renderDisplayView() with state.world='molten' delegates to renderDisplay_molten,
-// builds into #dvWorldRoot (an EQUAL lineup row per assigned vocalist + an ember stage <svg> +
-// warm service-order rows) from the REAL data, hides the default #dvLayout, and — critically —
-// the bespoke→default restore path re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: EVERY world is bespoke now (concrete/molten/corporate/terra/orbit), so there is no
-// non-bespoke world to switch to. To exercise the default fallback we force the default path
-// directly: temporarily null the active world's renderDisplay, render, then restore it.
+// Bespoke display — TERRA (organic / natural). Added 2026-07-08. Mirrors tests/world-concrete.js.
+// Verifies: renderDisplayView() with state.world='terra' delegates to renderDisplay_terra, builds
+// into #dvWorldRoot (river-stone roster rows + a topographic-contour stage <svg> with a FRONT
+// highlight + seed-dot run-sheet items) from the REAL data, hides the default #dvLayout, honors a
+// display toggle, and — critically — the bespoke→default restore path re-shows #dvLayout and
+// retires #dvWorldRoot, then switching back to terra re-populates it. EVERY world is bespoke now
+// (orbit included), so there is no non-bespoke world to switch to; the default fallback is forced
+// by temporarily nulling the active world's renderDisplay, rendering, then restoring it.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -21,7 +21,7 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}; toast=function(){}; saveState=function(){};');
- // Seed REAL data: 3 vocalists (assigned), 2 band instruments, a host, a service order.
+ // Seed REAL data: 3 vocalists (assigned), 2 band instruments, hosts, a service order.
  ev(`
    state.viewMode='display';
    state.vocalists=[{id:'v1',name:'Amelia Garcia',micAssigned:'HH-1'},{id:'v2',name:'Emma Johnson',micAssigned:'HH-2'},{id:'v3',name:'Jake Williams',micAssigned:'HH-3'}];
@@ -37,83 +37,79 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.config.display.runSheetPosition='right';
  `);
 
- check('WORLDS.molten.renderDisplay is wired to a function', ()=>{
-   if (ev("typeof WORLDS.molten.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
+ check('WORLDS.terra.renderDisplay is wired to a function', ()=>{
+   if (ev("typeof WORLDS.terra.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
  });
 
- check('renderDisplayView() with world=molten runs without throwing', ()=>{
-   ev("state.world='molten'; applyWorld(); renderDisplayView();");
+ check('renderDisplayView() with world=terra runs without throwing', ()=>{
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
  });
 
- check('#dvWorldRoot exists, is shown, and carries data-world=molten', ()=>{
+ check('#dvWorldRoot exists, is shown, and carries data-world=terra', ()=>{
    const root = doc.getElementById('dvWorldRoot');
    if (!root) throw new Error('#dvWorldRoot not created');
-   if (root.getAttribute('data-world') !== 'molten') throw new Error('data-world not molten');
+   if (root.getAttribute('data-world') !== 'terra') throw new Error('data-world not terra');
    if (root.style.display === 'none') throw new Error('#dvWorldRoot is hidden');
  });
 
- check('#dvLayout (default layout) is hidden while Molten is active', ()=>{
+ check('#dvLayout (default layout) is hidden while Terra is active', ()=>{
    const lay = doc.getElementById('dvLayout');
    if (!lay) throw new Error('#dvLayout missing');
    if (lay.style.display !== 'none') throw new Error('#dvLayout not hidden, got "'+lay.style.display+'"');
  });
 
- check('Molten renders one EQUAL lineup row per assigned vocalist (3), with names', ()=>{
+ check('Terra renders a river-stone per assigned vocalist (3), with names + role', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const lrows = root.querySelectorAll('.mw-lineup .mw-lrow');
-   if (lrows.length !== 3) throw new Error('expected 3 lineup rows, got '+lrows.length);
-   if (!/AMELIA GARCIA/i.test(root.textContent)) throw new Error('vocalist name missing');
-   if (!/VOCAL 1/i.test(root.textContent)) throw new Error('VOCAL n role label missing');
-   // Every voice equal — no worship-leader emphasis (no is-wl / hero markup).
-   if (root.querySelector('.is-wl, .mw-hero')) throw new Error('unexpected worship-leader emphasis in Molten lineup');
+   const stones = root.querySelectorAll('.tw-stones .tw-stone');
+   if (stones.length !== 3) throw new Error('expected 3 river-stones, got '+stones.length);
+   if (!/Amelia Garcia/i.test(root.textContent)) throw new Error('vocalist name missing');
+   if (!/Vocal 1/i.test(root.textContent)) throw new Error('Vocal n role label missing');
  });
 
- check('Molten shows the mic badge from real data', ()=>{
+ check('Terra renders the topographic stage <svg> with contours, a FRONT highlight, and real people dots', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const badges = root.querySelectorAll('.mw-lbadge');
-   if (!badges.length) throw new Error('no mic/iem badges rendered');
-   if (!/HH-1/i.test(root.textContent)) throw new Error('mic assignment missing');
- });
-
- check('Molten renders the ember stage <svg> with real people dots', ()=>{
-   const root = doc.getElementById('dvWorldRoot');
-   const svg = root.querySelector('.mw-stagewrap svg');
+   const svg = root.querySelector('.tw-stage svg');
    if (!svg) throw new Error('no stage svg');
-   if (!svg.querySelector('path.mw-edge')) throw new Error('no stage edge path');
-   const dots = svg.querySelectorAll('circle.mw-dt');
+   if (svg.querySelectorAll('path.tw-contour').length < 2) throw new Error('expected nested contour paths');
+   if (!svg.querySelector('path.tw-front')) throw new Error('no FRONT-edge highlight path');
+   const dots = svg.querySelectorAll('circle.tw-dt');
    // 2 band + 3 vocalists = 5 markers
    if (dots.length < 5) throw new Error('expected >=5 people dots, got '+dots.length);
-   if (!/BEN ROSS/i.test(root.textContent)) throw new Error('band member not on stage');
+   if (!/Ben Ross/i.test(root.textContent)) throw new Error('band member not on stage');
  });
 
- check('Molten renders band + service-order rows from real data', ()=>{
+ check('Terra renders band list + seed-dot run-sheet items from real data', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const rows = root.querySelectorAll('.mw-rows .mw-row');
-   if (rows.length < 3) throw new Error('expected warm rows, got '+rows.length);
-   if (!/Keep Praise/i.test(root.textContent)) throw new Error('service-order item missing');
-   if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('service-order duration missing');
-   if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band rows');
+   const bandRows = root.querySelectorAll('.tw-list .tw-lrow');
+   if (bandRows.length < 2) throw new Error('expected band list rows, got '+bandRows.length);
+   const runItems = root.querySelectorAll('.tw-order .tw-li');
+   if (runItems.length < 3) throw new Error('expected run-of-service items, got '+runItems.length);
+   if (!root.querySelector('.tw-order .tw-seed')) throw new Error('run sheet seed dot missing');
+   if (!/Keep Praise/i.test(root.textContent)) throw new Error('run sheet item missing');
+   if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('run sheet duration missing');
+   if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band list');
  });
 
- check('honors display toggles — showBand:false drops the band rows', ()=>{
+ check('honors display toggles — showBand:false drops the band block', ()=>{
    ev("state.config.display.showBand=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   const labels = Array.from(root.querySelectorAll('.mw-label')).map(n=>n.textContent);
-   if (labels.some(t=>/^Band$/i.test(t.trim()))) throw new Error('band section shown despite showBand:false');
+   // The Band section label should be gone; the roster/run sheet remain.
+   const labels = Array.from(root.querySelectorAll('.tw-label')).map(n=>n.textContent.trim());
+   if (labels.some(t=>/^Band$/i.test(t))) throw new Error('band block shown despite showBand:false');
    ev("state.config.display.showBand=true;");
  });
 
- check('honors display toggles — showStage:false drops the ember stage', ()=>{
+ check('honors display toggles — showStage:false drops the topographic stage', ()=>{
    ev("state.config.display.showStage=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   if (root.querySelector('.mw-stagewrap svg')) throw new Error('stage svg shown despite showStage:false');
+   if (root.querySelector('.tw-stage svg')) throw new Error('stage svg shown despite showStage:false');
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
  check('falling through to the DEFAULT skeleton re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // EVERY world is bespoke now — no non-bespoke world to switch to. Force the default path
-   // directly: null the active world's renderer so renderDisplayView() falls through to the
-   // default #dvLayout, then restore it.
+   // EVERY world is bespoke now (orbit included) — no non-bespoke world to switch to. Force the
+   // default path directly: null the active world's renderer so renderDisplayView() falls through
+   // to the default #dvLayout, then restore it.
    ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
@@ -122,11 +118,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for default path');
  });
 
- check('switching back to molten re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
-   ev("state.world='molten'; applyWorld(); renderDisplayView();");
+ check('switching back to terra re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!root || root.querySelectorAll('.mw-lineup .mw-lrow').length !== 3) throw new Error('#dvWorldRoot not re-populated');
+   if (!root || root.querySelectorAll('.tw-stone').length !== 3) throw new Error('#dvWorldRoot not re-populated');
    if (!lay || lay.style.display !== 'none') throw new Error('#dvLayout not re-hidden');
  });
 

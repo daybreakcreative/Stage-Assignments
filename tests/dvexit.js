@@ -59,12 +59,12 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   });
   check('display view does NOT highlight worship leaders on the vocal cards', ()=>{
     // A WL vocalist rendered in display mode must not get the is-wl accent/badge.
-    // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvVocGrid cards;
-    // the bespoke worlds (concrete=default, molten) have their own displays (equal lineup, no
-    // .dv-voc-card); corporate/terra/orbit fall back to this default skeleton.
+    // This asserts against the DEFAULT #dvVocGrid cards. EVERY world is bespoke now (concrete=default,
+    // molten, corporate, terra, orbit — equal lineup / list / river-stones / constellation, no
+    // .dv-voc-card), so there is no non-bespoke world to pin. Force the default path directly: null the
+    // active world's renderer so renderDisplayView() falls through to the default skeleton, then restore.
     ev("state.vocalists=[{id:'v1',name:'Grace',isWL:true}]; state.assignments=['v1'];");
-    ev("state.world='corporate'; applyWorld();");
-    ev("state.viewMode='display'; renderDisplayView();");
+    ev("state.viewMode='display'; __savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
     const wl = doc.querySelectorAll('#dvVocGrid .dv-voc-card.is-wl');
     if (wl.length) throw new Error(wl.length+' WL-highlighted vocal card(s) in display view');
     const cards = doc.querySelectorAll('#dvVocGrid .dv-voc-card');

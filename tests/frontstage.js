@@ -143,8 +143,11 @@ function boot(seedSave){
   }
 
   check('DEFAULT display renderer emits a highlighted FRONT edge + separates crowded cards',()=>{
-    seedRoster(); ev("state.world='corporate';"); // corporate uses the default skeleton
-    ev('renderDisplayView()');
+    // EVERY world is bespoke now (concrete/molten/corporate/terra/orbit), so force the DEFAULT
+    // skeleton directly: null the active world's renderer so renderDisplayView() falls through to
+    // the default #dvLayout, then restore it.
+    seedRoster();
+    ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge').length>=1,'no front-edge path on default display');
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge-lbl').length>=1,'no FRONT label on default display');
     const tops=[...doc.querySelectorAll('#dvStagePeople .dv-sp')].map(c=>parseFloat(c.style.top));
@@ -169,6 +172,24 @@ function boot(seedSave){
     const ys=[...doc.querySelectorAll('#dvWorldRoot .mw-pl')].map(t=>parseFloat(t.getAttribute('y')));
     const uniq=new Set(ys.map(y=>y.toFixed(1)));
     assert(uniq.size===ys.length,'molten name labels overlap (identical y): '+JSON.stringify(ys));
+  });
+
+  check('TERRA renderer emits a highlighted FRONT edge + separates crowded labels',()=>{
+    seedRoster(); ev("state.world='terra';"); ev('renderDisplayView()');
+    assert(doc.querySelectorAll('#dvWorldRoot .tw-front').length>=1,'no terra front path');
+    assert(doc.querySelectorAll('#dvWorldRoot .tw-frontlbl').length>=1,'no terra FRONT label');
+    const ys=[...doc.querySelectorAll('#dvWorldRoot .tw-pl')].map(t=>parseFloat(t.getAttribute('y')));
+    const uniq=new Set(ys.map(y=>y.toFixed(1)));
+    assert(uniq.size===ys.length,'terra name labels overlap (identical y): '+JSON.stringify(ys));
+  });
+
+  check('ORBIT renderer emits a highlighted FRONT edge + separates crowded labels',()=>{
+    seedRoster(); ev("state.world='orbit';"); ev('renderDisplayView()');
+    assert(doc.querySelectorAll('#dvWorldRoot .ow-front').length>=1,'no orbit front path');
+    assert(doc.querySelectorAll('#dvWorldRoot .ow-frontlbl').length>=1,'no orbit FRONT label');
+    const ys=[...doc.querySelectorAll('#dvWorldRoot .ow-pl')].map(t=>parseFloat(t.getAttribute('y')));
+    const uniq=new Set(ys.map(y=>y.toFixed(1)));
+    assert(uniq.size===ys.length,'orbit name labels overlap (identical y): '+JSON.stringify(ys));
   });
 
   // ---- (2b) MIGRATION FROM A PERSISTED LEGACY SAVE (no stageFrontEdge) ----
