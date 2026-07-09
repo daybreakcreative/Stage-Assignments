@@ -117,23 +117,10 @@ Behaviors that must keep working. **The executable version of this list is `test
 - [ ] Saved-stage library: save/load/delete named stages. → `savedstages`
 - [ ] Wizard stage + stage-layout steps mirror the live stage (custom outline, fixtures,
       people-drag). → `wizcheck`, `stagelayout`
-- [ ] **Front edge** (`state.config.stageFrontEdge`): the polygon edge vocalists line up
-      along. Absent/invalid → auto (most-forward/top edge); old saves migrate to `null`
-      safely. Outline editor has a "Front edge" toggle to pick it; the chosen edge is
-      always highlighted in the editor. Vocalists spread along the chosen edge, offset
-      inward along its normal (slider shape stays inward = +y, byte-identical to the old
-      `+MARGIN`). → `frontstage`
 
 ### Display, run sheet & output
 - [ ] Display view shows stage + band/hosts/vocalists + service-order rail. →
       `display`, `summary`
-- [ ] **Stage name labels never overlap.** When people sit close together the label
-      collision resolver (`resolveStageLabelLayout`) staggers labels vertically and/or
-      shortens to last name so no two print on top of each other — in the default display,
-      Concrete, and Molten renderers, and the print summary. Well-separated labels are NOT
-      moved or shortened. → `frontstage`
-- [ ] **Front edge is highlighted** on the default + Concrete + Molten display stages
-      (thicker accent line + "FRONT" label). → `frontstage`
 - [ ] Service order (run sheet) edit: add/delete/reorder/edit items + headers. →
       `summary`, `nav`
 - [ ] Print Summary is unbranded black-and-white. → `summary`
