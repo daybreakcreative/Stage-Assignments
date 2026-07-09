@@ -2,7 +2,9 @@
 // Verifies: renderDisplayView() with state.world='molten' delegates to renderDisplay_molten,
 // builds into #dvWorldRoot (an EQUAL lineup row per assigned vocalist + an ember stage <svg> +
 // warm service-order rows) from the REAL data, hides the default #dvLayout, and — critically —
-// switching to a NON-bespoke world (corporate) re-shows #dvLayout and retires #dvWorldRoot.
+// switching to a NON-bespoke world (terra) re-shows #dvLayout and retires #dvWorldRoot.
+// NOTE: corporate is now a bespoke world too, so the round-trip uses terra (still a default-
+// skeleton fallback) to exercise the bespoke→default restore path.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -107,13 +109,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to corporate (non-bespoke) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   ev("state.world='corporate'; applyWorld(); renderDisplayView();");
+ check('switching to terra (non-bespoke) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for corporate');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for corporate');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for corporate');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for terra');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for terra');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for terra');
  });
 
  check('switching back to molten re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{

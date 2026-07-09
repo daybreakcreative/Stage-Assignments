@@ -1480,6 +1480,90 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 [data-theme="light"] #dvWorldRoot[data-world="molten"] .mw-title{ text-shadow:none; }
 [data-theme="light"] #dvWorldRoot[data-world="molten"] .mw-floor{ fill:rgba(232,85,31,.06); }
 
+/* ============================================================
+   BESPOKE DISPLAY — CORPORATE (editorial / premium). Scoped to
+   #dvWorldRoot[data-world="corporate"] so nothing leaks into the editor.
+   Source of truth: docs/design-worlds-fresh.html panel .corp — a quiet
+   typographic list (name · role · mic, aligned columns, hairline rules — NOT
+   cards), a big Syne title, huge whitespace, a thin-line stage, a roman-numeral
+   "Run of Service", and a restrained CLAY accent. EVERY voice equal (no hero).
+   NATIVE FACE = LIGHT (warm off-white / cream). DARK = charcoal editorial (gated
+   on [data-theme="dark"]). --pw-* tokens keep it independent of the shared world
+   --c*/--text tokens; fonts are the world's Syne (display) + Archivo (body).
+============================================================ */
+#dvWorldRoot[data-world="corporate"]{
+  --pw-bg:#f4f1ea; --pw-ink:#1a1712; --pw-name:#151109; --pw-mut:#6b6155;
+  --pw-faint:#8a7f70; --pw-line:#1a1712; --pw-hair:rgba(26,23,18,.14);
+  --pw-hair2:rgba(26,23,18,.10); --pw-clay:#a8410f;
+  position:absolute; inset:0; overflow:auto;
+  background:var(--pw-bg); color:var(--pw-ink);
+  font-family:var(--ff-body,'Archivo',system-ui,sans-serif);
+  -webkit-font-smoothing:antialiased;
+}
+/* header: big quiet Syne title + tracked meta, hard bottom rule */
+#dvWorldRoot[data-world="corporate"] .pw-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding:clamp(26px,4vh,48px) clamp(28px,4.5vw,64px) clamp(16px,2.4vh,22px); border-bottom:1px solid var(--pw-line); }
+#dvWorldRoot[data-world="corporate"] .pw-title{ font-family:var(--ff-display,'Syne',system-ui,sans-serif); font-weight:600; font-size:clamp(30px,5.2vw,62px); line-height:.98; letter-spacing:-.01em; color:var(--pw-name); }
+#dvWorldRoot[data-world="corporate"] .pw-meta{ font-size:clamp(9px,1.1vw,11px); letter-spacing:.24em; text-transform:uppercase; color:var(--pw-mut); text-align:right; line-height:1.9; white-space:nowrap; }
+/* body: two columns w/ generous whitespace. LEFT stacks the Vocalist list (top) →
+   thin-line Stage (bottom-left); RIGHT holds band / hosts / shadows / Run of Service. */
+#dvWorldRoot[data-world="corporate"] .pw-body{ display:grid; grid-template-columns:1.7fr 1fr; gap:clamp(36px,5vw,64px); align-items:stretch; padding:clamp(24px,4vh,40px) clamp(28px,4.5vw,64px) clamp(40px,6vh,64px); }
+#dvWorldRoot[data-world="corporate"] .pw-body.pw-body-solo{ grid-template-columns:1fr; }
+#dvWorldRoot[data-world="corporate"] .pw-col{ min-width:0; display:flex; flex-direction:column; gap:clamp(26px,4vh,44px); }
+@media (max-width:820px){ #dvWorldRoot[data-world="corporate"] .pw-body{ grid-template-columns:1fr; } }
+/* the stage block sits at the BOTTOM of the left column; it grows to fill reclaimed space */
+#dvWorldRoot[data-world="corporate"] .pw-col .pw-block-stage{ margin-top:auto; }
+/* each section is a bare block (no border/box) — the editorial look leans on type + whitespace */
+#dvWorldRoot[data-world="corporate"] .pw-block{ min-width:0; }
+/* section label — fine tracked Archivo caps in a muted clay-brown */
+#dvWorldRoot[data-world="corporate"] .pw-label{ font-size:clamp(10px,1.1vw,12px); letter-spacing:.3em; text-transform:uppercase; color:var(--pw-faint); margin:0 0 clamp(8px,1.4vh,14px); }
+/* VOCALIST LIST — the signature: name · role · mic in aligned columns, hairline rules. NOT cards. */
+#dvWorldRoot[data-world="corporate"] .pw-vlist{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="corporate"] .pw-vrow{ display:grid; grid-template-columns:1fr auto auto; align-items:baseline; gap:clamp(14px,2vw,28px); padding:clamp(11px,1.8vh,17px) 0; border-bottom:1px solid var(--pw-hair); }
+#dvWorldRoot[data-world="corporate"] .pw-nm{ font-family:var(--ff-display,'Syne',system-ui,sans-serif); font-weight:500; font-size:clamp(17px,2.3vw,26px); line-height:1.05; color:var(--pw-name); min-width:0; }
+#dvWorldRoot[data-world="corporate"] .pw-rl{ font-size:clamp(9px,1vw,11px); letter-spacing:.2em; text-transform:uppercase; color:var(--pw-faint); white-space:nowrap; }
+#dvWorldRoot[data-world="corporate"] .pw-detail{ display:inline-flex; align-items:baseline; gap:12px; justify-content:flex-end; text-align:right; white-space:nowrap; }
+#dvWorldRoot[data-world="corporate"] .pw-mc{ font-size:clamp(11px,1.3vw,13px); font-weight:600; letter-spacing:.12em; color:var(--pw-clay); }
+#dvWorldRoot[data-world="corporate"] .pw-iem{ font-size:clamp(10px,1.1vw,12px); letter-spacing:.06em; color:var(--pw-mut); }
+#dvWorldRoot[data-world="corporate"] .pw-empty{ font-size:13px; letter-spacing:.06em; color:var(--pw-faint); border-top:1px solid var(--pw-hair); border-bottom:1px solid var(--pw-hair); padding:26px 0; text-align:center; }
+/* thin-line minimal stage — hairline outline, small clay dots, fine labels */
+#dvWorldRoot[data-world="corporate"] .pw-stage{ position:relative; }
+#dvWorldRoot[data-world="corporate"] .pw-stage svg{ width:100%; height:auto; display:block; }
+#dvWorldRoot[data-world="corporate"] .pw-floor{ fill:transparent; stroke:none; }
+#dvWorldRoot[data-world="corporate"] .pw-edge{ fill:none; stroke:var(--pw-line); stroke-width:1; }
+#dvWorldRoot[data-world="corporate"] .pw-front{ fill:none; stroke:var(--pw-clay); stroke-width:3; stroke-linecap:round; }
+#dvWorldRoot[data-world="corporate"] .pw-frontlbl{ font-size:10px; font-weight:600; fill:var(--pw-clay); letter-spacing:.16em; text-transform:uppercase; }
+#dvWorldRoot[data-world="corporate"] .pw-dt{ fill:var(--pw-clay); }
+#dvWorldRoot[data-world="corporate"] .pw-pl{ font-size:14px; font-weight:500; fill:var(--pw-name); letter-spacing:.02em; }
+#dvWorldRoot[data-world="corporate"] .pw-plr{ font-size:11px; fill:var(--pw-mut); letter-spacing:.04em; text-transform:uppercase; }
+#dvWorldRoot[data-world="corporate"] .pw-caption{ font-size:11px; fill:var(--pw-faint); letter-spacing:.18em; text-transform:uppercase; }
+/* stage feature overlays (monitors, DI, risers) — reuse the shared engine, tint quiet */
+#dvWorldRoot[data-world="corporate"] .pw-stage-feats{ position:absolute; inset:0; pointer-events:none; color:var(--pw-mut); }
+#dvWorldRoot[data-world="corporate"] .pw-stage-feats .stage-feature{ position:absolute; }
+#dvWorldRoot[data-world="corporate"] .pw-stage-feats .stage-feature svg{ width:100%; height:100%; display:block; }
+#dvWorldRoot[data-world="corporate"] .pw-stage-feats .sf-label{ position:absolute; transform:translate(-50%,-50%); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--pw-mut); white-space:nowrap; }
+/* editorial list rows: band / hosts / shadows — role · name · detail, hairline rules */
+#dvWorldRoot[data-world="corporate"] .pw-list{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="corporate"] .pw-lrow{ display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:16px; padding:clamp(8px,1.3vh,12px) 0; border-bottom:1px solid var(--pw-hair2); font-size:clamp(12px,1.4vw,15px); }
+#dvWorldRoot[data-world="corporate"] .pw-lrl{ font-size:clamp(9px,1vw,11px); letter-spacing:.16em; text-transform:uppercase; color:var(--pw-faint); white-space:nowrap; }
+#dvWorldRoot[data-world="corporate"] .pw-lnm{ color:var(--pw-ink); min-width:0; }
+#dvWorldRoot[data-world="corporate"] .pw-ldt{ color:var(--pw-mut); text-align:right; white-space:nowrap; font-size:.9em; }
+/* Run of Service — roman-numeral editorial list */
+#dvWorldRoot[data-world="corporate"] .pw-order{ list-style:none; margin:0; padding:0; }
+#dvWorldRoot[data-world="corporate"] .pw-orow{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:clamp(8px,1.3vh,12px) 0; border-bottom:1px solid var(--pw-hair2); font-size:clamp(12px,1.4vw,15px); color:var(--pw-ink); }
+#dvWorldRoot[data-world="corporate"] .pw-otitle{ min-width:0; }
+#dvWorldRoot[data-world="corporate"] .pw-onum{ color:var(--pw-faint); font-variant-numeric:tabular-nums; letter-spacing:.04em; }
+#dvWorldRoot[data-world="corporate"] .pw-odur{ color:var(--pw-faint); text-align:right; white-space:nowrap; font-size:.9em; }
+#dvWorldRoot[data-world="corporate"] .pw-ohead{ list-style:none; color:var(--pw-faint); letter-spacing:.2em; text-transform:uppercase; font-size:clamp(9px,1vw,11px); padding:clamp(12px,2vh,18px) 0 6px; }
+#dvWorldRoot[data-world="corporate"] .pw-key{ border:1px solid var(--pw-hair); border-radius:3px; padding:1px 6px; font-size:.85em; margin-left:6px; color:var(--pw-clay); }
+#dvWorldRoot[data-world="corporate"] .pw-lead{ color:var(--pw-mut); font-size:.85em; margin-left:6px; }
+#dvWorldRoot[data-world="corporate"] .pw-odesc{ color:var(--pw-mut); font-size:.85em; margin-top:3px; white-space:normal; }
+/* ---- DARK FACE: charcoal editorial (data-theme lives on <html>) ---- */
+[data-theme="dark"] #dvWorldRoot[data-world="corporate"]{
+  --pw-bg:#16130f; --pw-ink:#ece7dd; --pw-name:#f4efe6; --pw-mut:#a79c8c;
+  --pw-faint:#8a7f6f; --pw-line:#4a4238; --pw-hair:rgba(236,231,221,.16);
+  --pw-hair2:rgba(236,231,221,.10); --pw-clay:#d97a3f;
+}
+
 /* drifting backdrop on the app ground (dark + light both) — shared baseline for every world */
 /* The ground: a single monotonic diagonal wash — a subtle tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
@@ -9486,6 +9570,243 @@ function renderDisplay_molten() {
   }
 }
 
+// ============================================================================
+// BESPOKE DISPLAY — CORPORATE. Editorial / premium layout — the roster is a
+// TYPOGRAPHIC LIST (name · role · mic in aligned columns with hairline dividers,
+// NOT cards), a big Syne title, a thin-line minimal stage, a roman-numeral "Run of
+// Service" list, and a restrained clay accent. Renders into #dvWorldRoot (NOT
+// #dvLayout). Reuses the REAL data + geometry helpers (getStageShape /
+// getBandStagePositions / getVoxPositions / renderStageFeatures, formatDisplayName,
+// vocalistInstrumentTags, shortInstLabel, iemPackFor, hostChannels, hostName,
+// shadowNeedsNoMix, fmtDuration) and honors state.config.display toggles — the same
+// contract as Concrete + Molten. EVERY voice equal (no worship-leader emphasis).
+// Visual source of truth: docs/design-worlds-fresh.html panel .corp. Native face =
+// LIGHT (warm cream); DARK = charcoal editorial (gated on [data-theme="dark"]).
+// --pw-* tokens keep it independent of the shared world --c*/--text tokens; fonts
+// are the world's Syne (display) + Archivo (body).
+// ============================================================================
+function renderDisplay_corporate() {
+  const root = dvSetWorldRoot(true);
+  if (!root) return;
+  root.setAttribute('data-world', 'corporate');
+  const d = state.config.display || {};
+  const s = state.service;
+
+  // Roman-numeral helper for the editorial "Run of Service" list (I, II, III…).
+  const toRoman = (n) => {
+    if (!n || n < 1) return '';
+    const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    let out = ''; let v = n;
+    for (const [val, sym] of map) { while (v >= val) { out += sym; v -= val; } }
+    return out;
+  };
+
+  // ---- Header: big Syne title + tracked meta (date / time) ----------------
+  const title = esc(s.name || 'Service');
+  const dateStr = s.date
+    ? new Date(s.date + 'T00:00').toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' })
+    : '';
+  const timeStr = esc(s.time || '');
+  const metaLines = [dateStr, timeStr].filter(Boolean).map(t => esc(t)).join('<br>');
+
+  // ---- Toggles (mirror the default + Concrete + Molten views) -------------
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  const showStage   = d.showStage !== false;
+  const showBand    = d.showBand !== false;
+  const showHosts   = d.showHosts !== false;
+  const showShadows = d.showShadows !== false && hasShadows;
+  const rsPos = d.runSheetPosition || 'right';
+  const showRS = d.showServiceOrder !== false && state.serviceOrder && state.serviceOrder.length > 0 && rsPos !== 'hidden';
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  const showMic = state.config.showMicCapsules;
+
+  // ---- Vocalist LIST (name · role · mic, aligned columns, hairline rules) --
+  // All voices equal — no worship-leader emphasis (matches default view). This is
+  // a typographic list, NOT cards: the signature of the editorial layout.
+  const voxRows = [];
+  let vocCount = 0;
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    vocCount++;
+    const nm = esc(formatDisplayName(v.name) || '—');
+    const tags = vocalistInstrumentTags(v.id);
+    const tagStr = tags.length ? ' · ' + esc(tags.join(', ')) : '';
+    const iemPackName = esc((state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1)));
+    // Right column: mic (clay) when the capsule is shown, else IEM pack — so the
+    // toggle always lands somewhere. Both when both are on.
+    const bits = [];
+    if (d.vocShowMic !== false && showMic) bits.push(`<span class="pw-mc">${esc(v.micAssigned || '—')}</span>`);
+    if (d.vocShowIem !== false) bits.push(`<span class="pw-iem">${iemPackName}</span>`);
+    const detail = bits.length ? `<span class="pw-detail">${bits.join('')}</span>` : `<span class="pw-detail"></span>`;
+    voxRows.push(
+      `<div class="pw-vrow">`
+      + `<span class="pw-nm">${nm}</span>`
+      + `<span class="pw-rl">Vocal ${i + 1}${tagStr}</span>`
+      + detail
+      + `</div>`
+    );
+  }
+  const voxListHtml = voxRows.length
+    ? `<div class="pw-vlist">${voxRows.join('')}</div>`
+    : `<div class="pw-empty">No vocalists set yet.</div>`;
+
+  // ---- Thin-line minimal stage (real geometry, audience at top) -----------
+  let stageHtml = '';
+  if (showStage) {
+    const shape = getStageShape();
+    const marks = [];
+    const bandPositions = getBandStagePositions();
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;            // covered by a vocalist row
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const pos = bandPositions[inst.id]; if (!pos) return;
+      const isMD = state.musicDirectorId === inst.id;
+      marks.push({ x: pos.x, y: pos.y, label: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), name: formatDisplayName(name) });
+    });
+    const filled = state.assignments.filter(a => a !== null);
+    if (filled.length > 0) {
+      const voxPositions = getVoxPositions(filled.length);
+      let pi = 0;
+      for (let i = 0; i < MAX_VOCALISTS; i++) {
+        const id = state.assignments[i]; if (!id) continue;
+        const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+        const pos = voxPositions[pi++]; if (!pos) continue;
+        marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
+      }
+    }
+    // Thin dots + fine upright labels; labels flip left near the SR edge so they don't
+    // clip, and a collision resolver separates labels that would otherwise overlap.
+    const layout = resolveStageLabelLayout(
+      marks.map(m => ({ x: m.x, y: m.y, name: m.name || '', role: m.label || '' })),
+      { anchor: 'center', charW: 8.5, lineH: 15, gap: 4, dotR: 5 }
+    );
+    const dots = marks.map((m, k) => {
+      const L = layout[k];
+      const anchor = m.x > 640 ? 'end' : 'start';
+      const dx = m.x > 640 ? -7 : 7;
+      const nm = esc(L.name || '');
+      const rl = esc(m.label || '');
+      const nameY = L.labelY + 12;
+      const roleY = nameY + 15;
+      return `<circle class="pw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="4"/>`
+        + `<text class="pw-pl" x="${(m.x + dx).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="pw-plr" x="${(m.x + dx).toFixed(1)}" y="${roleY.toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+    }).join('');
+    stageHtml = ''
+      + `<div class="pw-block pw-block-stage">`
+      + `<div class="pw-label">Stage</div>`
+      + `<div class="pw-stage">`
+      + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+      + `<path class="pw-floor" d="${shape.path}"/>`
+      + `<path class="pw-edge" d="${shape.edge}"/>`
+      + frontEdgeHighlightSvg(shape, { pathClass: 'pw-front', lblClass: 'pw-frontlbl', label: true })
+      + `<text class="pw-caption" x="400" y="372" text-anchor="middle">↑ Audience</text>`
+      + dots
+      + `</svg>`
+      + `<div class="pw-stage-feats" id="pwStageFeatures"></div>`
+      + `</div>`   // .pw-stage
+      + `</div>`;  // .pw-block.pw-block-stage
+  }
+
+  // ---- Editorial list rows: band / hosts / shadows ------------------------
+  const listRow = (label, name, detail) =>
+    `<div class="pw-lrow"><span class="pw-lrl">${label}</span>`
+    + `<span class="pw-lnm">${name}</span>`
+    + `<span class="pw-ldt">${detail || ''}</span></div>`;
+
+  let bandHtml = '';
+  if (showBand) {
+    const rows = [];
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const isMD = state.musicDirectorId === inst.id;
+      rows.push(listRow(esc(shortInstLabel(inst.label)) + (isMD ? ' · MD' : ''), esc(formatDisplayName(name) || '—'), esc(iemPackFor(inst))));
+    });
+    if (!rows.length) rows.push(listRow('—', 'No band assigned', ''));
+    bandHtml = `<div class="pw-block"><div class="pw-label">Band</div><div class="pw-list">${rows.join('')}</div></div>`;
+  }
+
+  let hostsHtml = '';
+  if (showHosts) {
+    const rows = [];
+    hostChannels().forEach(ch => {
+      const name = hostName(ch.id);
+      if (!name) return;
+      rows.push(listRow(esc(ch.label), esc(formatDisplayName(name) || ''), ''));
+    });
+    if (rows.length) hostsHtml = `<div class="pw-block"><div class="pw-label">Hosts</div><div class="pw-list">${rows.join('')}</div></div>`;
+  }
+
+  let shadowsHtml = '';
+  if (showShadows) {
+    const rows = [];
+    state.shadows.forEach((sh, idx) => {
+      if (!sh.name && !sh.pack) return;
+      const bits = [];
+      if (shadowNeedsNoMix(sh.setup)) bits.push('no IEM');
+      else if (sh.pack) bits.push(sh.pack);
+      if (sh.mic) bits.push('🎤 ' + sh.mic);
+      rows.push(listRow('SH ' + (idx + 1), esc(formatDisplayName(sh.name) || '—'), esc(bits.join(' · '))));
+    });
+    if (rows.length) shadowsHtml = `<div class="pw-block"><div class="pw-label">Shadows</div><div class="pw-list">${rows.join('')}</div></div>`;
+  }
+
+  // ---- Run of Service — roman-numeral editorial list ----------------------
+  let runHtml = '';
+  if (showRS) {
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    // Roman numerals count only the non-header items, in visible order.
+    let seq = 0;
+    const rows = visibleItems.map(it => {
+      if (it.kind === 'header') {
+        return `<li class="pw-ohead">${esc(it.title || '—')}</li>`;
+      }
+      seq++;
+      const num = toRoman(seq);
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key) inlineMeta.push(`<span class="pw-key">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="pw-lead">${esc(it.leader)}</span>`);
+      const metaHtml = inlineMeta.length ? ` <span class="pw-ometa">${inlineMeta.join('')}</span>` : '';
+      const dur = rsCfg.showDuration !== false ? esc(fmtDuration(it.length)) : '';
+      const desc = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="pw-odesc">${esc(it.notes).replace(/\n/g, '<br>')}</div>` : '';
+      return `<li class="pw-orow"><span class="pw-otitle">${num ? `<span class="pw-onum">${num}.</span> ` : ''}${esc(it.title || '—')}${metaHtml}${desc}</span>`
+        + `<span class="pw-odur">${dur}</span></li>`;
+    }).join('');
+    runHtml = `<div class="pw-block"><div class="pw-label">Run of Service</div><ol class="pw-order">${rows}</ol></div>`;
+  }
+
+  // ---- Assemble: LEFT column = the vocalist list (the heart, top) → thin-line
+  // stage (bottom-left, pushed down to fill reclaimed space). RIGHT column = band /
+  // hosts / shadows / Run of Service. Collapse to a single column if the right side
+  // would be empty (list + stage still stack). --------------------------------
+  const voxBlockHtml = `<div class="pw-block"><div class="pw-label">Vocalists</div>${voxListHtml}</div>`;
+  const leftHtml = voxBlockHtml + stageHtml;         // stage block (if any) drops to the bottom
+  const rightHtml = [bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  const bodyClass = rightHtml ? 'pw-body' : 'pw-body pw-body-solo';
+
+  root.innerHTML = ''
+    + `<div class="pw-head">`
+    +   `<div class="pw-title">${title}</div>`
+    +   `<div class="pw-meta">${metaLines}</div>`
+    + `</div>`
+    + `<div class="${bodyClass}">`
+    +   `<div class="pw-col">${leftHtml}</div>`
+    +   (rightHtml ? `<div class="pw-col pw-col-r">${rightHtml}</div>` : '')
+    + `</div>`;
+
+  // Stage features (monitors, DI/power, risers, etc.) at their real positions.
+  if (showStage) {
+    const featLayer = root.querySelector('#pwStageFeatures');
+    if (featLayer) renderStageFeatures(featLayer, { interactive: false });
+  }
+}
+
 function setTheme(theme) {
   if (theme !== 'light' && theme !== 'dark') theme = 'dark';
   state.theme = theme;
@@ -9513,10 +9834,11 @@ const WORLDS = {
 const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit'];
 const DEFAULT_WORLD = 'concrete';
 // Bespoke per-world display renderers. These are hoisted function declarations, so they're
-// defined by the time any render runs. Concrete (the DEFAULT world) + Molten each have their own
-// display layout; the remaining worlds fall back to the default skeleton.
-WORLDS.molten.renderDisplay   = renderDisplay_molten;
-WORLDS.concrete.renderDisplay = renderDisplay_concrete;
+// defined by the time any render runs. Concrete (the DEFAULT world), Molten, and Corporate each
+// have their own display layout; the remaining worlds fall back to the default skeleton.
+WORLDS.molten.renderDisplay    = renderDisplay_molten;
+WORLDS.concrete.renderDisplay  = renderDisplay_concrete;
+WORLDS.corporate.renderDisplay = renderDisplay_corporate;
 // One preview tile for a world. Reused by the Settings picker + the wizard step.
 function worldSwatchHtml(id, selected) {
   const w = WORLDS[id]; if (!w) return '';

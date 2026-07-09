@@ -67,10 +67,10 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
  check('display: host row shows label + name only (never a mic capsule)', ()=>{
    setup(); ev('hostChannels()[0].capsule="SM58"');   // capsule set, but display must not show it
-   // Pin to a non-bespoke world (corporate) so this exercises the DEFAULT #dvHostsBlock list;
-   // the bespoke worlds (concrete=default, molten) have their own displays (warm .mw-rows /
-   // .cw-manifest, no #dvHostsBlock); corporate/terra/orbit fall back to this default skeleton.
-   ev('state.world="corporate"; applyWorld();');
+   // Pin to a non-bespoke world (terra) so this exercises the DEFAULT #dvHostsBlock list;
+   // the bespoke worlds (concrete=default, molten, corporate) have their own displays (warm
+   // .mw-rows / .cw-manifest / .pw-list, no #dvHostsBlock); terra/orbit fall back to the default.
+   ev('state.world="terra"; applyWorld();');
    ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup"');
    const block=doc.querySelector('#displayView #dvHostsBlock') || doc.getElementById('dvHostsBlock');
    const list=block && block.querySelector('.dv-list');

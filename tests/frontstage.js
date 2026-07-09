@@ -143,7 +143,7 @@ function boot(seedSave){
   }
 
   check('DEFAULT display renderer emits a highlighted FRONT edge + separates crowded cards',()=>{
-    seedRoster(); ev("state.world='corporate';"); // corporate uses the default skeleton
+    seedRoster(); ev("state.world='terra';"); // terra uses the default skeleton (corporate is now bespoke)
     ev('renderDisplayView()');
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge').length>=1,'no front-edge path on default display');
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge-lbl').length>=1,'no FRONT label on default display');

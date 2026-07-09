@@ -2,9 +2,9 @@
 // Verifies: renderDisplayView() with state.world='concrete' delegates to renderDisplay_concrete,
 // builds into #dvWorldRoot (voice cells + a blueprint stage <svg> + run-sheet manifest rows) from
 // the REAL data, hides the default #dvLayout, and — critically — switching to a non-bespoke
-// world (corporate) re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: this round-trip used to switch to molten, but molten is now itself a bespoke world
-// (renderDisplay_molten), so it no longer restores #dvLayout. Use corporate — still a default-
+// world (terra) re-shows #dvLayout and retires #dvWorldRoot.
+// NOTE: this round-trip used to switch to molten, then corporate — but both are now bespoke worlds
+// with their own renderDisplay, so neither restores #dvLayout. Use terra — still a default-
 // skeleton fallback — to exercise the bespoke→default restore path.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
@@ -100,14 +100,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to a non-bespoke world (corporate) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // molten is now bespoke too, so we switch to corporate (a default-skeleton fallback) here.
-   ev("state.world='corporate'; applyWorld(); renderDisplayView();");
+ check('switching to a non-bespoke world (terra) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   // molten + corporate are now bespoke too, so we switch to terra (a default-skeleton fallback) here.
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for corporate');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for corporate');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for corporate');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for terra');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for terra');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for terra');
  });
 
  check('switching back to concrete re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
