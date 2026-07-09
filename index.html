@@ -1564,6 +1564,117 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --pw-hair2:rgba(236,231,221,.10); --pw-clay:#d97a3f;
 }
 
+/* ============================================================
+   BESPOKE DISPLAY — TERRA (organic / natural). Scoped to
+   #dvWorldRoot[data-world="terra"] so nothing leaks into the editor.
+   Source of truth: docs/design-worlds-terra-orbit.html panel .terra — the roster
+   is a cluster of staggered rounded "river-stone" lozenges (offset horizontally,
+   varied earthy fills — NOT a grid), the stage is a topographic contour map
+   (nested contour lines), a seed-dot "Run of Service", warm serif Spectral title +
+   Mulish body, and a moss / clay / sand / cream palette on a LINEN/PAPER-grain
+   ground (extra grain wanted here). EVERY voice equal (no hero). NATIVE FACE =
+   LIGHT (cream → sage). DARK = deep loam / forest (gated on [data-theme="dark"]).
+   --tw-* tokens keep it independent of the shared world --c*/--text tokens; fonts
+   are the world's Spectral (display) + Mulish (body).
+============================================================ */
+#dvWorldRoot[data-world="terra"]{
+  --tw-ink:#3d3524; --tw-name:#312a1c; --tw-mut:#7a7355; --tw-faint:#8a8163;
+  --tw-line:rgba(90,80,50,.16); --tw-hair:rgba(90,80,50,.14); --tw-clay:#8a5a2b;
+  --tw-moss:#8a9668; --tw-stone-a:#e7dcc0; --tw-stone-b:#dfe0bd; --tw-stone-c:#e3d7bf;
+  --tw-stone-d:#d7ddba; --tw-pebble:#f3ecd8; --tw-grain:rgba(110,100,70,.055);
+  position:absolute; inset:0; overflow:auto;
+  background:linear-gradient(180deg,#eee6d0 0%,#dbe1c4 60%,#cdd7b4 100%);
+  color:var(--tw-ink);
+  font-family:var(--ff-display,'Spectral',Georgia,serif);
+  -webkit-font-smoothing:antialiased;
+}
+/* linen/paper grain: a fractal-noise wash (::after) + a fine woven grid (::before), both
+   multiplied into the cream ground for a natural texture. Extra grain is wanted for Terra. */
+#dvWorldRoot[data-world="terra"]::after{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.15; mix-blend-mode:multiply; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#dvWorldRoot[data-world="terra"]::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.6; mix-blend-mode:multiply; z-index:0;
+  background-image:
+    repeating-linear-gradient(0deg, var(--tw-grain) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(90deg, var(--tw-grain) 0 1px, transparent 1px 5px);
+}
+#dvWorldRoot[data-world="terra"] > *{ position:relative; z-index:1; }
+/* header: warm serif Spectral title + tracked Mulish meta */
+#dvWorldRoot[data-world="terra"] .tw-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding:clamp(24px,3.8vh,44px) clamp(28px,4.2vw,54px) clamp(14px,2.2vh,22px); }
+#dvWorldRoot[data-world="terra"] .tw-title{ font-family:var(--ff-display,'Spectral',Georgia,serif); font-weight:500; font-size:clamp(30px,5vw,58px); line-height:1; letter-spacing:-.01em; color:var(--tw-name); }
+#dvWorldRoot[data-world="terra"] .tw-meta{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:clamp(10px,1.2vw,13px); letter-spacing:.16em; text-transform:uppercase; color:var(--tw-mut); text-align:right; line-height:1.7; white-space:nowrap; }
+/* body: two columns. LEFT stacks the river-stone roster (top) → topographic stage
+   (bottom-left); RIGHT holds band / hosts / shadows / Run of Service. */
+#dvWorldRoot[data-world="terra"] .tw-body{ display:grid; grid-template-columns:1.25fr 1fr; gap:clamp(28px,4vw,48px); align-items:stretch; padding:clamp(20px,3vh,34px) clamp(28px,4.2vw,54px) clamp(36px,5vh,56px); }
+#dvWorldRoot[data-world="terra"] .tw-body.tw-body-solo{ grid-template-columns:1fr; }
+#dvWorldRoot[data-world="terra"] .tw-col{ min-width:0; display:flex; flex-direction:column; gap:clamp(22px,3.2vh,36px); }
+@media (max-width:820px){ #dvWorldRoot[data-world="terra"] .tw-body{ grid-template-columns:1fr; } }
+/* the stage block sits at the BOTTOM of the left column; it grows to fill reclaimed space */
+#dvWorldRoot[data-world="terra"] .tw-col .tw-block-stage{ margin-top:auto; }
+#dvWorldRoot[data-world="terra"] .tw-block{ min-width:0; }
+/* section label — fine tracked Mulish caps in a muted earthy tone */
+#dvWorldRoot[data-world="terra"] .tw-label{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-weight:700; font-size:clamp(10px,1.1vw,12px); letter-spacing:.26em; text-transform:uppercase; color:var(--tw-faint); margin:0 0 clamp(10px,1.6vh,16px); }
+/* RIVER-STONE ROSTER — staggered rounded lozenges, NOT a grid. Horizontal offset +
+   varied earthy fill come from :nth-child (mirrors the mockup's stagger). */
+#dvWorldRoot[data-world="terra"] .tw-stones{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="terra"] .tw-stone{ display:flex; align-items:center; gap:14px; background:var(--tw-stone-a); border-radius:40px; padding:clamp(10px,1.5vh,14px) clamp(16px,2vw,24px); margin-bottom:clamp(10px,1.5vh,14px); box-shadow:0 6px 16px rgba(90,80,50,.12); width:92%; }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(2){ margin-left:9%; width:90%; background:var(--tw-stone-c); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(3){ margin-left:14%; width:87%; background:var(--tw-stone-b); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(4){ margin-left:5%; width:90%; background:var(--tw-stone-c); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(5){ margin-left:16%; width:84%; background:var(--tw-stone-d); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(6){ margin-left:7%; width:89%; background:var(--tw-stone-a); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(7){ margin-left:12%; width:86%; background:var(--tw-stone-b); }
+#dvWorldRoot[data-world="terra"] .tw-stone:nth-child(8){ margin-left:3%; width:91%; background:var(--tw-stone-d); }
+#dvWorldRoot[data-world="terra"] .tw-snm{ font-family:var(--ff-display,'Spectral',Georgia,serif); font-weight:500; font-size:clamp(16px,2.2vw,22px); line-height:1.05; color:var(--tw-name); flex:1; min-width:0; }
+#dvWorldRoot[data-world="terra"] .tw-srl{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.14em; text-transform:uppercase; color:var(--tw-mut); white-space:nowrap; }
+#dvWorldRoot[data-world="terra"] .tw-smeta{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+#dvWorldRoot[data-world="terra"] .tw-mc{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-weight:700; font-size:clamp(11px,1.3vw,13px); color:var(--tw-clay); background:var(--tw-pebble); border-radius:20px; padding:3px 11px; }
+#dvWorldRoot[data-world="terra"] .tw-iem{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.06em; color:var(--tw-mut); }
+#dvWorldRoot[data-world="terra"] .tw-empty{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:13px; letter-spacing:.06em; color:var(--tw-faint); border:1px dashed var(--tw-line); border-radius:40px; padding:24px; text-align:center; }
+/* topographic-contour stage — nested moss contour lines, clay dots, fine serif labels */
+#dvWorldRoot[data-world="terra"] .tw-stage{ position:relative; }
+#dvWorldRoot[data-world="terra"] .tw-stage svg{ width:100%; height:auto; display:block; }
+#dvWorldRoot[data-world="terra"] .tw-contour{ fill:none; stroke:var(--tw-moss); stroke-width:1.4; stroke-linejoin:round; }
+#dvWorldRoot[data-world="terra"] .tw-front{ fill:none; stroke:var(--tw-clay); stroke-width:4; stroke-linecap:round; }
+#dvWorldRoot[data-world="terra"] .tw-frontlbl{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:10px; font-weight:700; fill:var(--tw-clay); letter-spacing:.16em; text-transform:uppercase; }
+#dvWorldRoot[data-world="terra"] .tw-dt{ fill:var(--tw-clay); }
+#dvWorldRoot[data-world="terra"] .tw-pl{ font-family:var(--ff-display,'Spectral',Georgia,serif); font-size:14px; font-weight:500; fill:var(--tw-name); }
+#dvWorldRoot[data-world="terra"] .tw-plr{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:11px; fill:var(--tw-mut); letter-spacing:.04em; text-transform:uppercase; }
+#dvWorldRoot[data-world="terra"] .tw-caption{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:11px; fill:var(--tw-faint); letter-spacing:.16em; text-transform:uppercase; }
+/* stage feature overlays (monitors, DI, risers) — reuse the shared engine, tint earthy */
+#dvWorldRoot[data-world="terra"] .tw-stage-feats{ position:absolute; inset:0; pointer-events:none; color:var(--tw-mut); }
+#dvWorldRoot[data-world="terra"] .tw-stage-feats .stage-feature{ position:absolute; }
+#dvWorldRoot[data-world="terra"] .tw-stage-feats .stage-feature svg{ width:100%; height:100%; display:block; }
+#dvWorldRoot[data-world="terra"] .tw-stage-feats .sf-label{ position:absolute; transform:translate(-50%,-50%); font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--tw-mut); white-space:nowrap; }
+/* earthy list rows: band / hosts / shadows — role · name · detail, hairline rules */
+#dvWorldRoot[data-world="terra"] .tw-list{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="terra"] .tw-lrow{ display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:14px; padding:clamp(8px,1.3vh,12px) 0; border-bottom:1px solid var(--tw-hair); font-size:clamp(12px,1.4vw,15px); }
+#dvWorldRoot[data-world="terra"] .tw-lrl{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.14em; text-transform:uppercase; color:var(--tw-faint); white-space:nowrap; }
+#dvWorldRoot[data-world="terra"] .tw-lnm{ font-family:var(--ff-display,'Spectral',Georgia,serif); color:var(--tw-ink); min-width:0; }
+#dvWorldRoot[data-world="terra"] .tw-ldt{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); color:var(--tw-mut); text-align:right; white-space:nowrap; font-size:.9em; }
+/* Run of Service — seed-dot list */
+#dvWorldRoot[data-world="terra"] .tw-order{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="terra"] .tw-li{ display:flex; align-items:center; gap:12px; padding:clamp(8px,1.3vh,11px) 0; border-bottom:1px solid var(--tw-line); }
+#dvWorldRoot[data-world="terra"] .tw-seed{ width:8px; height:8px; border-radius:50%; background:var(--tw-moss); flex:0 0 auto; }
+#dvWorldRoot[data-world="terra"] .tw-sn{ font-family:var(--ff-display,'Spectral',Georgia,serif); flex:1; min-width:0; font-size:clamp(14px,1.7vw,17px); color:var(--tw-ink); }
+#dvWorldRoot[data-world="terra"] .tw-tm{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:clamp(10px,1.2vw,12px); color:var(--tw-faint); white-space:nowrap; }
+#dvWorldRoot[data-world="terra"] .tw-li.tw-lhead{ border-bottom:none; padding-bottom:2px; }
+#dvWorldRoot[data-world="terra"] .tw-li.tw-lhead .tw-sn{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-weight:700; color:var(--tw-faint); letter-spacing:.2em; text-transform:uppercase; font-size:clamp(9px,1vw,11px); }
+#dvWorldRoot[data-world="terra"] .tw-key{ border:1px solid var(--tw-line); border-radius:20px; padding:1px 8px; font-family:var(--ff-body,'Mulish',system-ui,sans-serif); font-size:.8em; margin-left:6px; color:var(--tw-clay); }
+#dvWorldRoot[data-world="terra"] .tw-lead{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); color:var(--tw-mut); font-size:.8em; margin-left:6px; }
+#dvWorldRoot[data-world="terra"] .tw-odesc{ font-family:var(--ff-body,'Mulish',system-ui,sans-serif); color:var(--tw-mut); font-size:.8em; margin-top:3px; white-space:normal; }
+/* ---- DARK FACE: deep loam / forest (data-theme lives on <html>) ---- */
+[data-theme="dark"] #dvWorldRoot[data-world="terra"]{
+  --tw-ink:#e6e0cf; --tw-name:#f1ecdc; --tw-mut:#a89e83; --tw-faint:#8f8567;
+  --tw-line:rgba(230,224,207,.16); --tw-hair:rgba(230,224,207,.12); --tw-clay:#d99a5b;
+  --tw-moss:#9caf74; --tw-stone-a:#26301f; --tw-stone-b:#2a3324; --tw-stone-c:#2f3726;
+  --tw-stone-d:#28331c; --tw-pebble:#3a3322; --tw-grain:rgba(210,200,160,.05);
+  background:linear-gradient(180deg,#141a10 0%,#171d12 55%,#1b2114 100%);
+}
+[data-theme="dark"] #dvWorldRoot[data-world="terra"]::after{ opacity:.12; mix-blend-mode:screen; }
+
 /* drifting backdrop on the app ground (dark + light both) — shared baseline for every world */
 /* The ground: a single monotonic diagonal wash — a subtle tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
@@ -9807,6 +9918,262 @@ function renderDisplay_corporate() {
   }
 }
 
+// ============================================================================
+// BESPOKE DISPLAY — TERRA. Organic / natural layout — the roster is a cluster of
+// staggered rounded "river-stone" lozenges (offset horizontally, varied earthy
+// fills — NOT a rigid grid), the stage is a TOPOGRAPHIC CONTOUR MAP (nested
+// contour lines derived from the real stage floor), a seed-dot "Run of Service",
+// and an earthy moss/clay/sand/cream palette on a linen/paper-grain ground.
+// Renders into #dvWorldRoot (NOT #dvLayout). Reuses the REAL data + geometry
+// helpers (getStageShape / getBandStagePositions / getVoxPositions /
+// renderStageFeatures, formatDisplayName, vocalistInstrumentTags, shortInstLabel,
+// iemPackFor, hostChannels, hostName, shadowNeedsNoMix, fmtDuration) and honors
+// state.config.display toggles — the same contract as Concrete / Molten /
+// Corporate. EVERY voice equal (no worship-leader emphasis). Visual source of
+// truth: docs/design-worlds-terra-orbit.html panel .terra. NATIVE FACE = LIGHT
+// (cream → sage); DARK = deep loam / forest (gated on [data-theme="dark"]).
+// --tw-* tokens keep it independent of the shared world --c*/--text tokens; fonts
+// are the world's Spectral (display serif) + Mulish (body).
+// ============================================================================
+function renderDisplay_terra() {
+  const root = dvSetWorldRoot(true);
+  if (!root) return;
+  root.setAttribute('data-world', 'terra');
+  const d = state.config.display || {};
+  const s = state.service;
+
+  // ---- Header: warm serif Spectral title + tracked Mulish meta -------------
+  const title = esc(s.name || 'Service');
+  const dateStr = s.date
+    ? new Date(s.date + 'T00:00').toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })
+    : '';
+  const timeStr = esc(s.time || '');
+  const metaLines = [dateStr, timeStr].filter(Boolean).map(t => esc(t)).join(' · ');
+
+  // ---- Toggles (mirror the default + other bespoke views) -----------------
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  const showStage   = d.showStage !== false;
+  const showBand    = d.showBand !== false;
+  const showHosts   = d.showHosts !== false;
+  const showShadows = d.showShadows !== false && hasShadows;
+  const rsPos = d.runSheetPosition || 'right';
+  const showRS = d.showServiceOrder !== false && state.serviceOrder && state.serviceOrder.length > 0 && rsPos !== 'hidden';
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  const showMic = state.config.showMicCapsules;
+
+  // ---- River-stone roster (staggered rounded lozenges, NOT a grid) ---------
+  // All voices equal — no worship-leader emphasis (matches default view). The
+  // horizontal offset + varied earthy fill come from CSS :nth-child; here we
+  // just emit one .tw-stone per assigned vocalist.
+  const stones = [];
+  let vocCount = 0;
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    vocCount++;
+    const nm = esc(formatDisplayName(v.name) || '—');
+    const tags = vocalistInstrumentTags(v.id);
+    const tagStr = tags.length ? ' · ' + esc(tags.join(', ')) : '';
+    const iemPackName = esc((state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1)));
+    // Right side of the stone: mic pebble (clay) when the capsule is shown, plus
+    // a quiet IEM pebble — so each toggle always lands somewhere.
+    const bits = [];
+    if (d.vocShowMic !== false && showMic) bits.push(`<span class="tw-mc">${esc(v.micAssigned || '—')}</span>`);
+    if (d.vocShowIem !== false) bits.push(`<span class="tw-iem">${iemPackName}</span>`);
+    const meta = bits.length ? `<span class="tw-smeta">${bits.join('')}</span>` : '';
+    stones.push(
+      `<div class="tw-stone">`
+      + `<span class="tw-snm">${nm}</span>`
+      + `<span class="tw-srl">Vocal ${i + 1}${tagStr}</span>`
+      + meta
+      + `</div>`
+    );
+  }
+  const stonesHtml = stones.length
+    ? `<div class="tw-stones">${stones.join('')}</div>`
+    : `<div class="tw-empty">No vocalists set yet.</div>`;
+
+  // ---- Topographic-contour stage (real geometry, audience at top) ----------
+  let stageHtml = '';
+  if (showStage) {
+    const shape = getStageShape();
+    // Nested contour lines: shrink the REAL floor path toward its centroid by a
+    // few fractions, so the outline reads as a topographic map yet still traces
+    // the true stage. Fainter as they go inward. `contourPathAt` scales every
+    // numeric coord of the path string about the centroid.
+    const cx = (shape.centroid && shape.centroid.x != null) ? shape.centroid.x : 400;
+    const cy = (shape.centroid && shape.centroid.y != null) ? shape.centroid.y : 200;
+    // Coord-aware scaler: walk the path tokens, transform pairs of numbers as (x,y)
+    // about the centroid by factor k (1 = the real outline, <1 = an inner contour).
+    const contourPathAt = (dpath, k) => {
+      const toks = String(dpath || '').match(/[a-zA-Z]|-?\d+(?:\.\d+)?/g) || [];
+      let xTurn = true; // next number is an x
+      const out = toks.map(t => {
+        if (/[a-zA-Z]/.test(t)) { return t; }
+        const val = parseFloat(t);
+        const sc = xTurn ? (cx + (val - cx) * k) : (cy + (val - cy) * k);
+        xTurn = !xTurn;
+        return sc.toFixed(1);
+      });
+      return out.join(' ');
+    };
+    const contours = [
+      { k: 1.00, op: 0.9 },
+      { k: 0.82, op: 0.6 },
+      { k: 0.64, op: 0.4 },
+      { k: 0.46, op: 0.26 }
+    ].map(c => `<path class="tw-contour" style="opacity:${c.op}" d="${contourPathAt(shape.path, c.k)}"/>`).join('');
+
+    // People markers as {x,y,role,name} in the 0..800 × 0..380 stage space.
+    const marks = [];
+    const bandPositions = getBandStagePositions();
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;            // covered by a river-stone
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const pos = bandPositions[inst.id]; if (!pos) return;
+      const isMD = state.musicDirectorId === inst.id;
+      marks.push({ x: pos.x, y: pos.y, label: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), name: formatDisplayName(name) });
+    });
+    const filled = state.assignments.filter(a => a !== null);
+    if (filled.length > 0) {
+      const voxPositions = getVoxPositions(filled.length);
+      let pi = 0;
+      for (let i = 0; i < MAX_VOCALISTS; i++) {
+        const id = state.assignments[i]; if (!id) continue;
+        const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+        const pos = voxPositions[pi++]; if (!pos) continue;
+        marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—' });
+      }
+    }
+    // Clay dots + fine serif labels; labels flip left near the SR edge so they don't
+    // clip, and a collision resolver separates labels that would otherwise overlap.
+    const layout = resolveStageLabelLayout(
+      marks.map(m => ({ x: m.x, y: m.y, name: m.name || '', role: m.label || '' })),
+      { anchor: 'center', charW: 8.5, lineH: 15, gap: 4, dotR: 5 }
+    );
+    const dots = marks.map((m, k) => {
+      const L = layout[k];
+      const anchor = m.x > 640 ? 'end' : 'start';
+      const dx = m.x > 640 ? -7 : 7;
+      const nm = esc(L.name || '');
+      const rl = esc(m.label || '');
+      const nameY = L.labelY + 12;
+      const roleY = nameY + 14;
+      return `<circle class="tw-dt" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="5"/>`
+        + `<text class="tw-pl" x="${(m.x + dx).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="tw-plr" x="${(m.x + dx).toFixed(1)}" y="${roleY.toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+    }).join('');
+    stageHtml = ''
+      + `<div class="tw-block tw-block-stage">`
+      + `<div class="tw-label">Stage — Topography</div>`
+      + `<div class="tw-stage">`
+      + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+      + contours
+      + frontEdgeHighlightSvg(shape, { pathClass: 'tw-front', lblClass: 'tw-frontlbl', label: true })
+      + `<text class="tw-caption" x="400" y="372" text-anchor="middle">↑ Audience</text>`
+      + dots
+      + `</svg>`
+      + `<div class="tw-stage-feats" id="twStageFeatures"></div>`
+      + `</div>`   // .tw-stage
+      + `</div>`;  // .tw-block.tw-block-stage
+  }
+
+  // ---- Earthy list rows: band / hosts / shadows ---------------------------
+  const listRow = (label, name, detail) =>
+    `<div class="tw-lrow"><span class="tw-lrl">${label}</span>`
+    + `<span class="tw-lnm">${name}</span>`
+    + `<span class="tw-ldt">${detail || ''}</span></div>`;
+
+  let bandHtml = '';
+  if (showBand) {
+    const rows = [];
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const isMD = state.musicDirectorId === inst.id;
+      rows.push(listRow(esc(shortInstLabel(inst.label)) + (isMD ? ' · MD' : ''), esc(formatDisplayName(name) || '—'), esc(iemPackFor(inst))));
+    });
+    if (!rows.length) rows.push(listRow('—', 'No band assigned', ''));
+    bandHtml = `<div class="tw-block"><div class="tw-label">Band</div><div class="tw-list">${rows.join('')}</div></div>`;
+  }
+
+  let hostsHtml = '';
+  if (showHosts) {
+    const rows = [];
+    hostChannels().forEach(ch => {
+      const name = hostName(ch.id);
+      if (!name) return;
+      rows.push(listRow(esc(ch.label), esc(formatDisplayName(name) || ''), ''));
+    });
+    if (rows.length) hostsHtml = `<div class="tw-block"><div class="tw-label">Hosts</div><div class="tw-list">${rows.join('')}</div></div>`;
+  }
+
+  let shadowsHtml = '';
+  if (showShadows) {
+    const rows = [];
+    state.shadows.forEach((sh, idx) => {
+      if (!sh.name && !sh.pack) return;
+      const bits = [];
+      if (shadowNeedsNoMix(sh.setup)) bits.push('no IEM');
+      else if (sh.pack) bits.push(sh.pack);
+      if (sh.mic) bits.push('🎤 ' + sh.mic);
+      rows.push(listRow('SH ' + (idx + 1), esc(formatDisplayName(sh.name) || '—'), esc(bits.join(' · '))));
+    });
+    if (rows.length) shadowsHtml = `<div class="tw-block"><div class="tw-label">Shadows</div><div class="tw-list">${rows.join('')}</div></div>`;
+  }
+
+  // ---- Run of Service — seed-dot list -------------------------------------
+  let runHtml = '';
+  if (showRS) {
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    const rows = visibleItems.map(it => {
+      if (it.kind === 'header') {
+        return `<div class="tw-li tw-lhead"><span class="tw-sn">${esc(it.title || '—')}</span></div>`;
+      }
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key) inlineMeta.push(`<span class="tw-key">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="tw-lead">${esc(it.leader)}</span>`);
+      const metaHtml = inlineMeta.length ? ` <span class="tw-ometa">${inlineMeta.join('')}</span>` : '';
+      const dur = rsCfg.showDuration !== false ? esc(fmtDuration(it.length)) : '';
+      const desc = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="tw-odesc">${esc(it.notes).replace(/\n/g, '<br>')}</div>` : '';
+      return `<div class="tw-li"><span class="tw-seed"></span>`
+        + `<span class="tw-sn">${esc(it.title || '—')}${metaHtml}${desc}</span>`
+        + `<span class="tw-tm">${dur}</span></div>`;
+    }).join('');
+    runHtml = `<div class="tw-block"><div class="tw-label">Run of Service</div><div class="tw-order">${rows}</div></div>`;
+  }
+
+  // ---- Assemble: LEFT column = the river-stone roster (the heart, top) →
+  // topographic stage (bottom-left, pushed down to fill reclaimed space). RIGHT
+  // column = band / hosts / shadows / Run of Service, each an earthy block.
+  // Collapse to a single column if the right side would be empty (stones + stage
+  // still stack). --------------------------------------------------------------
+  const stonesBlockHtml = `<div class="tw-block"><div class="tw-label">Vocalists</div>${stonesHtml}</div>`;
+  const leftHtml = stonesBlockHtml + stageHtml;      // stage block (if any) drops to the bottom
+  const rightHtml = [bandHtml, hostsHtml, shadowsHtml, runHtml].filter(Boolean).join('');
+  const bodyClass = rightHtml ? 'tw-body' : 'tw-body tw-body-solo';
+
+  root.innerHTML = ''
+    + `<div class="tw-head">`
+    +   `<div class="tw-title">${title}</div>`
+    +   `<div class="tw-meta">${metaLines}</div>`
+    + `</div>`
+    + `<div class="${bodyClass}">`
+    +   `<div class="tw-col">${leftHtml}</div>`
+    +   (rightHtml ? `<div class="tw-col tw-col-r">${rightHtml}</div>` : '')
+    + `</div>`;
+
+  // Stage features (monitors, DI/power, risers, etc.) at their real positions.
+  if (showStage) {
+    const featLayer = root.querySelector('#twStageFeatures');
+    if (featLayer) renderStageFeatures(featLayer, { interactive: false });
+  }
+}
+
 function setTheme(theme) {
   if (theme !== 'light' && theme !== 'dark') theme = 'dark';
   state.theme = theme;
@@ -9834,11 +10201,12 @@ const WORLDS = {
 const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit'];
 const DEFAULT_WORLD = 'concrete';
 // Bespoke per-world display renderers. These are hoisted function declarations, so they're
-// defined by the time any render runs. Concrete (the DEFAULT world), Molten, and Corporate each
-// have their own display layout; the remaining worlds fall back to the default skeleton.
+// defined by the time any render runs. Concrete (the DEFAULT world), Molten, Corporate, and Terra
+// each have their own display layout; the remaining worlds fall back to the default skeleton.
 WORLDS.molten.renderDisplay    = renderDisplay_molten;
 WORLDS.concrete.renderDisplay  = renderDisplay_concrete;
 WORLDS.corporate.renderDisplay = renderDisplay_corporate;
+WORLDS.terra.renderDisplay     = renderDisplay_terra;
 // One preview tile for a world. Reused by the Settings picker + the wizard step.
 function worldSwatchHtml(id, selected) {
   const w = WORLDS[id]; if (!w) return '';

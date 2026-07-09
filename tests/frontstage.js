@@ -143,7 +143,7 @@ function boot(seedSave){
   }
 
   check('DEFAULT display renderer emits a highlighted FRONT edge + separates crowded cards',()=>{
-    seedRoster(); ev("state.world='terra';"); // terra uses the default skeleton (corporate is now bespoke)
+    seedRoster(); ev("state.world='orbit';"); // orbit uses the default skeleton (concrete/molten/corporate/terra are now bespoke)
     ev('renderDisplayView()');
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge').length>=1,'no front-edge path on default display');
     assert(doc.querySelectorAll('.dv-stage-svg .dv-front-edge-lbl').length>=1,'no FRONT label on default display');
@@ -169,6 +169,15 @@ function boot(seedSave){
     const ys=[...doc.querySelectorAll('#dvWorldRoot .mw-pl')].map(t=>parseFloat(t.getAttribute('y')));
     const uniq=new Set(ys.map(y=>y.toFixed(1)));
     assert(uniq.size===ys.length,'molten name labels overlap (identical y): '+JSON.stringify(ys));
+  });
+
+  check('TERRA renderer emits a highlighted FRONT edge + separates crowded labels',()=>{
+    seedRoster(); ev("state.world='terra';"); ev('renderDisplayView()');
+    assert(doc.querySelectorAll('#dvWorldRoot .tw-front').length>=1,'no terra front path');
+    assert(doc.querySelectorAll('#dvWorldRoot .tw-frontlbl').length>=1,'no terra FRONT label');
+    const ys=[...doc.querySelectorAll('#dvWorldRoot .tw-pl')].map(t=>parseFloat(t.getAttribute('y')));
+    const uniq=new Set(ys.map(y=>y.toFixed(1)));
+    assert(uniq.size===ys.length,'terra name labels overlap (identical y): '+JSON.stringify(ys));
   });
 
   // ---- (2b) MIGRATION FROM A PERSISTED LEGACY SAVE (no stageFrontEdge) ----

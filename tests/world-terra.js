@@ -1,10 +1,9 @@
-// Bespoke display — CORPORATE (editorial / premium list layout). Added 2026-07-08.
-// Verifies: renderDisplayView() with state.world='corporate' delegates to
-// renderDisplay_corporate, builds into #dvWorldRoot (a typographic vocalist LIST +
-// a thin-line stage <svg> with a FRONT highlight + a roman-numeral Run of Service)
-// from the REAL data, hides the default #dvLayout, honors a display toggle, and —
-// critically — switching to a non-bespoke world (orbit) re-shows #dvLayout and
-// retires #dvWorldRoot. (Mirrors tests/world-concrete.js.)
+// Bespoke display — TERRA (organic / natural). Added 2026-07-08. Mirrors tests/world-concrete.js.
+// Verifies: renderDisplayView() with state.world='terra' delegates to renderDisplay_terra, builds
+// into #dvWorldRoot (river-stone roster rows + a topographic-contour stage <svg> with a FRONT
+// highlight + seed-dot run-sheet items) from the REAL data, hides the default #dvLayout, honors a
+// display toggle, and — critically — switching to a non-bespoke world (orbit) re-shows #dvLayout
+// and retires #dvWorldRoot, then switching back to terra re-populates it.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -36,90 +35,77 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.config.display.runSheetPosition='right';
  `);
 
- check('WORLDS.corporate.renderDisplay is wired to a function', ()=>{
-   if (ev("typeof WORLDS.corporate.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
+ check('WORLDS.terra.renderDisplay is wired to a function', ()=>{
+   if (ev("typeof WORLDS.terra.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
  });
 
- check('renderDisplayView() with world=corporate runs without throwing', ()=>{
-   ev("state.world='corporate'; applyWorld(); renderDisplayView();");
+ check('renderDisplayView() with world=terra runs without throwing', ()=>{
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
  });
 
- check('#dvWorldRoot exists, is shown, and carries data-world=corporate', ()=>{
+ check('#dvWorldRoot exists, is shown, and carries data-world=terra', ()=>{
    const root = doc.getElementById('dvWorldRoot');
    if (!root) throw new Error('#dvWorldRoot not created');
-   if (root.getAttribute('data-world') !== 'corporate') throw new Error('data-world not corporate');
+   if (root.getAttribute('data-world') !== 'terra') throw new Error('data-world not terra');
    if (root.style.display === 'none') throw new Error('#dvWorldRoot is hidden');
  });
 
- check('#dvLayout (default layout) is hidden while Corporate is active', ()=>{
+ check('#dvLayout (default layout) is hidden while Terra is active', ()=>{
    const lay = doc.getElementById('dvLayout');
    if (!lay) throw new Error('#dvLayout missing');
    if (lay.style.display !== 'none') throw new Error('#dvLayout not hidden, got "'+lay.style.display+'"');
  });
 
- check('Corporate renders a typographic list row per assigned vocalist (3), with names', ()=>{
+ check('Terra renders a river-stone per assigned vocalist (3), with names + role', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const rows = root.querySelectorAll('.pw-vlist .pw-vrow');
-   if (rows.length !== 3) throw new Error('expected 3 vocalist list rows, got '+rows.length);
+   const stones = root.querySelectorAll('.tw-stones .tw-stone');
+   if (stones.length !== 3) throw new Error('expected 3 river-stones, got '+stones.length);
    if (!/Amelia Garcia/i.test(root.textContent)) throw new Error('vocalist name missing');
    if (!/Vocal 1/i.test(root.textContent)) throw new Error('Vocal n role label missing');
-   // Editorial layout = a LIST, not cards: there must be NO card-style cells here.
-   if (root.querySelector('.cw-cell') || root.querySelector('.mw-lrow')) throw new Error('leaked card/lineup markup from another world');
  });
 
- check('Corporate renders the thin-line stage <svg> with real people dots + a FRONT highlight', ()=>{
+ check('Terra renders the topographic stage <svg> with contours, a FRONT highlight, and real people dots', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const svg = root.querySelector('.pw-stage svg');
+   const svg = root.querySelector('.tw-stage svg');
    if (!svg) throw new Error('no stage svg');
-   if (!svg.querySelector('path.pw-edge')) throw new Error('no stage edge path');
-   if (!svg.querySelector('.pw-front')) throw new Error('no FRONT highlight element');
-   const dots = svg.querySelectorAll('circle.pw-dt');
+   if (svg.querySelectorAll('path.tw-contour').length < 2) throw new Error('expected nested contour paths');
+   if (!svg.querySelector('path.tw-front')) throw new Error('no FRONT-edge highlight path');
+   const dots = svg.querySelectorAll('circle.tw-dt');
    // 2 band + 3 vocalists = 5 markers
    if (dots.length < 5) throw new Error('expected >=5 people dots, got '+dots.length);
    if (!/Ben Ross/i.test(root.textContent)) throw new Error('band member not on stage');
  });
 
- check('Corporate renders band list rows + a roman-numeral Run of Service from real data', ()=>{
+ check('Terra renders band list + seed-dot run-sheet items from real data', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const bandRows = root.querySelectorAll('.pw-list .pw-lrow');
+   const bandRows = root.querySelectorAll('.tw-list .tw-lrow');
    if (bandRows.length < 2) throw new Error('expected band list rows, got '+bandRows.length);
-   if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band list');
-   const orderRows = root.querySelectorAll('.pw-order .pw-orow');
-   if (orderRows.length < 3) throw new Error('expected run-of-service rows, got '+orderRows.length);
+   const runItems = root.querySelectorAll('.tw-order .tw-li');
+   if (runItems.length < 3) throw new Error('expected run-of-service items, got '+runItems.length);
+   if (!root.querySelector('.tw-order .tw-seed')) throw new Error('run sheet seed dot missing');
    if (!/Keep Praise/i.test(root.textContent)) throw new Error('run sheet item missing');
    if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('run sheet duration missing');
-   // Roman numerals: I, II, III on the three items.
-   const nums = Array.from(root.querySelectorAll('.pw-order .pw-onum')).map(n=>n.textContent.trim());
-   if (!(nums.includes('I.') && nums.includes('II.') && nums.includes('III.'))) throw new Error('roman numerals missing/incorrect: '+JSON.stringify(nums));
+   if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band list');
  });
 
- check('honors display toggles — showBand:false drops the band list', ()=>{
-   // Count the band list rows before + after. Band + Hosts share .pw-list markup and band
-   // members also appear on the stage, so assert on the delta in .pw-list rows (band = 2 rows,
-   // hosts = 1 row) plus the disappearance of the "Band" section label specifically.
-   ev("state.config.display.showBand=true; renderDisplayView();");
-   const rootOn = doc.getElementById('dvWorldRoot');
-   const rowsOn = rootOn.querySelectorAll('.pw-list .pw-lrow').length;
-   const labelsOn = Array.from(rootOn.querySelectorAll('.pw-label')).map(n=>n.textContent.trim());
-   if (!labelsOn.includes('Band')) throw new Error('Band label absent when showBand:true');
+ check('honors display toggles — showBand:false drops the band block', ()=>{
    ev("state.config.display.showBand=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   const rowsOff = root.querySelectorAll('.pw-list .pw-lrow').length;
-   const labelsOff = Array.from(root.querySelectorAll('.pw-label')).map(n=>n.textContent.trim());
-   if (labelsOff.includes('Band')) throw new Error('Band label shown despite showBand:false');
-   if (rowsOff >= rowsOn) throw new Error('band list rows not dropped ('+rowsOn+' -> '+rowsOff+')');
+   // The Band section label should be gone; the roster/run sheet remain.
+   const labels = Array.from(root.querySelectorAll('.tw-label')).map(n=>n.textContent.trim());
+   if (labels.some(t=>/^Band$/i.test(t))) throw new Error('band block shown despite showBand:false');
    ev("state.config.display.showBand=true;");
  });
 
- check('honors display toggles — showStage:false drops the thin-line stage', ()=>{
+ check('honors display toggles — showStage:false drops the topographic stage', ()=>{
    ev("state.config.display.showStage=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   if (root.querySelector('.pw-stage svg')) throw new Error('stage svg shown despite showStage:false');
+   if (root.querySelector('.tw-stage svg')) throw new Error('stage svg shown despite showStage:false');
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
  check('switching to a non-bespoke world (orbit) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // terra is now bespoke too — orbit is the last default-skeleton fallback, so use it to exercise the bespoke→default restore path.
+   // orbit is still a default-skeleton fallback (no bespoke renderDisplay), so it restores #dvLayout.
    ev("state.world='orbit'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
@@ -128,11 +114,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for orbit');
  });
 
- check('switching back to corporate re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
-   ev("state.world='corporate'; applyWorld(); renderDisplayView();");
+ check('switching back to terra re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
+   ev("state.world='terra'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!root || root.querySelectorAll('.pw-vlist .pw-vrow').length !== 3) throw new Error('#dvWorldRoot not re-populated');
+   if (!root || root.querySelectorAll('.tw-stone').length !== 3) throw new Error('#dvWorldRoot not re-populated');
    if (!lay || lay.style.display !== 'none') throw new Error('#dvLayout not re-hidden');
  });
 

@@ -2,10 +2,10 @@
 // Verifies: renderDisplayView() with state.world='concrete' delegates to renderDisplay_concrete,
 // builds into #dvWorldRoot (voice cells + a blueprint stage <svg> + run-sheet manifest rows) from
 // the REAL data, hides the default #dvLayout, and — critically — switching to a non-bespoke
-// world (terra) re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: this round-trip used to switch to molten, then corporate — but both are now bespoke worlds
-// with their own renderDisplay, so neither restores #dvLayout. Use terra — still a default-
-// skeleton fallback — to exercise the bespoke→default restore path.
+// world (orbit) re-shows #dvLayout and retires #dvWorldRoot.
+// NOTE: this round-trip used to switch to molten, then corporate, then terra — but all of those
+// are now bespoke worlds with their own renderDisplay, so none restore #dvLayout. Use orbit — the
+// last remaining default-skeleton fallback — to exercise the bespoke→default restore path.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -100,14 +100,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to a non-bespoke world (terra) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // molten + corporate are now bespoke too, so we switch to terra (a default-skeleton fallback) here.
-   ev("state.world='terra'; applyWorld(); renderDisplayView();");
+ check('switching to a non-bespoke world (orbit) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   // molten + corporate + terra are all bespoke now, so we switch to orbit (the last default-skeleton fallback) here.
+   ev("state.world='orbit'; applyWorld(); renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for terra');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for terra');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for terra');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for orbit');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for orbit');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for orbit');
  });
 
  check('switching back to concrete re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
