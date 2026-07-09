@@ -67,11 +67,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
  check('display: host row shows label + name only (never a mic capsule)', ()=>{
    setup(); ev('hostChannels()[0].capsule="SM58"');   // capsule set, but display must not show it
-   // Pin to a non-bespoke world (orbit) so this exercises the DEFAULT #dvHostsBlock list;
-   // the bespoke worlds (concrete=default, molten, corporate, terra) have their own displays (warm
-   // .mw-rows / .cw-manifest / .pw-list / .tw-list, no #dvHostsBlock); orbit is the last default fallback.
-   ev('state.world="orbit"; applyWorld();');
-   ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup"');
+   // This asserts against the DEFAULT #dvHostsBlock list. EVERY world is bespoke now (concrete=default,
+   // molten, corporate, terra, orbit — warm .mw-rows / .cw-manifest / .pw-list / .tw-list / .ow-list,
+   // no #dvHostsBlock), so there is no non-bespoke world to pin. Force the default path directly: null
+   // the active world's renderer so renderDisplayView() falls through to the default skeleton, then restore.
+   ev("state.viewMode='display'; __savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD; state.viewMode='setup';");
    const block=doc.querySelector('#displayView #dvHostsBlock') || doc.getElementById('dvHostsBlock');
    const list=block && block.querySelector('.dv-list');
    if(!list) throw new Error('#dvHostsList missing');

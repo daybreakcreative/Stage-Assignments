@@ -1,11 +1,11 @@
-// Bespoke display — TERRA (organic / natural). Added 2026-07-08. Mirrors tests/world-concrete.js.
-// Verifies: renderDisplayView() with state.world='terra' delegates to renderDisplay_terra, builds
-// into #dvWorldRoot (river-stone roster rows + a topographic-contour stage <svg> with a FRONT
-// highlight + seed-dot run-sheet items) from the REAL data, hides the default #dvLayout, honors a
-// display toggle, and — critically — the bespoke→default restore path re-shows #dvLayout and
-// retires #dvWorldRoot, then switching back to terra re-populates it. EVERY world is bespoke now
-// (orbit included), so there is no non-bespoke world to switch to; the default fallback is forced
-// by temporarily nulling the active world's renderDisplay, rendering, then restoring it.
+// Bespoke display — ORBIT (deep-space / radial). Added 2026-07-08. Mirrors tests/world-terra.js.
+// Verifies: renderDisplayView() with state.world='orbit' delegates to renderDisplay_orbit, builds
+// into #dvWorldRoot (a glowing constellation star-map stage <svg> with REAL people nodes + a FRONT
+// highlight + a vertical "mission timeline" run sheet + a vocalist star legend) from the REAL data,
+// hides the default #dvLayout, honors a display toggle, and — critically — the bespoke→default
+// restore path re-shows #dvLayout and retires #dvWorldRoot. EVERY world is bespoke now (orbit
+// included), so there is no non-bespoke world to switch to; the default fallback is forced by
+// temporarily nulling the active world's renderDisplay, rendering, then restoring it.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -37,54 +37,57 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.config.display.runSheetPosition='right';
  `);
 
- check('WORLDS.terra.renderDisplay is wired to a function', ()=>{
-   if (ev("typeof WORLDS.terra.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
+ check('WORLDS.orbit.renderDisplay is wired to a function', ()=>{
+   if (ev("typeof WORLDS.orbit.renderDisplay") !== 'function') throw new Error('renderDisplay not a function');
  });
 
- check('renderDisplayView() with world=terra runs without throwing', ()=>{
-   ev("state.world='terra'; applyWorld(); renderDisplayView();");
+ check('renderDisplayView() with world=orbit runs without throwing', ()=>{
+   ev("state.world='orbit'; applyWorld(); renderDisplayView();");
  });
 
- check('#dvWorldRoot exists, is shown, and carries data-world=terra', ()=>{
+ check('#dvWorldRoot exists, is shown, and carries data-world=orbit', ()=>{
    const root = doc.getElementById('dvWorldRoot');
    if (!root) throw new Error('#dvWorldRoot not created');
-   if (root.getAttribute('data-world') !== 'terra') throw new Error('data-world not terra');
+   if (root.getAttribute('data-world') !== 'orbit') throw new Error('data-world not orbit');
    if (root.style.display === 'none') throw new Error('#dvWorldRoot is hidden');
  });
 
- check('#dvLayout (default layout) is hidden while Terra is active', ()=>{
+ check('#dvLayout (default layout) is hidden while Orbit is active', ()=>{
    const lay = doc.getElementById('dvLayout');
    if (!lay) throw new Error('#dvLayout missing');
    if (lay.style.display !== 'none') throw new Error('#dvLayout not hidden, got "'+lay.style.display+'"');
  });
 
- check('Terra renders a river-stone per assigned vocalist (3), with names + role', ()=>{
+ check('Orbit renders a star chip per assigned vocalist (3), with names + role', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const stones = root.querySelectorAll('.tw-stones .tw-stone');
-   if (stones.length !== 3) throw new Error('expected 3 river-stones, got '+stones.length);
+   const chips = root.querySelectorAll('.ow-stars .ow-star');
+   if (chips.length !== 3) throw new Error('expected 3 star chips, got '+chips.length);
    if (!/Amelia Garcia/i.test(root.textContent)) throw new Error('vocalist name missing');
    if (!/Vocal 1/i.test(root.textContent)) throw new Error('Vocal n role label missing');
  });
 
- check('Terra renders the topographic stage <svg> with contours, a FRONT highlight, and real people dots', ()=>{
+ check('Orbit renders the constellation stage <svg> with a real outline, a FRONT highlight, a link arc, and real people nodes', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const svg = root.querySelector('.tw-stage svg');
+   const svg = root.querySelector('.ow-map svg');
    if (!svg) throw new Error('no stage svg');
-   if (svg.querySelectorAll('path.tw-contour').length < 2) throw new Error('expected nested contour paths');
-   if (!svg.querySelector('path.tw-front')) throw new Error('no FRONT-edge highlight path');
-   const dots = svg.querySelectorAll('circle.tw-dt');
-   // 2 band + 3 vocalists = 5 markers
-   if (dots.length < 5) throw new Error('expected >=5 people dots, got '+dots.length);
+   if (!svg.querySelector('path.ow-stage')) throw new Error('no real stage outline path');
+   if (!svg.querySelector('path.ow-front')) throw new Error('no FRONT-edge highlight path');
+   if (!svg.querySelector('polyline.ow-link')) throw new Error('no constellation link arc through vocalist nodes');
+   const nodes = svg.querySelectorAll('circle.ow-node');
+   // 2 band + 3 vocalists = 5 star-nodes
+   if (nodes.length < 5) throw new Error('expected >=5 people nodes, got '+nodes.length);
+   // band nodes are faint (ow-node-band); at least the 2 band members should be present
+   if (svg.querySelectorAll('circle.ow-node-band').length < 2) throw new Error('expected faint band nodes upstage');
    if (!/Ben Ross/i.test(root.textContent)) throw new Error('band member not on stage');
+   if (!/▲ AUDIENCE/i.test(root.textContent)) throw new Error('audience-at-top caption missing');
  });
 
- check('Terra renders band list + seed-dot run-sheet items from real data', ()=>{
+ check('Orbit renders band list + vertical mission-timeline run-sheet items from real data', ()=>{
    const root = doc.getElementById('dvWorldRoot');
-   const bandRows = root.querySelectorAll('.tw-list .tw-lrow');
+   const bandRows = root.querySelectorAll('.ow-list .ow-lrow');
    if (bandRows.length < 2) throw new Error('expected band list rows, got '+bandRows.length);
-   const runItems = root.querySelectorAll('.tw-order .tw-li');
-   if (runItems.length < 3) throw new Error('expected run-of-service items, got '+runItems.length);
-   if (!root.querySelector('.tw-order .tw-seed')) throw new Error('run sheet seed dot missing');
+   const steps = root.querySelectorAll('.ow-time .ow-steps .ow-step');
+   if (steps.length < 3) throw new Error('expected timeline run-of-service steps, got '+steps.length);
    if (!/Keep Praise/i.test(root.textContent)) throw new Error('run sheet item missing');
    if (!/5m 12s|5:12|5m/i.test(root.textContent)) throw new Error('run sheet duration missing');
    if (!/Carlos M/i.test(root.textContent)) throw new Error('MD band member missing from band list');
@@ -93,17 +96,23 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('honors display toggles — showBand:false drops the band block', ()=>{
    ev("state.config.display.showBand=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   // The Band section label should be gone; the roster/run sheet remain.
-   const labels = Array.from(root.querySelectorAll('.tw-label')).map(n=>n.textContent.trim());
+   const labels = Array.from(root.querySelectorAll('.ow-label')).map(n=>n.textContent.trim());
    if (labels.some(t=>/^Band$/i.test(t))) throw new Error('band block shown despite showBand:false');
    ev("state.config.display.showBand=true;");
  });
 
- check('honors display toggles — showStage:false drops the topographic stage', ()=>{
+ check('honors display toggles — showStage:false drops the constellation stage', ()=>{
    ev("state.config.display.showStage=false; renderDisplayView();");
    const root = doc.getElementById('dvWorldRoot');
-   if (root.querySelector('.tw-stage svg')) throw new Error('stage svg shown despite showStage:false');
+   if (root.querySelector('.ow-map svg')) throw new Error('stage svg shown despite showStage:false');
    ev("state.config.display.showStage=true; renderDisplayView();");
+ });
+
+ check('honors display toggles — runSheetPosition:hidden drops the mission timeline', ()=>{
+   ev("state.config.display.runSheetPosition='hidden'; renderDisplayView();");
+   const root = doc.getElementById('dvWorldRoot');
+   if (root.querySelector('.ow-time')) throw new Error('timeline shown despite runSheetPosition:hidden');
+   ev("state.config.display.runSheetPosition='right'; renderDisplayView();");
  });
 
  check('falling through to the DEFAULT skeleton re-shows #dvLayout and retires #dvWorldRoot', ()=>{
@@ -118,11 +127,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for default path');
  });
 
- check('switching back to terra re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
-   ev("state.world='terra'; applyWorld(); renderDisplayView();");
+ check('rendering Orbit again after the default fall-through re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
+   ev("renderDisplayView();");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!root || root.querySelectorAll('.tw-stone').length !== 3) throw new Error('#dvWorldRoot not re-populated');
+   if (!root || root.querySelectorAll('.ow-star').length !== 3) throw new Error('#dvWorldRoot not re-populated');
    if (!lay || lay.style.display !== 'none') throw new Error('#dvLayout not re-hidden');
  });
 

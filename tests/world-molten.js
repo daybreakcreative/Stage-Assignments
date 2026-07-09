@@ -2,9 +2,10 @@
 // Verifies: renderDisplayView() with state.world='molten' delegates to renderDisplay_molten,
 // builds into #dvWorldRoot (an EQUAL lineup row per assigned vocalist + an ember stage <svg> +
 // warm service-order rows) from the REAL data, hides the default #dvLayout, and — critically —
-// switching to a NON-bespoke world (orbit) re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: corporate + terra are now bespoke worlds too, so the round-trip uses orbit (the last
-// default-skeleton fallback) to exercise the bespoke→default restore path.
+// the bespoke→default restore path re-shows #dvLayout and retires #dvWorldRoot.
+// NOTE: EVERY world is bespoke now (concrete/molten/corporate/terra/orbit), so there is no
+// non-bespoke world to switch to. To exercise the default fallback we force the default path
+// directly: temporarily null the active world's renderDisplay, render, then restore it.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -109,13 +110,16 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to orbit (non-bespoke) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   ev("state.world='orbit'; applyWorld(); renderDisplayView();");
+ check('falling through to the DEFAULT skeleton re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   // EVERY world is bespoke now — no non-bespoke world to switch to. Force the default path
+   // directly: null the active world's renderer so renderDisplayView() falls through to the
+   // default #dvLayout, then restore it.
+   ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for orbit');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for orbit');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for orbit');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for default path');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for default path');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for default path');
  });
 
  check('switching back to molten re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{

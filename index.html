@@ -1675,6 +1675,119 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 }
 [data-theme="dark"] #dvWorldRoot[data-world="terra"]::after{ opacity:.12; mix-blend-mode:screen; }
 
+/* ============================================================
+   BESPOKE DISPLAY — ORBIT (deep-space / radial). Scoped to
+   #dvWorldRoot[data-world="orbit"] so nothing leaks into the editor.
+   Source of truth: docs/design-worlds-terra-orbit.html panel .orbit — the stage
+   is a glowing constellation star-map CENTERPIECE (real geometry, audience at
+   top; vocalists = bright nodes joined by a faint link arc, band fainter
+   upstage), the roster is a legend of glowing "star" chips beneath it, and the
+   Run of Service is a vertical "mission timeline" down the side. Deep-space
+   background + faint stars + soft glow; Unbounded (display) + Manrope (body).
+   EVERY voice equal (no hero). NATIVE FACE = DARK (deep space). A light "dawn"
+   face (soft lavender sky) is gated on [data-theme="light"]. --ow-* tokens keep
+   it independent of the shared world --c*/--text tokens.
+============================================================ */
+#dvWorldRoot[data-world="orbit"]{
+  --ow-ink:#e9e6ff; --ow-name:#f2eeff; --ow-mut:#a99fd0; --ow-faint:#8f86bd;
+  --ow-accent:#b39cff; --ow-accent2:#67e8f9; --ow-line:rgba(179,156,255,.22);
+  --ow-hair:rgba(179,156,255,.14); --ow-glow:rgba(179,156,255,.9);
+  --ow-star-bg:rgba(179,156,255,.08); --ow-chip:rgba(179,156,255,.12);
+  position:absolute; inset:0; overflow:auto;
+  background:
+    radial-gradient(130% 90% at 50% -20%, rgba(128,92,224,.28), transparent 60%),
+    radial-gradient(80% 60% at 85% 10%, rgba(90,150,255,.14), transparent 55%),
+    linear-gradient(180deg,#0a0818 0%,#060410 100%);
+  color:var(--ow-ink);
+  font-family:var(--ff-body,'Manrope',system-ui,sans-serif);
+  -webkit-font-smoothing:antialiased;
+}
+/* faint scattered stars washed over the deep-space ground */
+#dvWorldRoot[data-world="orbit"]::after{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.5; z-index:0;
+  background-image:
+    radial-gradient(1.3px 1.3px at 12% 20%,#fff,transparent),radial-gradient(1px 1px at 32% 66%,#fff9,transparent),
+    radial-gradient(1.5px 1.5px at 68% 30%,#fff,transparent),radial-gradient(1px 1px at 82% 74%,#e5d9ffcc,transparent),
+    radial-gradient(1.2px 1.2px at 90% 16%,#fff,transparent),radial-gradient(1px 1px at 46% 86%,#fff9,transparent),
+    radial-gradient(1px 1px at 22% 48%,#fff8,transparent),radial-gradient(1.1px 1.1px at 60% 58%,#fff9,transparent);
+}
+#dvWorldRoot[data-world="orbit"] > *{ position:relative; z-index:1; }
+/* header: centered Unbounded title with glow + tracked Unbounded meta */
+#dvWorldRoot[data-world="orbit"] .ow-head{ text-align:center; padding:clamp(24px,3.6vh,44px) clamp(28px,4.2vw,54px) clamp(12px,2vh,20px); }
+#dvWorldRoot[data-world="orbit"] .ow-title{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-weight:700; font-size:clamp(28px,4.6vw,56px); line-height:1.02; letter-spacing:-.01em; color:var(--ow-name); text-shadow:0 0 26px rgba(179,156,255,.55); }
+#dvWorldRoot[data-world="orbit"] .ow-meta{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-size:clamp(9px,1.1vw,11px); letter-spacing:.24em; text-transform:uppercase; color:var(--ow-accent); margin-top:clamp(8px,1.2vh,12px); }
+/* body: LEFT = constellation stage CENTERPIECE + star legend, RIGHT = mission timeline */
+#dvWorldRoot[data-world="orbit"] .ow-body{ display:grid; grid-template-columns:1.6fr .9fr; gap:clamp(24px,3.4vw,44px); align-items:start; padding:clamp(16px,2.4vh,28px) clamp(28px,4.2vw,54px) clamp(34px,5vh,54px); }
+#dvWorldRoot[data-world="orbit"] .ow-body.ow-body-solo{ grid-template-columns:1fr; }
+#dvWorldRoot[data-world="orbit"] .ow-col{ min-width:0; display:flex; flex-direction:column; gap:clamp(20px,3vh,32px); }
+@media (max-width:820px){ #dvWorldRoot[data-world="orbit"] .ow-body{ grid-template-columns:1fr; } }
+#dvWorldRoot[data-world="orbit"] .ow-block{ min-width:0; }
+/* section label — fine tracked Unbounded caps in the accent tone */
+#dvWorldRoot[data-world="orbit"] .ow-label{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.2em; text-transform:uppercase; color:var(--ow-accent); margin:0 0 clamp(10px,1.6vh,16px); }
+/* CONSTELLATION STAGE — the radial centerpiece: glowing outline, star nodes, link arc */
+#dvWorldRoot[data-world="orbit"] .ow-map{ position:relative; }
+#dvWorldRoot[data-world="orbit"] .ow-map svg{ width:100%; height:auto; display:block; overflow:visible; }
+#dvWorldRoot[data-world="orbit"] .ow-stage{ fill:var(--ow-star-bg); stroke:var(--ow-accent); stroke-width:1.5; filter:drop-shadow(0 0 8px rgba(179,156,255,.45)); }
+#dvWorldRoot[data-world="orbit"] .ow-edge{ fill:none; stroke:var(--ow-accent); stroke-width:1; opacity:.55; }
+#dvWorldRoot[data-world="orbit"] .ow-front{ fill:none; stroke:var(--ow-accent2); stroke-width:4; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(103,232,249,.6)); }
+#dvWorldRoot[data-world="orbit"] .ow-frontlbl{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-size:10px; font-weight:500; fill:var(--ow-accent2); letter-spacing:.16em; text-transform:uppercase; }
+#dvWorldRoot[data-world="orbit"] .ow-aud{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-size:11px; letter-spacing:.16em; fill:var(--ow-accent); text-transform:uppercase; }
+#dvWorldRoot[data-world="orbit"] .ow-link{ stroke:var(--ow-line); stroke-width:1.2; }
+#dvWorldRoot[data-world="orbit"] .ow-node{ fill:var(--ow-accent); filter:drop-shadow(0 0 6px var(--ow-glow)); }
+#dvWorldRoot[data-world="orbit"] .ow-node-band{ fill:var(--ow-accent); opacity:.5; filter:drop-shadow(0 0 4px rgba(179,156,255,.5)); }
+#dvWorldRoot[data-world="orbit"] .ow-pl{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:14px; font-weight:600; fill:var(--ow-name); }
+#dvWorldRoot[data-world="orbit"] .ow-pl-band{ fill:var(--ow-mut); font-weight:500; opacity:.85; }
+#dvWorldRoot[data-world="orbit"] .ow-plr{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:11px; font-weight:700; fill:var(--ow-accent); letter-spacing:.04em; text-transform:uppercase; }
+/* stage feature overlays (monitors, DI, risers) — reuse the shared engine, tint accent */
+#dvWorldRoot[data-world="orbit"] .ow-stage-feats{ position:absolute; inset:0; pointer-events:none; color:var(--ow-mut); }
+#dvWorldRoot[data-world="orbit"] .ow-stage-feats .stage-feature{ position:absolute; }
+#dvWorldRoot[data-world="orbit"] .ow-stage-feats .stage-feature svg{ width:100%; height:100%; display:block; }
+#dvWorldRoot[data-world="orbit"] .ow-stage-feats .sf-label{ position:absolute; transform:translate(-50%,-50%); font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ow-mut); white-space:nowrap; }
+/* STAR LEGEND — glowing chips, one per vocalist (all equal) */
+#dvWorldRoot[data-world="orbit"] .ow-stars{ display:flex; flex-wrap:wrap; gap:clamp(8px,1.2vw,12px); }
+#dvWorldRoot[data-world="orbit"] .ow-star{ display:inline-flex; align-items:center; gap:10px; background:var(--ow-chip); border:1px solid var(--ow-line); border-radius:999px; padding:clamp(7px,1.1vh,10px) clamp(14px,1.6vw,20px); }
+#dvWorldRoot[data-world="orbit"] .ow-sdot{ width:9px; height:9px; border-radius:50%; background:var(--ow-accent); box-shadow:0 0 10px var(--ow-glow); flex:0 0 auto; }
+#dvWorldRoot[data-world="orbit"] .ow-snm{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-weight:500; font-size:clamp(13px,1.5vw,16px); color:var(--ow-name); }
+#dvWorldRoot[data-world="orbit"] .ow-srl{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.1em; text-transform:uppercase; color:var(--ow-mut); }
+#dvWorldRoot[data-world="orbit"] .ow-smeta{ display:inline-flex; align-items:center; gap:8px; }
+#dvWorldRoot[data-world="orbit"] .ow-mc{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-weight:700; font-size:clamp(10px,1.2vw,12px); color:var(--ow-accent2); }
+#dvWorldRoot[data-world="orbit"] .ow-iem{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:clamp(9px,1vw,11px); letter-spacing:.04em; color:var(--ow-mut); }
+#dvWorldRoot[data-world="orbit"] .ow-empty{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:13px; letter-spacing:.04em; color:var(--ow-faint); border:1px dashed var(--ow-line); border-radius:16px; padding:22px; text-align:center; }
+/* constellation "legend" list rows: band / hosts / shadows — label · name · detail */
+#dvWorldRoot[data-world="orbit"] .ow-list{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="orbit"] .ow-lrow{ display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:14px; padding:clamp(8px,1.3vh,12px) 0; border-bottom:1px solid var(--ow-hair); font-size:clamp(12px,1.4vw,15px); }
+#dvWorldRoot[data-world="orbit"] .ow-lrl{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-weight:700; font-size:clamp(9px,1vw,11px); letter-spacing:.12em; text-transform:uppercase; color:var(--ow-accent); white-space:nowrap; }
+#dvWorldRoot[data-world="orbit"] .ow-lnm{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-weight:400; color:var(--ow-name); min-width:0; }
+#dvWorldRoot[data-world="orbit"] .ow-ldt{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); color:var(--ow-mut); text-align:right; white-space:nowrap; font-size:.9em; }
+/* MISSION TIMELINE — Run of Service as a vertical timeline with glowing bullets */
+#dvWorldRoot[data-world="orbit"] .ow-time{ border-left:1px solid var(--ow-line); padding-left:clamp(16px,1.8vw,22px); }
+#dvWorldRoot[data-world="orbit"] .ow-steps{ display:flex; flex-direction:column; }
+#dvWorldRoot[data-world="orbit"] .ow-step{ position:relative; padding:0 0 clamp(14px,2.2vh,20px) clamp(18px,1.6vw,22px); }
+#dvWorldRoot[data-world="orbit"] .ow-step::before{ content:""; position:absolute; left:-5px; top:4px; width:10px; height:10px; border-radius:50%; background:var(--ow-accent); box-shadow:0 0 10px var(--ow-glow); }
+#dvWorldRoot[data-world="orbit"] .ow-step::after{ content:""; position:absolute; left:0; top:14px; bottom:-2px; width:1px; background:var(--ow-line); }
+#dvWorldRoot[data-world="orbit"] .ow-step:last-child::after{ display:none; }
+#dvWorldRoot[data-world="orbit"] .ow-sn{ font-family:var(--ff-display,'Unbounded',system-ui,sans-serif); font-weight:400; font-size:clamp(13px,1.6vw,17px); color:var(--ow-name); }
+#dvWorldRoot[data-world="orbit"] .ow-tm{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:clamp(10px,1.2vw,12px); color:var(--ow-mut); margin-top:2px; }
+#dvWorldRoot[data-world="orbit"] .ow-step.ow-shead{ padding-bottom:6px; }
+#dvWorldRoot[data-world="orbit"] .ow-step.ow-shead::before{ background:transparent; box-shadow:none; }
+#dvWorldRoot[data-world="orbit"] .ow-step.ow-shead .ow-sn{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-weight:700; font-size:clamp(9px,1vw,11px); letter-spacing:.2em; text-transform:uppercase; color:var(--ow-faint); }
+#dvWorldRoot[data-world="orbit"] .ow-key{ border:1px solid var(--ow-line); border-radius:999px; padding:1px 8px; font-family:var(--ff-body,'Manrope',system-ui,sans-serif); font-size:.75em; margin-left:6px; color:var(--ow-accent2); }
+#dvWorldRoot[data-world="orbit"] .ow-lead{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); color:var(--ow-mut); font-size:.8em; margin-left:6px; }
+#dvWorldRoot[data-world="orbit"] .ow-odesc{ font-family:var(--ff-body,'Manrope',system-ui,sans-serif); color:var(--ow-mut); font-size:.8em; margin-top:3px; white-space:normal; }
+/* ---- LIGHT "DAWN" FACE: soft lavender sky (data-theme lives on <html>) ---- */
+[data-theme="light"] #dvWorldRoot[data-world="orbit"]{
+  --ow-ink:#2c2550; --ow-name:#241d47; --ow-mut:#6a6296; --ow-faint:#8a83b0;
+  --ow-accent:#6f57c9; --ow-accent2:#2597ad; --ow-line:rgba(111,87,201,.22);
+  --ow-hair:rgba(111,87,201,.14); --ow-glow:rgba(111,87,201,.4);
+  --ow-star-bg:rgba(111,87,201,.06); --ow-chip:rgba(111,87,201,.08);
+  background:
+    radial-gradient(130% 90% at 50% -20%, rgba(179,156,255,.4), transparent 62%),
+    radial-gradient(80% 60% at 85% 8%, rgba(140,190,255,.28), transparent 58%),
+    linear-gradient(180deg,#eef0ff 0%,#e3e7fb 55%,#dfe6f7 100%);
+}
+[data-theme="light"] #dvWorldRoot[data-world="orbit"]::after{ opacity:.28; }
+[data-theme="light"] #dvWorldRoot[data-world="orbit"] .ow-title{ text-shadow:0 0 22px rgba(111,87,201,.28); }
+
 /* drifting backdrop on the app ground (dark + light both) — shared baseline for every world */
 /* The ground: a single monotonic diagonal wash — a subtle tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
@@ -10174,6 +10287,245 @@ function renderDisplay_terra() {
   }
 }
 
+// ============================================================================
+// BESPOKE DISPLAY — ORBIT (deep-space / radial). The stage is a glowing
+// constellation star-map CENTERPIECE rendered from the REAL geometry (real
+// outline + people as glowing star-nodes at their true positions, audience at
+// top). Vocalists are the bright constellation nodes joined by a faint link
+// line; the band sits fainter upstage. The run of service is a vertical
+// "mission timeline" down the side. Native face = dark (deep space); a light
+// "dawn" face (soft lavender sky) is gated on [data-theme="light"]. Reuses the
+// same real data + helpers as the other worlds; EVERY voice equal (no hero).
+// ============================================================================
+function renderDisplay_orbit() {
+  const root = dvSetWorldRoot(true);
+  if (!root) return;
+  root.setAttribute('data-world', 'orbit');
+  const d = state.config.display || {};
+  const s = state.service;
+
+  // ---- Header: centered Unbounded title (glow) + tracked meta -------------
+  const title = esc(s.name || 'Service');
+  const dateStr = s.date
+    ? new Date(s.date + 'T00:00').toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })
+    : '';
+  const timeStr = esc(s.time || '');
+  const metaLines = [dateStr, timeStr].filter(Boolean).map(t => esc(t)).join(' · ');
+
+  // ---- Toggles (mirror the default + other bespoke views) -----------------
+  const hasShadows = state.shadows && state.shadows.length > 0;
+  const showStage   = d.showStage !== false;
+  const showBand    = d.showBand !== false;
+  const showHosts   = d.showHosts !== false;
+  const showShadows = d.showShadows !== false && hasShadows;
+  const rsPos = d.runSheetPosition || 'right';
+  const showRS = d.showServiceOrder !== false && state.serviceOrder && state.serviceOrder.length > 0 && rsPos !== 'hidden';
+  const rsCfg = (state.config.display && state.config.display.runSheet) || {};
+  const showMic = state.config.showMicCapsules;
+
+  // ---- Vocalist roster — glowing "star" chips (all voices equal) ----------
+  // A quiet legend beneath the constellation; each assigned vocalist is one
+  // .ow-star chip (name · role · optional mic/IEM). No worship-leader emphasis.
+  const stars = [];
+  let vocCount = 0;
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments[i]; if (!id) continue;
+    const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    vocCount++;
+    const nm = esc(formatDisplayName(v.name) || '—');
+    const tags = vocalistInstrumentTags(v.id);
+    const tagStr = tags.length ? ' · ' + esc(tags.join(', ')) : '';
+    const iemPackName = esc((state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1)));
+    const bits = [];
+    if (d.vocShowMic !== false && showMic) bits.push(`<span class="ow-mc">${esc(v.micAssigned || '—')}</span>`);
+    if (d.vocShowIem !== false) bits.push(`<span class="ow-iem">${iemPackName}</span>`);
+    const meta = bits.length ? `<span class="ow-smeta">${bits.join('')}</span>` : '';
+    stars.push(
+      `<div class="ow-star">`
+      + `<span class="ow-sdot"></span>`
+      + `<span class="ow-snm">${nm}</span>`
+      + `<span class="ow-srl">Vocal ${i + 1}${tagStr}</span>`
+      + meta
+      + `</div>`
+    );
+  }
+  const starsHtml = stars.length
+    ? `<div class="ow-stars">${stars.join('')}</div>`
+    : `<div class="ow-empty">No vocalists set yet.</div>`;
+
+  // ---- Constellation star-map stage (REAL geometry, audience at top) ------
+  let stageHtml = '';
+  if (showStage) {
+    const shape = getStageShape();
+    // People markers as {x,y,role,name,kind} in the 0..800 × 0..380 stage space.
+    // kind:'vox' → bright front constellation node; kind:'band' → faint upstage node.
+    const marks = [];
+    const bandPositions = getBandStagePositions();
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;            // shown as a vocalist node
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const pos = bandPositions[inst.id]; if (!pos) return;
+      const isMD = state.musicDirectorId === inst.id;
+      marks.push({ x: pos.x, y: pos.y, label: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), name: formatDisplayName(name), kind: 'band' });
+    });
+    // Vocalist nodes come LAST in `marks` but we capture their indices to draw the
+    // constellation link line through them in stage order (SR → SL).
+    const voxIdx = [];
+    const filled = state.assignments.filter(a => a !== null);
+    if (filled.length > 0) {
+      const voxPositions = getVoxPositions(filled.length);
+      let pi = 0;
+      for (let i = 0; i < MAX_VOCALISTS; i++) {
+        const id = state.assignments[i]; if (!id) continue;
+        const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+        const pos = voxPositions[pi++]; if (!pos) continue;
+        voxIdx.push(marks.length);
+        marks.push({ x: pos.x, y: pos.y, label: 'V' + (i + 1), name: formatDisplayName(v.name) || '—', kind: 'vox' });
+      }
+    }
+    // Faint constellation polyline through the vocalist nodes, ordered stage-right
+    // → stage-left (ascending x) so it reads as one smooth arc across the front.
+    const linkPts = voxIdx
+      .map(k => marks[k])
+      .slice()
+      .sort((a, b) => a.x - b.x)
+      .map(m => `${m.x.toFixed(1)},${m.y.toFixed(1)}`)
+      .join(' ');
+    const linkLine = linkPts && voxIdx.length >= 2
+      ? `<polyline class="ow-link" points="${linkPts}" fill="none"/>`
+      : '';
+    // Glowing star nodes + fine labels; a collision resolver separates labels that
+    // would otherwise overlap, and labels flip left near the SR edge so they don't clip.
+    const layout = resolveStageLabelLayout(
+      marks.map(m => ({ x: m.x, y: m.y, name: m.name || '', role: m.label || '' })),
+      { anchor: 'center', charW: 8.5, lineH: 15, gap: 4, dotR: 6 }
+    );
+    const nodes = marks.map((m, k) => {
+      const L = layout[k];
+      const anchor = m.x > 640 ? 'end' : 'start';
+      const dx = m.x > 640 ? -9 : 9;
+      const nm = esc(L.name || '');
+      const rl = esc(m.label || '');
+      const nameY = L.labelY + 12;
+      const roleY = nameY + 14;
+      const nodeCls = m.kind === 'band' ? 'ow-node ow-node-band' : 'ow-node';
+      const nameCls = m.kind === 'band' ? 'ow-pl ow-pl-band' : 'ow-pl';
+      const r = m.kind === 'band' ? 4 : 5.5;
+      return `<circle class="${nodeCls}" cx="${m.x.toFixed(1)}" cy="${m.y.toFixed(1)}" r="${r}"/>`
+        + `<text class="${nameCls}" x="${(m.x + dx).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="${anchor}">${nm}</text>`
+        + `<text class="ow-plr" x="${(m.x + dx).toFixed(1)}" y="${roleY.toFixed(1)}" text-anchor="${anchor}">${rl}</text>`;
+    }).join('');
+    stageHtml = ''
+      + `<div class="ow-map">`
+      + `<svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
+      + `<path class="ow-stage" d="${shape.path}"/>`
+      + `<path class="ow-edge" d="${shape.edge}" fill="none"/>`
+      + frontEdgeHighlightSvg(shape, { pathClass: 'ow-front', lblClass: 'ow-frontlbl', label: true })
+      + `<text class="ow-aud" x="400" y="20" text-anchor="middle">▲ AUDIENCE</text>`
+      + linkLine
+      + nodes
+      + `</svg>`
+      + `<div class="ow-stage-feats" id="owStageFeatures"></div>`
+      + `</div>`;  // .ow-map
+  }
+
+  // ---- Constellation "legend" list rows: band / hosts / shadows -----------
+  const listRow = (label, name, detail) =>
+    `<div class="ow-lrow"><span class="ow-lrl">${label}</span>`
+    + `<span class="ow-lnm">${name}</span>`
+    + `<span class="ow-ldt">${detail || ''}</span></div>`;
+
+  let bandHtml = '';
+  if (showBand) {
+    const rows = [];
+    state.instruments.forEach(inst => {
+      if (inst.vocalistPlayer) return;
+      const name = (inst.assignedTo || '').trim();
+      if (!name) return;
+      const isMD = state.musicDirectorId === inst.id;
+      rows.push(listRow(esc(shortInstLabel(inst.label)) + (isMD ? ' · MD' : ''), esc(formatDisplayName(name) || '—'), esc(iemPackFor(inst))));
+    });
+    if (!rows.length) rows.push(listRow('—', 'No band assigned', ''));
+    bandHtml = `<div class="ow-block"><div class="ow-label">Band</div><div class="ow-list">${rows.join('')}</div></div>`;
+  }
+
+  let hostsHtml = '';
+  if (showHosts) {
+    const rows = [];
+    hostChannels().forEach(ch => {
+      const name = hostName(ch.id);
+      if (!name) return;
+      rows.push(listRow(esc(ch.label), esc(formatDisplayName(name) || ''), ''));
+    });
+    if (rows.length) hostsHtml = `<div class="ow-block"><div class="ow-label">Hosts</div><div class="ow-list">${rows.join('')}</div></div>`;
+  }
+
+  let shadowsHtml = '';
+  if (showShadows) {
+    const rows = [];
+    state.shadows.forEach((sh, idx) => {
+      if (!sh.name && !sh.pack) return;
+      const bits = [];
+      if (shadowNeedsNoMix(sh.setup)) bits.push('no IEM');
+      else if (sh.pack) bits.push(sh.pack);
+      if (sh.mic) bits.push('🎤 ' + sh.mic);
+      rows.push(listRow('SH ' + (idx + 1), esc(formatDisplayName(sh.name) || '—'), esc(bits.join(' · '))));
+    });
+    if (rows.length) shadowsHtml = `<div class="ow-block"><div class="ow-label">Shadows</div><div class="ow-list">${rows.join('')}</div></div>`;
+  }
+
+  // ---- Run of Service — vertical "mission timeline" -----------------------
+  let runHtml = '';
+  if (showRS) {
+    let visibleItems = state.serviceOrder;
+    if (rsCfg.songsOnly) visibleItems = state.serviceOrder.filter(it => it.kind === 'song' || it.kind === 'header');
+    const rows = visibleItems.map(it => {
+      if (it.kind === 'header') {
+        return `<div class="ow-step ow-shead"><span class="ow-sn">${esc(it.title || '—')}</span></div>`;
+      }
+      const inlineMeta = [];
+      if (rsCfg.showKey && it.key) inlineMeta.push(`<span class="ow-key">${esc(it.key)}</span>`);
+      if (rsCfg.showLeader && it.leader) inlineMeta.push(`<span class="ow-lead">${esc(it.leader)}</span>`);
+      const metaHtml = inlineMeta.length ? ` <span class="ow-ometa">${inlineMeta.join('')}</span>` : '';
+      const dur = rsCfg.showDuration !== false ? esc(fmtDuration(it.length)) : '';
+      const desc = (rsCfg.showDescriptions && it.notes && it.notes.trim())
+        ? `<div class="ow-odesc">${esc(it.notes).replace(/\n/g, '<br>')}</div>` : '';
+      return `<div class="ow-step">`
+        + `<div class="ow-sn">${esc(it.title || '—')}${metaHtml}</div>`
+        + (dur ? `<div class="ow-tm">${dur}</div>` : '')
+        + desc
+        + `</div>`;
+    }).join('');
+    runHtml = `<div class="ow-time"><div class="ow-label">Sequence</div><div class="ow-steps">${rows}</div></div>`;
+  }
+
+  // ---- Assemble: LEFT column = the constellation stage CENTERPIECE (the star
+  // map) + the vocalist star legend beneath it. RIGHT column = the mission
+  // timeline (run of service) atop band / hosts / shadows. Collapse to one
+  // column if the right side would be empty. --------------------------------
+  const starsBlockHtml = `<div class="ow-block ow-block-stars"><div class="ow-label">Vocalists</div>${starsHtml}</div>`;
+  const leftHtml = stageHtml + starsBlockHtml;
+  const rightHtml = [runHtml, bandHtml, hostsHtml, shadowsHtml].filter(Boolean).join('');
+  const bodyClass = rightHtml ? 'ow-body' : 'ow-body ow-body-solo';
+
+  root.innerHTML = ''
+    + `<div class="ow-head">`
+    +   `<div class="ow-title">${title}</div>`
+    +   `<div class="ow-meta">${metaLines}</div>`
+    + `</div>`
+    + `<div class="${bodyClass}">`
+    +   `<div class="ow-col ow-col-l">${leftHtml}</div>`
+    +   (rightHtml ? `<div class="ow-col ow-col-r">${rightHtml}</div>` : '')
+    + `</div>`;
+
+  // Stage features (monitors, DI/power, risers, etc.) at their real positions.
+  if (showStage) {
+    const featLayer = root.querySelector('#owStageFeatures');
+    if (featLayer) renderStageFeatures(featLayer, { interactive: false });
+  }
+}
+
 function setTheme(theme) {
   if (theme !== 'light' && theme !== 'dark') theme = 'dark';
   state.theme = theme;
@@ -10201,12 +10553,14 @@ const WORLDS = {
 const WORLD_ORDER = ['molten','concrete','corporate','terra','orbit'];
 const DEFAULT_WORLD = 'concrete';
 // Bespoke per-world display renderers. These are hoisted function declarations, so they're
-// defined by the time any render runs. Concrete (the DEFAULT world), Molten, Corporate, and Terra
-// each have their own display layout; the remaining worlds fall back to the default skeleton.
+// defined by the time any render runs. Every world now has its own bespoke display layout —
+// Concrete (the DEFAULT world), Molten, Corporate, Terra, and Orbit — so there is NO remaining
+// world that falls back to the default #dvLayout skeleton in normal use.
 WORLDS.molten.renderDisplay    = renderDisplay_molten;
 WORLDS.concrete.renderDisplay  = renderDisplay_concrete;
 WORLDS.corporate.renderDisplay = renderDisplay_corporate;
 WORLDS.terra.renderDisplay     = renderDisplay_terra;
+WORLDS.orbit.renderDisplay     = renderDisplay_orbit;
 // One preview tile for a world. Reused by the Settings picker + the wizard step.
 function worldSwatchHtml(id, selected) {
   const w = WORLDS[id]; if (!w) return '';

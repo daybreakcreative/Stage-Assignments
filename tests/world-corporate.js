@@ -3,8 +3,10 @@
 // renderDisplay_corporate, builds into #dvWorldRoot (a typographic vocalist LIST +
 // a thin-line stage <svg> with a FRONT highlight + a roman-numeral Run of Service)
 // from the REAL data, hides the default #dvLayout, honors a display toggle, and —
-// critically — switching to a non-bespoke world (orbit) re-shows #dvLayout and
-// retires #dvWorldRoot. (Mirrors tests/world-concrete.js.)
+// critically — the bespoke→default restore path re-shows #dvLayout and retires
+// #dvWorldRoot. EVERY world is bespoke now, so there is no non-bespoke world to
+// switch to; we force the default path by temporarily nulling the active world's
+// renderDisplay, then restore it. (Mirrors tests/world-concrete.js.)
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -118,14 +120,16 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to a non-bespoke world (orbit) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // terra is now bespoke too — orbit is the last default-skeleton fallback, so use it to exercise the bespoke→default restore path.
-   ev("state.world='orbit'; applyWorld(); renderDisplayView();");
+ check('falling through to the DEFAULT skeleton re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   // EVERY world is bespoke now — no non-bespoke world to switch to. Force the default path
+   // directly: null the active world's renderer so renderDisplayView() falls through to the
+   // default #dvLayout, then restore it.
+   ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for orbit');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for orbit');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for orbit');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for default path');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for default path');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for default path');
  });
 
  check('switching back to corporate re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{

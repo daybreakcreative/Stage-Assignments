@@ -1,11 +1,12 @@
 // Bespoke display — CONCRETE (the first per-world layout). Added 2026-07-08.
 // Verifies: renderDisplayView() with state.world='concrete' delegates to renderDisplay_concrete,
 // builds into #dvWorldRoot (voice cells + a blueprint stage <svg> + run-sheet manifest rows) from
-// the REAL data, hides the default #dvLayout, and — critically — switching to a non-bespoke
-// world (orbit) re-shows #dvLayout and retires #dvWorldRoot.
-// NOTE: this round-trip used to switch to molten, then corporate, then terra — but all of those
-// are now bespoke worlds with their own renderDisplay, so none restore #dvLayout. Use orbit — the
-// last remaining default-skeleton fallback — to exercise the bespoke→default restore path.
+// the REAL data, hides the default #dvLayout, and — critically — the bespoke→default restore path
+// re-shows #dvLayout and retires #dvWorldRoot.
+// NOTE: EVERY world is bespoke now (concrete/molten/corporate/terra/orbit), so there is no
+// non-bespoke world to switch to. To exercise the default fallback we force the default path
+// directly: temporarily null the active world's renderDisplay so renderDisplayView() falls through
+// to the default #dvLayout skeleton, then restore it.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -100,14 +101,16 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.display.showStage=true; renderDisplayView();");
  });
 
- check('switching to a non-bespoke world (orbit) re-shows #dvLayout and retires #dvWorldRoot', ()=>{
-   // molten + corporate + terra are all bespoke now, so we switch to orbit (the last default-skeleton fallback) here.
-   ev("state.world='orbit'; applyWorld(); renderDisplayView();");
+ check('falling through to the DEFAULT skeleton re-shows #dvLayout and retires #dvWorldRoot', ()=>{
+   // EVERY world is bespoke now (concrete/molten/corporate/terra/orbit) — there is no non-bespoke
+   // world left to switch to. Force the default path directly: null out the active world's
+   // renderer so renderDisplayView() falls through to the default #dvLayout, then restore it.
+   ev("__savedRD = WORLDS[state.world].renderDisplay; WORLDS[state.world].renderDisplay = undefined; renderDisplayView(); WORLDS[state.world].renderDisplay = __savedRD;");
    const lay = doc.getElementById('dvLayout');
    const root = doc.getElementById('dvWorldRoot');
-   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for orbit');
-   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for orbit');
-   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for orbit');
+   if (!lay || lay.style.display === 'none') throw new Error('#dvLayout not re-shown for default path');
+   if (root && root.style.display !== 'none') throw new Error('#dvWorldRoot not hidden for default path');
+   if (root && root.innerHTML.trim() !== '') throw new Error('#dvWorldRoot not emptied for default path');
  });
 
  check('switching back to concrete re-populates #dvWorldRoot and re-hides #dvLayout', ()=>{
