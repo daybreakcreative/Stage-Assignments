@@ -804,12 +804,7 @@ background-size:5% 10%}
 .wiz-stage-shape.selected{border-color:var(--accent);background:var(--accent-dim)}
 .wiz-stage-shape svg{margin-bottom:4px}
 .wiz-shape-label{font-family:var(--ff-display);font-size:14px;font-weight:500;color:var(--text)}
-/* Aurora mood preview swatches (settings + wizard) */
-.mood-picker{display:flex;gap:8px;flex-wrap:wrap}
-.mood-swatch{position:relative;width:88px;height:52px;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;padding:0;display:flex;align-items:flex-end;transition:transform .12s ease,border-color .12s ease}
-.mood-swatch:hover{transform:translateY(-2px)}
-.mood-swatch .lbl{width:100%;padding:3px 5px;background:rgba(10,12,18,.55);color:#fff;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:capitalize;text-align:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.mood-swatch.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35),0 6px 18px rgba(0,0,0,.4)}
+/* (Aurora mood preview swatches .mood-picker/.mood-swatch removed 2026-07-09 — color picker retired) */
 .wiz-shape-sub{font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em}
 /* Palette grid */
 .wiz-display-sections{display:flex;flex-direction:column;gap:6px}
@@ -1275,22 +1270,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
   --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
   --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
-/* moods — Dillon's picks (neutral → cool → warm). Mono moods carry a lower --mix. */
-[data-look="aurora"][data-mood="graphite"]{--c1:#cbd3dd;--c2:#8b95a3;--c3:#5b6472;--gd:#0a0b0d;--mix:14%}
+/* Aurora mood is LOCKED to platinum (color picker removed 2026-07-09); the other 10 mood
+   blocks were dead and were deleted. applyLook() always sets data-mood="platinum". */
 [data-look="aurora"][data-mood="platinum"]{--c1:#eae4d8;--c2:#c9c0b0;--c3:#9a917f;--gd:#0b0a09;--mix:14%}
-[data-look="aurora"][data-mood="fog"]     {--c1:#a9cfcb;--c2:#8fb0be;--c3:#b7b0a0;--gd:#080d0d;--mix:22%}
-[data-look="aurora"][data-mood="ashrose"] {--c1:#d8b3c0;--c2:#b7a0c4;--c3:#c8b8ad;--gd:#0d0a0c;--mix:22%}
-[data-look="aurora"][data-mood="frost"]   {--c1:#a5f3fc;--c2:#7dd3fc;--c3:#cbd5ff;--gd:#070b12}
-[data-look="aurora"][data-mood="nebula"]  {--c1:#67e8f9;--c2:#b39cff;--c3:#f7a8d8;--gd:#080b16}
-[data-look="aurora"][data-mood="ocean"]   {--c1:#38bdf8;--c2:#4f7cff;--c3:#22d3ee;--gd:#050b16}
-[data-look="aurora"][data-mood="dusk"]    {--c1:#8b9cff;--c2:#c08cff;--c3:#7fb0ff;--gd:#090a1a}
-[data-look="aurora"][data-mood="meadow"]  {--c1:#86d9a6;--c2:#e3cf7a;--c3:#8ecae6;--gd:#08110c}
-[data-look="aurora"][data-mood="rose"]    {--c1:#f9a8d4;--c2:#c4b5fd;--c3:#fbcfe8;--gd:#120b12}
-[data-look="aurora"][data-mood="molten"]  {--c1:#ff6b4a;--c2:#ffb020;--c3:#ff4d6d;--gd:#140806}
-/* pale/mono moods: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
-[data-look="aurora"][data-theme="light"][data-mood="graphite"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail,
-[data-look="aurora"][data-theme="light"][data-mood="frost"] .dv-list-item .detail{color:var(--text);text-shadow:none}
+/* platinum is pale: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
+[data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail{color:var(--text);text-shadow:none}
 /* drifting aurora backdrop on the app ground (dark + light both) */
 /* The Aurora ground: a single monotonic diagonal wash — a subtle mood tint (top-left) → the
    solid ground → a faint second tint (bottom-right). It only goes one direction, so it can't
@@ -1859,7 +1843,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-09·c</div>
+<div id="buildStamp">build 2026-07-09·d</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -8503,25 +8487,10 @@ function toggleTheme() {
   setTheme(state.theme === 'light' ? 'dark' : 'light');
 }
 
-// ---- Look + mood (Aurora is the only look; moods are the "which look" choice) ----
-// Dillon's chosen moods, ordered neutral → cool → warm.
-const AURORA_MOODS = ['graphite','platinum','fog','ashrose','frost','nebula','ocean','dusk','meadow','rose','molten'];
-const MOOD_LABEL = { ashrose:'Ash Rose', rose:'Rose Quartz' };
-// c1·c2·c3 per mood — used to paint preview swatches (must mirror the [data-mood] CSS).
-const MOOD_COLORS = {
-  graphite:['#cbd3dd','#8b95a3','#5b6472'], platinum:['#eae4d8','#c9c0b0','#9a917f'],
-  fog:['#a9cfcb','#8fb0be','#b7b0a0'], ashrose:['#d8b3c0','#b7a0c4','#c8b8ad'],
-  frost:['#a5f3fc','#7dd3fc','#cbd5ff'], nebula:['#67e8f9','#b39cff','#f7a8d8'],
-  ocean:['#38bdf8','#4f7cff','#22d3ee'], dusk:['#8b9cff','#c08cff','#7fb0ff'],
-  meadow:['#86d9a6','#e3cf7a','#8ecae6'], rose:['#f9a8d4','#c4b5fd','#fbcfe8'],
-  molten:['#ff6b4a','#ffb020','#ff4d6d']
-};
-// One preview swatch button for a mood. Reused by the settings picker + the wizard step.
-function moodSwatchHtml(m, selected) {
-  const c = MOOD_COLORS[m] || ['#888','#888','#888'];
-  const grad = `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 52%, ${c[2]} 100%)`;
-  return `<button type="button" class="mood-swatch${selected ? ' sel' : ''}" data-mood-opt="${m}" title="${MOOD_LABEL[m] || m}" style="background:${grad};"><span class="lbl">${MOOD_LABEL[m] || m}</span></button>`;
-}
+// ---- Look (Aurora is the only look; mood is LOCKED to "platinum") ----
+// The multi-mood machinery (AURORA_MOODS / MOOD_COLORS / MOOD_LABEL / moodSwatchHtml /
+// setMood) was removed 2026-07-09 when the color picker was retired: applyLook() below
+// hard-sets data-mood="platinum", so the only remaining color choice is dark/light.
 // These are set INLINE on <html> by applyBrand(); inline wins over the [data-look="aurora"]
 // stylesheet, so Aurora must clear them (theme takes over) and Classic restores them.
 const BRAND_INLINE_VARS = ['--accent','--accent-2','--wl','--ff-display','--accent-dim','--accent-glow','--btn-primary-text'];
@@ -8541,11 +8510,6 @@ function applyLook() {
   html.style.setProperty('--btn-primary-text', '#0a0f16');
 }
 function setLook() { applyLook(); saveState(); } // retained for callers; aurora is unconditional
-function setMood(mood) {
-  state.auroraMood = AURORA_MOODS.includes(mood) ? mood : 'graphite';
-  applyLook(); saveState();
-  if (state.viewMode === 'display' && typeof renderDisplayView === 'function') renderDisplayView();
-}
 
 function applyBrand() {
   // Aurora owns the accent + display font (via its mood tokens); don't let a brand edit

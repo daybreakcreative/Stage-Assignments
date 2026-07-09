@@ -32,7 +32,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
  check('mood is LOCKED: applyLook always yields platinum regardless of state.auroraMood', ()=>{
    // Mood picker removed 2026-07-09. Even if a legacy save carries another mood, applyLook
-   // forces data-mood=platinum. (setMood is retained as harmless dead machinery.)
+   // forces data-mood=platinum. (The multi-mood JS/CSS machinery was deleted 2026-07-09.)
    ev('state.auroraMood="dusk"; applyLook()');
    if(html.getAttribute('data-mood')!=='platinum') throw new Error('data-mood not forced to platinum: '+html.getAttribute('data-mood'));
    ev('state.auroraMood="frost"; applyLook()');
