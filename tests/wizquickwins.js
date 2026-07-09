@@ -46,10 +46,13 @@ window.addEventListener('load', () => setTimeout(() => {
   check('look step renders + wires without a jsdomError', () => {
     if (jsdomErrors.length !== errCountBefore) throw new Error('jsdomError raised: ' + jsdomErrors.slice(errCountBefore).join('; '));
   });
-  check('look step wires a known control (Aurora mood swatches present)', () => {
-    // #8 (2026-07-06): the look step is now Aurora mood swatches + dark/light (the old
-    // brand palette + font picker were retired when Aurora became the only look).
-    if (document.querySelectorAll('.mood-picker [data-mood-opt]').length < 11) throw new Error('no mood swatches in look step');
+  check('look step wires a known control (dark/light toggle present, no mood picker)', () => {
+    // #8 (2026-07-06): the look step was Aurora mood swatches + dark/light (brand palette +
+    // font picker retired when Aurora became the only look).
+    // 2026-07-09: the color-mood picker was removed too (look locked to Platinum). The dark/light
+    // [data-wtheme] toggle is the remaining control; there should be NO mood swatches.
+    if (document.querySelectorAll('.mood-picker [data-mood-opt]').length) throw new Error('mood swatches should be gone from look step');
+    if (!document.querySelector('[data-wtheme]')) throw new Error('look step missing dark/light toggle');
   });
 
   // --- Dead display-design step removed ---

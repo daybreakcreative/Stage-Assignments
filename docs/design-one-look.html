@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The one look — Concrete × Corporate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#0a0a0c; color:#e8e8ee; font-family:'Archivo',system-ui,sans-serif; padding:40px clamp(16px,4vw,64px) 80px; -webkit-font-smoothing:antialiased; }
+  .doc-head{ max-width:1120px; margin:0 auto 30px; }
+  .doc-head h1{ font-family:'Unbounded'; font-weight:700; font-size:clamp(22px,3vw,32px); }
+  .doc-head p{ color:#a0a0aa; font-size:15px; line-height:1.6; margin-top:10px; max-width:820px; }
+  .doc-head .note{ color:#7a7a86; font-size:13px; margin-top:12px; }
+  .mood-block{ max-width:1120px; margin:0 auto 30px; border-radius:14px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .mood-cap{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:14px 20px; background:#141418; border:1px solid #22222a; border-bottom:none; }
+  .mood-cap .name{ font-family:'Unbounded'; font-weight:700; font-size:16px; }
+  .mood-cap .emotion{ color:#b9b9c4; font-style:italic; font-size:13.5px; }
+  .mood-cap .changed{ margin-left:auto; color:#8a8a95; font-size:12px; }
+
+  /* ============================================================
+     THE LOOK — monochrome + one clay accent, grain, Syne display,
+     Archivo body, Space Mono data. Editorial whitespace + structure.
+  ============================================================ */
+  .look{ --accent:#c05f2e; position:relative; padding:36px 42px; font-family:'Archivo',sans-serif; }
+  .look.dark{ --ink:#eceae4; --ink-mut:#8f8c85; --bg:#17161b; --bg2:#1e1d23; --hair:rgba(255,255,255,.14); --hair2:rgba(255,255,255,.07); background:#17161b; color:var(--ink); }
+  .look.light{ --ink:#1c1a16; --ink-mut:#6f6a60; --bg:#f3f0e8; --bg2:#eae6db; --hair:rgba(0,0,0,.16); --hair2:rgba(0,0,0,.07); background:#f3f0e8; color:var(--ink); }
+  .look::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .look.light::after{ mix-blend-mode:multiply; opacity:.06; }
+  .look > *{ position:relative; z-index:1; }
+
+  /* header */
+  .lk-head{ display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--ink); padding-bottom:16px; }
+  .lk-title{ font-family:'Syne'; font-weight:800; font-size:44px; letter-spacing:-.015em; line-height:.92; }
+  .lk-meta{ font-family:'Space Mono'; font-size:11px; letter-spacing:.08em; text-transform:uppercase; text-align:right; color:var(--ink-mut); line-height:1.7; }
+  .lk-body{ display:grid; grid-template-columns:1.5fr 1fr; gap:44px; margin-top:26px; }
+  .lk-label{ font-family:'Space Mono'; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+  .lk-label::after{ content:""; flex:1; height:1px; background:var(--hair2); margin-left:12px; }
+
+  /* roster — editorial list w/ a strong accent tick */
+  .lk-row{ display:grid; grid-template-columns:auto 1fr auto auto; align-items:baseline; gap:16px; padding:14px 0; border-bottom:1px solid var(--hair); }
+  .lk-row .tick{ width:3px; height:20px; background:var(--accent); align-self:center; }
+  .lk-row .nm{ font-family:'Syne'; font-weight:600; font-size:22px; letter-spacing:-.01em; }
+  .lk-row .rl{ font-family:'Space Mono'; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mut); }
+  .lk-row .mc{ font-family:'Space Mono'; font-size:13px; font-weight:700; color:var(--accent); min-width:54px; text-align:right; }
+  .lk-actions{ margin-top:22px; display:flex; gap:14px; }
+  .lk-btn{ font-family:'Space Mono'; font-size:11px; letter-spacing:.1em; text-transform:uppercase; padding:9px 18px; border:1.5px solid var(--ink); background:transparent; color:var(--ink); cursor:default; }
+  .lk-btn.pri{ background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; }
+
+  /* right column: stage + manifests */
+  .lk-stage svg{ width:100%; height:auto; display:block; }
+  .lk-stage .ln{ fill:none; stroke:var(--ink); stroke-width:1.5; opacity:.5; }
+  .lk-stage .front{ fill:none; stroke:var(--accent); stroke-width:3; }
+  .lk-stage .frontlbl{ font-family:'Space Mono'; font-size:7px; letter-spacing:.2em; fill:var(--accent); }
+  .lk-stage .dt{ fill:var(--ink); }
+  .lk-stage .pl{ font-family:'Space Mono'; font-size:7.5px; fill:var(--ink); text-transform:uppercase; }
+  .lk-man{ margin-top:24px; }
+  .lk-man .r{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; padding:9px 0; border-bottom:1px solid var(--hair2); font-family:'Space Mono'; font-size:12px; }
+  .lk-man .r .no{ color:var(--ink-mut); }
+  .lk-man .r .du{ color:var(--ink-mut); }
+  .lk-man .r .nm{ color:var(--ink); }
+
+  @media (max-width:820px){ .lk-body{ grid-template-columns:1fr !important; } }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <h1>The one look — Concrete × Corporate</h1>
+    <p>One strong, simple look instead of many. Monochrome + grain + hard structure (Concrete) meets editorial whitespace, big <strong>Syne</strong> display type, and refinement (Corporate), tied together by a single confident <strong>clay</strong> accent and <strong>Space Mono</strong> for the technical data (mics, times). Dark and light are the same look, one ☾/☀ toggle — no world picker.</p>
+    <p class="note">Static mockup — react to the vibe (type, accent, density, texture) and I'll build it in as the app's single look. Scroll: dark → light.</p>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">◐ Dark</span><span class="emotion">powerful, editorial-industrial</span><span class="changed">Syne + Archivo + Space Mono · clay accent · grain</span></div>
+    <div class="look dark">
+      <div class="lk-head"><div class="lk-title">Sunday<br>Service</div><div class="lk-meta">Sun · Jul 13<br>9:00 &amp; 11:00<br>Main Auditorium</div></div>
+      <div class="lk-body">
+        <div>
+          <div class="lk-label"><span>Vocalists</span><span>04</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Amelia Garcia</span><span class="rl">Vocal 1</span><span class="mc">HH 1</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Emma Johnson</span><span class="rl">Vocal 2</span><span class="mc">HH 2</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Jake Williams</span><span class="rl">Vocal 3</span><span class="mc">HH 3</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Sophia Davis</span><span class="rl">Vocal 4</span><span class="mc">HH 4</span></div>
+          <div class="lk-actions"><button class="lk-btn">↻ Refresh</button><button class="lk-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="lk-label"><span>Stage</span><span>SL · SR</span></div>
+          <div class="lk-stage"><svg viewBox="0 0 300 132" xmlns="http://www.w3.org/2000/svg">
+            <path class="ln" d="M16,124 L16,54 Q150,20 284,54 L284,124"/>
+            <path class="front" d="M16,54 Q150,20 284,54"/><text class="frontlbl" x="120" y="14">↑ FRONT</text>
+            <circle class="dt" cx="104" cy="60" r="3"/><text class="pl" x="110" y="62">John R.</text>
+            <circle class="dt" cx="196" cy="56" r="3"/><text class="pl" x="202" y="58">Emma J.</text>
+            <circle class="dt" cx="150" cy="88" r="3"/><text class="pl" x="156" y="90">Ben R.</text>
+          </svg></div>
+          <div class="lk-label" style="margin-top:22px;"><span>Band</span><span></span></div>
+          <div class="lk-man"><div class="r"><span class="no">DR</span><span class="nm">Ben Rivera</span><span class="du">Drums</span></div><div class="r"><span class="no">BS</span><span class="nm">Carlos M</span><span class="du">Bass</span></div></div>
+          <div class="lk-label" style="margin-top:18px;"><span>Run of Service</span><span>03</span></div>
+          <div class="lk-man"><div class="r"><span class="no">01</span><span class="nm">Keep Praise</span><span class="du">5:12</span></div><div class="r"><span class="no">02</span><span class="nm">Great Are You</span><span class="du">4:40</span></div><div class="r"><span class="no">03</span><span class="nm">Welcome</span><span class="du">2:00</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mood-block">
+    <div class="mood-cap"><span class="name">◑ Light</span><span class="emotion">same look, paper-white</span><span class="changed">warm off-white + grain · same type + clay</span></div>
+    <div class="look light">
+      <div class="lk-head"><div class="lk-title">Sunday<br>Service</div><div class="lk-meta">Sun · Jul 13<br>9:00 &amp; 11:00<br>Main Auditorium</div></div>
+      <div class="lk-body">
+        <div>
+          <div class="lk-label"><span>Vocalists</span><span>04</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Amelia Garcia</span><span class="rl">Vocal 1</span><span class="mc">HH 1</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Emma Johnson</span><span class="rl">Vocal 2</span><span class="mc">HH 2</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Jake Williams</span><span class="rl">Vocal 3</span><span class="mc">HH 3</span></div>
+          <div class="lk-row"><span class="tick"></span><span class="nm">Sophia Davis</span><span class="rl">Vocal 4</span><span class="mc">HH 4</span></div>
+          <div class="lk-actions"><button class="lk-btn">↻ Refresh</button><button class="lk-btn pri">⤢ Display</button></div>
+        </div>
+        <div>
+          <div class="lk-label"><span>Stage</span><span>SL · SR</span></div>
+          <div class="lk-stage"><svg viewBox="0 0 300 132" xmlns="http://www.w3.org/2000/svg">
+            <path class="ln" d="M16,124 L16,54 Q150,20 284,54 L284,124"/>
+            <path class="front" d="M16,54 Q150,20 284,54"/><text class="frontlbl" x="120" y="14">↑ FRONT</text>
+            <circle class="dt" cx="104" cy="60" r="3"/><text class="pl" x="110" y="62">John R.</text>
+            <circle class="dt" cx="196" cy="56" r="3"/><text class="pl" x="202" y="58">Emma J.</text>
+            <circle class="dt" cx="150" cy="88" r="3"/><text class="pl" x="156" y="90">Ben R.</text>
+          </svg></div>
+          <div class="lk-label" style="margin-top:22px;"><span>Band</span><span></span></div>
+          <div class="lk-man"><div class="r"><span class="no">DR</span><span class="nm">Ben Rivera</span><span class="du">Drums</span></div><div class="r"><span class="no">BS</span><span class="nm">Carlos M</span><span class="du">Bass</span></div></div>
+          <div class="lk-label" style="margin-top:18px;"><span>Run of Service</span><span>03</span></div>
+          <div class="lk-man"><div class="r"><span class="no">01</span><span class="nm">Keep Praise</span><span class="du">5:12</span></div><div class="r"><span class="no">02</span><span class="nm">Great Are You</span><span class="du">4:40</span></div><div class="r"><span class="no">03</span><span class="nm">Welcome</span><span class="du">2:00</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

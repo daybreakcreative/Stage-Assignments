@@ -6,9 +6,9 @@
 <title>Stage·Assign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Familjen+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Familjen+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d0e10;--bg-elev:#15171a;--bg-inset:#0a0b0d;--surface:#1c1e22;--surface-2:#23262b;--border:#2a2d33;--border-2:#3a3e46;--text:#e8e6e1;--text-muted:#8a8c92;--text-faint:#5a5c62;--accent:#d4a147;--accent-2:#e8b857;--accent-dim:rgba(212,161,71,.12);--wl:#e8b857;--leader:#c98b3d;--success:#7a9960;--danger:#b8614a;--pco:#4a90c2;--ff-display:'Fraunces',Georgia,serif;--ff-body:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;--ff-mono:'JetBrains Mono',ui-monospace,monospace}
+:root{--bg:#0d0e10;--bg-elev:#15171a;--bg-inset:#0a0b0d;--surface:#1c1e22;--surface-2:#23262b;--border:#2a2d33;--border-2:#3a3e46;--text:#e8e6e1;--text-muted:#8a8c92;--text-faint:#5a5c62;--accent:#d4a147;--accent-2:#e8b857;--accent-dim:rgba(212,161,71,.12);--wl:#e8b857;--leader:#c98b3d;--success:#7a9960;--danger:#b8614a;--pco:#4a90c2;--ff-display:'Manrope',system-ui,sans-serif;--ff-body:'Manrope',system-ui,sans-serif;--ff-mono:'Manrope',system-ui,sans-serif}
 [data-theme="light"]{--bg:#fafaf8;--bg-elev:#ffffff;--bg-inset:#f0eee9;--surface:#ffffff;--surface-2:#f5f3ee;--border:#e2dfd8;--border-2:#c5c2bb;--text:#1a1a1a;--text-muted:#5a5a5a;--text-faint:#9a9a9a}
 [data-theme="light"] body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.06) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(74,144,194,.04) 0%,transparent 50%),#fafaf8}
 [data-theme="light"] .topbar{background:linear-gradient(180deg,rgba(0,0,0,.02),transparent),#fafaf8}
@@ -1261,8 +1261,8 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    Classic (default, no data-look or data-look=classic) is unaffected. Aurora re-defines the
    core tokens so existing var(--…) usages recolor; mood rules set --c1/--c2/--c3/--gd. */
 [data-look="aurora"]{
-  --ff-display:'Bricolage Grotesque',system-ui,sans-serif;
-  --ff-body:'Familjen Grotesk',system-ui,sans-serif;
+  --ff-display:'Manrope',system-ui,sans-serif;
+  --ff-body:'Manrope',system-ui,sans-serif;
   --mix:24%;
   --bg:var(--gd);--bg-elev:rgba(255,255,255,.05);--bg-inset:rgba(255,255,255,.03);
   --surface:rgba(255,255,255,.055);--surface-2:rgba(255,255,255,.08);
@@ -1634,7 +1634,7 @@ body>*:not(.summary-overlay){display:none!important}
               </linearGradient>
             </defs>
             <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="url(#stageFloor)" stroke="rgba(212,161,71,0.3)" stroke-width="1.5"/>
-            <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
+            <text x="400" y="374" text-anchor="middle" font-family="'Manrope',system-ui,sans-serif" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
             <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="rgba(212,161,71,0.5)" stroke-width="1.5"/>
           </svg>
           <!-- Grid overlay — only visible while actively dragging in edit mode -->
@@ -1859,7 +1859,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-07·c</div>
+<div id="buildStamp">build 2026-07-09·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -1934,7 +1934,7 @@ body>*:not(.summary-overlay){display:none!important}
             <div class="dv-stage-svg-wrap" id="dvStageWrap">
               <svg class="dv-stage-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet" style="color:var(--accent);">
                 <path d="M 20 360 L 780 360 L 780 146 Q 400 22 20 146 Z" fill="var(--bg-elev)" stroke="currentColor" stroke-width="2" opacity="0.9"/>
-                <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="currentColor" letter-spacing="3" opacity="0.6">BACK</text>
+                <text x="400" y="374" text-anchor="middle" font-family="'Manrope',system-ui,sans-serif" font-size="10" fill="currentColor" letter-spacing="3" opacity="0.6">BACK</text>
                 <path d="M 780 146 Q 400 22 20 146" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
               </svg>
               <div id="dvStageFeatures"></div>
@@ -2165,7 +2165,7 @@ const DEFAULT_STATE = {
   viewMode: 'setup',
   theme: 'dark',
   look: 'aurora',         // Aurora is the only look now ("the new classic")
-  auroraMood: 'graphite'  // active Aurora color mood
+  auroraMood: 'platinum'  // locked Aurora mood (color picker removed 2026-07-09)
 };
 
 // Grouped option catalog per instrument. NO built-in defaults — the church selects its
@@ -4475,8 +4475,8 @@ function openPolygonStageEditor(opts) {
     for (let x = 0; x <= 800; x += 40) h += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>`;
     for (let y = 0; y <= 380; y += 38) h += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>`;
     h += '</g>';
-    const lbl = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
-    const subLbl = 'font-family:monospace;font-size:8.5px;fill:rgba(180,160,100,0.34);letter-spacing:0.06em';
+    const lbl = 'font-family:\'Manrope\',system-ui,sans-serif;font-size:13px;fill:rgba(180,160,100,0.5);letter-spacing:0.12em';
+    const subLbl = 'font-family:\'Manrope\',system-ui,sans-serif;font-size:8.5px;fill:rgba(180,160,100,0.34);letter-spacing:0.06em';
     h += `<text x="400" y="18" text-anchor="middle" style="${lbl}">&#x2191; AUDIENCE</text>`;
     h += `<text x="400" y="31" text-anchor="middle" style="${subLbl}">SL = stage left · SR = stage right · as the band sees it</text>`;
     h += `<text x="16" y="195" text-anchor="start" style="${lbl}">SL &#x2192;</text>`;
@@ -4639,8 +4639,8 @@ function openStageFeaturesEditor(onClose) {
     for (let y = 0; y <= 380; y += 38) h += `<line x1="0" y1="${y}" x2="800" y2="${y}" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>`;
     h += '</g>';
     h += `<path d="${shape.path}" fill="rgba(212,161,71,0.06)" stroke="rgba(212,161,71,0.4)" stroke-width="1.5"/>`;
-    const lbl = 'font-family:monospace;font-size:13px;fill:rgba(180,160,100,0.45);letter-spacing:0.12em';
-    const subLbl = 'font-family:monospace;font-size:8.5px;fill:rgba(180,160,100,0.32);letter-spacing:0.06em';
+    const lbl = 'font-family:\'Manrope\',system-ui,sans-serif;font-size:13px;fill:rgba(180,160,100,0.45);letter-spacing:0.12em';
+    const subLbl = 'font-family:\'Manrope\',system-ui,sans-serif;font-size:8.5px;fill:rgba(180,160,100,0.32);letter-spacing:0.06em';
     h += `<text x="400" y="18" text-anchor="middle" style="${lbl}">&#x2191; AUDIENCE</text>`;
     h += `<text x="400" y="31" text-anchor="middle" style="${subLbl}">SL = stage left · SR = stage right · as the band sees it</text>`;
     h += `<text x="16" y="195" text-anchor="start" style="${lbl}">SL &#x2192;</text>`;
@@ -5005,7 +5005,7 @@ function renderModalStage() {
             </linearGradient>
           </defs>
           <path d="${shape.path}" fill="url(#semStageFloor)" stroke="rgba(212,161,71,0.3)" stroke-width="1.5"/>
-          <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
+          <text x="400" y="374" text-anchor="middle" font-family="'Manrope',system-ui,sans-serif" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
           <path d="${shape.edge}" fill="none" stroke="rgba(212,161,71,0.5)" stroke-width="1.5"/>
         </svg>
         <div id="semPeople" class="sem-people"></div>
@@ -5599,12 +5599,6 @@ function renderLayoutEditor() {
       `).join('')}
     </div>
 
-    <div class="section-label" style="margin-bottom:8px;">Theme</div>
-    <div class="mood-picker">
-      ${AURORA_MOODS.map(m=>moodSwatchHtml(m, state.auroraMood===m)).join('')}
-    </div>
-    <p class="subtitle" style="margin:8px 0 18px;font-size:11.5px;">Pick a color mood — the whole app + display recolor live. Dark/light follows the ☾ button in the top bar. (You also choose this in the setup wizard.)</p>
-
     <div class="section-label" style="margin-bottom:8px;">Vocalists editor</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
       <label class="cfg-toggle"><input type="checkbox" data-display="allowEditorShadows" ${c.display.allowEditorShadows?'checked':''} /><span>Allow adding shadow positions from the editor</span></label>
@@ -6010,10 +6004,6 @@ function renderLayoutEditor() {
       if (e.target.dataset.display === 'allowEditorShadows' && typeof renderVocalists === 'function') renderVocalists();
     });
   });
-  // Mood swatches — recolor the whole app live, then re-render so the selected ring updates.
-  el.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', e => {
-    setMood(e.currentTarget.dataset.moodOpt); renderLayoutEditor();
-  }));
   // Run sheet sub-toggles
   el.querySelectorAll('[data-rs]').forEach(cb => {
     cb.addEventListener('change', e => {
@@ -8543,8 +8533,8 @@ function applyLook() {
   const html = document.documentElement;
   state.look = 'aurora';
   html.setAttribute('data-look', 'aurora');
-  const mood = AURORA_MOODS.includes(state.auroraMood) ? state.auroraMood : 'graphite';
-  html.setAttribute('data-mood', mood);
+  // Look is locked to the Platinum mood (color picker removed 2026-07-09); ignore state.auroraMood.
+  html.setAttribute('data-mood', 'platinum');
   BRAND_INLINE_VARS.forEach(p => html.style.removeProperty(p));
   html.style.setProperty('--wl', 'var(--c2)');
   html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
@@ -11556,7 +11546,7 @@ function renderWizardStepBody(step) {
                   </linearGradient>
                 </defs>
                 <path id="wizStagePath" d="" fill="url(#wizStageFloor)" stroke="rgba(212,161,71,0.3)" stroke-width="1.5"/>
-                <text x="400" y="374" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
+                <text x="400" y="374" text-anchor="middle" font-family="'Manrope',system-ui,sans-serif" font-size="9" fill="rgba(212,161,71,0.4)" letter-spacing="2">BACK</text>
                 <path id="wizStageEdge" d="" fill="none" stroke="rgba(212,161,71,0.5)" stroke-width="1.5"/>
               </svg>
               <div class="wiz-stage-people" id="wizStagePeople"></div>
@@ -11569,14 +11559,9 @@ function renderWizardStepBody(step) {
       return `
         <div>
           <div class="wiz-q-title">Choose your look</div>
-          <div class="wiz-q-help">Stage·Assign uses the <strong>Aurora</strong> theme — a luminous glass look with color moods. Pick a mood and the whole app + the display recolor instantly. Change it anytime in Advanced Settings → Display.</div>
+          <div class="wiz-q-help">Stage·Assign uses the <strong>Aurora</strong> theme — a luminous glass look with a warm platinum palette. Pick dark or light below; you can switch anytime from the header (☾).</div>
 
-          <div class="section-label" style="margin-bottom:10px;">Color mood</div>
-          <div class="mood-picker">
-            ${AURORA_MOODS.map(m => moodSwatchHtml(m, (state.auroraMood || 'graphite') === m)).join('')}
-          </div>
-
-          <div class="section-label" style="margin-top:20px;margin-bottom:10px;">Light or dark</div>
+          <div class="section-label" style="margin-bottom:10px;">Light or dark</div>
           <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Dark suits a dim booth; light suits a bright room. Toggle anytime from the header (☾).</p>
           <div class="wiz-stage-shapes" style="grid-template-columns:1fr 1fr;margin-top:0;">
             <button class="wiz-stage-shape${(state.theme||'dark') === 'dark' ? ' selected' : ''}" data-wtheme="dark">
@@ -12157,11 +12142,7 @@ function wireWizardStep(step) {
     });
   }
   if (step === 'look') {
-    // Aurora mood swatches — apply live so the whole wizard + app recolor instantly.
-    body.querySelectorAll('[data-mood-opt]').forEach(b => b.addEventListener('click', () => {
-      setMood(b.dataset.moodOpt);
-      renderWizardStep();
-    }));
+    // Color mood picker removed 2026-07-09 (look locked to Platinum). Only dark/light remains.
     // Light / dark toggle (live).
     body.querySelectorAll('[data-wtheme]').forEach(b => b.addEventListener('click', () => {
       state.theme = b.dataset.wtheme;

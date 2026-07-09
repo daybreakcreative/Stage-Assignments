@@ -1,5 +1,7 @@
-// Aurora is the only look now ("the new classic"): always applied via [data-look="aurora"],
-// with a color mood ([data-mood]) chosen in the wizard + settings. Dark/light is independent.
+// Aurora is the only look now ("the new classic"): always applied via [data-look="aurora"].
+// 2026-07-09: the color mood is LOCKED to "platinum" — the mood picker was removed from both
+// Settings→Display and the wizard (intentional behavior change). data-mood is always "platinum"
+// regardless of state.auroraMood; the only user color choice left is dark/light (independent axis).
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(((e.detail&&e.detail.message)||e.message)));
@@ -15,11 +17,11 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 window.addEventListener('load',()=>setTimeout(()=>{
  const html=doc.documentElement;
 
- check('defaults: look=aurora (applied), theme=dark, mood=graphite', ()=>{
+ check('defaults: look=aurora (applied), theme=dark, mood LOCKED to platinum', ()=>{
    if(ev('state.look')!=='aurora') throw new Error('look default not aurora: '+ev('state.look'));
-   if(ev('state.auroraMood')!=='graphite') throw new Error('mood default not graphite: '+ev('state.auroraMood'));
+   if(ev('state.auroraMood')!=='platinum') throw new Error('mood default not platinum: '+ev('state.auroraMood'));
    if(html.getAttribute('data-look')!=='aurora') throw new Error('data-look not aurora on <html>');
-   if(html.getAttribute('data-mood')!=='graphite') throw new Error('data-mood not graphite');
+   if(html.getAttribute('data-mood')!=='platinum') throw new Error('data-mood not platinum');
  });
 
  check('applyLook is unconditional — migrates a legacy look:"classic" save to aurora', ()=>{
@@ -28,12 +30,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(ev('state.look')!=='aurora') throw new Error('state.look not forced to aurora');
  });
 
- check('setMood persists + applies; falls back to graphite for unknown', ()=>{
-   ev('setMood("dusk")');
-   if(ev('state.auroraMood')!=='dusk') throw new Error('mood not saved');
-   if(html.getAttribute('data-mood')!=='dusk') throw new Error('data-mood attr not dusk');
-   ev('setMood("nope")');
-   if(ev('state.auroraMood')!=='graphite') throw new Error('unknown mood should fall back to graphite');
+ check('mood is LOCKED: applyLook always yields platinum regardless of state.auroraMood', ()=>{
+   // Mood picker removed 2026-07-09. Even if a legacy save carries another mood, applyLook
+   // forces data-mood=platinum. (setMood is retained as harmless dead machinery.)
+   ev('state.auroraMood="dusk"; applyLook()');
+   if(html.getAttribute('data-mood')!=='platinum') throw new Error('data-mood not forced to platinum: '+html.getAttribute('data-mood'));
+   ev('state.auroraMood="frost"; applyLook()');
+   if(html.getAttribute('data-mood')!=='platinum') throw new Error('data-mood not forced to platinum for frost');
+   ev('state.auroraMood="platinum"'); // restore default
  });
 
  check('dark/light axis stays independent of aurora', ()=>{
@@ -43,28 +47,17 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev('setTheme("dark")');
  });
 
- check('settings renders mood SWATCHES and no Classic/Aurora look buttons', ()=>{
+ check('settings has NO mood picker and no Classic/Aurora look buttons (color choice removed)', ()=>{
    ev('renderLayoutEditor()');
-   const swatches=[...doc.querySelectorAll('.mood-picker [data-mood-opt]')];
-   if(swatches.length<11) throw new Error('expected 11 mood swatches, got '+swatches.length);
+   // Mood picker removed 2026-07-09 — Settings→Display no longer offers a color choice.
+   if(doc.querySelector('.mood-picker [data-mood-opt]')) throw new Error('mood swatches should be gone from Settings');
    if(doc.querySelector('[data-look-opt]')) throw new Error('Classic/Aurora look buttons should be gone');
-   // swatch should carry a gradient preview (inline background)
-   if(!/gradient/.test(swatches[0].getAttribute('style')||'')) throw new Error('swatch missing gradient preview');
  });
 
- check('clicking a mood swatch sets the mood live', ()=>{
-   ev('renderLayoutEditor()');
-   const ocean=doc.querySelector('[data-mood-opt="ocean"]'); if(!ocean) throw new Error('no ocean swatch');
-   ocean.click();
-   if(ev('state.auroraMood')!=='ocean') throw new Error('mood not set by swatch click');
-   if(html.getAttribute('data-mood')!=='ocean') throw new Error('data-mood not applied live');
-   ev('setMood("graphite")'); // restore
- });
-
- check('wizard look step renders mood swatches + dark/light', ()=>{
+ check('wizard look step has NO mood swatches but KEEPS the dark/light toggle', ()=>{
    ev('startWizard(); wizardStepIdx=WIZARD_STEPS.indexOf("look"); renderWizardStep();');
-   const sw=[...doc.querySelectorAll('#wizardBody .mood-picker [data-mood-opt], .mood-picker [data-mood-opt]')];
-   if(sw.length<11) throw new Error('wizard look step missing mood swatches, got '+sw.length);
+   // Mood picker removed 2026-07-09; only the dark/light mode toggle remains in the look step.
+   if(doc.querySelector('.mood-picker [data-mood-opt]')) throw new Error('wizard look step should have no mood swatches');
    if(!doc.querySelector('[data-wtheme]')) throw new Error('wizard look step missing dark/light toggle');
  });
 
