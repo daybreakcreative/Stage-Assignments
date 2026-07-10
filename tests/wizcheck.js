@@ -20,8 +20,10 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!c.querySelector('.saved-stage-saverow')) throw new Error('no saverow');
    if(!c.querySelector('.saved-stage-item')) throw new Error('no item');
  });
- check('AS Display editor renders the saved-stages container + panel', ()=>{
-   ev('renderLayoutEditor();');
+ // Saved-stages panel moved from the (former single) Display tab to the new Stage tab
+ // when the Display settings tab was split into Stage / Instruments & IEMs / Display.
+ check('AS Stage editor renders the saved-stages container + panel', ()=>{
+   ev('renderStageEditor();');
    const c=document.querySelector('#asSavedStages');
    if(!c) throw new Error('no #asSavedStages'); if(!c.querySelector('.saved-stage-saverow')) throw new Error('panel not rendered');
  });

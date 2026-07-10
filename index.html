@@ -1686,6 +1686,8 @@ body>*:not(.summary-overlay){display:none!important}
     <h2>Settings<span class="settings-venue-tag" id="settingsVenueTag" style="display:none;"></span></h2>
     <div class="tabs">
       <button class="tab active" data-tab="inventory">Mics</button>
+      <button class="tab" data-tab="stage">Stage</button>
+      <button class="tab" data-tab="instruments">Instruments &amp; IEMs</button>
       <button class="tab" data-tab="layout">Display</button>
       <button class="tab" data-tab="setups">Setup Items</button>
       <button class="tab" data-tab="venues" style="display:none;">Venues</button>
@@ -1698,6 +1700,12 @@ body>*:not(.summary-overlay){display:none!important}
       <button class="add-row-btn" id="addMicBtn">+ Add mic type</button>
       <div id="prefEdit" style="margin-top:26px;"></div>
       <div id="hostChanEdit" style="margin-top:26px;"></div>
+    </div>
+    <div class="tab-panel" id="tab-stage">
+      <div id="stageEdit"></div>
+    </div>
+    <div class="tab-panel" id="tab-instruments">
+      <div id="instrumentsEdit"></div>
     </div>
     <div class="tab-panel" id="tab-layout">
       <div id="layoutEdit"></div>
@@ -1843,7 +1851,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-10·b</div>
+<div id="buildStamp">build 2026-07-10·c</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2044,8 +2052,21 @@ const DEFAULT_INSTRUMENTS = [
   { id:'inst_keys',  label:'Keys',       pack:'Keys',     placeholder:'Keys',    tag:'Keys',  assignedTo:'', vocalistPlayer:null, optional:false }
 ];
 
+// Nearest Sunday >= today, as a local 'YYYY-MM-DD' string. If today is Sunday,
+// returns today. Used to default the service date (worship plans are for Sundays).
+// Local-date based (not UTC) to match how the app parses dates (new Date(d+'T00:00')).
+function upcomingSunday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); // 0=Sunday → add 0..6 days
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const DEFAULT_STATE = {
-  service: { date: new Date().toISOString().slice(0, 10), time: '9:45 AM', name: 'Sunday Morning' },
+  service: { date: upcomingSunday(), time: '9:45 AM', name: 'Sunday Morning' },
   vocalists: [],
   assignments: new Array(MAX_VOCALISTS).fill(null),
   shadows: [],
@@ -5040,12 +5061,12 @@ function wireStageEditControls() {
   if (editBtn) editBtn.addEventListener('click', enterStageEditMode);
   if (doneBtn) doneBtn.addEventListener('click', exitStageEditMode);
   if (resetBtn) resetBtn.addEventListener('click', resetStageLayoutToAuto);
-  // Outline + Features are edited in Advanced Settings → Display. The Edit-Layout toolbar just
+  // Outline + Features are edited in Advanced Settings → Stage. The Edit-Layout toolbar just
   // links there (leaving edit mode first), instead of hosting the editors inline.
   const outlineFeaturesBtn = document.getElementById('stageEditOutlineFeaturesBtn');
   if (outlineFeaturesBtn) outlineFeaturesBtn.addEventListener('click', () => {
     if (isStageEditing()) exitStageEditMode();
-    openSettings('layout');
+    openSettings('stage');
   });
   // Escape exits Edit-Layout mode
   document.addEventListener('keydown', e => {
@@ -5313,6 +5334,8 @@ function openSettings(tab='inventory') {
   renderInvEditor();
   renderPrefEditor();
   renderHostChannelEditor();
+  renderStageEditor();
+  renderInstrumentsEditor();
   renderLayoutEditor();
   renderPCOSettings();
   renderSetupManager();
@@ -5427,14 +5450,15 @@ function renderStageAreasEditor() {
   });
 }
 
-function renderLayoutEditor() {
-  const el = document.getElementById('layoutEdit');
+// ── Settings ▸ Stage tab ─────────────────────────────────────────────────
+// Stage shape/depth, outline & features, saved stage layouts, and vocal arrangement.
+// Split out of the former single Display tab so each settings tab renders + wires
+// ONLY its own controls (a listener left in the wrong panel would getElementById→null).
+function renderStageEditor() {
+  const el = document.getElementById('stageEdit');
   if (!el) return;
   const c = state.config;
   const curCurvature = typeof c.stageCurvature === 'number' ? c.stageCurvature : legacyShapeToCurvature(c.stageShape);
-  // Build instrument rows
-  const presetOptions = ['', ...c.iemPackPresets].map(p => `<option value="${esc(p)}">${esc(p || '— pick preset —')}</option>`).join('');
-  const vocalistOptions = state.vocalists.map(v => `<option value="${esc(v.id)}">${esc(v.name || '(unnamed)')}</option>`).join('');
   // Compute SVG path for the preview at the current curvature value
   const curDepth = typeof c.stageDepth === 'number' ? c.stageDepth : DEFAULT_STAGE_DEPTH;
   const hasCustomOutline = !!(c.customStagePoints && c.customStagePoints.length >= 3);
@@ -5442,7 +5466,7 @@ function renderLayoutEditor() {
     ? buildCustomOutlinePreviewSvg(c.customStagePoints)
     : buildStagePreviewSvg(curCurvature, curDepth);
   el.innerHTML = `
-    <p class="subtitle" style="margin-bottom:18px;">Configure stage shape, vocal direction, instruments &amp; IEM packs, and display options.</p>
+    <p class="subtitle" style="margin-bottom:18px;">Set the stage shape, outline &amp; features, saved layouts, and which side Vocal 1 stands on.</p>
 
     <div class="section-label" style="margin-bottom:10px;">Stage Shape</div>
     ${hasCustomOutline ? `<div class="subtitle" style="font-size:11.5px;color:var(--accent);margin:-2px 0 10px;line-height:1.5;">&#9873; A custom outline is active &mdash; the preview shows your shape. The shape sliders are hidden while a custom outline is in use. Edit it or reset to the default shape under &ldquo;Stage outline &amp; features&rdquo; below.</div>` : ''}
@@ -5495,6 +5519,104 @@ function renderLayoutEditor() {
         <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-faint);margin-top:3px;letter-spacing:.1em;">Standard layout</div>
       </button>
     </div>
+  `;
+
+  // Curvature + Depth sliders (shared preview)
+  const curvSlider = el.querySelector('#layoutCurvatureSlider');
+  const curvValue = el.querySelector('#layoutCurvatureValue');
+  const depthSlider = el.querySelector('#layoutDepthSlider');
+  const depthValue = el.querySelector('#layoutDepthValue');
+  const curvPreview = el.querySelector('#layoutCurvaturePreview');
+  function refreshShapePreview() {
+    if (curvPreview) {
+      if (c.customStagePoints && c.customStagePoints.length >= 3) {
+        curvPreview.innerHTML = buildCustomOutlinePreviewSvg(c.customStagePoints);
+        return;
+      }
+      const cv = parseInt(curvSlider ? curvSlider.value : c.stageCurvature, 10) || 0;
+      const dv = parseInt(depthSlider ? depthSlider.value : c.stageDepth, 10);
+      const dvFinal = isNaN(dv) ? DEFAULT_STAGE_DEPTH : dv;
+      curvPreview.innerHTML = buildStagePreviewSvg(cv, dvFinal);
+    }
+  }
+  if (curvSlider) {
+    curvSlider.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      c.stageCurvature = v;
+      if (curvValue) curvValue.textContent = v + '%';
+      refreshShapePreview();
+      renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+    curvSlider.addEventListener('change', () => saveState());
+  }
+  if (depthSlider) {
+    depthSlider.addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      c.stageDepth = v;
+      if (depthValue) depthValue.textContent = v + '%';
+      refreshShapePreview();
+      renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+    depthSlider.addEventListener('change', () => saveState());
+  }
+  const curvReset = el.querySelector('#layoutCurvatureReset');
+  if (curvReset) {
+    curvReset.addEventListener('click', () => {
+      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
+      c.stageDepth = DEFAULT_STAGE_DEPTH;
+      // Reset to defaults also clears any custom outline, in one click.
+      c.customStagePoints = null;
+      saveState();
+      renderStageEditor();
+      renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  }
+  // Stage outline + features editors
+  (function() {
+    const outlineBtn = el.querySelector('#layoutEditOutline');
+    const featuresBtn = el.querySelector('#layoutEditFeatures');
+    const resetOutlineBtn = el.querySelector('#layoutResetOutline');
+    const refresh = () => { renderStageEditor(); renderStage(); if (state.viewMode === 'display') renderDisplayView(); };
+    if (outlineBtn) outlineBtn.addEventListener('click', () => {
+      openPolygonStageEditor({
+        getInitial: () => c.customStagePoints,
+        onSave: (pts) => { c.customStagePoints = pts; saveState(); refresh(); }
+      });
+    });
+    if (featuresBtn) featuresBtn.addEventListener('click', () => {
+      openStageFeaturesEditor(() => renderStageEditor());
+    });
+    if (resetOutlineBtn) resetOutlineBtn.addEventListener('click', () => {
+      if (!confirm('Remove the custom outline and reset the stage shape to the default sliders?')) return;
+      c.customStagePoints = null;
+      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
+      c.stageDepth = DEFAULT_STAGE_DEPTH;
+      saveState(); refresh();
+    });
+    renderSavedStagesPanel('#asSavedStages', { source: 'config', onChange: refresh });
+  })();
+
+  // Vocal direction
+  el.querySelectorAll('[data-voc-dir]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      c.vocalDirection = btn.dataset.vocDir;
+      saveState(); renderStageEditor(); renderStage();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  });
+}
+
+// ── Settings ▸ Instruments & IEMs tab ────────────────────────────────────
+// Instrument roster, IEM packs, vocal IEM packs, and the default shadow pack.
+function renderInstrumentsEditor() {
+  const el = document.getElementById('instrumentsEdit');
+  if (!el) return;
+  const c = state.config;
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:18px;">Manage the instrument roster, IEM packs, vocal IEM packs, and the default shadow pack.</p>
 
     <div class="section-label" style="margin-bottom:10px;">Instruments
       <span style="font-size:9px;color:var(--text-faint);margin-left:8px;text-transform:none;letter-spacing:.05em;">(top → bottom of list = Stage Left → Stage Right on the diagram)</span>
@@ -5559,12 +5681,154 @@ function renderLayoutEditor() {
       <span class="iem-lbl">Default Shadow IEM Pack</span>
       <input type="text" class="field-input" data-shadow-pack value="${esc(c.shadowPack||'')}" placeholder="Misc 2" />
     </div>
+  `;
 
-    <div class="section-label" style="margin-bottom:10px;">✓ Items checklist</div>
-    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">The <strong>✓ Items</strong> page is your per-musician setup checklist for each service. These options affect how it behaves.</p>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
-      <label class="cfg-toggle"><input type="checkbox" data-cfg-blockdisplay ${c.blockDisplayUntilSetup?'checked':''} /><span>Block the Display view until the setup checklist is fully complete <span style="color:var(--text-faint);font-size:11px;">(on by default — turn off to let Display always open)</span></span></label>
-    </div>
+  // Instrument field edits
+  el.querySelectorAll('[data-field]').forEach(input => {
+    input.addEventListener('change', e => {
+      const inst = instById(e.target.dataset.id);
+      if (!inst) return;
+      const f = e.target.dataset.field;
+      if (f === 'vocalistPlayer') {
+        inst.vocalistPlayer = e.target.value || null;
+      } else if (f === 'optional') {
+        inst.optional = !!e.target.checked;
+      } else {
+        inst[f] = e.target.value;
+      }
+      saveState();
+      renderAll();
+      renderInstrumentsEditor();
+    });
+  });
+
+  // Instrument delete
+  el.querySelectorAll('.inst-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = btn.dataset.id;
+      const inst = instById(id); if (!inst) return;
+      if (!confirm(`Delete "${inst.label}"?`)) return;
+      state.instruments = state.instruments.filter(i => i.id !== id);
+      if (state.musicDirectorId === id) state.musicDirectorId = null;
+      saveState(); renderAll(); renderInstrumentsEditor();
+    });
+  });
+
+  // Add instrument
+  el.querySelector('#addInstrumentBtn').addEventListener('click', () => {
+    if (state.instruments.length >= MAX_INSTRUMENTS) return;
+    const newInst = {
+      id: instUid(),
+      label: 'New Instrument',
+      pack: c.iemPackPresets[0] || 'New mix',
+      placeholder: 'Player',
+      tag: '',
+      assignedTo: '',
+      vocalistPlayer: null
+    };
+    state.instruments.push(newInst);
+    saveState(); renderAll(); renderInstrumentsEditor();
+  });
+
+  // Reset instruments
+  el.querySelector('#resetInstrumentsBtn').addEventListener('click', () => {
+    if (!confirm('Reset instruments to defaults? This will clear current assignments.')) return;
+    state.instruments = structuredClone(DEFAULT_INSTRUMENTS);
+    state.musicDirectorId = 'inst_keys';
+    saveState(); renderAll(); renderInstrumentsEditor();
+  });
+
+  // Drag-reorder instruments
+  let draggedInstId = null;
+  el.querySelectorAll('.inst-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      // Don't start drag from form elements
+      if (e.target.matches('input, select, option, button, textarea')) {
+        e.preventDefault(); return;
+      }
+      draggedInstId = row.dataset.instId;
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      el.querySelectorAll('.inst-row').forEach(r => r.classList.remove('drop-target'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
+      row.classList.add('drop-target');
+    });
+    row.addEventListener('dragleave', e => {
+      if (!row.contains(e.relatedTarget)) row.classList.remove('drop-target');
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drop-target');
+      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
+      const fromIdx = state.instruments.findIndex(i => i.id === draggedInstId);
+      const toIdx = state.instruments.findIndex(i => i.id === row.dataset.instId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = state.instruments.splice(fromIdx, 1);
+      state.instruments.splice(toIdx, 0, moved);
+      draggedInstId = null;
+      saveState(); renderAll(); renderInstrumentsEditor();
+    });
+  });
+
+  // IEM pack presets
+  el.querySelectorAll('[data-preset-idx]').forEach(input => {
+    input.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.presetIdx, 10);
+      const v = e.target.value.trim();
+      if (v) c.iemPackPresets[idx] = v;
+      saveState(); renderInstrumentsEditor();
+    });
+  });
+  el.querySelectorAll('[data-preset-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(btn.dataset.presetDel, 10);
+      c.iemPackPresets.splice(idx, 1);
+      saveState(); renderInstrumentsEditor();
+    });
+  });
+  el.querySelector('#addPresetBtn').addEventListener('click', () => {
+    c.iemPackPresets.push('New mix');
+    saveState(); renderInstrumentsEditor();
+  });
+
+  // Vocal IEM packs
+  el.querySelectorAll('[data-vox-pack-idx]').forEach(input => {
+    input.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.voxPackIdx, 10);
+      c.voxIemPacks[idx] = e.target.value.trim() || `Vocal ${idx+1}`;
+      saveState(); renderAll();
+    });
+  });
+  // Shadow IEM pack (default for new shadows; existing shadows that match the old value also update)
+  const shadowInput = el.querySelector('[data-shadow-pack]');
+  if (shadowInput) {
+    shadowInput.addEventListener('change', e => {
+      const oldPack = c.shadowPack;
+      const newPack = e.target.value.trim() || 'Misc 2';
+      c.shadowPack = newPack;
+      // Update any existing shadow that was using the old default pack
+      state.shadows.forEach(s => { if (s.pack === oldPack) s.pack = newPack; });
+      saveState(); renderAll();
+    });
+  }
+}
+
+// ── Settings ▸ Display tab (slimmed) ─────────────────────────────────────
+// Everything about the ▶ Display VIEW: layout resize, display options, what to
+// show, vocalist-card styling, name format, side-panel order, run-sheet position,
+// the Vocalists-editor shadow toggle, and Service-Order inclusion.
+function renderLayoutEditor() {
+  const el = document.getElementById('layoutEdit');
+  if (!el) return;
+  const c = state.config;
+  el.innerHTML = `
+    <p class="subtitle" style="margin-bottom:18px;">Control what the ▶ Display view shows and how it looks — sizing, vocalist cards, name format, panel order, and the run sheet.</p>
 
     <div class="section-label" style="margin-bottom:10px;">Display Layout</div>
     <p class="subtitle" style="margin-bottom:8px;font-size:12px;">Drag the dividers in Display View to resize sections. Sizes are saved per device. Double-click a divider to reset it.</p>
@@ -5706,228 +5970,6 @@ function renderLayoutEditor() {
     });
   });
 
-  // Curvature + Depth sliders (shared preview)
-  const curvSlider = el.querySelector('#layoutCurvatureSlider');
-  const curvValue = el.querySelector('#layoutCurvatureValue');
-  const depthSlider = el.querySelector('#layoutDepthSlider');
-  const depthValue = el.querySelector('#layoutDepthValue');
-  const curvPreview = el.querySelector('#layoutCurvaturePreview');
-  function refreshShapePreview() {
-    if (curvPreview) {
-      if (c.customStagePoints && c.customStagePoints.length >= 3) {
-        curvPreview.innerHTML = buildCustomOutlinePreviewSvg(c.customStagePoints);
-        return;
-      }
-      const cv = parseInt(curvSlider ? curvSlider.value : c.stageCurvature, 10) || 0;
-      const dv = parseInt(depthSlider ? depthSlider.value : c.stageDepth, 10);
-      const dvFinal = isNaN(dv) ? DEFAULT_STAGE_DEPTH : dv;
-      curvPreview.innerHTML = buildStagePreviewSvg(cv, dvFinal);
-    }
-  }
-  if (curvSlider) {
-    curvSlider.addEventListener('input', e => {
-      const v = parseInt(e.target.value, 10);
-      c.stageCurvature = v;
-      if (curvValue) curvValue.textContent = v + '%';
-      refreshShapePreview();
-      renderStage();
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-    curvSlider.addEventListener('change', () => saveState());
-  }
-  if (depthSlider) {
-    depthSlider.addEventListener('input', e => {
-      const v = parseInt(e.target.value, 10);
-      c.stageDepth = v;
-      if (depthValue) depthValue.textContent = v + '%';
-      refreshShapePreview();
-      renderStage();
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-    depthSlider.addEventListener('change', () => saveState());
-  }
-  const curvReset = el.querySelector('#layoutCurvatureReset');
-  if (curvReset) {
-    curvReset.addEventListener('click', () => {
-      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
-      c.stageDepth = DEFAULT_STAGE_DEPTH;
-      // Reset to defaults also clears any custom outline, in one click.
-      c.customStagePoints = null;
-      saveState();
-      renderLayoutEditor();
-      renderStage();
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-  }
-  // Stage outline + features editors
-  (function() {
-    const outlineBtn = el.querySelector('#layoutEditOutline');
-    const featuresBtn = el.querySelector('#layoutEditFeatures');
-    const resetOutlineBtn = el.querySelector('#layoutResetOutline');
-    const refresh = () => { renderLayoutEditor(); renderStage(); if (state.viewMode === 'display') renderDisplayView(); };
-    if (outlineBtn) outlineBtn.addEventListener('click', () => {
-      openPolygonStageEditor({
-        getInitial: () => c.customStagePoints,
-        onSave: (pts) => { c.customStagePoints = pts; saveState(); refresh(); }
-      });
-    });
-    if (featuresBtn) featuresBtn.addEventListener('click', () => {
-      openStageFeaturesEditor(() => renderLayoutEditor());
-    });
-    if (resetOutlineBtn) resetOutlineBtn.addEventListener('click', () => {
-      if (!confirm('Remove the custom outline and reset the stage shape to the default sliders?')) return;
-      c.customStagePoints = null;
-      c.stageCurvature = DEFAULT_STAGE_CURVATURE;
-      c.stageDepth = DEFAULT_STAGE_DEPTH;
-      saveState(); refresh();
-    });
-    renderSavedStagesPanel('#asSavedStages', { source: 'config', onChange: refresh });
-  })();
-
-  // Vocal direction
-  el.querySelectorAll('[data-voc-dir]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      c.vocalDirection = btn.dataset.vocDir;
-      saveState(); renderLayoutEditor(); renderStage();
-      if (state.viewMode === 'display') renderDisplayView();
-    });
-  });
-
-  // Instrument field edits
-  el.querySelectorAll('[data-field]').forEach(input => {
-    input.addEventListener('change', e => {
-      const inst = instById(e.target.dataset.id);
-      if (!inst) return;
-      const f = e.target.dataset.field;
-      if (f === 'vocalistPlayer') {
-        inst.vocalistPlayer = e.target.value || null;
-      } else if (f === 'optional') {
-        inst.optional = !!e.target.checked;
-      } else {
-        inst[f] = e.target.value;
-      }
-      saveState();
-      renderAll();
-      renderLayoutEditor();
-    });
-  });
-
-  // Instrument delete
-  el.querySelectorAll('.inst-del').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const id = btn.dataset.id;
-      const inst = instById(id); if (!inst) return;
-      if (!confirm(`Delete "${inst.label}"?`)) return;
-      state.instruments = state.instruments.filter(i => i.id !== id);
-      if (state.musicDirectorId === id) state.musicDirectorId = null;
-      saveState(); renderAll(); renderLayoutEditor();
-    });
-  });
-
-  // Add instrument
-  el.querySelector('#addInstrumentBtn').addEventListener('click', () => {
-    if (state.instruments.length >= MAX_INSTRUMENTS) return;
-    const newInst = {
-      id: instUid(),
-      label: 'New Instrument',
-      pack: c.iemPackPresets[0] || 'New mix',
-      placeholder: 'Player',
-      tag: '',
-      assignedTo: '',
-      vocalistPlayer: null
-    };
-    state.instruments.push(newInst);
-    saveState(); renderAll(); renderLayoutEditor();
-  });
-
-  // Reset instruments
-  el.querySelector('#resetInstrumentsBtn').addEventListener('click', () => {
-    if (!confirm('Reset instruments to defaults? This will clear current assignments.')) return;
-    state.instruments = structuredClone(DEFAULT_INSTRUMENTS);
-    state.musicDirectorId = 'inst_keys';
-    saveState(); renderAll(); renderLayoutEditor();
-  });
-
-  // Drag-reorder instruments
-  let draggedInstId = null;
-  el.querySelectorAll('.inst-row').forEach(row => {
-    row.addEventListener('dragstart', e => {
-      // Don't start drag from form elements
-      if (e.target.matches('input, select, option, button, textarea')) {
-        e.preventDefault(); return;
-      }
-      draggedInstId = row.dataset.instId;
-      e.dataTransfer.effectAllowed = 'move';
-      row.classList.add('dragging');
-    });
-    row.addEventListener('dragend', () => {
-      row.classList.remove('dragging');
-      el.querySelectorAll('.inst-row').forEach(r => r.classList.remove('drop-target'));
-    });
-    row.addEventListener('dragover', e => {
-      e.preventDefault();
-      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
-      row.classList.add('drop-target');
-    });
-    row.addEventListener('dragleave', e => {
-      if (!row.contains(e.relatedTarget)) row.classList.remove('drop-target');
-    });
-    row.addEventListener('drop', e => {
-      e.preventDefault();
-      row.classList.remove('drop-target');
-      if (!draggedInstId || draggedInstId === row.dataset.instId) return;
-      const fromIdx = state.instruments.findIndex(i => i.id === draggedInstId);
-      const toIdx = state.instruments.findIndex(i => i.id === row.dataset.instId);
-      if (fromIdx === -1 || toIdx === -1) return;
-      const [moved] = state.instruments.splice(fromIdx, 1);
-      state.instruments.splice(toIdx, 0, moved);
-      draggedInstId = null;
-      saveState(); renderAll(); renderLayoutEditor();
-    });
-  });
-
-  // IEM pack presets
-  el.querySelectorAll('[data-preset-idx]').forEach(input => {
-    input.addEventListener('change', e => {
-      const idx = parseInt(e.target.dataset.presetIdx, 10);
-      const v = e.target.value.trim();
-      if (v) c.iemPackPresets[idx] = v;
-      saveState(); renderLayoutEditor();
-    });
-  });
-  el.querySelectorAll('[data-preset-del]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const idx = parseInt(btn.dataset.presetDel, 10);
-      c.iemPackPresets.splice(idx, 1);
-      saveState(); renderLayoutEditor();
-    });
-  });
-  el.querySelector('#addPresetBtn').addEventListener('click', () => {
-    c.iemPackPresets.push('New mix');
-    saveState(); renderLayoutEditor();
-  });
-
-  // Vocal IEM packs
-  el.querySelectorAll('[data-vox-pack-idx]').forEach(input => {
-    input.addEventListener('change', e => {
-      const idx = parseInt(e.target.dataset.voxPackIdx, 10);
-      c.voxIemPacks[idx] = e.target.value.trim() || `Vocal ${idx+1}`;
-      saveState(); renderAll();
-    });
-  });
-  // Shadow IEM pack (default for new shadows; existing shadows that match the old value also update)
-  const shadowInput = el.querySelector('[data-shadow-pack]');
-  if (shadowInput) {
-    shadowInput.addEventListener('change', e => {
-      const oldPack = c.shadowPack;
-      const newPack = e.target.value.trim() || 'Misc 2';
-      c.shadowPack = newPack;
-      // Update any existing shadow that was using the old default pack
-      state.shadows.forEach(s => { if (s.pack === oldPack) s.pack = newPack; });
-      saveState(); renderAll();
-    });
-  }
-
   // Plain config toggles
   el.querySelectorAll('[data-cfg]').forEach(cb => {
     cb.addEventListener('change', e => {
@@ -5940,15 +5982,7 @@ function renderLayoutEditor() {
   // (TV/Computer display-mode radios removed — display sizing is now per-section
   // hover font-scalers in the display view. See setDisplaySectionScale.)
   // (The enable-shadows toggle was removed — shadows are always available.)
-
-  // Block-display-until-setup-complete toggle
-  const blockToggle = el.querySelector('[data-cfg-blockdisplay]');
-  if (blockToggle) {
-    blockToggle.addEventListener('change', e => {
-      c.blockDisplayUntilSetup = e.target.checked;
-      saveState();
-    });
-  }
+  // (The ✓ Items "block Display until setup complete" toggle moved to the Setup Items tab.)
 
   // Reset display layout
   const resetDvBtn = el.querySelector('#resetDvDividersBtn');
@@ -6188,6 +6222,29 @@ function setupKeyRoleLabel(key) {
 
 let setupMgrSort = 'lineup';   // 'lineup' | 'name' | 'position'
 let setupMgrSearch = '';
+// Append the "✓ Items checklist" behavior section (currently just the block-Display-
+// until-setup-complete toggle) to the Setup Items tab, and wire it. Self-contained so it
+// can run after either the empty-state or the populated setup-manager render. Relocated
+// here from the former single Display tab.
+function appendSetupItemsChecklistToggle(el) {
+  if (!el) return;
+  const c = state.config;
+  el.insertAdjacentHTML('beforeend', `
+    <div class="section-label" style="margin-top:26px;margin-bottom:10px;">✓ Items checklist</div>
+    <p class="subtitle" style="margin-bottom:10px;font-size:12px;">The <strong>✓ Items</strong> page is your per-musician setup checklist for each service. This option affects how it behaves.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+      <label class="cfg-toggle"><input type="checkbox" data-cfg-blockdisplay ${c.blockDisplayUntilSetup?'checked':''} /><span>Block the Display view until the setup checklist is fully complete <span style="color:var(--text-faint);font-size:11px;">(on by default — turn off to let Display always open)</span></span></label>
+    </div>
+  `);
+  const blockToggle = el.querySelector('[data-cfg-blockdisplay]');
+  if (blockToggle) {
+    blockToggle.addEventListener('change', e => {
+      c.blockDisplayUntilSetup = e.target.checked;
+      saveState();
+    });
+  }
+}
+
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
   if (!el) return;
@@ -6248,6 +6305,7 @@ function renderSetupManager() {
       <div style="background:var(--bg-inset);border:1px dashed var(--border);border-radius:9px;padding:24px 18px;text-align:center;color:var(--text-muted);font-size:13px;">
         No setups saved yet. Add setup items to anyone in <strong>✓ Items</strong> and they'll show up here.
       </div>`;
+    appendSetupItemsChecklistToggle(el);
     return;
   }
 
@@ -6356,6 +6414,7 @@ function renderSetupManager() {
     openPersonSetupModal(d.editName || '', d.editKey, (d.editType && d.editType !== 'none') ? d.editType : null, d.editLabel || '');
   }));
   applyFilter();  // re-apply any active search after a re-render
+  appendSetupItemsChecklistToggle(el);
 }
 
 // Open one person's full setup question flow (the same grouped questions + custom
@@ -8469,6 +8528,9 @@ function renderDisplayView() {
   for (let i=0; i<MAX_VOCALISTS; i++) {
     const id = state.assignments[i]; if (!id) continue;
     const v = state.vocalists.find(x => x.id === id); if (!v) continue;
+    // Display view only: hide empty (no-name) vocalist slots so blank cards don't
+    // show on the green-room TV. The edit/assign view keeps them so people can be added.
+    if (!v.name || !v.name.trim()) continue;
     const card = document.createElement('div');
     // Display view intentionally does NOT highlight worship leaders (no is-wl badge/accent).
     card.className = 'dv-voc-card';
@@ -8703,7 +8765,7 @@ function resetAll() {
   if (!confirm('Clear this week\'s vocalists, band, hosts, notes, and service order? Mic inventory, preferences, layout config, and Planning Center connection will be kept.')) return;
   const preserved = { inventory: state.inventory, preferences: state.preferences, pcoConfig: state.pcoConfig, brand: state.brand, config: state.config };
   state = structuredClone(DEFAULT_STATE);
-  state.service.date = new Date().toISOString().slice(0,10);
+  state.service.date = upcomingSunday();
   state.inventory = preserved.inventory;
   state.preferences = preserved.preferences;
   state.pcoConfig = preserved.pcoConfig;
