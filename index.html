@@ -1274,10 +1274,20 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   --bg-elev:rgba(255,255,255,.6);--bg-inset:rgba(255,255,255,.5);
   --surface:rgba(255,255,255,.62);--surface-2:rgba(255,255,255,.8);
   --border:rgba(30,40,90,.14);--border-2:rgba(30,40,90,.24);
-  --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4}
+  --text:#141834;--text-muted:#5b6288;--text-faint:#98a0c4;
+  /* Platinum's --accent (=--c1) is a pale champagne that's near-invisible on the light ground;
+     use a deeper gold in light mode so accent TEXT (eyebrows, section labels, counts, run-sheet
+     headers, the ▶ Display button) stays readable. Dark surfaces that persist in light mode (the
+     on-stage .sp/.dv-sp cards) carry mostly white/grey text, so this doesn't hurt them. */
+  --accent:#a07d2e;--accent-2:#8a6a24}
 /* Aurora mood is LOCKED to platinum (color picker removed 2026-07-09); the other 10 mood
    blocks were dead and were deleted. applyLook() always sets data-mood="platinum". */
 [data-look="aurora"][data-mood="platinum"]{--c1:#eae4d8;--c2:#c9c0b0;--c3:#9a917f;--gd:#0b0a09;--mix:14%}
+/* The platinum --gd above is DARK. In light mode it must not win over the light ground: the light
+   rule sets --gd:#eef1f8 but the 2-attribute platinum rule comes later at equal specificity and
+   clobbered it, so --bg (=var(--gd)) stayed dark and the whole app never went light. This
+   3-attribute rule out-specifies platinum, restoring a light ground in light mode. */
+[data-look="aurora"][data-theme="light"][data-mood="platinum"]{--gd:#eef1f8}
 /* platinum is pale: in LIGHT mode the near-white accent would vanish — keep IEM on ink */
 [data-look="aurora"][data-theme="light"][data-mood="platinum"] .dv-list-item .detail{color:var(--text);text-shadow:none}
 /* drifting aurora backdrop on the app ground (dark + light both) */
@@ -1303,6 +1313,9 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 /* glowing IEM + gradient section labels (the signature) */
 [data-look="aurora"][data-theme="dark"] .dv-list-item .detail{color:var(--c1);text-shadow:0 0 14px color-mix(in srgb,var(--c1) 55%,transparent)}
 [data-look="aurora"] .dv-section-label{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+/* In LIGHT mode the pale-platinum gradient (--c1/--c2) is near-invisible on the light ground — fall
+   back to a solid, readable muted fill (undo the gradient text-clip). */
+[data-look="aurora"][data-theme="light"] .dv-section-label{background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--text-muted);color:var(--text-muted)}
 
 @media print{
 @page{size:letter;margin:.5in}
@@ -1856,7 +1869,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-10·d</div>
+<div id="buildStamp">build 2026-07-10·e</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
