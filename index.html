@@ -1843,7 +1843,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-10·a</div>
+<div id="buildStamp">build 2026-07-10·b</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -2826,6 +2826,17 @@ function setPreferredName(currentName, preferred) {
   // micPrefs.people keyed by normFullName
   const mp = state.config && state.config.micPrefs && state.config.micPrefs.people;
   if (mp && mp[curN] && curN !== prefN) { mp[prefN] = mp[curN]; delete mp[curN]; }
+  // checklistState (go-live check-offs) is nested by plan; inner keys are
+  // `${normFullName}|role|typeKey|itemText` (see collectChecklistItems / FIX #1). Re-key every
+  // plan's entries so a rename carries the check-offs — same name-prefix scheme as setupItems.
+  // (This supersedes the old remapChecklistKeys path, which used a dead display-name format.)
+  if (state.checklistState) {
+    Object.keys(state.checklistState).forEach(planKey => {
+      reKey(state.checklistState[planKey],
+            k => { const p = k.split('|'); return p.length >= 2 ? { name: p[0], rest: p.slice(1).join('|') } : null; },
+            (pref, parts) => `${normFullName(pref)}|${parts.rest}`);
+    });
+  }
   saveState();
   if (typeof renderAll === 'function') renderAll();
 }
