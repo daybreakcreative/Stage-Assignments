@@ -2294,7 +2294,10 @@ function defaultSelectionsFor(key) { return JSON.parse(JSON.stringify(churchSetu
 function resolveSetupItems(key, selections, customItems) {
   const cat = setupCatalogFor(key);
   const out = [];
-  const push = t => { if (t) out.push({ text: t }); };
+  // FIX #6: a catalog line the user reworded inline is recorded as a customItems entry carrying
+  // `replaces` = the original catalog text. Skip those originals so the edit isn't duplicated.
+  const replaced = new Set((customItems || []).map(ci => ci.replaces).filter(Boolean));
+  const push = t => { if (t && !replaced.has(t)) out.push({ text: t }); };
   if (cat) {
     cat.groups.forEach(g => {
       const sel = selections ? selections[g.id] : undefined;
@@ -2306,8 +2309,31 @@ function resolveSetupItems(key, selections, customItems) {
       });
     });
   }
-  (customItems || []).forEach(ci => push(ci.text));
+  // Custom items (including reworded-preset overrides) always render, by their text.
+  (customItems || []).forEach(ci => { if (ci.text) out.push({ text: ci.text }); });
   return out;
+}
+
+// Persist an inline text edit to the SOURCE OF TRUTH so it survives rebuildPersonItems (FIX #6).
+// Editing bucket.items[].text alone is futile — items are rebuilt from selections + customItems.
+// A real custom item is edited in place; a catalog/preset line is recorded as a `replaces`
+// override on customItems (resolveSetupItems renders the new text and skips the original — no
+// duplicate, no new persisted field, no migration). Returns true if a durable change was made.
+function editSetupItemText(stableKey, typeKey, oldText, rawNewText) {
+  const bucket = state.setupItems[stableKey];
+  if (!bucket) return false;
+  const newText = (rawNewText || '').trim();
+  if (!newText || newText === oldText) return false;
+  const tKey = typeKey || ((stableKey || '').split('|')[2] || null);
+  bucket.customItems = bucket.customItems || [];
+  const existing = bucket.customItems.find(ci => ci.text === oldText);
+  if (existing) {
+    existing.text = newText;                 // real custom item, or re-editing a prior override
+  } else {
+    bucket.customItems.push({ id: newSetupItem('').id, text: newText, replaces: oldText });
+  }
+  rebuildPersonItems(stableKey, tKey);
+  return true;
 }
 
 function detectPresetKey(inst) {
@@ -6256,10 +6282,15 @@ function renderSetupManager() {
     </div>
   `;
 
-  // Edit item text (no re-render — preserve the cursor)
+  // Edit item text — route through editSetupItemText so it survives rebuildPersonItems (FIX #6).
+  // `change` fires on blur/enter (not per keystroke), so a re-render here is safe and resyncs the
+  // stale data-i indices after the rebuild reorders items.
   el.querySelectorAll('.setup-item-input').forEach(inp => inp.addEventListener('change', e => {
-    const b = store[e.target.dataset.key]; const i = parseInt(e.target.dataset.i, 10);
-    if (b && b.items[i]) { b.items[i].text = e.target.value; saveState(); }
+    const key = e.target.dataset.key; const b = store[key]; const i = parseInt(e.target.dataset.i, 10);
+    if (b && b.items[i]) {
+      const oldText = b.items[i].text;
+      if (editSetupItemText(key, b.typeKey, oldText, e.target.value)) { saveState(); renderSetupManager(); }
+    }
   }));
   // Remove a single item
   el.querySelectorAll('.setup-item-rm').forEach(btn => btn.addEventListener('click', e => {
@@ -9649,10 +9680,13 @@ function wireSetupItemsContent() {
       const item = bucket.items.find(i => i.id === itemId);
       if (!item) return;
       const newText = prompt('Edit setup item:', item.text);
-      if (newText !== null && newText.trim() !== item.text) {
-        item.text = newText.trim();
-        saveState();
-        renderSetupItemsView();
+      if (newText !== null && newText.trim() && newText.trim() !== item.text) {
+        // Route through the source of truth so the edit isn't wiped on the next rebuild (FIX #6).
+        const spType = row.dataset.spType || (bucket && bucket.typeKey) || null;
+        if (editSetupItemText(personKey, spType, item.text, newText)) {
+          saveState();
+          renderSetupItemsView();
+        }
       }
     });
   });
