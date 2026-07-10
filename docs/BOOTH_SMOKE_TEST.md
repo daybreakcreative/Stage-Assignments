@@ -52,7 +52,7 @@ Work top-down; report any ❌ (and what you saw). Ideally test with a real PCO p
 - [ ] Display view does **not** highlight worship leaders.
 - [ ] Empty optional band slots (Electric 2, Acoustic) are hidden with a **"+ Add"** chip until needed; a pull auto-fills them.
 - [ ] **Keys** auto-places to **far stage right** (SR).
-- [ ] In Edit Layout, **"Edit Outline or Features"** opens Advanced Settings → Display.
+- [ ] In Edit Layout, **"Edit Outline or Features"** opens Advanced Settings → Stage.
 
 ---
 _Report ❌s with a quick note of what you saw; I'll fix and redeploy._

@@ -30,9 +30,11 @@ Behaviors that must keep working. **The executable version of this list is `test
     Advanced Settings → mic prefs. → `mic`
 29. **All multi-venue UI hidden** this release (switcher, Venues tab, settings venue
     tag). Machinery kept/dormant; single venue works. → `venues2`–`venues5`
-30. **Custom outline hides the curve/depth sliders** (Advanced Settings → Display), and
+30. **Custom outline hides the curve/depth sliders** (Advanced Settings → **Stage**), and
     the two reset buttons are consolidated to one "Reset outline to defaults" (clears
-    the custom outline AND resets sliders to defaults).
+    the custom outline AND resets sliders to defaults). _(Settings split 2026-07-10: stage
+    shape/outline live on the new **Stage** tab, instruments/IEMs on **Instruments & IEMs**;
+    "Display" is now display-view options only. → `settingstabs`)_
 31. **`renderDisplayView` is null-hardened** — band/hosts/shadows/run-sheet element
     accesses are guarded so one missing node can't abort the render; the service-order
     rail renders. → `display`, `summary`

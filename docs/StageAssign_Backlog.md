@@ -9,14 +9,16 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 
 ## Open
 
-### Display / green-room (the current frontier)
-- **[FEATURE] Live countdown + idle screen** on the display. A big clock counting down to
+### Display / green-room
+- **[FEATURE] ~~Live countdown + idle screen~~ — DEPRIORITIZED.** A big clock counting down to
   service time, custom labels ("Band Load", "Rehearsal"), an edge-glow alarm at zero, and an
   idle screen when nothing's live. Pure client-side, uses the service time we already have.
-  _Recommended next build (from the SideStage review — the cheap, high-polish win)._
-- **[FEATURE] Headshots on the display.** People photos so anyone can run a mic check without
-  asking who's who. Client-side is doable but photos bloat `localStorage` — weigh the storage
-  cost / cap it / downscale. (SideStage review, #2.)
+  _Deprioritized 2026-07-10 — Dillon deemed it unnecessary for now; brainstorm cancelled. Left
+  here in case it comes back._
+- **[FEATURE] ~~Headshots on the display~~ — PARKED.** People photos so anyone can run a mic
+  check without asking who's who. Client-side is doable but photos bloat `localStorage` — weigh
+  the storage cost / cap it / downscale. Best angle if revisited: **pull photos from the PCO
+  People API on the plan pull** (zero manual work). Parked 2026-07-10 with the countdown above.
 - **[POLISH] Export / share the display view.** A "print or PDF the display" for posting
   backstage (the Print Summary is the stage-tech sheet; this would be the display snapshot).
 
