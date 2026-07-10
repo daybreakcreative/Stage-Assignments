@@ -135,6 +135,41 @@ window.addEventListener('load', ()=>setTimeout(async ()=>{
     if (can !== false) throw new Error('refresh not paused during review modal');
   });
 
+  // Bug #7: the guard must also block while the wizard / post-pull / summary /
+  // pco-secondary overlays are open (they aren't `.overlay`, so the old guard missed them).
+  for (const cls of ['wizard-overlay','post-pull-overlay','summary-overlay','pco-secondary-overlay']) {
+    await check('pcoCanRefresh pauses while a .'+cls+' is open', ()=>{
+      ev(`pcoTokens={access_token:'t',expires_at:9999999999999}; state.pcoConfig.selectedPlanId='p1'; state.config.autoRefreshPaused=false; document.body.classList.remove('stage-editing'); pcoMergeInFlight=false;`);
+      // Clear any modal left in the DOM by earlier tests so THIS test isolates the new
+      // overlay class — otherwise a stray .overlay.show/.setup-review-modal.show would make
+      // the OLD guard already return false and hide the regression.
+      doc.querySelectorAll('.overlay.show, .setup-review-modal.show').forEach(n=>n.classList.remove('show'));
+      if (ev('pcoCanRefresh()') !== true) throw new Error('precondition: expected refresh ALLOWED before opening the overlay');
+      const ov = doc.createElement('div'); ov.className=cls+' show'; doc.body.appendChild(ov);
+      const can = ev('pcoCanRefresh()');
+      ov.remove();
+      if (can !== false) throw new Error('refresh not paused while '+cls+' open (can='+can+')');
+    });
+  }
+
+  // Bug #8: the auto-refresh interval must be clearable + single-instance.
+  await check('pcoDisconnect clears the auto-refresh interval', ()=>{
+    ev(`window.confirm=()=>true; toast=function(){};`);
+    ev(`pcoAutoRefreshTimer=null; startPcoAutoRefresh();`);
+    if (ev('pcoAutoRefreshTimer')==null) throw new Error('timer was not armed by startPcoAutoRefresh');
+    ev('pcoDisconnect()');
+    if (ev('pcoAutoRefreshTimer')!=null) throw new Error('pcoDisconnect left the interval armed');
+  });
+  await check('startPcoAutoRefresh is single-instance (no double-arm leak)', ()=>{
+    ev(`pcoAutoRefreshTimer=null; startPcoAutoRefresh();`);
+    const first = ev('pcoAutoRefreshTimer');
+    ev('startPcoAutoRefresh()');
+    const second = ev('pcoAutoRefreshTimer');
+    if (String(first)!==String(second)) throw new Error('second arm replaced the timer (leaked the first interval)');
+    // clean up so the jsdom process can exit
+    ev('if(pcoAutoRefreshTimer){clearInterval(pcoAutoRefreshTimer);pcoAutoRefreshTimer=null;}');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;

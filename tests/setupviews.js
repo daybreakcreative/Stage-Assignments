@@ -135,6 +135,22 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!cs[k]) throw new Error('click did not persist under key '+k);
  });
 
+ // Bug #13: the ✓ Items page ⚙ button must open a REAL Settings tab (setups),
+ // not a non-existent 'templates' tab that leaves the sheet blank.
+ check('✓ Items ⚙ (siSettingsBtn) opens Settings on the Setup Items tab', ()=>{
+   ev('closeSettings && closeSettings()');
+   const btn=doc.getElementById('siSettingsBtn');
+   if(!btn) throw new Error('no siSettingsBtn');
+   btn.click();
+   const ov=doc.getElementById('settingsOverlay');
+   if(!ov || !ov.classList.contains('show')) throw new Error('settings overlay not shown');
+   const activeTab=doc.querySelector('.tab.active');
+   if(!activeTab || activeTab.dataset.tab!=='setups') throw new Error('active tab is '+(activeTab&&activeTab.dataset.tab)+', expected setups');
+   const panel=doc.getElementById('tab-setups');
+   if(!panel || !panel.classList.contains('active')) throw new Error('tab-setups panel not active (blank sheet)');
+   ev('closeSettings && closeSettings()');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

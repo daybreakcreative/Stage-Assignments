@@ -63,21 +63,50 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!p || Math.abs(p[0].x-500)>3 || Math.abs(p[0].y-350)>3) throw new Error('saved pts wrong: '+JSON.stringify(p&&p[0]));
  });
  // ---------- editor: drag an edge dot to curve it ----------
+ // NOTE (bug #9): the control point is now clamped to the viewBox (0..800 / 0..380), so the
+ // drag target here bows the apron toward the audience but keeps the extrapolated control
+ // point (c.y = 2H.y - ½(a.y+b.y)) in-bounds — apex 130 → c.y 60 (was apex 60 → c.y -80,
+ // which required an off-canvas control point that the clamp now forbids).
  check('dragging an edge dot creates a curve (stores control point)', ()=>{
    ev('state.config.customStagePoints=[{x:100,y:200},{x:700,y:200},{x:700,y:340},{x:100,y:340}]');
    ev('openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, onSave:(p)=>{ window.__savedPts2=p; } })');
    const svg=doc.getElementById('saPolySvg');
    const edge0=svg.querySelector('[data-edge="0"]'); // midpoint of top edge ~ (400,200)
    pdown(edge0,400,200);
-   pmove(svg,400,80);   // pull the apex up toward the audience
-   pmove(svg,400,60);
-   pup(svg,400,60);
+   pmove(svg,400,150);  // pull the apex up toward the audience (stays in-bounds)
+   pmove(svg,400,130);
+   pup(svg,400,130);
    doc.getElementById('saPolySave').click();
    const p=window.__savedPts2;
    if(!p[0].c) throw new Error('edge 0 has no control point after curve drag');
-   // apex should be near (400,60): on-curve mid = .25a + .5c + .25b
+   // apex should be near (400,130): on-curve mid = .25a + .5c + .25b
    const a=p[0], b=p[1]; const apexY=0.25*a.y+0.5*a.c.y+0.25*b.y;
-   if(Math.abs(apexY-60)>4) throw new Error('apex not at drag point, apexY='+apexY);
+   if(Math.abs(apexY-130)>4) throw new Error('apex not at drag point, apexY='+apexY);
+   // and the stored control point stays inside the viewBox
+   if(a.c.y<0||a.c.y>380) throw new Error('control y escaped viewBox: '+a.c.y);
+ });
+ // Bug #9: an aggressively dragged edge extrapolates its control point far past the
+ // viewBox (c = 2H - 0.5(a+b)). That off-canvas control point flings auto-placed
+ // vocalists off-screen. The stored control point must be clamped to 0..800 / 0..380.
+ check('edge control point is clamped to the viewBox (0..800 / 0..380)', ()=>{
+   ev('state.config.customStagePoints=[{x:100,y:200},{x:700,y:200},{x:700,y:340},{x:100,y:340}]');
+   ev('openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, onSave:(p)=>{ window.__savedPts3=p; } })');
+   const svg=doc.getElementById('saPolySvg');
+   const edge0=svg.querySelector('[data-edge="0"]'); // midpoint of top edge ~ (400,200)
+   pdown(edge0,400,200);
+   // yank the apex hard toward the top-left corner — extrapolated c would be well < 0
+   pmove(svg,0,0);
+   pmove(svg,0,0);
+   pup(svg,0,0);
+   doc.getElementById('saPolySave').click();
+   const p=window.__savedPts3;
+   if(!p[0].c) throw new Error('edge 0 has no control point after curve drag');
+   const c=p[0].c;
+   if(c.x<0||c.x>800) throw new Error('control x escaped viewBox: '+c.x);
+   if(c.y<0||c.y>380) throw new Error('control y escaped viewBox: '+c.y);
+   // sanity: the resulting midY used by getStageShape stays on-canvas too
+   const a=p[0], b=p[1]; const apexY=0.25*a.y+0.5*c.y+0.25*b.y;
+   if(apexY<0||apexY>380) throw new Error('derived apexY off-canvas: '+apexY);
  });
  check('curve survives a save→reload (loadState keeps .c)', ()=>{
    // simulate persistence round-trip

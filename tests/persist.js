@@ -16,6 +16,27 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('roundStagePoint without c stays straight', ()=>{
    const rp=ev('roundStagePoint({x:1.2,y:2.8})'); if(rp.c) throw new Error('added spurious c');
  });
+ // Bug #4: a saved roster of 9+ vocalists must NOT be truncated by loadState.
+ // MAX_VOCALISTS defaults to 8 and only grows via ensureVocalCapacity() which runs
+ // AFTER loadState — so loadState must key its pad/trim off the saved roster size.
+ check('loadState keeps the 9th & 10th vocalist assignment + IEM pack (no truncation)', ()=>{
+   const vocalists=[];
+   for(let i=0;i<10;i++) vocalists.push({id:'v'+i,name:'V'+i,isWL:i===0,micAssigned:''});
+   const assignments=vocalists.map(v=>v.id);            // 10 slots, id per position
+   const voxIemPacks=vocalists.map((_,i)=>'Pack'+i);    // 10 parallel pack names
+   const saved={ config:{ voxIemPacks }, vocalists, assignments, service:{ date:'2026-07-05' } };
+   window.localStorage.setItem(ev('STORAGE_KEY'), JSON.stringify(saved));
+   const loaded=ev('loadState()');
+   if(loaded._firstRun) throw new Error('loadState collapsed to _firstRun');
+   if(loaded.vocalists.length!==10) throw new Error('vocalists truncated to '+loaded.vocalists.length);
+   if(loaded.assignments.length<10) throw new Error('assignments truncated to '+loaded.assignments.length);
+   if(loaded.assignments[8]!=='v8') throw new Error('slot 9 lost: '+loaded.assignments[8]);
+   if(loaded.assignments[9]!=='v9') throw new Error('slot 10 lost: '+loaded.assignments[9]);
+   if((loaded.config.voxIemPacks||[]).length<10) throw new Error('voxIemPacks truncated to '+(loaded.config.voxIemPacks||[]).length);
+   if(loaded.config.voxIemPacks[8]!=='Pack8') throw new Error('pack 9 lost: '+loaded.config.voxIemPacks[8]);
+   if(loaded.config.voxIemPacks[9]!=='Pack9') throw new Error('pack 10 lost: '+loaded.config.voxIemPacks[9]);
+   window.localStorage.removeItem(ev('STORAGE_KEY'));
+ });
  check('saveState writes curve to localStorage; reload keeps it', ()=>{
    ev('state.config.customStagePoints=[{x:20,y:120,c:{x:400,y:18}},{x:780,y:120},{x:780,y:340},{x:20,y:340}]');
    ev('saveState()');

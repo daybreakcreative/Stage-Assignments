@@ -2345,6 +2345,20 @@ function loadState() {
       const p = JSON.parse(raw);
       const loadedConfig = p.config || {};
 
+      // Grow vocal capacity to fit the SAVED roster BEFORE any pad/truncate below.
+      // MAX_VOCALISTS defaults to 8 and is normally grown by ensureVocalCapacity(), but that
+      // runs AFTER loadState() — so a saved roster of 9+ vocalists (and its assignments /
+      // IEM packs) would get sliced to 8 here and lost. Key the cap off what was saved.
+      {
+        const savedCap = Math.max(
+          MAX_VOCALISTS,
+          Array.isArray(p.vocalists) ? p.vocalists.length : 0,
+          Array.isArray(p.assignments) ? p.assignments.length : 0,
+          (loadedConfig.voxIemPacks && Array.isArray(loadedConfig.voxIemPacks)) ? loadedConfig.voxIemPacks.length : 0
+        );
+        if (savedCap > MAX_VOCALISTS) MAX_VOCALISTS = savedCap;
+      }
+
       // Migrate legacy state.band → state.instruments if needed
       let instruments = p.instruments;
       if (!Array.isArray(instruments)) {
@@ -4523,7 +4537,12 @@ function openPolygonStageEditor(opts) {
       if (Math.hypot(H.x - midx, H.y - midy) < 14) {
         pts[i] = { x:a.x, y:a.y };                 // snapped back to the line → straighten
       } else {
-        pts[i] = { x:a.x, y:a.y, c: { x: Math.round(2*H.x - 0.5*(a.x+b.x)), y: Math.round(2*H.y - 0.5*(a.y+b.y)) } };
+        // The control point is EXTRAPOLATED (2H - ½(a+b)), so an aggressive drag can push it
+        // far outside the 800×380 viewBox — which flings the derived front edge (and any
+        // auto-placed vocalists) off-screen. Clamp it back onto the canvas before storing.
+        const cx = Math.max(0, Math.min(800, Math.round(2*H.x - 0.5*(a.x+b.x))));
+        const cy = Math.max(0, Math.min(380, Math.round(2*H.y - 0.5*(a.y+b.y))));
+        pts[i] = { x:a.x, y:a.y, c: { x: cx, y: cy } };
       }
       render();
     }
@@ -6388,11 +6407,31 @@ function renderDataEditor() {
     if (!confirm('Overwrite ALL current data with the imported JSON?')) return;
     try {
       const parsed = JSON.parse(txt);
-      if (!parsed || typeof parsed !== 'object') throw new Error('Not an object');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Not an object');
       // Basic sanity check: must have at least a config and a service
       if (!parsed.config && !parsed.service && !parsed.vocalists && !parsed.instruments) {
         throw new Error('Doesn\'t look like a Stage·Assign export');
       }
+      // Validate IN MEMORY before we touch stored data: run the candidate through the SAME
+      // normalization loadState() uses, and confirm it yields a sane state (config object +
+      // service + vocalists/instruments arrays, not a _firstRun collapse). A parseable-but-
+      // broken payload must NEVER overwrite good data. Restore localStorage no matter what.
+      const backup = localStorage.getItem(STORAGE_KEY);
+      let normalized = null;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        normalized = loadState();
+      } finally {
+        if (backup === null) localStorage.removeItem(STORAGE_KEY);
+        else localStorage.setItem(STORAGE_KEY, backup);
+      }
+      const sane = normalized && !normalized._firstRun
+        && normalized.config && typeof normalized.config === 'object'
+        && normalized.service && typeof normalized.service === 'object'
+        && Array.isArray(normalized.vocalists)
+        && Array.isArray(normalized.instruments);
+      if (!sane) throw new Error('File is not a usable Stage·Assign backup');
+      // Valid → commit and reload.
       localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
       toast('Imported ✓ — reloading...', 'success');
       setTimeout(() => location.reload(), 600);
@@ -6785,6 +6824,9 @@ function pcoDisconnect() {
   state.pcoConfig.selectedPlanId = '';
   saveState();
   pcoServiceTypes = []; pcoPlans = [];
+  // Stop the 3-min auto-refresh interval (armed on connect); otherwise it keeps firing
+  // against a disconnected session forever.
+  if (pcoAutoRefreshTimer) { clearInterval(pcoAutoRefreshTimer); pcoAutoRefreshTimer = null; }
   hidePCOBar();
   renderPCOSettings();
   toast('Disconnected from Planning Center');
@@ -7640,7 +7682,10 @@ function pcoCanRefresh() {
   if (!state.pcoConfig.selectedPlanId) return false;             // no plan
   if (state.config.autoRefreshPaused) return false;              // user paused
   if (isStageEditing()) return false;                            // mid-edit
-  if (document.querySelector('.overlay.show, .setup-review-modal.show')) return false;     // a sheet/modal (incl. setup review) is open
+  // Don't refresh under the user's feet while ANY modal/overlay is open. The wizard,
+  // post-pull summary, run-sheet summary and secondary PCO sheets are their own overlay
+  // classes (not `.overlay`), so list them explicitly alongside the generic sheet + review.
+  if (document.querySelector('.overlay.show, .setup-review-modal.show, .wizard-overlay.show, .post-pull-overlay.show, .summary-overlay.show, .pco-secondary-overlay.show')) return false;
   return true;
 }
 
@@ -12515,7 +12560,7 @@ function init() {
   const itemsBtn = document.getElementById('setupItemsBtn');
   if (itemsBtn) itemsBtn.style.display = state.config.enableSetupItems === false ? 'none' : '';
   document.getElementById('siBackBtn').addEventListener('click', exitSetupItemsView);
-  document.getElementById('siSettingsBtn').addEventListener('click', () => openSettings('templates'));
+  document.getElementById('siSettingsBtn').addEventListener('click', () => openSettings('setups'));
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
   document.getElementById('printFromSummaryBtn').addEventListener('click', () => window.print());
   document.getElementById('copySummaryBtn').addEventListener('click', copySummaryText);
