@@ -1,9 +1,9 @@
 # Debug sweep — finding #1: go-live checklist check-offs orphaned on rebuild
 
-**Status:** investigated + characterized; **NOT implemented** (needs Dillon's sign-off — it
-rewrites persisted check-off data and carries a one-time-reset vs. recovery-migration choice).
-Written 2026-07-09 during the autonomous overnight sweep. Everything else from the sweep is either
-deployed (12 fixes, build ·f) or staged on `feat/debug-sweep-2` (#6, committed).
+**Status:** **IMPLEMENTED as Option A** on `feat/debug-sweep-2` (staged, not yet deployed) —
+Dillon chose "do 2" and I applied the recommended no-migration fix. On deploy, existing go-live
+check-offs reset once (no worse than today's flakiness); stable forever after. The Option A/B
+analysis below is retained as rationale. Written 2026-07-09; implemented 2026-07-10.
 
 ---
 

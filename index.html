@@ -1843,7 +1843,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-09·f</div>
+<div id="buildStamp">build 2026-07-10·a</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -9839,8 +9839,9 @@ function collectChecklistItems() {
   // the setup manager, reading the stable-key buckets in state.setupItems. This is
   // why the go-live checklist no longer falsely shows "No setup items configured"
   // when items ARE configured — it reads the real buckets, not the dead legacy
-  // v.setupItems / inst.setupItems arrays. Check-off keys are `stableKey|itemId`
-  // so a check-off is stable across relabels and per (person, role, item).
+  // v.setupItems / inst.setupItems arrays. Check-off keys are `stableKey|itemText`
+  // (NOT the item id, which newSetupItem re-mints on every rebuild — see FIX #1 below)
+  // so a check-off is stable across setup rebuilds and per (person, role, item).
   // Each enumerated role becomes one "person card": a group keyed by stableKey with
   // the person's name, their role/instrument label as a subheading, and their items.
   // The flat `items` array on each section is preserved (badge, lock screen, mark-all/
@@ -9880,7 +9881,11 @@ function collectChecklistItems() {
       const tkey = text.toLowerCase();
       if (p.seen.has(tkey)) return;
       p.seen.add(tkey);
-      p.items.push({ itemText: text, key: en.stableKey + '|' + it.id });
+      // Key by TEXT, not it.id — newSetupItem re-mints item ids on every rebuildPersonItems, so an
+      // id-based key orphaned the go-live check-off on any rebuild (FIX #1). Text is trimmed and
+      // deduped-unique per person (the p.seen guard above), mirroring how the editor's
+      // doneThisService already survives rebuilds by text.
+      p.items.push({ itemText: text, key: en.stableKey + '|' + text });
     });
   });
 
