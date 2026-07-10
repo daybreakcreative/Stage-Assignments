@@ -2862,9 +2862,9 @@ function micPrefsStore() {
   return state.config.micPrefs;
 }
 function micPrefFor(name) {
-  const k = normName(name); if (!k) return null;
+  const k = normFullName(name); if (!k) return null;   // match on FULL name — first-name matches collide (WATCHLIST #25)
   const people = micPrefsStore().people;
-  for (const key of Object.keys(people)) { if (normName(key) === k) return people[key]; }
+  for (const key of Object.keys(people)) { if (normFullName(key) === k) return people[key]; }
   return null;
 }
 function micPrefRecord(name) { // find-or-create by name
@@ -2887,10 +2887,10 @@ function setMicRemembered(name, mic) {
 }
 
 function getPref(name) {
-  const k = normName(name);
+  const k = normFullName(name);   // match on FULL name — first-name matches collide (WATCHLIST #25)
   if (!k) return null;
   for (const [key, val] of Object.entries(state.preferences)) {
-    if (normName(key) === k) return val;
+    if (normFullName(key) === k) return val;
   }
   return null;
 }
@@ -3038,7 +3038,7 @@ function computePositions(vocs) {
   positions.forEach((v, i) => { if (v) full[i] = v.id; });
   return full;
 }
-function assignMicsToVocalists() {
+function assignMicsToVocalists(seedRemembered = false) {
   const named = state.vocalists.filter(v => (v.name || '').trim().length > 0);
   const wl = named.find(v => v.isWL);
   const leaders = named.filter(v => v.leadsSongs && !v.isWL);
@@ -3087,11 +3087,16 @@ function assignMicsToVocalists() {
 
   state.vocalists.forEach(v => { v.micAssigned = result[v.id] || ''; });
   // Auto-remember (seed only — never overwrite a usual mic with a one-time fallback).
-  ordered.forEach(v => {
-    const got = result[v.id]; if (!got) return;
-    const p = micPrefFor(v.name);
-    if (!p || !p.remembered) setMicRemembered(v.name, got);
-  });
+  // ONLY on a deliberate Auto-Assign (seedRemembered=true). A derived assignment (PCO pull,
+  // post-pull re-run, wizard, name-blur, shadow-toggle) must NOT pin a "usual" mic to whatever
+  // fell out of the pool this week — that would silently stick forever (FIX #9).
+  if (seedRemembered) {
+    ordered.forEach(v => {
+      const got = result[v.id]; if (!got) return;
+      const p = micPrefFor(v.name);
+      if (!p || !p.remembered) setMicRemembered(v.name, got);
+    });
+  }
   // Hosts do NOT draw from the shared vocalist/shadow mic pool. Each host channel has its own
   // default capsule (config.hostChannels[].capsule) that the setup person sets — see renderHosts.
   // Shadow mics — lowest priority of all. A shadow only gets a mic if its setup is
@@ -3116,7 +3121,7 @@ function autoAssign() {
   // Re-order positions from ALL slots (named + any empty placeholders) so empty cards aren't
   // silently dropped; leader-centering still applies to the named vocalists.
   state.assignments = computePositions(state.vocalists);
-  assignMicsToVocalists();
+  assignMicsToVocalists(true);   // deliberate click — seed the "usual" mic (FIX #9)
   saveState();
   renderAll();
   toast('Mics assigned ✓','success');

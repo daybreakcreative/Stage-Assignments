@@ -23,7 +23,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
  };
 
  check('1) with no prefs, mics are handed out best→worst in order (leaders first)', ()=>{
-   setup(); ev('assignMicsToVocalists()');
+   // seedRemembered=true = the deliberate Auto-Assign path (FIX #9): only that seeds "usual" mics.
+   setup(); ev('assignMicsToVocalists(true)');
    // ordered WL Grayson, leader Mara, then non-leaders Mo, Ned.
    // Pool best→worst by rank/qty: KMS105 x1, Beta 58A x2, SM58 x4, D:Facto x1.
    // → Grayson KMS105, Mara Beta 58A, Mo Beta 58A (2nd), Ned SM58.
