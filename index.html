@@ -7567,12 +7567,16 @@ function pcoAddShadow(p) {
   state.shadows.push({ id:'sh_'+Math.random().toString(36).slice(2,8), name:p.name, position: p.positionName || '', pack: state.config.shadowPack || 'Misc 2' });
 }
 
+// Returns true if the person was actually placed. Only band placement can fail (a 2nd
+// drummer/bassist with no free slot — drums/bass aren't auto-created); the other kinds
+// keep their prior always-succeeds semantics.
 function pcoAddPerson(p) {
-  if (p.kind === 'vocalist') pcoAddVocalist(p);
-  else if (p.kind === 'band') pcoAddBand(p);
-  else if (p.kind === 'host') pcoAddHost(p);
-  else if (p.kind === 'shadow') pcoAddShadow(p);
-  else if (p.kind === 'md') { const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name)); if (inst) state.musicDirectorId = inst.id; }
+  if (p.kind === 'vocalist') { pcoAddVocalist(p); return true; }
+  else if (p.kind === 'band') return pcoAddBand(p);
+  else if (p.kind === 'host') { pcoAddHost(p); return true; }
+  else if (p.kind === 'shadow') { pcoAddShadow(p); return true; }
+  else if (p.kind === 'md') { const inst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(p.name)); if (inst) state.musicDirectorId = inst.id; return true; }
+  return true;
 }
 
 function pcoRemovePerson(p) {
@@ -7615,16 +7619,38 @@ function pcoRenamePerson(from, to) {
 }
 
 // Role change = remove from old role, add to new role, then carry any custom stage XY across.
+// TRANSACTIONAL (FIX #7): if the add to the new role can't place the person (e.g. moving TO a
+// single drums/bass slot that's already occupied), we must NOT leave them removed from their old
+// slot — that's a silent drop. Snapshot the collections reslot touches, and on a failed add roll
+// them back and surface a distinct "couldn't move" notice. Returns true iff the move succeeded.
 function pcoReslotPerson(from, to) {
   const oldInst = (from.kind === 'band' || from.kind === 'md') ? state.instruments.find(i => normFullName(i.assignedTo) === normFullName(from.name)) : null;
   const oldKey = oldInst ? oldInst.id : null;
   const oldCustom = (oldKey && state.config.customStagePositions) ? state.config.customStagePositions[oldKey] : null;
+  // Snapshot everything remove+add can mutate, so a failed add rolls back cleanly.
+  const snap = structuredClone({
+    instruments: state.instruments, vocalists: state.vocalists, assignments: state.assignments,
+    hosts: state.hosts, shadows: state.shadows, musicDirectorId: state.musicDirectorId,
+    customStagePositions: state.config.customStagePositions
+  });
   pcoRemovePerson(from);
-  pcoAddPerson(to);
+  const placed = pcoAddPerson(to);
+  if (!placed) {
+    // roll back to the pre-reslot state — the person keeps their old slot
+    state.instruments = snap.instruments; state.vocalists = snap.vocalists;
+    state.assignments = snap.assignments; state.hosts = snap.hosts;
+    state.shadows = snap.shadows; state.musicDirectorId = snap.musicDirectorId;
+    state.config.customStagePositions = snap.customStagePositions;
+    const oldPos = from.position || from.kind;
+    const newPos = to.position || to.kind;
+    pcoMergeNotices.needs.push({ id:'mv_'+(to.pcoId||from.pcoId||to.name), text:`⚠ couldn't move ${to.name} to ${newPos} — kept at ${oldPos}` });
+    return false;
+  }
   if (oldCustom) {
     const newInst = state.instruments.find(i => normFullName(i.assignedTo) === normFullName(to.name));
     if (newInst) { state.config.customStagePositions = state.config.customStagePositions || {}; state.config.customStagePositions[newInst.id] = oldCustom; }
   }
+  return true;
 }
 
 // applyPcoMerge: apply the change-list to live state. `next` is the fresh derivePcoModel (for service order/meta).
@@ -7638,14 +7664,24 @@ function applyPcoMerge(changeList, next) {
   }
   changeList.hardRemoved.forEach(pcoRemovePerson);
   changeList.declined.forEach(pcoRemovePerson);
+  // Track changes that couldn't actually be applied so pcoMergeNotify can suppress the misleading
+  // "added"/"role changed" line for them (FIX #7 — don't lie in the banner). The distinct
+  // "couldn't move"/"could not be placed" ⚠ notices are pushed at the point of failure.
+  const failedIds = [];
   // roleChanged before renamed: reslot looks up by old name, so apply it before the rename mutates the name
-  changeList.roleChanged.forEach(c => pcoReslotPerson(c.from, c.to));
+  changeList.roleChanged.forEach(c => { if (!pcoReslotPerson(c.from, c.to)) failedIds.push(c.to.pcoId); });
   changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
-  changeList.added.forEach(pcoAddPerson);
+  changeList.added.forEach(p => {
+    if (!pcoAddPerson(p)) {
+      failedIds.push(p.pcoId);
+      const pos = p.position || p.kind;
+      pcoMergeNotices.needs.push({ id:'nf_'+p.pcoId, text:`⚠ ${p.name} could not be placed (no free ${pos} slot)` });
+    }
+  });
   // Seed setup buckets for newly-added band/vocalist people and flag them for review.
   // Returned entries let the caller (pcoMergeRefresh) open the review dialog — applyPcoMerge
   // itself never opens a modal, so it stays unit-testable with no DOM intent.
-  return { setupReviewEntries: pcoSeedAddedSetup(changeList.added) };
+  return { setupReviewEntries: pcoSeedAddedSetup(changeList.added), failedAddIds: failedIds };
 }
 
 // For each added person that occupies an instrument (band, or md on an instrument) or
@@ -7740,7 +7776,7 @@ async function pcoMergeRefresh() {
     saveState();
     if (changeList.hasChanges) {
       renderAll();
-      pcoMergeNotify(changeList);
+      pcoMergeNotify(changeList, (mergeResult && mergeResult.failedAddIds) || []);
       const entries = (mergeResult && mergeResult.setupReviewEntries) || [];
       if (entries.length) openSetupReviewDialog(entries);
     }
@@ -7755,9 +7791,13 @@ async function pcoMergeRefresh() {
 
 let pcoMergeNotices = { needs: [], fyi: [] };   // {id, text} entries; ephemeral
 
-function pcoMergeNotify(changeList) {
+function pcoMergeNotify(changeList, failedIds) {
+  // `failedIds` (optional) = pcoIds of adds/reslots that couldn't be placed. We skip the generic
+  // "added"/"role changed" line for them; a distinct honest ⚠ notice was already pushed (FIX #7).
+  const failed = new Set(failedIds || []);
   // ⚠ needs-you (adds: assign mic/position · declines: find a sub) — stays until you dismiss it
   changeList.added.forEach(p => {
+    if (failed.has(p.pcoId)) return;   // don't claim we "added" someone we couldn't place
     const needsSetup = p.kind === 'band' || p.kind === 'vocalist' || p.kind === 'md';
     const text = needsSetup
       ? `⚠ ${p.name} added — assign mic/position & complete setup items`
@@ -7767,7 +7807,7 @@ function pcoMergeNotify(changeList) {
   changeList.declined.forEach(p => pcoMergeNotices.needs.push({ id:'d_'+p.pcoId, text:`⚠ ${p.name} declined — find a sub` }));
   // ℹ FYI (dismissable): hard removals, role changes, renames
   changeList.hardRemoved.forEach(p => pcoMergeNotices.fyi.push({ id:'r_'+p.pcoId, text:`ℹ ${p.name} removed from plan` }));
-  changeList.roleChanged.forEach(c => pcoMergeNotices.fyi.push({ id:'rc_'+c.to.pcoId, text:`ℹ ${c.to.name} role changed → ${c.to.position||c.to.kind}` }));
+  changeList.roleChanged.forEach(c => { if (failed.has(c.to.pcoId)) return; pcoMergeNotices.fyi.push({ id:'rc_'+c.to.pcoId, text:`ℹ ${c.to.name} role changed → ${c.to.position||c.to.kind}` }); });
   changeList.renamed.forEach(c => pcoMergeNotices.fyi.push({ id:'rn_'+c.to.pcoId, text:`ℹ renamed → ${c.to.name}` }));
   // de-dupe by id (a re-fire shouldn't stack)
   const dedupe = arr => { const seen=new Set(); return arr.filter(n=>!seen.has(n.id)&&seen.add(n.id)); };
