@@ -3849,10 +3849,21 @@ function getBandStagePositions() {
   const span = 800 - 2*PAD;
   // The stage spans from edgeY (front, top of SVG) to backY (back wall, bottom of SVG).
   // Place band along the back third of the stage so they sit INSIDE the outline regardless of curvature/depth.
-  const tc = getStageCurvature() / 100;
-  const td = getStageDepth() / 100;
-  const edgeY = 30 + 170 * tc;         // matches getStageShape()
-  const backY = 180 + 180 * td;        // matches getStageShape()
+  // When a CUSTOM outline is drawn, derive the front/back Y from that shape (via getStageShape) so
+  // auto-placed band follow the drawn stage — matching how getVoxPositions places vocalists (FIX #6).
+  // Otherwise fall back to the slider-derived basis. X / keys-stage-right logic below is unchanged.
+  let edgeY, backY;
+  const hasCustomOutline = !!(state.config && state.config.customStagePoints && state.config.customStagePoints.length >= 3);
+  if (hasCustomOutline) {
+    const shape = getStageShape();
+    edgeY = shape.edgeY;
+    backY = shape.backY;
+  } else {
+    const tc = getStageCurvature() / 100;
+    const td = getStageDepth() / 100;
+    edgeY = 30 + 170 * tc;         // matches getStageShape()
+    backY = 180 + 180 * td;        // matches getStageShape()
+  }
   const safeBack = Math.max(backY, edgeY + 60); // never invert if very deep curve + very shallow depth
   // Band sits in the back 1/3 of the stage. Outer slots a bit further back than center.
   const stageHeight = safeBack - edgeY;
