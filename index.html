@@ -1573,7 +1573,7 @@ body>*:not(.summary-overlay){display:none!important}
     <button class="btn pco" id="pcoBtn" title="PCO: Not Connected"><span class="dot"></span> Planning Center</button>
     <button class="btn ghost" id="themeBtn" title="Toggle light/dark mode">☾</button>
     <button class="btn ghost" id="settingsBtn" title="Advanced Settings" aria-label="Advanced Settings">Advanced Settings</button>
-    <button class="btn ghost" id="resetBtn">Reset</button>
+    <button class="btn ghost" id="resetBtn" title="Clear this week's team & run sheet for a new service (keeps mics, layout & PCO)">New Service</button>
     <button class="btn" id="summaryBtn">Print Summary</button>
     <button class="btn" id="setupItemsBtn" title="Open setup checklist" aria-label="Setup checklist">✓ Items<span class="nav-setup-badge" id="setupNavBadge" style="display:none"></span></button>
     <button class="btn primary" id="displayBtn" title="Switch to display view for green room / vocalists">▶ Display</button>
@@ -1869,7 +1869,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-10·e</div>
+<div id="buildStamp">build 2026-07-10·f</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -3108,7 +3108,9 @@ function computePositions(vocs) {
   // Remaining vocalists: prioritize WL → vocalists marked as leadsSongs → others.
   // Fill any open slots, working from the next fan-out slot outward.
   const remaining = [];
-  const wl = vocs.find(v => v.isWL && !used.has(v.id));
+  // Only CENTER a Worship Leader who's actually named — a blank starred slot (the wizard stars
+  // vocal 1 before it's filled) must not get pulled to the center as an empty highlighted card.
+  const wl = vocs.find(v => v.isWL && (v.name || '').trim() && !used.has(v.id));
   if (wl) { remaining.push(wl); used.add(wl.id); }
   vocs.filter(v => v.leadsSongs && !used.has(v.id)).forEach(v => { remaining.push(v); used.add(v.id); });
   vocs.filter(v => !used.has(v.id)).forEach(v => remaining.push(v));
@@ -3386,7 +3388,10 @@ function renderVocalists() {
       return `<option value="${esc(m.name)}"${isSelected?' selected':''}${atCap?' disabled':''}>${esc(label)}</option>`;
     }).join('');
     const card = document.createElement('div');
-    card.className = 'voc-card' + (v.isWL ? ' is-wl' : '');
+    // Only show the WL card HIGHLIGHT once the slot is named — the wizard pre-stars vocal 1, and a
+    // highlighted/centered blank card reads as a glitch on a fresh board. The ★ button still shows
+    // the designation. (computePositions likewise won't center a blank WL.)
+    card.className = 'voc-card' + (v.isWL && (v.name || '').trim() ? ' is-wl' : '');
     card.dataset.vid = v.id;
     card.innerHTML = `
       <div class="voc-pos-bar">
@@ -6154,7 +6159,7 @@ function renderLayoutEditor() {
         <input type="checkbox" id="vocShowMicCb" ${c.display.vocShowMic!==false?'checked':''}>
         <span>Show mic</span>
       </label>
-      <span class="voc-mic-warn" id="vocMicWarnTag" style="display:${c.showMicCapsules===false ? 'inline' : 'none'}">⚠ Mic assignment is off globally — enable it in Prefs</span>
+      <span class="voc-mic-warn" id="vocMicWarnTag" style="display:${c.showMicCapsules===false ? 'inline' : 'none'}">⚠ Mic capsules are off globally — turn on “Show mic capsule type” above</span>
       <label class="toggle-row">
         <input type="checkbox" id="vocShowIemCb" ${c.display.vocShowIem!==false?'checked':''}>
         <span>Show IEM pack</span>
@@ -10405,7 +10410,7 @@ function renderSetupChecklist() {
 
   let sectionsHtml = '';
   if (sections.length === 0) {
-    sectionsHtml = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">No setup items configured.<br>Add setup items to vocalists or band positions.</div>';
+    sectionsHtml = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">No setup items configured yet.<br>Add per-person setup items in <strong>Settings → Setup Items</strong>.<br><button class="scv-btn primary" id="scvAddSetupBtn" style="margin-top:18px;">+ Set up items</button></div>';
   } else {
     const rowHtml = it => {
       const isDone = !!cs[it.key];
@@ -10495,6 +10500,10 @@ function renderSetupChecklist() {
   // Back button
   const scvBack = container.querySelector('#scvBackBtn');
   if (scvBack) scvBack.addEventListener('click', exitSetupChecklistView);
+
+  // Empty-state "+ Set up items" → leave the checklist and open the Setup Items manager
+  const scvAddSetup = container.querySelector('#scvAddSetupBtn');
+  if (scvAddSetup) scvAddSetup.addEventListener('click', () => { exitSetupChecklistView(); openSettings('setups'); });
 
   // Mark all done
   const markAll = container.querySelector('#scvMarkAllBtn');
