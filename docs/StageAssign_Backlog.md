@@ -19,16 +19,18 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   check without asking who's who. Client-side is doable but photos bloat `localStorage` — weigh
   the storage cost / cap it / downscale. Best angle if revisited: **pull photos from the PCO
   People API on the plan pull** (zero manual work). Parked 2026-07-10 with the countdown above.
-- **[POLISH] Export / share the display view.** A "print or PDF the display" for posting
-  backstage (the Print Summary is the stage-tech sheet; this would be the display snapshot).
+- ~~**[POLISH] Export / share the display view.**~~ **Declined 2026-07-10** — Print Summary is the
+  only print path needed (the display is the on-screen/TV view).
 
 ### Stage editor
-- **[POLISH] Feature label overlap.** Labels can overlap an adjacent fixture on a crowded stage.
+- **[POLISH] Fixture label overlap.** A FIXTURE's label (stairs/doors/monitors) can overlap an
+  adjacent fixture on a crowded stage. (Distinct from the person name-label resolver — that shipped
+  2026-07-10 ·d.)
 
 ### Vocalists
-- **[POLISH] Seeded WL on an empty slot.** The wizard stars the first vocalist as Worship Leader
-  even when blank; Auto-Assign then centers an empty starred card. Self-resolves once you
-  name/unstar it, but could be cleaner.
+- ✅ **[DONE 2026-07-10 ·f] Seeded WL on an empty slot.** A blank starred vocalist no longer renders
+  as a highlighted/centered card (`computePositions` won't center a nameless WL; the card highlight
+  is gated on a name). The ★ button still shows the designation.
 
 ---
 
@@ -39,13 +41,12 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   2026-07-09** (too complex / not loved). Preserved at git tag **`worlds-v1`**, mockups in
   `docs/design-*.html`, spec + plan in `docs/superpowers/`. A candidate basis for a future
   **per-church custom edition**.
-- Two useful fixes rode in with that work and were reverted with it — **not in the live classic
-  app**, both cherry-pickable from `worlds-v1`:
-  - **Stage name-label overlap fix** (`resolveStageLabelLayout`). ⚠ Because it was reverted, the
-    live stage can still print names on top of each other when people sit close — a **live bug**
-    worth re-porting.
-  - **Front-of-stage selector + highlight** (`state.config.stageFrontEdge`) — pick the front edge
-    in the outline editor; highlight it on the display.
+- Two useful fixes rode in with that work — both **re-ported into the live app 2026-07-10 (build
+  ·d)**, now shipped (no longer pending):
+  - ✅ **Stage name-label overlap resolver** (`resolveStageLabelLayout`) — wired into Display + Print.
+  - ✅ **Front-of-stage selector + highlight** (`state.config.stageFrontEdge`) — "⚑ Front edge" in
+    the outline editor + wizard, highlighted on Display/Print; vocalists spread along the chosen
+    edge (fixes the peaked-outline crowding).
 
 ---
 
