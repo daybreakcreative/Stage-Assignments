@@ -7654,34 +7654,55 @@ function pcoReslotPerson(from, to) {
 }
 
 // applyPcoMerge: apply the change-list to live state. `next` is the fresh derivePcoModel (for service order/meta).
+// ATOMIC (FIX #8): the whole merge is all-or-nothing. This runs unattended every ~3 min; a throw
+// partway (bad plan payload, a helper bug) must NOT leave state half-merged — the corruption would
+// otherwise be persisted on the next user-triggered saveState. Snapshot the collections the merge
+// mutates, apply inside try/catch, and on any throw restore every collection and rethrow so callers
+// (pcoMergeRefresh) still see the error and skip the immediate saveState.
 function applyPcoMerge(changeList, next) {
-  if (changeList.metaChanged && next && next.meta) {
-    if (next.meta.title) state.service.name = next.meta.title;
-    if (next.meta.date) state.service.date = next.meta.date;
-  }
-  if (changeList.serviceOrderChanged && next) {
-    state.serviceOrder = (next.serviceOrder || []).map(s => ({ id:s.id, kind:s.kind, title:s.title, length:s.length, key:s.key, leader:s.leader, notes:s.notes }));
-  }
-  changeList.hardRemoved.forEach(pcoRemovePerson);
-  changeList.declined.forEach(pcoRemovePerson);
-  // Track changes that couldn't actually be applied so pcoMergeNotify can suppress the misleading
-  // "added"/"role changed" line for them (FIX #7 — don't lie in the banner). The distinct
-  // "couldn't move"/"could not be placed" ⚠ notices are pushed at the point of failure.
-  const failedIds = [];
-  // roleChanged before renamed: reslot looks up by old name, so apply it before the rename mutates the name
-  changeList.roleChanged.forEach(c => { if (!pcoReslotPerson(c.from, c.to)) failedIds.push(c.to.pcoId); });
-  changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
-  changeList.added.forEach(p => {
-    if (!pcoAddPerson(p)) {
-      failedIds.push(p.pcoId);
-      const pos = p.position || p.kind;
-      pcoMergeNotices.needs.push({ id:'nf_'+p.pcoId, text:`⚠ ${p.name} could not be placed (no free ${pos} slot)` });
-    }
+  const _snap = structuredClone({
+    service: state.service, serviceOrder: state.serviceOrder, vocalists: state.vocalists,
+    instruments: state.instruments, hosts: state.hosts, shadows: state.shadows,
+    assignments: state.assignments, musicDirectorId: state.musicDirectorId,
+    setupItems: state.setupItems, customStagePositions: state.config.customStagePositions
   });
-  // Seed setup buckets for newly-added band/vocalist people and flag them for review.
-  // Returned entries let the caller (pcoMergeRefresh) open the review dialog — applyPcoMerge
-  // itself never opens a modal, so it stays unit-testable with no DOM intent.
-  return { setupReviewEntries: pcoSeedAddedSetup(changeList.added), failedAddIds: failedIds };
+  try {
+    if (changeList.metaChanged && next && next.meta) {
+      if (next.meta.title) state.service.name = next.meta.title;
+      if (next.meta.date) state.service.date = next.meta.date;
+    }
+    if (changeList.serviceOrderChanged && next) {
+      state.serviceOrder = (next.serviceOrder || []).map(s => ({ id:s.id, kind:s.kind, title:s.title, length:s.length, key:s.key, leader:s.leader, notes:s.notes }));
+    }
+    changeList.hardRemoved.forEach(pcoRemovePerson);
+    changeList.declined.forEach(pcoRemovePerson);
+    // Track changes that couldn't actually be applied so pcoMergeNotify can suppress the misleading
+    // "added"/"role changed" line for them (FIX #7 — don't lie in the banner). The distinct
+    // "couldn't move"/"could not be placed" ⚠ notices are pushed at the point of failure.
+    const failedIds = [];
+    // roleChanged before renamed: reslot looks up by old name, so apply it before the rename mutates the name
+    changeList.roleChanged.forEach(c => { if (!pcoReslotPerson(c.from, c.to)) failedIds.push(c.to.pcoId); });
+    changeList.renamed.forEach(c => pcoRenamePerson(c.from, c.to));
+    changeList.added.forEach(p => {
+      if (!pcoAddPerson(p)) {
+        failedIds.push(p.pcoId);
+        const pos = p.position || p.kind;
+        pcoMergeNotices.needs.push({ id:'nf_'+p.pcoId, text:`⚠ ${p.name} could not be placed (no free ${pos} slot)` });
+      }
+    });
+    // Seed setup buckets for newly-added band/vocalist people and flag them for review.
+    // Returned entries let the caller (pcoMergeRefresh) open the review dialog — applyPcoMerge
+    // itself never opens a modal, so it stays unit-testable with no DOM intent.
+    return { setupReviewEntries: pcoSeedAddedSetup(changeList.added), failedAddIds: failedIds };
+  } catch (err) {
+    // Roll back every mutated collection to the pre-merge snapshot, then rethrow.
+    state.service = _snap.service; state.serviceOrder = _snap.serviceOrder;
+    state.vocalists = _snap.vocalists; state.instruments = _snap.instruments;
+    state.hosts = _snap.hosts; state.shadows = _snap.shadows;
+    state.assignments = _snap.assignments; state.musicDirectorId = _snap.musicDirectorId;
+    state.setupItems = _snap.setupItems; state.config.customStagePositions = _snap.customStagePositions;
+    throw err;
+  }
 }
 
 // For each added person that occupies an instrument (band, or md on an instrument) or
