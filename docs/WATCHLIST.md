@@ -125,6 +125,11 @@ Behaviors that must keep working. **The executable version of this list is `test
       `summary`, `nav`
 - [ ] Print Summary is unbranded black-and-white. → `summary`
 - [ ] Navigation between Assign / Display / Settings works. → `nav`, `mobile`
+- [ ] **Single look, locked.** The app uses ONE font (**Manrope**) everywhere and is locked to
+      the **Platinum** palette — bold mixed-case titles, thin uppercase-tracked labels/roles — with
+      NO color/mood picker in Settings or the wizard; the ☾/☀ dark-light toggle still works. (The
+      multi-"worlds" redesign was reverted 2026-07-09; it lives at tag `worlds-v1`.) → `aurora`,
+      `wizquickwins`
 
 ### Persistence & data
 - [ ] State persists across reload; `loadState` merges new defaults onto old saved

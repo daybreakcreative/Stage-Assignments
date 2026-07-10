@@ -1,6 +1,6 @@
 # Stage·Assign — Backlog
 
-_Last pruned 2026-07-07 to reflect reality (a lot had shipped but was still listed as open).
+_Last pruned 2026-07-07; **reconciled 2026-07-09** after the "worlds" redesign was built then reverted (see "Reverted" below).
 Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** = new capability ·
 **[POLISH]** = minor. See also `docs/audit-2026-07-06.md` (health snapshot) and
 `docs/sidestage-comparison.md` (competitive review + where the new display ideas came from)._
@@ -30,6 +30,23 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 
 ---
 
+## Reverted — recoverable from `worlds-v1`
+
+- The **"display worlds" redesign** (5 distinct looks — Molten / Concrete / Corporate / Terra /
+  Orbit, each its own layout + type + texture) was fully built and shipped, then **reverted
+  2026-07-09** (too complex / not loved). Preserved at git tag **`worlds-v1`**, mockups in
+  `docs/design-*.html`, spec + plan in `docs/superpowers/`. A candidate basis for a future
+  **per-church custom edition**.
+- Two useful fixes rode in with that work and were reverted with it — **not in the live classic
+  app**, both cherry-pickable from `worlds-v1`:
+  - **Stage name-label overlap fix** (`resolveStageLabelLayout`). ⚠ Because it was reverted, the
+    live stage can still print names on top of each other when people sit close — a **live bug**
+    worth re-porting.
+  - **Front-of-stage selector + highlight** (`state.config.stageFrontEdge`) — pick the front edge
+    in the outline editor; highlight it on the display.
+
+---
+
 ## Decisions to make (parked — nothing to build until you weigh in)
 
 - **[BIG] Live TV sync — the strategic fork.** Previously dropped because the display runs on the
@@ -47,9 +64,10 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 
 ## Shipped (compressed record — so this list stays honest)
 
-- **Aurora theme** is the only look (Classic retired): default, 11 moods, wizard look step, live
-  recolor, display dialed in, smooth single-direction gradient (2026-07-07). Brand tab retired —
-  Name Format folded into the Display tab.
+- **Theme (current, 2026-07-09):** the app is locked to a single **Platinum** palette with **one
+  font (Manrope)** everywhere — bold mixed-case titles, thin uppercase-tracked labels/roles — plus
+  the ☾/☀ dark-light toggle. The old 11-color mood picker + its machinery were removed. (Brand tab
+  retired earlier; Name Format lives in the Display tab.)
 - **IEM pack rework:** dropped the redundant "Pack" suffix + migration; smart conflict engine
   (off-stage shadow lowest priority); resolution dialog on PCO pull / add-person; live ⚠ badge.
 - **Report-a-bug v2:** in-app form (description + screenshot) → downloads config + opens a
