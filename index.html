@@ -1843,7 +1843,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-09·d</div>
+<div id="buildStamp">build 2026-07-09·e</div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -6435,14 +6435,6 @@ function ensureFontLoaded(fontName) {
   return Promise.resolve();
 }
 
-// Master font list — used by both the wizard and Settings → Brand picker
-const ALL_FONTS = ['Fraunces','Playfair Display','Cormorant Garamond','Lora','Merriweather','EB Garamond','Bitter','Crimson Pro','Inter','DM Sans','Manrope','Plus Jakarta Sans','Outfit','Geist'];
-
-// Eagerly preload all font CSS so the picker shows them in their true face the first time it opens
-function preloadAllFonts() {
-  ALL_FONTS.forEach(f => ensureFontLoaded(f));
-}
-
 // Render a custom font picker into a container. Each option shown in its own face.
 // containerEl: a parent element (will be emptied and re-populated)
 // currentFont: the currently selected font name
@@ -8509,7 +8501,6 @@ function applyLook() {
   html.style.setProperty('--accent-glow', 'color-mix(in srgb, var(--c1) 35%, transparent)');
   html.style.setProperty('--btn-primary-text', '#0a0f16');
 }
-function setLook() { applyLook(); saveState(); } // retained for callers; aurora is unconditional
 
 function applyBrand() {
   // Aurora owns the accent + display font (via its mood tokens); don't let a brand edit
