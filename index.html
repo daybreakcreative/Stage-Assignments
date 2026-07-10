@@ -4430,8 +4430,12 @@ function openPolygonStageEditor(opts) {
   opts = opts || {};
   const existing = document.getElementById('saPolyModal'); if (existing) existing.remove();
   const seedFn = opts.seed || seedPolygonPoints;
-  let pts = (opts.getInitial && opts.getInitial()) || [];
-  pts = (Array.isArray(pts) && pts.length >= 3) ? pts.map(roundStagePoint) : seedFn();
+  const initial = (opts.getInitial && opts.getInitial()) || [];
+  const startedCustom = Array.isArray(initial) && initial.length >= 3;   // FIX #5
+  let pts = startedCustom ? initial.map(roundStagePoint) : seedFn();
+  // Snapshot the STARTING shape so a no-edit close of an AUTO outline doesn't pin the seed
+  // (slider shape) as a custom outline — which would hide the curve/depth sliders (WATCHLIST #30).
+  const initialSnapshot = JSON.stringify(pts.map(roundStagePoint));
   let snap = false;
   let selIdx = -1;
 
@@ -4580,7 +4584,12 @@ function openPolygonStageEditor(opts) {
   modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; render(); });
   const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
   const commit = () => {
-    if (pts.length >= 3 && opts.onSave) opts.onSave(pts.map(roundStagePoint));
+    // Only write when there's something worth writing: the editor STARTED from a custom
+    // outline, OR the current points differ from the seeded shape (a real edit / reset).
+    // A no-edit close of an AUTO outline is treated as a Discard so we don't pin the slider
+    // shape as custom (FIX #5).
+    const dirty = startedCustom || JSON.stringify(pts.map(roundStagePoint)) !== initialSnapshot;
+    if (pts.length >= 3 && dirty && opts.onSave) opts.onSave(pts.map(roundStagePoint));
     close();
   };
   function onKey(e) { if (e.key === 'Escape') commit(); }
