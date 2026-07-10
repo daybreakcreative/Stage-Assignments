@@ -1226,6 +1226,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 #dvStagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none}
 #dvStagePeople > .dv-sp{pointer-events:auto}
 .dv-stage-svg{display:block}
+/* Front-of-stage edge highlight (where vocalists line up) — accent stroke + caption. */
+.dv-front-edge{stroke:var(--accent);stroke-width:6;stroke-linecap:round;opacity:.9}
+.dv-front-edge-lbl{font-family:var(--ff-mono),'Manrope',system-ui,sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;fill:var(--accent);opacity:.95}
+.s-stage-frame .dv-front-edge{stroke:#b08a3a!important;opacity:.85}
+.s-stage-frame .dv-front-edge-lbl{fill:#7a6838!important}
 .dv-sp{position:absolute;transform:translate(-50%,-50%);transform-origin:center center;background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;width:max-content;max-width:none;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
@@ -2099,6 +2104,10 @@ const DEFAULT_STATE = {
     // Custom stage outline as a simple polygon (array of {x, y} corners in viewBox units). null = use slider shape.
     // (Replaces the old Bezier pen-tool data; the renderer always drew these as straight edges anyway.)
     customStagePoints: null,
+    // Which polygon edge is the "front" (where vocalists line up, facing the audience).
+    // Stored as the START-corner index of that edge into the stage polygon points (edge i = point i → point i+1).
+    // null = auto (the most-forward edge, i.e. the top/audience edge) — preserves legacy behavior.
+    stageFrontEdge: null,
     // Stage features (stairs, doors, risers, monitor wedges, etc.) placed on the stage.
     // Each: { id, type, label, x, y, w, h, rot } — x/y is the CENTER in viewBox units (0..800 / 0..380),
     // w/h in viewBox units, rot in degrees. Persists across services (venue-level).
@@ -2487,6 +2496,10 @@ function loadState() {
           customStagePoints: (Array.isArray(loadedConfig.customStagePoints) && loadedConfig.customStagePoints.length >= 3)
             ? loadedConfig.customStagePoints.map(roundStagePoint)
             : null,
+          // Front edge: a non-negative integer edge index, or null = auto. Absent/invalid old saves → null.
+          stageFrontEdge: (Number.isInteger(loadedConfig.stageFrontEdge) && loadedConfig.stageFrontEdge >= 0)
+            ? loadedConfig.stageFrontEdge
+            : null,
           stageFeatures: Array.isArray(loadedConfig.stageFeatures) ? loadedConfig.stageFeatures : [],
           personMicPrefs: (loadedConfig.personMicPrefs && typeof loadedConfig.personMicPrefs === 'object') ? loadedConfig.personMicPrefs : {},
           micPrefs: normalizeMicPrefs(loadedConfig, p),
@@ -2538,7 +2551,7 @@ function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(st
    ============================================================================ */
 const VENUE_CONFIG_KEYS = [
   'vocalDirection', 'stageShape', 'stageCurvature', 'stageDepth',
-  'customStagePositions', 'customStageEnabled', 'customStagePoints',
+  'customStagePositions', 'customStageEnabled', 'customStagePoints', 'stageFrontEdge',
   'stageFeatures', 'stageAreas',
   'voxIemPacks', 'iemPackPresets', 'shadowPack', 'enableShadows'
 ];
@@ -4064,6 +4077,26 @@ function roundStagePoint(p) {
   return np;
 }
 
+// The "front edge" of a polygon is the edge vocalists line up along. Resolve which edge index
+// to use: an explicit user choice (state.config.stageFrontEdge) when it's a valid edge for these
+// points, otherwise auto = the most-forward edge (smallest midpoint Y = closest to the audience
+// at top). Kept as a shared helper so the shape math + editor + display highlight all agree.
+function autoFrontEdgeIndex(pts) {
+  let fi = 0, bestY = Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    const my = (a.y + b.y) / 2;
+    if (my < bestY) { bestY = my; fi = i; }
+  }
+  return fi;
+}
+function resolveFrontEdgeIndex(pts) {
+  if (!pts || pts.length < 2) return 0;
+  const chosen = state.config && state.config.stageFrontEdge;
+  if (Number.isInteger(chosen) && chosen >= 0 && chosen < pts.length) return chosen;
+  return autoFrontEdgeIndex(pts);
+}
+
 function getStageShape() {
   // If a custom polygon has been drawn, use it for the floor path AND derive the front edge from it
   // (so we no longer draw the slider's curve on top — that was the "old curve still showing" bug).
@@ -4071,26 +4104,35 @@ function getStageShape() {
   if (customPts && customPts.length >= 3) {
     const pts = customPts;
     const pathD = polygonPathFromPoints(pts);
-    // Find the most-forward edge (smallest midpoint Y = closest to the audience at top).
-    let fi = 0, bestY = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i + 1) % pts.length];
-      const my = (a.y + b.y) / 2;
-      if (my < bestY) { bestY = my; fi = i; }
-    }
+    // The front edge is the one vocalists line up along — user-selected, else the most-forward edge.
+    const fi = resolveFrontEdgeIndex(pts);
     const ea = pts[fi], eb = pts[(fi + 1) % pts.length];
-    const right = ea.x >= eb.x ? ea : eb;   // P0 = stage-right end (larger x)
-    const left  = ea.x >= eb.x ? eb : ea;   // P2 = stage-left end
+    // P0 = stage-right end, P2 = stage-left end. For a horizontal-ish edge that's larger x;
+    // for a steep/vertical side edge, order by y instead so vocalists still spread along it.
+    const horizEdge = Math.abs(ea.x - eb.x) >= Math.abs(ea.y - eb.y);
+    let right, left;
+    if (horizEdge) { right = ea.x >= eb.x ? ea : eb; left = ea.x >= eb.x ? eb : ea; }
+    else           { right = ea.y <= eb.y ? ea : eb; left = ea.y <= eb.y ? eb : ea; }
     const ctrl  = (ea.c && typeof ea.c.x === 'number') ? ea.c : { x: (ea.x + eb.x) / 2, y: (ea.y + eb.y) / 2 };
     const edge = `M ${right.x} ${right.y} Q ${Math.round(ctrl.x)} ${Math.round(ctrl.y)} ${left.x} ${left.y}`;
     const ys = pts.map(p => p.y);
     const edgeY = Math.min.apply(null, ys);
     const backY = Math.max.apply(null, ys);
+    // Inward normal of the front edge, pointing toward the polygon centroid (so vocalists can be
+    // nudged "just inside" whichever edge is front — top, bottom, or a side).
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    const ex = eb.x - ea.x, ey = eb.y - ea.y;
+    let nx = -ey, ny = ex; // one perpendicular
+    const mx = (ea.x + eb.x) / 2, myn = (ea.y + eb.y) / 2;
+    if ((cx - mx) * nx + (cy - myn) * ny < 0) { nx = -nx; ny = -ny; } // flip to point inward
+    const nlen = Math.hypot(nx, ny) || 1;
     return {
       path: pathD,
       edge,
       P0: { x: right.x, y: right.y }, P1: { x: ctrl.x, y: ctrl.y }, P2: { x: left.x, y: left.y },
-      edgeY, backY, midY: ctrl.y
+      edgeY, backY, midY: ctrl.y,
+      frontEdgeIndex: fi, inward: { x: nx / nlen, y: ny / nlen }, centroid: { x: cx, y: cy }
     };
   }
   // Returns SVG path data for stage + bezier control points for vocalists.
@@ -4114,20 +4156,25 @@ function getStageShape() {
   // Back wall position: depth=100 puts it at y=360, depth=0 puts it at y=180 (shallow)
   const backY = 180 + (180 * td);
 
+  // Slider shape: the front is ALWAYS the top/audience edge, so inward = straight down (+y).
+  const sliderInward = { x: 0, y: 1 };
+  const sliderCentroid = { x: 400, y: (edgeY + backY) / 2 };
   if (tc === 0) {
     // Pure flat — straight line, not a quadratic curve
     return {
       path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} L 20 ${edgeY} Z`,
       edge: `M 780 ${edgeY} L 20 ${edgeY}`,
       P0: { x:780, y:edgeY + 25 }, P1: { x:400, y:edgeY + 25 }, P2: { x:20, y:edgeY + 25 },
-      edgeY, backY, midY
+      edgeY, backY, midY,
+      frontEdgeIndex: null, inward: sliderInward, centroid: sliderCentroid
     };
   }
   return {
     path: `M 20 ${backY} L 780 ${backY} L 780 ${edgeY} Q 400 ${midY} 20 ${edgeY} Z`,
     edge: `M 780 ${edgeY} Q 400 ${midY} 20 ${edgeY}`,
     P0: { x:780, y:edgeY }, P1: { x:400, y:midY }, P2: { x:20, y:edgeY },
-    edgeY, backY, midY
+    edgeY, backY, midY,
+    frontEdgeIndex: null, inward: sliderInward, centroid: sliderCentroid
   };
 }
 function getVoxPositions(count) {
@@ -4135,6 +4182,10 @@ function getVoxPositions(count) {
   const { P0, P1, P2 } = shape;
   function bez(t) { const mt = 1-t; return { x:mt*mt*P0.x + 2*mt*t*P1.x + t*t*P2.x, y:mt*mt*P0.y + 2*mt*t*P1.y + t*t*P2.y }; }
   const MARGIN = 38;
+  // Offset vocalists "just inside" the front edge along its inward normal. For the slider shape
+  // inward = +y (straight down), which reproduces the historical `pt.y + MARGIN` exactly; for a
+  // custom polygon with an arbitrary front edge it pushes them the correct way into the stage.
+  const inward = (shape.inward && typeof shape.inward.y === 'number') ? shape.inward : { x: 0, y: 1 };
   const inset = Math.max(0.08, 0.5/count);
   const direction = (state.config && state.config.vocalDirection) || 'rtl';
   const customs = (state.config.customStageEnabled && state.config.customStagePositions) || null;
@@ -4153,20 +4204,63 @@ function getVoxPositions(count) {
     else if (direction === 'ltr') t = (1-inset) - (i/(count-1)) * (1-2*inset);
     else                          t = inset       + (i/(count-1)) * (1-2*inset);
     const pt = bez(t);
-    positions.push({ x:pt.x, y:pt.y + MARGIN });
+    positions.push({ x: pt.x + inward.x * MARGIN, y: pt.y + inward.y * MARGIN });
   }
   return positions;
+}
+// Build SVG markup that highlights the FRONT edge of the stage (where vocalists line up).
+// Draws a thicker accent-colored stroke over shape.edge, plus an optional "FRONT" label nudged
+// inward from the edge midpoint. Only meaningful when a custom outline has a resolvable front edge.
+// opts: { label:true, pathClass, lblClass }.
+function frontEdgeHighlightSvg(shape, opts) {
+  opts = opts || {};
+  if (!shape || !shape.edge) return '';
+  const pathClass = opts.pathClass || 'dv-front-edge';
+  const lblClass = opts.lblClass || 'dv-front-edge-lbl';
+  let out = `<path class="${pathClass}" d="${shape.edge}" fill="none"/>`;
+  if (opts.label !== false) {
+    // Midpoint of the front edge ≈ the bezier control's midpoint; nudge inward so the text sits
+    // just inside the stage rather than off the apron.
+    const mx = shape.P1 ? shape.P1.x : 400;
+    const my = shape.P1 ? shape.P1.y : (shape.edgeY || 30);
+    const inw = (shape.inward && typeof shape.inward.y === 'number') ? shape.inward : { x: 0, y: 1 };
+    const lx = mx + inw.x * 20;
+    const ly = my + inw.y * 20 + 4;
+    out += `<text class="${lblClass}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">FRONT</text>`;
+  }
+  return out;
+}
+// Add/update a front-edge highlight (accent stroke over the front edge + a "FRONT" caption) inside
+// one stage <svg>. Only shown when a custom outline is active with a resolvable front edge; removed
+// otherwise. Idempotent — safe to call on every renderStageShape().
+function syncFrontEdgeHighlight(svgEl, shape) {
+  if (!svgEl) return;
+  const prev = svgEl.querySelector('.dv-front-edge-group');
+  const hasCustom = !!(state.config && state.config.customStagePoints && state.config.customStagePoints.length >= 3);
+  if (!hasCustom || !shape || !shape.edge) { if (prev) prev.remove(); return; }
+  const svgns = 'http://www.w3.org/2000/svg';
+  let g = prev;
+  if (!g) { g = document.createElementNS(svgns, 'g'); g.setAttribute('class', 'dv-front-edge-group'); svgEl.appendChild(g); }
+  else { svgEl.appendChild(g); } // keep it on top of the floor/edge paths
+  g.setAttribute('pointer-events', 'none');
+  g.innerHTML = frontEdgeHighlightSvg(shape, { label: true });
 }
 function renderStageShape() {
   // Update the SVG path for both setup and display views whenever the stage shape config changes
   const shape = getStageShape();
-  document.querySelectorAll('.stage-svg path').forEach((el, i) => {
-    if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
-    else el.setAttribute('d', shape.path);
+  document.querySelectorAll('.stage-svg').forEach((svgEl) => {
+    svgEl.querySelectorAll('path').forEach((el) => {
+      if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
+      else el.setAttribute('d', shape.path);
+    });
+    syncFrontEdgeHighlight(svgEl, shape);
   });
-  document.querySelectorAll('.dv-stage-svg path').forEach((el) => {
-    if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
-    else el.setAttribute('d', shape.path);
+  document.querySelectorAll('.dv-stage-svg').forEach((svgEl) => {
+    svgEl.querySelectorAll('path').forEach((el) => {
+      if (el.getAttribute('fill') === 'none') el.setAttribute('d', shape.edge);
+      else el.setAttribute('d', shape.path);
+    });
+    syncFrontEdgeHighlight(svgEl, shape);
   });
 }
 function vocalistInstrumentTags(vId) {
@@ -4399,6 +4493,7 @@ function captureStageSnapshot(source) {
   if (source === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
     return {
       points: (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? structuredClone(wizardData.customStagePoints) : null,
+      frontEdge: Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null,
       curvature: (typeof wizardData.stageCurvature === 'number') ? wizardData.stageCurvature : DEFAULT_STAGE_CURVATURE,
       depth: (typeof wizardData.stageDepth === 'number') ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH,
       vocalDirection: wizardData.vocalDirection || DEFAULT_VOCAL_DIRECTION,
@@ -4408,6 +4503,7 @@ function captureStageSnapshot(source) {
   const c = state.config;
   return {
     points: (Array.isArray(c.customStagePoints) && c.customStagePoints.length >= 3) ? structuredClone(c.customStagePoints) : null,
+    frontEdge: Number.isInteger(c.stageFrontEdge) ? c.stageFrontEdge : null,
     curvature: (typeof c.stageCurvature === 'number') ? c.stageCurvature : DEFAULT_STAGE_CURVATURE,
     depth: (typeof c.stageDepth === 'number') ? c.stageDepth : DEFAULT_STAGE_DEPTH,
     vocalDirection: c.vocalDirection || DEFAULT_VOCAL_DIRECTION,
@@ -4427,11 +4523,13 @@ function applySavedStage(id, target) {
   if (!s) return false;
   if (target === 'wizard' && typeof wizardData !== 'undefined' && wizardData) {
     wizardData.customStagePoints = s.points ? structuredClone(s.points) : null;
+    wizardData.stageFrontEdge = (s.points && Number.isInteger(s.frontEdge)) ? s.frontEdge : null;
     wizardData.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
     wizardData.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
     if (s.vocalDirection) wizardData.vocalDirection = s.vocalDirection;
   } else {
     state.config.customStagePoints = s.points ? structuredClone(s.points) : null;
+    state.config.stageFrontEdge = (s.points && Number.isInteger(s.frontEdge)) ? s.frontEdge : null;
     state.config.stageCurvature = (typeof s.curvature === 'number') ? s.curvature : DEFAULT_STAGE_CURVATURE;
     state.config.stageDepth = (typeof s.depth === 'number') ? s.depth : DEFAULT_STAGE_DEPTH;
     if (s.vocalDirection) state.config.vocalDirection = s.vocalDirection;
@@ -4507,6 +4605,14 @@ function openPolygonStageEditor(opts) {
   const initialSnapshot = JSON.stringify(pts.map(roundStagePoint));
   let snap = false;
   let selIdx = -1;
+  // Which edge is the FRONT (vocalists line up here). Seeded from the resolved front edge so the
+  // highlight matches the live stage; tracked locally and kept stable as corners are added/removed.
+  let frontIdx = (opts.getInitialFront && opts.getInitialFront());
+  if (!Number.isInteger(frontIdx) || frontIdx < 0 || frontIdx >= pts.length) frontIdx = autoFrontEdgeIndex(pts);
+  // Whether the user has explicitly touched the front edge in this editor session. If they never
+  // do, we return null on save (= auto), so the front keeps auto-tracking as the shape changes.
+  let frontTouched = Number.isInteger(opts.getInitialFront && opts.getInitialFront());
+  let frontMode = false; // when true, clicking an edge marks it as the front
 
   const modal = document.createElement('div');
   modal.id = 'saPolyModal'; modal.className = 'sa-modal';
@@ -4514,12 +4620,14 @@ function openPolygonStageEditor(opts) {
     <div class="sa-panel">
       <div class="sa-header">
         <span class="sa-title">Edit stage outline</span>
+        <button class="draw-tool-btn" id="saPolyFront">&#x2691; Front edge</button>
         <button class="draw-tool-btn" id="saPolySnap">&#x22A1; Snap to grid</button>
         <button class="draw-tool-btn" id="saPolyReset">&#x21bb; Reset to rectangle</button>
         <button class="sa-close" id="saPolyClose" title="Close">&#x2715;</button>
       </div>
       <div class="sa-body">
-        <div class="sa-hint"><b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it (drag it back to the middle to straighten) &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it. Your changes are kept unless you hit Discard.</div>
+        <div class="sa-hint" id="saPolyHint"><b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it (drag it back to the middle to straighten) &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it. Your changes are kept unless you hit Discard.</div>
+        <div class="sa-hint" style="color:var(--accent);"><b>Front</b> = where vocalists line up, facing the audience.</div>
         <div class="sa-canvas-wrap"><svg id="saPolySvg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet"></svg></div>
       </div>
       <div class="sa-footer">
@@ -4560,6 +4668,27 @@ function openPolygonStageEditor(opts) {
     h += `<text x="400" y="372" text-anchor="middle" style="${lbl}">BACK &#x2193;</text>`;
     // Curve-aware filled outline
     h += `<path d="${polygonPathFromPoints(pts)}" fill="rgba(212,161,71,0.15)" stroke="rgba(212,161,71,0.85)" stroke-width="2" stroke-linejoin="round"/>`;
+    // ALWAYS highlight the current FRONT edge (thicker accent stroke over just that edge).
+    if (Number.isInteger(frontIdx) && frontIdx >= 0 && frontIdx < pts.length) {
+      const a = pts[frontIdx], b = pts[(frontIdx + 1) % pts.length];
+      const fd = (a.c && typeof a.c.x === 'number')
+        ? `M ${a.x} ${a.y} Q ${a.c.x} ${a.c.y} ${b.x} ${b.y}`
+        : `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+      h += `<path class="poly-front" d="${fd}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" opacity="0.95" pointer-events="none"/>`;
+      const fmx = (a.x + b.x) / 2, fmy = (a.y + b.y) / 2;
+      h += `<text x="${fmx.toFixed(1)}" y="${(fmy).toFixed(1)}" text-anchor="middle" style="font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:700;fill:var(--accent);letter-spacing:0.14em" pointer-events="none">FRONT</text>`;
+    }
+    // In Front-edge mode, overlay fat transparent click targets on every edge so the user can
+    // click the edge they want to make the front.
+    if (frontMode) {
+      pts.forEach((p, i) => {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        const ed = (a.c && typeof a.c.x === 'number')
+          ? `M ${a.x} ${a.y} Q ${a.c.x} ${a.c.y} ${b.x} ${b.y}`
+          : `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+        h += `<path class="poly-frontpick" data-frontedge="${i}" d="${ed}" fill="none" stroke="rgba(212,161,71,0.001)" stroke-width="24" stroke-linecap="round" pointer-events="stroke" style="cursor:pointer;"/>`;
+      });
+    }
     // Edge handles (dot at the apex) — TAP to add a corner, DRAG to curve the edge
     pts.forEach((p, i) => {
       const ap = edgeApex(i);
@@ -4590,6 +4719,12 @@ function openPolygonStageEditor(opts) {
   let drag = null; // { kind:'corner'|'curve', idx, moved, pid }
   svg.addEventListener('pointerdown', e => {
     const t = e.target;
+    // Front-edge mode: a tap on an edge picks it as the front. No corner/curve dragging here.
+    if (frontMode) {
+      const fe = t.closest && t.closest('[data-frontedge]');
+      if (fe) { e.preventDefault(); frontIdx = parseInt(fe.dataset.frontedge, 10); frontTouched = true; frontMode = false; syncFrontBtn(); render(); }
+      return;
+    }
     if (t.closest && t.closest('[data-del]')) return; // delete handled on click
     const cornerEl = t.closest && t.closest('[data-corner]');
     if (cornerEl) { e.preventDefault(); drag = { kind:'corner', idx: parseInt(cornerEl.dataset.corner,10), moved:false, pid:e.pointerId }; selIdx = drag.idx; try{ svg.setPointerCapture(e.pointerId);}catch(_){ } render(); return; }
@@ -4635,6 +4770,8 @@ function openPolygonStageEditor(opts) {
       pts[i] = { x:a.x, y:a.y };
       pts.splice(i + 1, 0, { x: Math.round((a.x + b.x) / 2), y: Math.round((a.y + b.y) / 2) });
       selIdx = i + 1;
+      // Keep the FRONT selection on the same physical edge: inserting before it shifts its index.
+      if (Number.isInteger(frontIdx) && i + 1 <= frontIdx) frontIdx += 1;
     }
     render();
   }
@@ -4644,21 +4781,44 @@ function openPolygonStageEditor(opts) {
     const delEl = e.target.closest && e.target.closest('[data-del]');
     if (delEl && pts.length > 3) {
       e.stopPropagation();
-      pts.splice(parseInt(delEl.dataset.del, 10), 1);
+      const di = parseInt(delEl.dataset.del, 10);
+      pts.splice(di, 1);
+      // Keep FRONT valid/stable after a corner removal.
+      if (Number.isInteger(frontIdx)) {
+        if (di < frontIdx) frontIdx -= 1;
+        if (frontIdx >= pts.length) frontIdx = pts.length - 1;
+        if (frontIdx < 0) frontIdx = 0;
+      }
       selIdx = -1; render();
     }
   });
 
+  // Front-edge mode toggle + Reset. Reset re-seeds points → front index no longer meaningful.
+  const syncFrontBtn = () => { const b = modal.querySelector('#saPolyFront'); if (b) b.classList.toggle('active', frontMode); };
+  modal.querySelector('#saPolyFront').addEventListener('click', () => {
+    frontMode = !frontMode;
+    // Deselect any corner + show a mode hint while picking.
+    if (frontMode) selIdx = -1;
+    const hint = modal.querySelector('#saPolyHint');
+    if (hint) hint.innerHTML = frontMode
+      ? '<b>Click the edge</b> vocalists line up along to mark it as the front. Click <b>Front edge</b> again to cancel.'
+      : '<b>Drag a corner</b> to move it &middot; <b>drag the dot on an edge</b> to curve it &middot; <b>tap a dot</b> to add a corner &middot; select a corner then <b>&times;</b> to remove it.';
+    syncFrontBtn(); render();
+  });
   modal.querySelector('#saPolySnap').addEventListener('click', () => { snap = !snap; render(); });
-  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; render(); });
+  modal.querySelector('#saPolyReset').addEventListener('click', () => { pts = rectangleStagePoints(); selIdx = -1; frontIdx = autoFrontEdgeIndex(pts); frontTouched = false; frontMode = false; syncFrontBtn(); render(); });
   const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
   const commit = () => {
     // Only write when there's something worth writing: the editor STARTED from a custom
-    // outline, OR the current points differ from the seeded shape (a real edit / reset).
-    // A no-edit close of an AUTO outline is treated as a Discard so we don't pin the slider
-    // shape as custom (FIX #5).
-    const dirty = startedCustom || JSON.stringify(pts.map(roundStagePoint)) !== initialSnapshot;
-    if (pts.length >= 3 && dirty && opts.onSave) opts.onSave(pts.map(roundStagePoint));
+    // outline, the current points differ from the seeded shape (a real edit / reset), OR the
+    // user explicitly picked a front edge. A no-edit close of an AUTO outline is treated as a
+    // Discard so we don't pin the slider shape as custom (FIX #5).
+    const dirty = startedCustom || frontTouched || JSON.stringify(pts.map(roundStagePoint)) !== initialSnapshot;
+    if (pts.length >= 3 && dirty && opts.onSave) {
+      // Only pass a concrete front index if the user chose one; otherwise null = keep auto.
+      const fi = frontTouched ? ((Number.isInteger(frontIdx) && frontIdx >= 0 && frontIdx < pts.length) ? frontIdx : autoFrontEdgeIndex(pts)) : null;
+      opts.onSave(pts.map(roundStagePoint), fi);
+    }
     close();
   };
   function onKey(e) { if (e.key === 'Escape') commit(); }
@@ -5566,8 +5726,9 @@ function renderStageEditor() {
     curvReset.addEventListener('click', () => {
       c.stageCurvature = DEFAULT_STAGE_CURVATURE;
       c.stageDepth = DEFAULT_STAGE_DEPTH;
-      // Reset to defaults also clears any custom outline, in one click.
+      // Reset to defaults also clears any custom outline (+ its front edge), in one click.
       c.customStagePoints = null;
+      c.stageFrontEdge = null;
       saveState();
       renderStageEditor();
       renderStage();
@@ -5583,7 +5744,8 @@ function renderStageEditor() {
     if (outlineBtn) outlineBtn.addEventListener('click', () => {
       openPolygonStageEditor({
         getInitial: () => c.customStagePoints,
-        onSave: (pts) => { c.customStagePoints = pts; saveState(); refresh(); }
+        getInitialFront: () => c.stageFrontEdge,
+        onSave: (pts, frontIdx) => { c.customStagePoints = pts; c.stageFrontEdge = (Number.isInteger(frontIdx) ? frontIdx : null); saveState(); refresh(); }
       });
     });
     if (featuresBtn) featuresBtn.addEventListener('click', () => {
@@ -5592,6 +5754,7 @@ function renderStageEditor() {
     if (resetOutlineBtn) resetOutlineBtn.addEventListener('click', () => {
       if (!confirm('Remove the custom outline and reset the stage shape to the default sliders?')) return;
       c.customStagePoints = null;
+      c.stageFrontEdge = null;
       c.stageCurvature = DEFAULT_STAGE_CURVATURE;
       c.stageDepth = DEFAULT_STAGE_DEPTH;
       saveState(); refresh();
@@ -10373,6 +10536,7 @@ function startWizard() {
     stageShape: 'curved', // legacy; not used after slider migration
     stageCurvature: DEFAULT_STAGE_CURVATURE,
     stageDepth: DEFAULT_STAGE_DEPTH,
+    stageFrontEdge: null, // front edge index for a custom outline (null = auto)
     vocalDirection: 'rtl', // 'rtl' (SR→SL) or 'ltr' (SL→SR)
     // Branding (final step)
     accentPreset: 'gold',  // 'gold' | 'blue' | 'green' | 'mono' | 'custom'
@@ -12161,8 +12325,9 @@ function wireWizardStep(step) {
       resetBtn.addEventListener('click', () => {
         wizardData.stageCurvature = DEFAULT_STAGE_CURVATURE;
         wizardData.stageDepth = DEFAULT_STAGE_DEPTH;
-        // Reset to defaults also clears any custom shape, in one click.
+        // Reset to defaults also clears any custom shape (+ its front edge), in one click.
         wizardData.customStagePoints = null;
+        wizardData.stageFrontEdge = null;
         renderWizardStep();
       });
     }
@@ -12177,6 +12342,7 @@ function wireWizardStep(step) {
       if (openBtn) openBtn.addEventListener('click', () => {
         openPolygonStageEditor({
           getInitial: () => wizardData.customStagePoints,
+          getInitialFront: () => wizardData.stageFrontEdge,
           seed: () => {
             const tc = (typeof wizardData.stageCurvature === 'number' ? wizardData.stageCurvature : DEFAULT_STAGE_CURVATURE) / 100;
             const td = (typeof wizardData.stageDepth === 'number' ? wizardData.stageDepth : DEFAULT_STAGE_DEPTH) / 100;
@@ -12185,8 +12351,8 @@ function wireWizardStep(step) {
             if (tc < 0.05) return [fl, fr, br, bl];
             return [fl, { x: 400, y: Math.max(12, Math.round(edgeY - 300 * tc)) }, fr, br, bl];
           },
-          onSave: (pts) => { wizardData.customStagePoints = pts; renderWizardStep(); },
-          onClear: () => { wizardData.customStagePoints = null; renderWizardStep(); }
+          onSave: (pts, frontIdx) => { wizardData.customStagePoints = pts; wizardData.stageFrontEdge = (Number.isInteger(frontIdx) ? frontIdx : null); renderWizardStep(); },
+          onClear: () => { wizardData.customStagePoints = null; wizardData.stageFrontEdge = null; renderWizardStep(); }
         });
       });
     })();
@@ -12195,14 +12361,16 @@ function wireWizardStep(step) {
     // showing the wizard's in-progress shape as the backdrop while placing fixtures.
     const wizFeatBtn = body.querySelector('#wizFeaturesBtn');
     if (wizFeatBtn) wizFeatBtn.addEventListener('click', () => {
-      const saved = { curv: state.config.stageCurvature, depth: state.config.stageDepth, pts: state.config.customStagePoints, dir: state.config.vocalDirection };
+      const saved = { curv: state.config.stageCurvature, depth: state.config.stageDepth, pts: state.config.customStagePoints, dir: state.config.vocalDirection, front: state.config.stageFrontEdge };
       if (typeof wizardData.stageCurvature === 'number') state.config.stageCurvature = wizardData.stageCurvature;
       if (typeof wizardData.stageDepth === 'number') state.config.stageDepth = wizardData.stageDepth;
       state.config.customStagePoints = wizardData.customStagePoints || null;
+      state.config.stageFrontEdge = Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
       if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
       openStageFeaturesEditor(() => {
         state.config.stageCurvature = saved.curv; state.config.stageDepth = saved.depth;
         state.config.customStagePoints = saved.pts; state.config.vocalDirection = saved.dir;
+        state.config.stageFrontEdge = saved.front;
         saveState(); renderWizardStep();
       });
     });
@@ -12225,11 +12393,14 @@ function wireWizardStep(step) {
     if (wizardData.vocalDirection) state.config.vocalDirection = wizardData.vocalDirection;
     state.config.customStageEnabled = false;
     state.config.customStagePoints = (Array.isArray(wizardData.customStagePoints) && wizardData.customStagePoints.length >= 3) ? wizardData.customStagePoints.slice() : null;
+    state.config.stageFrontEdge = state.config.customStagePoints && Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
 
     // Update SVG paths
     const shape = getStageShape();
     pathEl.setAttribute('d', shape.path);
     if (edgeEl) edgeEl.setAttribute('d', shape.edge);
+    // Highlight the front edge on the wizard preview so the chosen edge is obvious here too.
+    syncFrontEdgeHighlight(pathEl && pathEl.ownerSVGElement, shape);
 
     // Build temp instrument list matching the IDs applyWizardChoices will create
     const slots = expandedInstrumentSlots();
@@ -12554,6 +12725,7 @@ function applyWizardChoices() {
   // Stage layout — custom stage shape from wizard draw tool
   if (wizardData.customStagePoints && wizardData.customStagePoints.length >= 3) {
     state.config.customStagePoints = wizardData.customStagePoints.slice();
+    state.config.stageFrontEdge = Number.isInteger(wizardData.stageFrontEdge) ? wizardData.stageFrontEdge : null;
     state.config.stageShape = 'custom';
   }
   // Stage layout — custom positions from drag step
