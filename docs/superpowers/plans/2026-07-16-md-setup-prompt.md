@@ -4,7 +4,7 @@
 
 **Goal:** When a service is pulled, a person who is on an instrument **and** is the Music Director is asked for both their instrument setup and their MD setup on the same post-pull card; a player promoted to MD is asked for MD setup even if already set up on their instrument.
 
-**Architecture:** Single-file vanilla app (`index.html`). Add MD as a second, independently-stored setup section on the existing `pref-band` post-pull card, backed by a separate `md` bucket (`stableSetupKey(name,'band','md')`). Three edit sites — step building (`buildPostPullSteps`), rendering (`renderPostPullStep`), saving (`savePostPullStep`) — plus a new jsdom test file.
+**Architecture:** Single-file vanilla app (`index.html`). Add MD as a second setup section on the existing `pref-band` post-pull card, bound to the EXISTING MD bucket `stableSetupKey(name,'md','md')` (the same key `getStageAreas`/`enumerateSetupRoles` already use, so edits round-trip to the ✓ Items page). Three edit sites — step building (`buildPostPullSteps`), rendering (`renderPostPullStep`), saving (`savePostPullStep`) — plus a new jsdom test file.
 
 **Tech Stack:** HTML/CSS/JS, `localStorage` state, jsdom regression tests via `npm test`, `npm run check` for syntax/CSS.
 
@@ -20,7 +20,8 @@
   - `buildPostPullSteps` band loop (currently ~line 10820) — compute MD flags, attach to the `pref-band` step.
   - `renderPostPullStep` `pref-band` branch (currently ~line 11162) — adaptive header + conditional instrument/MD sections.
   - `savePostPullStep` `pref-band` branch (currently ~line 11281) — mark instrument and/or MD prefs asked.
-- **Create:** `tests/mdsetup.js` — jsdom coverage for step-building, render, and save/dedup.
+- **Create:** `tests/mdpostpull.js` — jsdom coverage for step-building, render, and save/dedup.
+  (NOTE: `tests/mdpostpull.js` already exists and covers the items-layer MD bucket — leave it untouched.)
 - **Modify:** `docs/WATCHLIST.md` — add a behavior line.
 
 ---
@@ -28,10 +29,10 @@
 ## Task 1: Step-building logic in `buildPostPullSteps`
 
 **Files:**
-- Test: `tests/mdsetup.js` (create)
+- Test: `tests/mdpostpull.js` (create)
 - Modify: `index.html` — `buildPostPullSteps` band loop (re-grep anchor: `const role = roleTagFromInstLabel(inst.label);` inside `state.instruments.forEach`)
 
-- [ ] **Step 1: Write the failing test** — create `tests/mdsetup.js`:
+- [ ] **Step 1: Write the failing test** — create `tests/mdpostpull.js`:
 
 ```javascript
 // FEATURE: post-pull popup asks a band member who is ALSO the Music Director for both their
@@ -111,7 +112,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd "$HOME/Documents/03_Claude/Projects/Stage Assign App" && node tests/mdsetup.js`
+Run: `cd "$HOME/Documents/03_Claude/Projects/Stage Assign App" && node tests/mdpostpull.js`
 Expected: FAIL — the "MD + new on instrument" check fails with "showMD should be true" (current step has no `showMD`/`isMD` fields, so `s.showMD` is `undefined`).
 
 - [ ] **Step 3: Implement the step-building change**
@@ -177,13 +178,13 @@ with:
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `node tests/mdsetup.js`
+Run: `node tests/mdpostpull.js`
 Expected: PASS — all five checks OK, `=== RESULT: ALL CHECKS PASSED ===`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/mdsetup.js index.html
+git add tests/mdpostpull.js index.html
 git commit -m "feat(setup): flag MD on the post-pull band step
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -194,10 +195,10 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ## Task 2: Render the MD section on the card
 
 **Files:**
-- Test: `tests/mdsetup.js` (add render checks)
+- Test: `tests/mdpostpull.js` (add render checks)
 - Modify: `index.html` — `renderPostPullStep` `pref-band` branch (re-grep anchor: `<div class="pp-step-person-tag">New on ${esc(step.instLabel)}</div>`)
 
-- [ ] **Step 1: Add failing render checks** — insert these checks into `tests/mdsetup.js` immediately before the `console.log('\n=== RESULT:'...)` line:
+- [ ] **Step 1: Add failing render checks** — insert these checks into `tests/mdpostpull.js` immediately before the `console.log('\n=== RESULT:'...)` line:
 
 ```javascript
  // ---- render: the card shows the right sections ----
@@ -232,7 +233,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 2: Run the test to verify the new checks fail**
 
-Run: `node tests/mdsetup.js`
+Run: `node tests/mdpostpull.js`
 Expected: FAIL — "render: MD + new instrument shows BOTH editors" fails with "MD editor container missing" (current render only emits `#pp_setup_editor`).
 
 - [ ] **Step 3: Implement the render change**
@@ -313,20 +314,20 @@ with:
     // The MD role's own setup bucket, shown as a second section on the same card.
     if (showMD) {
       const mdEd = content.querySelector('#pp_md_setup_editor');
-      if (mdEd) renderPersonSetupEditor(mdEd, stableSetupKey(step.personName, 'band', 'md'), 'md');
+      if (mdEd) renderPersonSetupEditor(mdEd, stableSetupKey(step.personName, 'md', 'md'), 'md');
     }
   } else if (step.kind === 'shadow') {
 ```
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `node tests/mdsetup.js`
+Run: `node tests/mdpostpull.js`
 Expected: PASS — all checks OK.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/mdsetup.js index.html
+git add tests/mdpostpull.js index.html
 git commit -m "feat(setup): render MD setup section on the post-pull card
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -337,10 +338,10 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ## Task 3: Save/dedup the MD pref on advance
 
 **Files:**
-- Test: `tests/mdsetup.js` (add save checks)
+- Test: `tests/mdpostpull.js` (add save checks)
 - Modify: `index.html` — `savePostPullStep` `pref-band` branch (re-grep anchor: `// just record that we've asked so this person isn't prompted again.`)
 
-- [ ] **Step 1: Add failing save checks** — insert into `tests/mdsetup.js` immediately before the `console.log('\n=== RESULT:'...)` line:
+- [ ] **Step 1: Add failing save checks** — insert into `tests/mdpostpull.js` immediately before the `console.log('\n=== RESULT:'...)` line:
 
 ```javascript
  // ---- save: advancing marks both prefs asked so neither re-prompts ----
@@ -378,7 +379,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 2: Run the test to verify the new checks fail**
 
-Run: `node tests/mdsetup.js`
+Run: `node tests/mdpostpull.js`
 Expected: FAIL — "save: MD + new instrument marks BOTH..." fails with "md pref not marked" (current save writes only `step.prefKey`).
 
 - [ ] **Step 3: Implement the save change**
@@ -417,13 +418,13 @@ with:
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `node tests/mdsetup.js`
+Run: `node tests/mdpostpull.js`
 Expected: PASS — all checks OK, `=== RESULT: ALL CHECKS PASSED ===`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/mdsetup.js index.html
+git add tests/mdpostpull.js index.html
 git commit -m "feat(setup): mark instrument + MD prefs asked on advance
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"

@@ -152,3 +152,8 @@ Behaviors that must keep working. **The executable version of this list is `test
       flight. → `pcorefresh`
 - [ ] **Pause auto-refresh** checkbox reflects + persists `state.config.autoRefreshPaused`. →
       `pcorefresh`
+- [ ] On a service pull, a person on an instrument who is also the MD is asked for BOTH
+      instrument and MD setup on the same post-pull card; a player promoted to MD is asked
+      for MD setup even if already set up on their instrument; the MD section never duplicates
+      when the instrument itself is the MD/tracks preset; the popup's MD edits share the items
+      layer bucket (`stableSetupKey(name,'md','md')`). → `mdpostpull`

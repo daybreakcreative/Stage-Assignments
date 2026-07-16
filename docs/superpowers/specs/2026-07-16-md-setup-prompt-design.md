@@ -42,7 +42,11 @@ Rationale:
 
 - **Setup buckets** (`state.setupItems`, keyed `normFullName|role|typeKey`):
   - instrument bucket: `name|band|<instTypeKey>` (unchanged).
-  - MD bucket: `name|band|md` (new; seeded from the `md` preset).
+  - MD bucket: `name|md|md` — the SAME key the items layer already uses
+    (`getStageAreas`/`enumerateSetupRoles` build it via `stableSetupKey(name,'md','md')`,
+    covered by the existing `tests/mdsetup.js`). The popup binds its MD editor to this
+    existing bucket so prefs entered on the pull show up on the ✓ Items page. NOT a new
+    key — the bucket already exists; the popup just surfaces it for editing during the pull.
 - **"Asked" markers** (`state.musicianPreferences`, keyed `normFullName|role`):
   - instrument: `name|<role>` (unchanged; role via `roleTagFromInstLabel`).
   - MD: `name|md` (new).
@@ -105,7 +109,8 @@ so the md marker is written on advance.
     (unchanged path).
   - When `showMD`: render a second labeled section "Setup as Music Director" into
     `#pp_md_setup_editor` via
-    `renderPersonSetupEditor(el, stableSetupKey(name,'band','md'), 'md')`.
+    `renderPersonSetupEditor(el, stableSetupKey(name,'md','md'), 'md')` — the same bucket
+    the items layer uses, so edits round-trip to the ✓ Items page.
 - Both editors save selections live into their own buckets (existing behavior of
   `renderPersonSetupEditor`).
 
@@ -120,7 +125,11 @@ so the md marker is written on advance.
     marker is also written when the instrument is itself the MD/tracks preset (§1), preventing a
     stray MD-only card on the next pull.
 
-## Testing (`tests/mdsetup.js`, jsdom harness like `tests/setupreview.js`)
+> **Note:** `tests/mdsetup.js` already exists and covers the items-layer MD bucket
+> (`getStageAreas`/`enumerateSetupRoles`). Leave it untouched. Post-pull popup coverage
+> goes in a new file, `tests/mdpostpull.js`.
+
+## Testing (`tests/mdpostpull.js`, jsdom harness like `tests/setupreview.js`)
 
 1. **Both new:** keys player who is MD, no prefs → `buildPostPullSteps` yields one
    `pref-band` step with `showInstrument:true` and `showMD:true`.
@@ -134,6 +143,9 @@ so the md marker is written on advance.
 6. **MD-typed instrument:** a player whose instrument is itself the MD/tracks preset and
    who is MD → `showMD:false` (no duplicate section), and after advancing, the `name|md`
    marker is written so no MD-only card appears on a second pull.
+7. **Bucket consistency:** the popup's MD editor writes to `stableSetupKey(name,'md','md')`
+   — the same key `getStageAreas()` emits for that MD's `area_md` entry — so MD prefs set
+   on the pull appear on the ✓ Items page.
 
 Run `npm run check` and `npm test`; suite must stay green (allowing the known
 `curve.js` false-fail).
