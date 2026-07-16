@@ -112,6 +112,38 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!ev(`!!state.setupItems[${JSON.stringify(mdKey)}]`)) throw new Error('popup did not seed the shared md bucket '+mdKey);
  });
 
+ console.log('--- save: advancing marks both prefs asked so neither re-prompts ---');
+ function saveBandStep(step){
+   ev(`toast=function(){};renderAll=function(){};saveState=function(){};refreshSetupItemsUI=function(){};`);
+   ev(`state.instruments=[{id:'inst_x',label:'Bass',assignedTo:'Sophia Martinez'}];`);
+   ev(`state.musicianPreferences={};`);
+   ev(`postPullState={steps:[${JSON.stringify(step)}],idx:0,onClose:null};`);
+   ev(`renderPostPullStep(); savePostPullStep();`);
+   return JSON.parse(ev(`JSON.stringify(state.musicianPreferences)`));
+ }
+
+ check('save: MD + new instrument marks BOTH instrument and md asked', ()=>{
+   const prefs=saveBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:true,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'});
+   if(!prefs['sophia martinez|bass']) throw new Error('instrument pref not marked');
+   if(!prefs['sophia martinez|md']) throw new Error('md pref not marked');
+ });
+
+ check('save: MD whose instrument IS md-type still marks md asked (isMD, not showMD)', ()=>{
+   const prefs=saveBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Tracks',instId:'inst_x',prefKey:'sophia martinez|tracks',showInstrument:true,isMD:true,showMD:false,mdPrefKey:'sophia martinez|md'});
+   if(!prefs['sophia martinez|md']) throw new Error('md pref not marked when instrument is md-type');
+ });
+
+ check('save: MD-only card does NOT overwrite the known instrument pref', ()=>{
+   ev(`toast=function(){};renderAll=function(){};saveState=function(){};refreshSetupItemsUI=function(){};`);
+   ev(`state.instruments=[{id:'inst_x',label:'Bass',assignedTo:'Sophia Martinez'}];`);
+   ev(`state.musicianPreferences={'sophia martinez|bass':{askedAt:'ORIGINAL'}};`);
+   ev(`postPullState={steps:[${JSON.stringify({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:false,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'})}],idx:0,onClose:null};`);
+   ev(`renderPostPullStep(); savePostPullStep();`);
+   const prefs=JSON.parse(ev(`JSON.stringify(state.musicianPreferences)`));
+   if(prefs['sophia martinez|bass'].askedAt!=='ORIGINAL') throw new Error('instrument pref was overwritten');
+   if(!prefs['sophia martinez|md']) throw new Error('md pref not marked');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

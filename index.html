@@ -11322,11 +11322,19 @@ function savePostPullStep() {
     if (micName) setMicRemembered(step.personName, micName);
     // Setup selections are saved live by the grouped editor into the person's stable bucket.
   } else if (step.kind === 'pref-band') {
-    // Setup selections are saved live by the grouped editor into the person's stable bucket;
+    // Setup selections are saved live by the grouped editor into each person's stable bucket;
     // just record that we've asked so this person isn't prompted again.
-    state.musicianPreferences[step.prefKey] = {
-      askedAt: new Date().toISOString()
-    };
+    // Only mark the instrument pref when the instrument section was actually shown, so an
+    // MD-only card doesn't stamp (or overwrite) an instrument pref we never asked about.
+    if (step.showInstrument !== false) {
+      state.musicianPreferences[step.prefKey] = { askedAt: new Date().toISOString() };
+    }
+    // If they're the MD, mark the MD prefs asked too. Keyed on isMD (not showMD) so it also
+    // covers an MD whose instrument is itself the MD/tracks preset. Recompute the key from the
+    // current (possibly renamed) name so it matches the next pull's lookup.
+    if (step.isMD) {
+      state.musicianPreferences[`${normFullName(step.personName)}|md`] = { askedAt: new Date().toISOString() };
+    }
   } else if (step.kind === 'shadow') {
     const selOpt = content.querySelector('[data-shadow-opt].selected');
     const choice = selOpt ? selOpt.dataset.shadowOpt : null;
