@@ -10824,7 +10824,16 @@ function buildPostPullSteps(planContext) {
     const nName = normFullName(name);
     const role = roleTagFromInstLabel(inst.label);
     const prefKey = `${nName}|${role}`;
-    if (state.musicianPreferences[prefKey]) return;
+    const isMD = state.musicDirectorId === inst.id;
+    const instIsMdType = detectPresetKey(inst) === 'md';
+    const mdPrefKey = `${nName}|md`;
+    const instKnown = !!state.musicianPreferences[prefKey];
+    const mdMissing = isMD && !state.musicianPreferences[mdPrefKey];
+    // The MD role has its own setup ("Music Director / Tracks"). Show it as a SECOND section on
+    // this person's card — unless the instrument itself IS the MD/tracks preset, in which case
+    // its own section already covers MD (don't render a duplicate over the same bucket).
+    const showMD = mdMissing && !instIsMdType;
+    if (instKnown && !mdMissing) return; // nothing new to ask
     if (seen.has(prefKey)) return;
     seen.add(prefKey);
     steps.push({
@@ -10832,7 +10841,11 @@ function buildPostPullSteps(planContext) {
       personName: name,
       instLabel: inst.label,
       instId: inst.id,
-      prefKey
+      prefKey,
+      showInstrument: !instKnown,
+      isMD,
+      showMD,
+      mdPrefKey
     });
   });
 
