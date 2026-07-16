@@ -69,6 +69,49 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(s.showInstrument!==true) throw new Error('showInstrument should be true');
  });
 
+ console.log('--- render: the card shows the right sections ---');
+ // Render a pref-band step directly by seeding postPullState, then inspect #postPullContent.
+ function renderBandStep(step){
+   ev(`toast=function(){};renderAll=function(){};saveState=function(){};refreshSetupItemsUI=function(){};`);
+   ev(`state.instruments=[{id:'inst_x',label:'Bass',assignedTo:'Sophia Martinez'}];`);
+   ev(`postPullState={steps:[${JSON.stringify(step)}],idx:0,onClose:null};`);
+   ev(`renderPostPullStep();`);
+ }
+
+ check('render: MD + new instrument shows BOTH editors', ()=>{
+   renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:true,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'});
+   if(!doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor missing');
+   const md=doc.querySelector('#pp_md_setup_editor');
+   if(!md) throw new Error('MD editor container missing');
+   if(md.children.length===0) throw new Error('MD editor not populated');
+ });
+
+ check('render: non-MD player shows NO MD editor', ()=>{
+   renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:true,isMD:false,showMD:false,mdPrefKey:'sophia martinez|md'});
+   if(!doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor missing');
+   if(doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor should NOT be present');
+ });
+
+ check('render: MD-only card shows MD editor, no instrument editor', ()=>{
+   renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:false,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'});
+   if(doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor should NOT be present');
+   if(!doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor missing');
+ });
+
+ check('bucket consistency: popup MD editor seeds the same md bucket as the items layer', ()=>{
+   ev(`state.setupItems={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[];`);
+   ev(`state.instruments=[{id:'inst_k',label:'Keys',assignedTo:'Sky Fox'}];`);
+   ev(`state.musicDirectorId='inst_k';`);
+   const mdKey = ev(`stableSetupKey('Sky Fox','md','md')`);
+   const areaKey = ev(`(getStageAreas().find(a=>a.id==='area_md')||{people:[{}]}).people[0].key`);
+   if(areaKey!==mdKey) throw new Error('items-layer md key '+areaKey+' != '+mdKey);
+   ev(`state.setupItems={};`); // clear so we can prove the popup seeds the SHARED bucket
+   ev(`postPullState={steps:[{kind:'pref-band',personName:'Sky Fox',instLabel:'Keys',instId:'inst_k',prefKey:'sky fox|keys',showInstrument:true,isMD:true,showMD:true,mdPrefKey:'sky fox|md'}],idx:0,onClose:null};`);
+   ev(`renderPostPullStep();`);
+   if(!doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor missing');
+   if(!ev(`!!state.setupItems[${JSON.stringify(mdKey)}]`)) throw new Error('popup did not seed the shared md bucket '+mdKey);
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

@@ -11173,24 +11173,54 @@ function renderPostPullStep() {
     const spEd = content.querySelector('#pp_setup_editor');
     if (spEd) renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'vocalist', 'vocals'), 'vocals');
   } else if (step.kind === 'pref-band') {
+    const showInstrument = step.showInstrument !== false; // default true (legacy steps)
+    const showMD = !!step.showMD;
+    // Header + subtitle adapt to what this card is actually asking for.
+    let tag, sub;
+    if (showInstrument && showMD) {
+      tag = `New on ${esc(step.instLabel)} · MD`;
+      sub = `First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)} — and they're the Music Director. Set their instrument setup and what the MD role needs. These become checklist items on the ✓ Items page.`;
+    } else if (showMD) {
+      tag = `Now Music Director`;
+      sub = `${esc(firstName(step.personName))} is the Music Director this week. Set what the MD role needs — these become checklist items on the ✓ Items page.`;
+    } else {
+      tag = `New on ${esc(step.instLabel)}`;
+      sub = `First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Select their setup — your defaults are pre-checked. Tick what they need (e.g. brings their own rig, needs the house rig) and add anything custom. These become checklist items on the ✓ Items page.`;
+    }
+    const instSection = showInstrument ? `
+      <div class="pp-row">
+        <div class="pp-row-label">Setup for ${esc(step.instLabel)}</div>
+        <div id="pp_setup_editor"></div>
+      </div>` : '';
+    const mdSection = showMD ? `
+      <div class="pp-row">
+        <div class="pp-row-label">Setup as Music Director</div>
+        <div id="pp_md_setup_editor"></div>
+      </div>` : '';
     content.innerHTML = `
-      <div class="pp-step-person-tag">New on ${esc(step.instLabel)}</div>
+      <div class="pp-step-person-tag">${tag}</div>
       <h2 class="pp-step-title">${esc(step.personName)}</h2>
-      <p class="pp-step-sub">First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Select their setup — your defaults are pre-checked. Tick what they need (e.g. brings their own rig, needs the house rig) and add anything custom. These become checklist items on the ✓ Items page.</p>
+      <p class="pp-step-sub">${sub}</p>
       <div class="pp-row">
         <div class="pp-row-label">Name (what they go by)</div>
         <input type="text" id="pp_name" value="${esc(step.personName)}" />
       </div>
-      <div class="pp-row">
-        <div class="pp-row-label">Setup for ${esc(step.instLabel)}</div>
-        <div id="pp_setup_editor"></div>
-      </div>
+      ${instSection}
+      ${mdSection}
     `;
     // Grouped per-instrument setup, seeded from the church's wizard defaults.
-    const spEd = content.querySelector('#pp_setup_editor');
-    if (spEd) {
-      const typeKey = detectPresetKey(instById(step.instId)) || null;
-      renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'band', typeKey), typeKey);
+    if (showInstrument) {
+      const spEd = content.querySelector('#pp_setup_editor');
+      if (spEd) {
+        const typeKey = detectPresetKey(instById(step.instId)) || null;
+        renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'band', typeKey), typeKey);
+      }
+    }
+    // The MD role's own setup bucket, shown as a second section on the same card. Bound to the
+    // SAME key the items layer uses (stableSetupKey(name,'md','md')) so edits round-trip to ✓ Items.
+    if (showMD) {
+      const mdEd = content.querySelector('#pp_md_setup_editor');
+      if (mdEd) renderPersonSetupEditor(mdEd, stableSetupKey(step.personName, 'md', 'md'), 'md');
     }
   } else if (step.kind === 'shadow') {
     const prev = state.shadowPreferences[normFullName(step.personName)];
