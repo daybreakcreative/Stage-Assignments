@@ -43,11 +43,24 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(layout[0].fullName!=='Zed'||layout[1].fullName!=='Amy'||layout[2].fullName!=='Mo') throw new Error('order not preserved: '+layout.map(l=>l.fullName).join(','));
  });
 
- check('shortens to last name to reclaim horizontal room when crowded', ()=>{
+ check('crowded labels keep full names, and never collapse to a surname', ()=>{
+   // Two labels at nearly the same point. The resolver should de-overlap them by
+   // REPOSITIONING (stacking), keeping full names — and if it ever has to shorten as a
+   // last resort, it uses the FIRST name (the identifier), never the surname alone.
    const marks='[{"x":400,"y":200,"name":"Jonathan Livingston","role":"VOCAL 1"},{"x":405,"y":200,"name":"Kimberly Anderson","role":"VOCAL 2"}]';
    const layout=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(${marks}, { anchor:'center' }))`));
-   // At least one of the crowded pair should have been shortened to its last word.
-   if(!layout.some(l=>l.useLast && !/\s/.test(l.name))) throw new Error('no last-name shortening applied: '+JSON.stringify(layout.map(l=>({n:l.name,u:l.useLast}))));
+   const bad=anyOverlap(layout);
+   if(bad) throw new Error('crowded pair still overlaps at '+bad.join(','));
+   layout.forEach(L=>{
+     const parts=String(L.fullName).split(/\s+/).filter(Boolean);
+     if(parts.length<2) return;
+     const first=parts[0], last=parts[parts.length-1];
+     // Acceptable displayed name: the full name, or a shortening to the FIRST name.
+     // Reducing to the surname alone (dropping the first name) is the bug we fixed.
+     if(L.name===last && L.name!==first) throw new Error('label collapsed to surname only: "'+L.name+'" (from "'+L.fullName+'")');
+   });
+   // With vertical room available, both should still carry their full name.
+   if(!layout.every(l=>/\s/.test(l.name))) throw new Error('a name was shortened despite vertical room: '+JSON.stringify(layout.map(l=>l.name)));
  });
 
  check('non-overlapping input is left essentially in place (no needless nudging)', ()=>{

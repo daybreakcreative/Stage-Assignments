@@ -4232,10 +4232,11 @@ function getVoxPositions(count) {
 // People markers on the stage carry a name label (and a role line). When two people sit close
 // together their labels print on top of each other and become unreadable. This takes the markers
 // (each { x, y, name, role } in the 800×380 viewBox) and returns, per marker, a resolved layout:
-//   { x, y, name, role, labelX, labelY, dy, side, useLast, w, h }
+//   { x, y, name, role, labelX, labelY, dy, side, shortened, w, h }
 // where labelX/labelY is the top-center of the label box, dy is the vertical nudge applied
-// (relative to the dot), side is 'below'|'above', and useLast=true means the display shortened
-// the shown name to just the last word to reclaim horizontal room. Pure function (no DOM), so it
+// (relative to the dot), side is 'below'|'above', and shortened=true means the display fell back
+// to just the FIRST name to reclaim horizontal room (only when repositioning couldn't clear the
+// overlap; full names are kept whenever there's room). Pure function (no DOM), so it
 // works identically for the default HTML display and the print stage, and is unit-testable.
 // opts: { charW, lineH, gap, dotR, minY, maxY, anchor } (all in viewBox units).
 function resolveStageLabelLayout(marks, opts) {
@@ -4249,7 +4250,7 @@ function resolveStageLabelLayout(marks, opts) {
   // anchor 'below' (default): label box hangs just under the dot (SVG text renderers).
   // anchor 'center': label box is centered on the dot (HTML .dv-sp cards centered on their point).
   const anchor = opts.anchor || 'below';
-  const lastWord = (s) => { const p = String(s || '').trim().split(/\s+/); return p[p.length - 1] || String(s || ''); };
+  const firstWord = (s) => { const p = String(s || '').trim().split(/\s+/); return p[0] || String(s || ''); };
   const measure = (txt) => Math.max(28, String(txt || '').length * charW);
 
   // Build working boxes. Two label lines (role above name, or name above role — irrelevant to
@@ -4260,7 +4261,7 @@ function resolveStageLabelLayout(marks, opts) {
     return {
       i, m,
       name: m.name || '', role: m.role || '',
-      useLast: false,
+      shortened: false,
       w: measure(m.name), h: boxH,
       side: 'below',
       labelX: m.x, labelY: top0,
@@ -4283,36 +4284,50 @@ function resolveStageLabelLayout(marks, opts) {
   const placed = [];
   order.forEach(it => {
     const collidesAny = () => placed.some(p => overlaps(it, p));
-    if (collidesAny()) {
-      // 1) shorten to last name — reclaims horizontal room, often resolves side-by-side pairs.
-      const ln = lastWord(it.name);
-      if (ln && ln.length < it.name.length) { it.useLast = true; it.w = measure(ln); }
-    }
-    // 2) still colliding → push the label DOWN below the colliding boxes, in small steps.
-    let guard = 0;
-    while (collidesAny() && guard < 40) {
-      // find the lowest bottom among current collisions and drop just beneath it
-      let lowest = it.labelY;
-      placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.labelY + p.h + gap); });
-      it.labelY = Math.max(it.labelY + lineH * 0.5, lowest);
-      it.dy = it.labelY - it.m.y;
-      it.side = 'below';
-      guard++;
-    }
-    // 3) if we pushed off the bottom of the canvas, flip this label ABOVE its dot instead.
-    if (it.labelY + it.h > maxY) {
-      it.side = 'above';
-      it.labelY = (anchor === 'center' ? (it.m.y - it.h / 2) : (it.m.y - dotR - 1 - it.h));
-      it.dy = it.labelY - it.m.y;
-      let g2 = 0;
-      while (collidesAny() && g2 < 40) {
-        let highest = it.labelY;
-        placed.forEach(p => { if (overlaps(it, p)) highest = Math.min(highest, p.labelY - it.h - gap); });
-        it.labelY = Math.min(it.labelY - lineH * 0.5, highest);
+    // Resolve collisions by REPOSITIONING first so every label keeps its full name whenever
+    // there's room. Truncating the name (below) is a last resort, not the opening move.
+    const resolveByMoving = () => {
+      // 1) push the label DOWN below the colliding boxes, in small steps.
+      let guard = 0;
+      while (collidesAny() && guard < 40) {
+        // find the lowest bottom among current collisions and drop just beneath it
+        let lowest = it.labelY;
+        placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.labelY + p.h + gap); });
+        it.labelY = Math.max(it.labelY + lineH * 0.5, lowest);
         it.dy = it.labelY - it.m.y;
-        g2++;
+        it.side = 'below';
+        guard++;
       }
-      if (it.labelY < minY) it.labelY = minY;
+      // 2) if we pushed off the bottom of the canvas, flip this label ABOVE its dot instead.
+      if (it.labelY + it.h > maxY) {
+        it.side = 'above';
+        it.labelY = (anchor === 'center' ? (it.m.y - it.h / 2) : (it.m.y - dotR - 1 - it.h));
+        it.dy = it.labelY - it.m.y;
+        let g2 = 0;
+        while (collidesAny() && g2 < 40) {
+          let highest = it.labelY;
+          placed.forEach(p => { if (overlaps(it, p)) highest = Math.min(highest, p.labelY - it.h - gap); });
+          it.labelY = Math.min(it.labelY - lineH * 0.5, highest);
+          it.dy = it.labelY - it.m.y;
+          g2++;
+        }
+        if (it.labelY < minY) it.labelY = minY;
+      }
+    };
+    resolveByMoving();
+    // Last resort: repositioning alone couldn't clear the overlap (a genuinely packed cluster).
+    // Shorten to the FIRST name — the identifier people read — never the surname, then reclaim
+    // the freed horizontal room and try to reposition once more from the anchor.
+    if (collidesAny()) {
+      const fn = firstWord(it.name);
+      if (fn && fn.length < it.name.length) {
+        it.shortened = true;
+        it.w = measure(fn);
+        it.labelY = (anchor === 'center' ? (it.m.y - it.h / 2) : (it.m.y + dotR + 1));
+        it.side = 'below';
+        it.dy = it.labelY - it.m.y;
+        resolveByMoving();
+      }
     }
     placed.push(it);
   });
@@ -4323,11 +4338,11 @@ function resolveStageLabelLayout(marks, opts) {
     .sort((a, b) => a.i - b.i)
     .map(it => ({
       x: it.m.x, y: it.m.y,
-      name: it.useLast ? lastWord(it.name) : it.name,
+      name: it.shortened ? firstWord(it.name) : it.name,
       role: it.role,
       fullName: it.name,
       labelX: it.labelX, labelY: it.labelY,
-      dy: it.dy, side: it.side, useLast: it.useLast,
+      dy: it.dy, side: it.side, shortened: it.shortened,
       w: it.w, h: it.h
     }));
 }
