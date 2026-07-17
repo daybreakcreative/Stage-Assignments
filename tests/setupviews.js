@@ -107,7 +107,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const view=doc.getElementById('setupChecklistView');
    if(!view) throw new Error('no setupChecklistView');
    if(/No setup items configured/i.test(view.textContent)) throw new Error('false empty message shown');
-   const items=view.querySelectorAll('.scv-item');
+   // ✓ Items view renders items as .si-chip cards now (redesign); behavior unchanged.
+   const items=view.querySelectorAll('.si-chip[data-item-key]');
    if(items.length<4) throw new Error('expected >=4 checklist items, got '+items.length);
    // person label should reflect the specific instrument/role label, never Removed instrument
    if(/removed instrument/i.test(view.textContent)) throw new Error('Removed instrument in checklist');
@@ -127,7 +128,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`enumerateSetupRoles().forEach(r=>{ seedPersonSetup(r.stableKey,r.typeKey); var b=state.setupItems[r.stableKey]; b.items=[{id:'onlyid',text:'Line for '+r.label,doneThisService:false,scopeOneTime:false}]; });`);
    ev('renderSetupChecklist()');
    const view=doc.getElementById('setupChecklistView');
-   const first=view.querySelector('.scv-item');
+   const first=view.querySelector('.si-chip[data-item-key]');
    if(!first) throw new Error('no item to click');
    first.click();
    const cs=JSON.parse(ev('JSON.stringify(getChecklistState())'));

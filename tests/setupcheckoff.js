@@ -41,9 +41,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const k = ev(`stableSetupKey('Amelia','vocalist','vocals')`);
    ev(`state.setupItems['${k}']={seeded:true,selections:{},customItems:[],items:[{id:'i1',text:'Straight mic stand',doneThisService:false},{id:'i2',text:'Music stand',doneThisService:false}]};`);
    ev(`renderSetupChecklist();`);
-   const rows = ev(`document.querySelectorAll('#setupChecklistView .scv-item').length`);
+   // ✓ Items view now renders items as .si-chip cards (was .scv-item rows); behavior (in-place
+   // toggle, node survives, gets a done marker) is unchanged. Selector updated per redesign.
+   const rows = ev(`document.querySelectorAll('#setupChecklistView .si-chip[data-item-key]').length`);
    if (rows < 2) throw new Error('expected >=2 checklist rows, got '+rows);
-   ev(`window.__row0 = document.querySelector('#setupChecklistView .scv-item');`);
+   ev(`window.__row0 = document.querySelector('#setupChecklistView .si-chip[data-item-key]');`);
    ev(`window.__row0.click();`);
    if (!ev(`document.getElementById('setupChecklistView').contains(window.__row0)`))
      throw new Error('row node detached → full re-render happened (scroll would jump to top)');

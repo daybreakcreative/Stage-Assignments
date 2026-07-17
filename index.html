@@ -10352,6 +10352,12 @@ function collectChecklistItems() {
   const order = [];
   const byPerson = new Map();
   rows.forEach(en => {
+    // Mirror the assigned vocal mic into the bucket as a checkable item so it flows into the
+    // checklist just like any other setup item (see syncAssignedMicItem).
+    if (en.role === 'vocalist') {
+      const vv = (state.vocalists || []).find(x => normFullName(x.name) === normFullName(en.name));
+      if (vv) syncAssignedMicItem({ role: 'vocalist', vocId: vv.id, key: en.stableKey });
+    }
     const bucket = state.setupItems[en.stableKey];
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
     const nn = normFullName(en.name);
@@ -10377,10 +10383,24 @@ function collectChecklistItems() {
   order.forEach(nn => {
     const p = byPerson.get(nn);
     if (!p.items.length) return;
-    const roleLabel = p.roles.join(' · ');
+    let roleLabel = p.roles.join(' · ');
+    // Vocalists: badge by assignment slot ("Vocal N") and surface their IEM pack + assigned mic.
+    // Band: surface the IEM pack from the instrument. IEM is a note, never a checkable item.
+    let iem = '', micText = '';
+    if (p.isVoc) {
+      const vv = (state.vocalists || []).find(x => normFullName(x.name) === nn);
+      if (vv) {
+        const slot = vocalSlotFor(vv.id);
+        if (slot) { roleLabel = 'Vocal ' + slot; iem = (state.config.voxIemPacks || [])[slot - 1] || ('Vocal ' + slot); }
+        micText = (vv.micAssigned || '').trim();
+      }
+    } else {
+      const inst = (state.instruments || []).find(i => i && !i.vocalistPlayer && normFullName(i.assignedTo) === nn);
+      if (inst) iem = iemPackFor(inst) || '';
+    }
     const flatBucket = p.isVoc ? vocItems : bandItems;
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
-    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items });
+    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText });
   });
   if (vocItems.length > 0) {
     sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
@@ -10534,24 +10554,33 @@ function renderSetupChecklist() {
         </div>`;
     };
     sections.forEach(sec => {
-      // One card per person (enumerated role). Header = name; subheading = role/instrument.
+      // One rich card per person (enumerated role) in a responsive grid: name + role badge +
+      // progress ring, setup items as click-to-toggle chips (mic highlighted), IEM as a note.
       // Falls back to a flat list only if a section somehow lacks grouping.
       const groups = Array.isArray(sec.people) ? sec.people : null;
       let bodyHtml;
       if (groups) {
-        bodyHtml = groups.map(p => {
+        bodyHtml = '<div class="si-grid">' + groups.map(p => {
           const pTotal = p.items.length;
           const pDone = p.items.filter(it => !!cs[it.key]).length;
-          const rows = p.items.map(rowHtml).join('');
-          return `<div class="scv-person${pTotal > 0 && pDone === pTotal ? ' all-done' : ''}">
-            <div class="scv-person-head">
-              <span class="scv-person-name">${esc(p.name)}</span>
-              <span class="scv-person-role">${esc(p.roleLabel)}</span>
-              <span class="scv-person-count">${pDone}/${pTotal}</span>
+          const pct = pTotal > 0 ? Math.round((pDone / pTotal) * 100) : 0;
+          const chipsHtml = pTotal
+            ? p.items.map(it => {
+                const isDone = !!cs[it.key];
+                const isMic = p.micText && it.itemText === p.micText;
+                return `<label class="si-chip${isDone ? ' ck' : ''}${isMic ? ' mic' : ''}" data-item-key="${esc(it.key)}"><span class="si-chip-box"></span><span class="si-chip-text">${esc(it.itemText)}</span></label>`;
+              }).join('')
+            : '<div class="si-none">No setup needed</div>';
+          return `<div class="si-card${pTotal > 0 && pDone === pTotal ? ' status-green' : ''}">
+            <div class="si-card-head">
+              <span class="si-card-name">${esc(p.name)}</span>
+              ${p.roleLabel ? `<span class="si-card-role">${esc(p.roleLabel)}</span>` : ''}
+              ${pTotal > 0 ? `<span class="si-ring" style="--pct:${pct}"><span class="si-person-count">${pDone}/${pTotal}</span></span>` : ''}
             </div>
-            <div class="scv-person-items">${rows}</div>
+            <div class="si-chips">${chipsHtml}</div>
+            ${p.iem ? `<div class="si-iem-note"><span class="k">IEM</span> ${esc(p.iem)}</div>` : ''}
           </div>`;
-        }).join('');
+        }).join('') + '</div>';
       } else {
         bodyHtml = sec.items.map(rowHtml).join('');
       }
@@ -10581,27 +10610,32 @@ function renderSetupChecklist() {
   // Wire checkbox clicks. Update IN PLACE (toggle the row + recompute counts/progress) rather
   // than re-rendering the whole view — a full innerHTML rebuild reset the scroll position to the
   // top on every check-off. Done items aren't reordered, so in-place is visually identical.
-  container.querySelectorAll('.scv-item').forEach(item => {
+  container.querySelectorAll('[data-item-key]').forEach(item => {
     item.addEventListener('click', () => {
       const k = item.dataset.itemKey;
       cs[k] = !cs[k];
       saveState();
       const on = !!cs[k];
-      item.classList.toggle('done', on);
+      item.classList.toggle('done', on); // legacy .scv-item
+      item.classList.toggle('ck', on);   // new .si-chip
       const box = item.querySelector('.scv-checkbox');
       if (box) box.textContent = on ? '✓' : '';
-      // This person's count + all-done state
-      const personEl = item.closest('.scv-person');
+      // This person's count + all-done state (card is a .si-card or a legacy .scv-person)
+      const personEl = item.closest('.si-card, .scv-person');
       if (personEl) {
-        const pRows = personEl.querySelectorAll('.scv-item');
-        const pDone = personEl.querySelectorAll('.scv-item.done').length;
-        const countEl = personEl.querySelector('.scv-person-count');
-        if (countEl) countEl.textContent = pDone + '/' + pRows.length;
-        personEl.classList.toggle('all-done', pRows.length > 0 && pDone === pRows.length);
+        const pRows = personEl.querySelectorAll('[data-item-key]').length;
+        const pDone = personEl.querySelectorAll('[data-item-key].done, [data-item-key].ck').length;
+        const countEl = personEl.querySelector('.si-person-count, .scv-person-count');
+        if (countEl) countEl.textContent = pDone + '/' + pRows;
+        const allDoneNow = pRows > 0 && pDone === pRows;
+        personEl.classList.toggle('all-done', allDoneNow);   // legacy
+        personEl.classList.toggle('status-green', allDoneNow); // new card tint
+        const ring = personEl.querySelector('.si-ring');
+        if (ring) ring.style.setProperty('--pct', pRows ? Math.round((pDone / pRows) * 100) : 0);
       }
       // Global progress bar + label
-      const allRows = container.querySelectorAll('.scv-item').length;
-      const allDone = container.querySelectorAll('.scv-item.done').length;
+      const allRows = container.querySelectorAll('[data-item-key]').length;
+      const allDone = container.querySelectorAll('[data-item-key].done, [data-item-key].ck').length;
       const pctNow = allRows === 0 ? 0 : Math.round((allDone / allRows) * 100);
       const fill = container.querySelector('.scv-progress-fill');
       if (fill) fill.style.width = pctNow + '%';

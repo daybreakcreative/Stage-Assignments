@@ -126,13 +126,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments=[{id:'inst_k3',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k3';`);
    ev(`openSetupChecklistView();`);
    const view=window.document.getElementById('setupChecklistView');
-   const persons=view.querySelectorAll('.scv-person');
+   // ✓ Items view redesigned into .si-card person cards with .si-chip items (was .scv-person/.scv-item).
+   const persons=view.querySelectorAll('.si-card');
    if(persons.length<2) throw new Error('expected >=2 person cards, got '+persons.length);
-   // Each card must have a name header and its own item rows.
-   const graceCard=Array.from(persons).find(c=>{const h=c.querySelector('.scv-person-name'); return h && h.textContent==='Grace';});
+   // Each card must have a name header and its own item chips.
+   const graceCard=Array.from(persons).find(c=>{const h=c.querySelector('.si-card-name'); return h && h.textContent==='Grace';});
    if(!graceCard) throw new Error('no Grace person card');
-   if(!graceCard.querySelector('.scv-person-role')) throw new Error('Grace card missing role subheading');
-   if(graceCard.querySelectorAll('.scv-item').length<1) throw new Error('Grace card has no check rows');
+   if(!graceCard.querySelector('.si-card-role')) throw new Error('Grace card missing role subheading');
+   if(graceCard.querySelectorAll('.si-chip[data-item-key]').length<1) throw new Error('Grace card has no check chips');
  });
 
  // ---- Check state persists across re-render ---------------------------------------
@@ -142,16 +143,16 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments=[{id:'inst_k4',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}]; state.musicDirectorId='inst_k4';`);
    ev(`openSetupChecklistView();`);
    const view=window.document.getElementById('setupChecklistView');
-   const first=view.querySelector('.scv-item');
+   const first=view.querySelector('.si-chip[data-item-key]');
    if(!first) throw new Error('no items rendered');
    const key=first.dataset.itemKey;
-   first.click(); // toggles + re-renders
+   first.click(); // toggles in place + persists
    const cs=JSON.parse(ev(`JSON.stringify(getChecklistState())`));
    if(!cs[key]) throw new Error('check state not stored after click');
-   // re-render and confirm the same key shows done
+   // re-render and confirm the same key shows done (chips mark done with the `ck` class)
    ev(`renderSetupChecklist();`);
-   const again=window.document.querySelector('.scv-item[data-item-key="'+key.replace(/"/g,'\\"')+'"]');
-   if(!again || !again.classList.contains('done')) throw new Error('done state lost after re-render');
+   const again=window.document.querySelector('.si-chip[data-item-key="'+key.replace(/"/g,'\\"')+'"]');
+   if(!again || !again.classList.contains('ck')) throw new Error('done state lost after re-render');
  });
 
  // ---- Lock-screen count still works ----------------------------------------------
