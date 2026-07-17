@@ -157,7 +157,13 @@ Behaviors that must keep working. **The executable version of this list is `test
       for MD setup even if already set up on their instrument; the MD section never duplicates
       when the instrument itself is the MD/tracks preset; the popup's MD edits share the items
       layer bucket (`stableSetupKey(name,'md','md')`). → `mdpostpull`
-- [ ] ✓ Items renders as grouped rich cards (responsive grid): each person a card with role
-      badge (vocalists = "Vocal N", band MD = "· MD"), a progress ring, setup items as
-      click-to-toggle chips, the assigned mic as a checkable chip, IEM as an uncounted note,
-      and a "No setup needed" state. Toggling a chip updates doneThisService + counts. → `setupitemsview`
+- [ ] The ✓ Items page — the LIVE checklist opened by the ✓ Items nav button
+      (`openSetupChecklistView` → `renderSetupChecklist`, `#setupChecklistView`) — renders as
+      grouped rich cards: a responsive `.si-grid` of `.si-card` person cards, each with a role
+      badge (vocalists = "Vocal N" by assignment slot), a progress ring, setup items as
+      click-to-toggle `.si-chip`s, the assigned vocal mic as a highlighted chip, and IEM as an
+      uncounted note. Toggling a chip persists to `getChecklistState()` and updates the ring +
+      counts in place. Done-state marks the chip with the `ck` class. → `scvredesign`
+      (Note: `renderSetupItemsView`/`renderPersonCard` — the `.si-*` card view reached only by
+      the unwired `enterSetupItemsView` — also carries a parallel copy of this design but is
+      NOT reachable from the nav; the live path is `renderSetupChecklist`.)
