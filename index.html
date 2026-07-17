@@ -968,7 +968,7 @@ body.setup-items-mode .container{display:none}
 .si-person.status-empty{opacity:.7}
 .si-person-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-left:8px}
 .si-person-name{font-family:var(--ff-display);font-size:15.5px;font-weight:500;color:var(--text);flex:1}
-.si-person-name .wl-star{border:none;background:transparent;padding:0;min-width:0;height:auto;color:var(--wl-color);margin-right:4px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em}
+.si-person-name .wl-star{border:none;background:transparent;padding:0;min-width:0;height:auto;color:var(--wl);margin-right:4px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em}
 .si-person-role{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;color:var(--text-faint);font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg-inset);border:1px solid var(--border)}
 .si-person-count{font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:5px;background:var(--bg-inset);color:var(--text-muted)}
 .si-person-count.green{color:#7ba968;background:rgba(123,169,104,.1)}
@@ -981,6 +981,34 @@ body.setup-items-mode .container{display:none}
 .si-items{display:flex;flex-direction:column;gap:4px;margin-left:8px}
 .si-item{display:flex;align-items:flex-start;gap:10px;padding:8px 8px 8px 4px;border-radius:6px;transition:background .12s;position:relative}
 .si-item:hover{background:rgba(255,255,255,.02)}
+.si-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.si-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;position:relative;transition:border-color .2s,background .2s}
+.si-card.status-green{border-color:rgba(123,169,104,.35);background:rgba(123,169,104,.05)}
+.si-card.status-empty{opacity:.72}
+.si-card-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.si-card-name{font-family:var(--ff-display);font-size:14.5px;font-weight:600;color:var(--text)}
+.si-card-name .wl-star{color:var(--wl);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em;margin-right:4px}
+.si-card-role{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.08em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.si-ring{margin-left:auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:conic-gradient(var(--accent) calc(var(--pct,0)*1%),var(--bg-inset) 0)}
+.si-ring .si-person-count{background:var(--surface);border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--text-muted);padding:0}
+.si-ring .si-person-count.green{color:#7ba968}.si-ring .si-person-count.red{color:#c8554d}
+.si-chips{display:flex;flex-wrap:wrap;gap:6px}
+.si-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text);background:var(--bg-inset);border:1px solid var(--border);border-radius:20px;padding:3px 9px;cursor:pointer;user-select:none;transition:all .12s}
+.si-chip:hover{border-color:var(--accent)}
+.si-chip-box{width:12px;height:12px;border:1.5px solid var(--text-faint);border-radius:4px;flex:none}
+.si-chip.mic{border-color:rgba(212,161,71,.5);color:var(--accent)}
+.si-chip.mic .si-chip-box{border-color:var(--accent)}
+.si-chip.auto .si-chip-text::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.55;margin-left:5px;vertical-align:middle}
+.si-chip.ck{color:var(--text-faint);background:transparent;text-decoration:line-through}
+.si-chip.ck .si-chip-box{background:#7ba968;border-color:#7ba968;position:relative}
+.si-chip.ck .si-chip-box::after{content:"✓";position:absolute;inset:-3px 0 0 0;text-align:center;font-size:9px;color:var(--bg)}
+.si-iem-note{margin-top:9px;font-size:11px;color:var(--text-muted)}
+.si-iem-note .k{font-family:var(--ff-mono);font-size:9px;letter-spacing:.06em;color:var(--text-faint);font-weight:700;text-transform:uppercase;margin-right:5px}
+.si-none{font-size:11.5px;color:var(--text-faint);font-style:italic}
+.si-edit{display:inline-block;margin-top:10px;font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);text-decoration:none;cursor:pointer;opacity:0;transition:opacity .15s}
+.si-card:hover .si-edit{opacity:1}
+.si-edit:hover{color:var(--accent)}
 .si-item-checkbox{flex-shrink:0;margin-top:2px;width:18px;height:18px;border:1.5px solid var(--border-2);border-radius:4px;background:var(--bg-elev);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;appearance:none;-webkit-appearance:none}
 .si-item-checkbox:hover{border-color:var(--accent)}
 .si-item-checkbox:checked{background:#7ba968;border-color:#7ba968}
@@ -9809,7 +9837,7 @@ function renderAreaCard(area) {
           : `<span class="si-area-stats">empty</span>`
         }
       </div>
-      <div class="si-people">
+      <div class="si-grid">
         ${area.people.map(p => renderPersonCard(p)).join('')}
       </div>
     </div>`;
@@ -9876,59 +9904,57 @@ function renderItemChip(personKey, item) {
 }
 function renderPersonCard(p) {
   const bucket = ensureSetupBucket(p.key);
+  // Mirror the assigned vocalist mic as a checkable item BEFORE stats are computed.
+  syncAssignedMicItem(p);
   const stats = setupCompletionStats(p.key);
   const items = bucket.items;
   const status = stats.status === 'empty' ? 'empty' : stats.status;
-  // typeKey/key come from getStageAreas (stable). Fall back to deriving if a caller
-  // built p without them (keeps older call sites safe).
   const presetKey = ('typeKey' in p) ? p.typeKey
     : ((p.role === 'band') ? detectPresetKey(p.inst) : (p.role === 'vocalist' ? 'vocals' : null));
-  // Grouped setup editor: the person's STABLE key IS the check-off key (p.key), so the
-  // editor and the visible check-off list write the same bucket. (null typeKey => no editor)
   const spTypeKey = presetKey;
   const spStableKey = spTypeKey ? p.key : null;
 
-  // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players.
-  // The dual-role signal is an EXPLICIT vocalist link (inst.vocalistPlayer) — never a name match —
-  // so a guitarist and a vocalist who merely share a first name don't trigger it.
-  // A linked instrument has no separate band row (it's "covered by" the vocalist), so the boom
-  // lands on the VOCALIST's bucket. A typed-name MD (a real band row) gets it on the band bucket.
+  // Feature 1: Auto-add "Boom mic stand" for dual-role / MD players. (UNCHANGED — keep block.)
   {
     const BOOM = 'Boom mic stand';
     const bandNeedsBoom = (p.role === 'band' && p.inst && state.musicDirectorId && state.musicDirectorId === p.inst.id);
     const vocalistNeedsBoom = (p.role === 'vocalist' && p.vocId && state.instruments.some(i => i.vocalistPlayer === p.vocId));
     if (bandNeedsBoom || vocalistNeedsBoom) {
-      const bucket = ensureSetupBucket(p.key);
-      if (!bucket.items.some(it => it.text === BOOM)) {
-        bucket.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2,9), text: BOOM, doneThisService: false, scopeOneTime: false, autoAdded: true });
+      const b2 = ensureSetupBucket(p.key);
+      if (!b2.items.some(it => it.text === BOOM)) {
+        b2.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2,9), text: BOOM, doneThisService: false, scopeOneTime: false, autoAdded: true });
       }
     }
   }
 
-  // Roles label
+  // Role badge
   let roleLabel = '';
-  if (p.role === 'band' && p.instLabel) roleLabel = p.instLabel;
-  else if (p.role === 'vocalist') roleLabel = 'VOCAL';
-  else if (p.role === 'shadow') roleLabel = 'SHADOW';
+  if (p.role === 'vocalist') { const s = vocalSlotFor(p.vocId); roleLabel = s ? ('Vocal ' + s) : 'Vocal'; }
+  else if (p.role === 'band' && p.instLabel) roleLabel = p.instLabel + ((state.musicDirectorId && p.inst && state.musicDirectorId === p.inst.id) ? ' · MD' : '');
+  else if (p.role === 'shadow') roleLabel = 'Shadow';
+
+  const iem = iemNoteFor(p);
+  const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+  const chipsHtml = items.length
+    ? items.map(it => renderItemChip(p.key, it)).join('')
+    : `<div class="si-none">No setup needed</div>`;
 
   return `
-    <div class="si-person status-${status}" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-person-role="${esc(p.role||'')}" ${p.inst ? `data-person-inst-id="${esc(p.inst.id)}"` : ''} ${p.inst && p.inst.tag ? `data-person-inst-tag="${esc(p.inst.tag)}"` : ''}>
-      <div class="si-person-header">
-        <span class="si-person-name">${p.isWL ? '<span class="wl-star">WL</span>' : ''}${esc(p.name)}</span>
-        ${roleLabel ? `<span class="si-person-role">${esc(roleLabel)}</span>` : ''}
-        ${stats.total > 0 ? `<span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span>` : ''}
-        <div class="si-actions">
-          ${spStableKey ? `<button class="si-action-btn" data-action="edit-setup" data-sp-key="${esc(spStableKey)}" data-sp-type="${esc(spTypeKey)}" data-person-key="${esc(p.key)}" title="Edit grouped setup options">⚙ Edit setup</button>` : ''}
+    <div class="si-card status-${status}" data-person-key="${esc(p.key)}" data-person-name="${esc(p.name)}" data-person-role="${esc(p.role||'')}" ${p.inst ? `data-person-inst-id="${esc(p.inst.id)}"` : ''} ${p.inst && p.inst.tag ? `data-person-inst-tag="${esc(p.inst.tag)}"` : ''}>
+      <div class="si-card-head">
+        <span class="si-card-name">${p.isWL ? '<span class="wl-star">WL</span>' : ''}${esc(p.name)}</span>
+        ${roleLabel ? `<span class="si-card-role">${esc(roleLabel)}</span>` : ''}
+        ${stats.total > 0 ? `<span class="si-ring" style="--pct:${pct}"><span class="si-person-count ${stats.status}">${stats.done}/${stats.total}</span></span>` : ''}
+      </div>
+      <div class="si-chips">${chipsHtml}</div>
+      ${iem ? `<div class="si-iem-note"><span class="k">IEM</span> ${esc(iem)}</div>` : ''}
+      ${spStableKey ? `<div class="sp-editor-wrap" id="sp_wrap_${esc(p.key)}" style="display:none">
+        <div class="si-add-row">
+          <input type="text" class="si-add-input" placeholder="Add a setup item…" data-add-input="${esc(p.key)}" />
+          <button class="si-add-btn" data-action="add-item" data-person-key="${esc(p.key)}" data-sp-type="${esc(presetKey || '')}">Add</button>
         </div>
       </div>
-      ${spStableKey ? `<div class="sp-editor-wrap" id="sp_wrap_${esc(p.key)}" style="display:none"></div>` : ''}
-      <div class="si-items">
-        ${items.map(it => renderItemRow(p.key, it)).join('')}
-      </div>
-      <div class="si-add-row">
-        <input type="text" class="si-add-input" placeholder="Add a setup item…" data-add-input="${esc(p.key)}" />
-        <button class="si-add-btn" data-action="add-item" data-person-key="${esc(p.key)}" data-sp-type="${esc(presetKey || '')}">Add</button>
-      </div>
+      <a class="si-edit" data-action="edit-setup" data-sp-key="${esc(spStableKey)}" data-sp-type="${esc(spTypeKey)}" data-person-key="${esc(p.key)}" title="Edit grouped setup options">✎ edit setup</a>` : ''}
     </div>`;
 }
 

@@ -133,6 +133,48 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(out.newKind!=='mic') throw new Error('renamed mic item should be kind===mic, got '+out.newKind);
  });
 
+ console.log('--- render: chip cards ---');
+ function renderItems(){ seed(); ev(`state.viewMode='setup-items'; renderSetupItemsView();`); }
+
+ check('renders a card grid with one card per person', ()=>{
+   renderItems();
+   if(!doc.querySelector('#si_content .si-grid')) throw new Error('no .si-grid');
+   const cards=doc.querySelectorAll('#si_content .si-card');
+   // 5 cards: 3 vocalists + Pat (Keys area) + Pat again (separate MD area). getStageAreas
+   // surfaces an MD who plays a non-'md' instrument in BOTH its instrument area AND an MD area.
+   if(cards.length!==5) throw new Error('expected 5 cards (3 vocals + Pat/Keys + Pat/MD), got '+cards.length);
+ });
+
+ check('vocalist card shows Vocal N and a checkable mic chip; band MD shows · MD', ()=>{
+   renderItems();
+   var ava=[].find.call(doc.querySelectorAll('.si-card'),c=>/Ava Chen/.test(c.textContent));
+   if(!/Vocal 1/.test(ava.querySelector('.si-card-role').textContent)) throw new Error('Ava should be Vocal 1');
+   var micChip=ava.querySelector('.si-chip.mic');
+   if(!micChip) throw new Error('Ava should have a mic chip');
+   if(!/Beta 58 #1/.test(micChip.textContent)) throw new Error('mic chip text wrong');
+   if(!micChip.querySelector('input[data-action="toggle-item"]')) throw new Error('mic chip should be checkable');
+   var pat=[].find.call(doc.querySelectorAll('.si-card'),c=>/Pat Reed/.test(c.textContent));
+   if(!/· MD/.test(pat.querySelector('.si-card-role').textContent)) throw new Error('Pat should be · MD');
+ });
+
+ check('IEM shows as a note, not a chip and not counted', ()=>{
+   renderItems();
+   var ava=[].find.call(doc.querySelectorAll('.si-card'),c=>/Ava Chen/.test(c.textContent));
+   var note=ava.querySelector('.si-iem-note');
+   if(!note||!/Pack A/.test(note.textContent)) throw new Error('Ava IEM note missing');
+   // the note must NOT be a toggle-item
+   if(note.querySelector('[data-action="toggle-item"]')) throw new Error('IEM note must not be checkable');
+ });
+
+ check('person with no items shows the No setup needed state', ()=>{
+   seed();
+   ev(`state.vocalists.find(v=>v.id==='v3').micAssigned='';`); // Mia: no mic, no items
+   ev(`state.viewMode='setup-items'; renderSetupItemsView();`);
+   var mia=[].find.call(doc.querySelectorAll('.si-card'),c=>/Mia Torres/.test(c.textContent));
+   if(!mia.querySelector('.si-none')) throw new Error('Mia should show .si-none');
+   if(mia.querySelector('.si-chip')) throw new Error('Mia should have no chips');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
