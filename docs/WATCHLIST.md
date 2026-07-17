@@ -157,3 +157,7 @@ Behaviors that must keep working. **The executable version of this list is `test
       for MD setup even if already set up on their instrument; the MD section never duplicates
       when the instrument itself is the MD/tracks preset; the popup's MD edits share the items
       layer bucket (`stableSetupKey(name,'md','md')`). → `mdpostpull`
+- [ ] ✓ Items renders as grouped rich cards (responsive grid): each person a card with role
+      badge (vocalists = "Vocal N", band MD = "· MD"), a progress ring, setup items as
+      click-to-toggle chips, the assigned mic as a checkable chip, IEM as an uncounted note,
+      and a "No setup needed" state. Toggling a chip updates doneThisService + counts. → `setupitemsview`
