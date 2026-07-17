@@ -175,6 +175,22 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(mia.querySelector('.si-chip')) throw new Error('Mia should have no chips');
  });
 
+ console.log('--- toggle ---');
+ check('clicking a chip toggles doneThisService and updates the count', ()=>{
+   renderItems();
+   var ava=[].find.call(doc.querySelectorAll('.si-card'),c=>/Ava Chen/.test(c.textContent));
+   var chip=ava.querySelector('.si-chip.mic');
+   var cb=chip.querySelector('input[data-action="toggle-item"]');
+   var key=ava.dataset.personKey, id=chip.dataset.itemId;
+   cb.checked=true; cb.dispatchEvent(new window.Event('change',{bubbles:true}));
+   var item=ev(`state.setupItems[${JSON.stringify(key)}].items.find(i=>i.id===${JSON.stringify(id)})`);
+   if(ev(`state.setupItems[${JSON.stringify(key)}].items.find(i=>i.id===${JSON.stringify(id)}).doneThisService`)!==true)
+     throw new Error('doneThisService not set true');
+   // count element reflects 1/1 for Ava (only the mic item)
+   var count=ava.querySelector('.si-person-count');
+   if(!/1\/1/.test(count.textContent)) throw new Error('count not updated: '+count.textContent);
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

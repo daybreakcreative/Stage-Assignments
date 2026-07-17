@@ -9381,7 +9381,16 @@ function reconstructSetupBucket(stableKey, typeKey) {
   if (Object.keys(b.selections).length) return; // already has selections
   const cat = setupCatalogFor(typeKey);
   const doneByText = {};
-  (b.items || []).forEach(it => { if (it.doneThisService) doneByText[it.text] = true; });
+  // Also preserve each item's id by text so ids stay STABLE across this rebuild. Selection-less
+  // buckets (e.g. a vocalist whose only item is the auto-mic) reconstruct fully on every
+  // getStageAreas(); without this the ids would be regenerated each render, leaving the DOM's
+  // data-item-id stale so a toggled chip could no longer be re-toggled. Same philosophy as
+  // doneByText: reconcile by the stable text.
+  const idByText = {};
+  (b.items || []).forEach(it => {
+    if (it.doneThisService) doneByText[it.text] = true;
+    if (it.text && !(it.text in idByText)) idByText[it.text] = it.id;
+  });
   // Build lookup: text -> { groupId, optId, type } for both option text and addItems.
   const textMap = {};
   if (cat) {
@@ -9408,6 +9417,7 @@ function reconstructSetupBucket(stableKey, typeKey) {
   // Preserve completion by text across the upcoming rebuild.
   b.items = resolveSetupItems(typeKey, selections, customItems).map(l => {
     const nit = newSetupItem(l.text, false);
+    if (idByText[l.text]) nit.id = idByText[l.text];
     if (doneByText[l.text]) nit.doneThisService = true;
     return nit;
   });
@@ -10123,7 +10133,7 @@ function wireSetupItemsContent() {
   // Toggle item completion
   root.querySelectorAll('[data-action="toggle-item"]').forEach(cb => {
     cb.addEventListener('change', e => {
-      const row = e.target.closest('.si-item');
+      const row = e.target.closest('[data-item-id]');
       if (!row) return;
       const personKey = row.dataset.personKey;
       const itemId = row.dataset.itemId;
@@ -10240,7 +10250,7 @@ function refreshSetupItemsUI() {
   if (!root) return;
 
   // Update per-person card statuses
-  root.querySelectorAll('.si-person').forEach(card => {
+  root.querySelectorAll('.si-card, .si-person').forEach(card => {
     const key = card.dataset.personKey;
     const stats = setupCompletionStats(key);
     const status = stats.status === 'empty' ? 'empty' : stats.status;
@@ -10251,15 +10261,19 @@ function refreshSetupItemsUI() {
       countEl.textContent = `${stats.done}/${stats.total}`;
       countEl.className = 'si-person-count ' + stats.status;
     }
-    // Update item rows
-    card.querySelectorAll('.si-item').forEach(row => {
+    // Update item rows (legacy) AND chips
+    card.querySelectorAll('[data-item-id]').forEach(row => {
       const itemId = row.dataset.itemId;
       const bucket = state.setupItems[key];
       if (!bucket) return;
       const item = bucket.items.find(i => i.id === itemId);
       if (!item) return;
-      row.classList.toggle('done', item.doneThisService);
+      row.classList.toggle('done', !!item.doneThisService);   // .si-item
+      row.classList.toggle('ck', !!item.doneThisService);     // .si-chip
     });
+    // Update the progress ring fill
+    const ring = card.querySelector('.si-ring');
+    if (ring) ring.style.setProperty('--pct', stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0);
   });
   // Update area stats
   root.querySelectorAll('.si-area').forEach(areaEl => {
