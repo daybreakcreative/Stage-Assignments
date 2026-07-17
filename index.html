@@ -9833,21 +9833,36 @@ function iemNoteFor(p) {
   if (p.role === 'band' && p.inst) return iemPackFor(p.inst) || '';
   return '';
 }
-// Keep the assigned VOCALIST mic mirrored as one auto-managed, checkable item (kind:'mic')
-// at the front of the bucket, so it counts toward X/Y and remembers its done-state with zero
-// new persistence. Create/update/remove to match v.micAssigned. Band mics are ordinary items.
+// Keep the assigned VOCALIST mic mirrored as one auto-managed, checkable item so it counts
+// toward X/Y and remembers its done-state with zero new persistence. Band mics are ordinary
+// items. IMPORTANT: dedupe by TEXT, not by a `kind` flag — `getStageAreas()` runs
+// `reconstructSetupBucket` before every render, which rebuilds `b.items` via `newSetupItem`
+// and STRIPS custom fields (`kind`, `autoAdded`) and regenerates ids. A `kind`-based lookup
+// would miss the surviving (text-preserved) item and unshift a duplicate each render. So we
+// track the current mic text on the bucket (`bucket.micItemText`, an untouched field that
+// survives reconstruction), reconcile by text, and re-tag `kind:'mic'` every call (styling
+// needs it fresh at render time). This mirrors how the Boom-mic auto-add stays idempotent.
 function syncAssignedMicItem(p) {
   if (p.role !== 'vocalist' || !p.vocId) return;
   const v = state.vocalists.find(x => x.id === p.vocId);
   const mic = (v && v.micAssigned) ? v.micAssigned.trim() : '';
   const bucket = ensureSetupBucket(p.key);
-  const existing = bucket.items.find(it => it.kind === 'mic');
-  if (!mic) { if (existing) bucket.items = bucket.items.filter(it => it.kind !== 'mic'); return; }
-  if (existing) { if (existing.text !== mic) existing.text = mic; return; }
-  bucket.items.unshift({ id: 'si_mic_' + Math.random().toString(36).slice(2, 9), text: mic, doneThisService: false, scopeOneTime: false, autoAdded: true, kind: 'mic' });
+  const prev = bucket.micItemText || '';
+  // Assignment changed or cleared → drop the stale auto-mic (identified by its tracked text).
+  if (prev && prev !== mic) bucket.items = bucket.items.filter(it => it.text !== prev);
+  if (!mic) { delete bucket.micItemText; return; }
+  let item = bucket.items.find(it => it.text === mic);
+  if (!item) {
+    item = { id: 'si_mic_' + Math.random().toString(36).slice(2, 9), text: mic, doneThisService: false, scopeOneTime: false };
+    bucket.items.unshift(item);
+  }
+  item.kind = 'mic';       // re-tag every call — survives reconstruction stripping the flag
+  item.autoAdded = true;
+  bucket.micItemText = mic;
 }
 // One setup item as a click-to-toggle chip. Reuses data-action="toggle-item"; the chip carries
-// data-item-id/data-person-key so the existing handler (closest('[data-item-id]')) finds them.
+// data-item-id/data-person-key on the <label> so that once Task 3 decouples the toggle handler
+// from closest('.si-item') to closest('[data-item-id]'), it resolves the chip the same way.
 function renderItemChip(personKey, item) {
   const done = !!item.doneThisService;
   const cls = ['si-chip'];

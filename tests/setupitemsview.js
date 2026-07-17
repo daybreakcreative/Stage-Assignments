@@ -51,12 +51,86 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(mics[0].autoAdded!==true) throw new Error('mic item should be autoAdded');
  });
 
+ check('syncAssignedMicItem is idempotent for the SAME mic (stable id + done-state, no dupes)', ()=>{
+   seed();
+   const key=ev(`stableSetupKey('Ava Chen','vocalist','vocals')`);
+   // Resolve p ONCE, then drive the helper repeatedly on the SAME assigned mic — reconciling
+   // by text must reuse the existing item (stable id, preserved done-state, never duplicated).
+   const out=JSON.parse(ev(`JSON.stringify((function(){
+     var p=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1');
+     syncAssignedMicItem(p);
+     var m=state.setupItems[${JSON.stringify(key)}].items.find(i=>i.kind==='mic');
+     var id0=m.id; m.doneThisService=true;           // user checks it off
+     syncAssignedMicItem(p); syncAssignedMicItem(p); // repeat renders of the same mic
+     var mics=state.setupItems[${JSON.stringify(key)}].items.filter(i=>i.kind==='mic');
+     return {id0:id0, count:mics.length, item:mics[0]};
+   })())`));
+   if(out.count!==1) throw new Error('expected 1 mic item after repeat syncs, got '+out.count);
+   if(out.item.id!==out.id0) throw new Error('mic item id should be stable when the mic is unchanged');
+   if(out.item.text!=='Beta 58 #1') throw new Error('mic text should be unchanged, got '+out.item.text);
+   if(out.item.doneThisService!==true) throw new Error('done-state should be preserved across same-mic syncs');
+ });
+
+ check('syncAssignedMicItem replaces the item on a rename (no in-between reconstruct), no dupes', ()=>{
+   seed();
+   const key=ev(`stableSetupKey('Ava Chen','vocalist','vocals')`);
+   // Resolve p ONCE; change the assigned mic, then sync twice. Reconciliation drops the stale
+   // text and creates the new one — exactly one item with the new text, no duplicates.
+   const out=JSON.parse(ev(`JSON.stringify((function(){
+     var p=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1');
+     syncAssignedMicItem(p);
+     state.vocalists.find(v=>v.id==='v1').micAssigned='SM7B #9';
+     syncAssignedMicItem(p); syncAssignedMicItem(p);
+     var items=state.setupItems[${JSON.stringify(key)}].items||[];
+     return {oldCount:items.filter(i=>i.text==='Beta 58 #1').length,
+             newCount:items.filter(i=>i.text==='SM7B #9').length,
+             mics:items.filter(i=>i.kind==='mic').length};
+   })())`));
+   if(out.oldCount!==0) throw new Error('old mic text should be gone, got '+out.oldCount);
+   if(out.newCount!==1) throw new Error('expected exactly 1 item with the new mic text, got '+out.newCount);
+   if(out.mics!==1) throw new Error('expected exactly 1 kind===mic item, got '+out.mics);
+ });
+
  check('syncAssignedMicItem removes the mic item when assignment cleared', ()=>{
    seed();
    const key=ev(`stableSetupKey('Ava Chen','vocalist','vocals')`);
    ev(`(function(){var p=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1'); syncAssignedMicItem(p); state.vocalists.find(v=>v.id==='v1').micAssigned=''; syncAssignedMicItem(p);})()`);
    const n=ev(`(state.setupItems[${JSON.stringify(key)}].items||[]).filter(function(i){return i.kind==='mic';}).length`);
    if(n!==0) throw new Error('mic item should be removed, got '+n);
+ });
+
+ check('syncAssignedMicItem survives the RENDER FLOW (getStageAreas rebuild) without duplicating', ()=>{
+   // v1 (Ava) has a mic and NO catalog selections, so reconstructSetupBucket rebuilds her
+   // bucket via newSetupItem on EVERY getStageAreas() call — stripping `kind`/`autoAdded` and
+   // regenerating ids. Two render cycles (getStageAreas→sync, ×2) must not produce a duplicate.
+   seed();
+   const key=ev(`stableSetupKey('Ava Chen','vocalist','vocals')`);
+   const out=JSON.parse(ev(`JSON.stringify((function(){
+     var p1=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1'); syncAssignedMicItem(p1);
+     var p2=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1'); syncAssignedMicItem(p2);
+     var items=state.setupItems[${JSON.stringify(key)}].items||[];
+     var mic=items.filter(function(i){return i.text==='Beta 58 #1';});
+     return {micCount:mic.length, kind:(mic[0]||{}).kind};
+   })())`));
+   if(out.micCount!==1) throw new Error('expected exactly 1 item with the mic text after 2 render cycles, got '+out.micCount);
+   if(out.kind!=='mic') throw new Error('mic item should be re-tagged kind===mic after final sync, got '+out.kind);
+ });
+
+ check('syncAssignedMicItem renames through the render flow (old text gone, one new item)', ()=>{
+   seed();
+   const key=ev(`stableSetupKey('Ava Chen','vocalist','vocals')`);
+   const out=JSON.parse(ev(`JSON.stringify((function(){
+     var p1=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1'); syncAssignedMicItem(p1);
+     state.vocalists.find(v=>v.id==='v1').micAssigned='SM7B #9';
+     var p2=getStageAreas().find(a=>a.id==='area_vocals').people.find(x=>x.vocId==='v1'); syncAssignedMicItem(p2);
+     var items=state.setupItems[${JSON.stringify(key)}].items||[];
+     return {oldCount:items.filter(function(i){return i.text==='Beta 58 #1';}).length,
+             newCount:items.filter(function(i){return i.text==='SM7B #9';}).length,
+             newKind:(items.find(function(i){return i.text==='SM7B #9';})||{}).kind};
+   })())`));
+   if(out.oldCount!==0) throw new Error('old mic text should be gone, got '+out.oldCount);
+   if(out.newCount!==1) throw new Error('expected exactly 1 item with the new mic text, got '+out.newCount);
+   if(out.newKind!=='mic') throw new Error('renamed mic item should be kind===mic, got '+out.newKind);
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
