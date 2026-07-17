@@ -9815,6 +9815,50 @@ function renderAreaCard(area) {
     </div>`;
 }
 
+// ── Setup Items card helpers ─────────────────────────────────────────────
+// Vocal slot (1-based) from the assignment order — matches renderDisplayView's VOCAL n.
+function vocalSlotFor(vocId) {
+  const a = state.assignments || [];
+  const i = a.indexOf(vocId);
+  return i >= 0 ? i + 1 : 0;
+}
+// The IEM pack to show as a read-only note (never counted). '' when none.
+function iemNoteFor(p) {
+  if (p.role === 'vocalist' && p.vocId) {
+    const slot = vocalSlotFor(p.vocId);
+    if (!slot) return '';
+    const packs = state.config.voxIemPacks || [];
+    return packs[slot - 1] || ('Vocal ' + slot);
+  }
+  if (p.role === 'band' && p.inst) return iemPackFor(p.inst) || '';
+  return '';
+}
+// Keep the assigned VOCALIST mic mirrored as one auto-managed, checkable item (kind:'mic')
+// at the front of the bucket, so it counts toward X/Y and remembers its done-state with zero
+// new persistence. Create/update/remove to match v.micAssigned. Band mics are ordinary items.
+function syncAssignedMicItem(p) {
+  if (p.role !== 'vocalist' || !p.vocId) return;
+  const v = state.vocalists.find(x => x.id === p.vocId);
+  const mic = (v && v.micAssigned) ? v.micAssigned.trim() : '';
+  const bucket = ensureSetupBucket(p.key);
+  const existing = bucket.items.find(it => it.kind === 'mic');
+  if (!mic) { if (existing) bucket.items = bucket.items.filter(it => it.kind !== 'mic'); return; }
+  if (existing) { if (existing.text !== mic) existing.text = mic; return; }
+  bucket.items.unshift({ id: 'si_mic_' + Math.random().toString(36).slice(2, 9), text: mic, doneThisService: false, scopeOneTime: false, autoAdded: true, kind: 'mic' });
+}
+// One setup item as a click-to-toggle chip. Reuses data-action="toggle-item"; the chip carries
+// data-item-id/data-person-key so the existing handler (closest('[data-item-id]')) finds them.
+function renderItemChip(personKey, item) {
+  const done = !!item.doneThisService;
+  const cls = ['si-chip'];
+  if (done) cls.push('ck');
+  if (item.kind === 'mic') cls.push('mic');
+  if (item.autoAdded) cls.push('auto');
+  return `<label class="${cls.join(' ')}" data-item-id="${esc(item.id)}" data-person-key="${esc(personKey)}">
+      <input type="checkbox" class="si-chip-cb" data-action="toggle-item" ${done ? 'checked' : ''} hidden>
+      <span class="si-chip-box"></span><span class="si-chip-text">${esc(item.text)}</span>
+    </label>`;
+}
 function renderPersonCard(p) {
   const bucket = ensureSetupBucket(p.key);
   const stats = setupCompletionStats(p.key);
