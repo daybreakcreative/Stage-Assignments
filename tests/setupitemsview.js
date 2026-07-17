@@ -189,6 +189,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
    // count element reflects 1/1 for Ava (only the mic item)
    var count=ava.querySelector('.si-person-count');
    if(!/1\/1/.test(count.textContent)) throw new Error('count not updated: '+count.textContent);
+   // the visible refresh landed: chip label gains the .ck class
+   if(!chip.classList.contains('ck')) throw new Error('chip label should gain the ck class when done');
+   // and the progress ring fill reflects 100 (1/1 done)
+   var ring=ava.querySelector('.si-ring');
+   if(!ring) throw new Error('no .si-ring');
+   if(String(ring.style.getPropertyValue('--pct')).trim()!=='100')
+     throw new Error('ring --pct should be 100, got '+ring.style.getPropertyValue('--pct'));
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
