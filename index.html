@@ -6897,7 +6897,7 @@ function renderBulkPreadd() {
         <button class="bulk-expand" data-bulk-expand title="Expand">${r.open ? '▾' : '▸'}</button>
         <div class="bulk-name-wrap"><input type="text" class="bulk-name" placeholder="${canSearch ? 'Search Planning Center people…' : 'Name'}" value="${esc(r.name)}" autocomplete="off" /><div class="bulk-name-results"></div></div>
         <select class="bulk-role">${roleOpts}</select>
-        ${r.role === 'md' ? '' : `<label class="bulk-md-lbl"><input type="checkbox" class="bulk-md"${r.isMD ? ' checked' : ''}/> also MD</label>`}
+        ${r.role === 'band' ? `<label class="bulk-md-lbl"><input type="checkbox" class="bulk-md"${r.isMD ? ' checked' : ''}/> also MD</label>` : ''}
         <span class="bulk-summary">${esc(bulkRowSummary(r))}</span>
         <button class="bulk-remove" data-bulk-remove title="Remove">✕</button>
       </div>
@@ -6981,8 +6981,10 @@ function bulkRowsFromPcoTeamData(members, existingKeys) {
     }
   });
   mdNames.forEach((disp, nn) => {
+    // A vocalist is never the MD — only flag a band (instrument) row. If they never played an
+    // instrument, they become a tracks-only MD row instead.
     let flagged = false;
-    for (const row of rowMap.values()) { if (normFullName(row.name) === nn) { row.isMD = true; flagged = true; break; } }
+    for (const row of rowMap.values()) { if (normFullName(row.name) === nn && row.role === 'band') { row.isMD = true; flagged = true; break; } }
     if (!flagged) rowMap.set(keyOf(disp, 'md', ''), { name: disp, role: 'md', onStage: true });
   });
   const out = [];

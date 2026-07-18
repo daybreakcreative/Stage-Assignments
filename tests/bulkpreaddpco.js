@@ -38,6 +38,15 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    if(byName('Nope').length!==0) throw new Error('Video Host should be skipped');
  });
 
+ check('a vocalist who was also MD is NOT flagged MD — MD becomes its own row', ()=>{
+   const members=JSON.stringify([{name:'Val Singer',position:'Vocals'},{name:'Val Singer',position:'Music Director'}]);
+   const rows=JSON.parse(ev(`JSON.stringify(bulkRowsFromPcoTeamData(${members}, []))`));
+   const voc=rows.find(r=>r.name==='Val Singer'&&r.role==='vocalist');
+   if(!voc) throw new Error('vocalist row missing');
+   if(voc.isMD) throw new Error('vocalist row must NOT be flagged isMD');
+   if(!rows.some(r=>r.name==='Val Singer'&&r.role==='md')) throw new Error('a tracks-only MD row should be added instead');
+ });
+
  check('bulkRowsFromPcoTeamData dedupes against existing grid keys', ()=>{
    const members=JSON.stringify([{name:'Jo Vane',position:'Bass'},{name:'New Guy',position:'Drums'}]);
    const existing=JSON.stringify([ev(`(normFullName('Jo Vane'))`)+'|band|bass']);
