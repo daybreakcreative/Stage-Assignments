@@ -9800,6 +9800,14 @@ function setupOverallStats() {
 
 // ===== Setup Items: Render + interactions =====
 
+// ⚠️ UNREACHABLE LEGACY VIEW. The live "✓ Items" page is renderSetupChecklist()
+// (#setupChecklistView), opened by the nav button via openSetupChecklistView(). This
+// renderSetupItemsView()/renderPersonCard()/renderAreaCard() path is reached ONLY by
+// enterSetupItemsView(), which has no callers (viewMode 'setup-items' is never entered).
+// It carries a parallel copy of the grouped rich-card design for reference, but users never
+// see it. Removing this dead path is a tracked follow-up (it shares refreshSetupItemsUI with
+// the live grouped editor, so deletion needs a careful pass). Redesign edits belong in
+// renderSetupChecklist, not here.
 function renderSetupItemsView() {
   maybeRollOverToNewService();
 
@@ -10351,12 +10359,29 @@ function collectChecklistItems() {
 
   const order = [];
   const byPerson = new Map();
+  // Boom-mic auto-add targets (mirrors renderPersonCard): the MD's own instrument bucket, and
+  // any vocalist who has an instrument explicitly linked to them (inst.vocalistPlayer).
+  const mdInst = state.musicDirectorId ? instById(state.musicDirectorId) : null;
+  const mdBoomKey = (mdInst && (mdInst.assignedTo || '').trim() && !mdInst.vocalistPlayer)
+    ? stableSetupKey((mdInst.assignedTo || '').trim(), 'band', detectPresetKey(mdInst)) : null;
+  const linkedVocIds = new Set((state.instruments || []).filter(i => i && i.vocalistPlayer).map(i => i.vocalistPlayer));
+  const ensureBoom = key => {
+    const b = ensureSetupBucket(key);
+    if (!b.items.some(it => it.text === 'Boom mic stand')) {
+      b.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2, 9), text: 'Boom mic stand', doneThisService: false, scopeOneTime: false, autoAdded: true });
+    }
+  };
   rows.forEach(en => {
     // Mirror the assigned vocal mic into the bucket as a checkable item so it flows into the
     // checklist just like any other setup item (see syncAssignedMicItem).
     if (en.role === 'vocalist') {
       const vv = (state.vocalists || []).find(x => normFullName(x.name) === normFullName(en.name));
-      if (vv) syncAssignedMicItem({ role: 'vocalist', vocId: vv.id, key: en.stableKey });
+      if (vv) {
+        syncAssignedMicItem({ role: 'vocalist', vocId: vv.id, key: en.stableKey });
+        if (linkedVocIds.has(vv.id)) ensureBoom(en.stableKey); // dual-role player needs a boom
+      }
+    } else if (en.role === 'band' && mdBoomKey && en.stableKey === mdBoomKey) {
+      ensureBoom(en.stableKey); // the MD gets a boom mic on their instrument card
     }
     const bucket = state.setupItems[en.stableKey];
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
@@ -10391,12 +10416,19 @@ function collectChecklistItems() {
       const vv = (state.vocalists || []).find(x => normFullName(x.name) === nn);
       if (vv) {
         const slot = vocalSlotFor(vv.id);
-        if (slot) { roleLabel = 'Vocal ' + slot; iem = (state.config.voxIemPacks || [])[slot - 1] || ('Vocal ' + slot); }
+        if (slot) roleLabel = 'Vocal ' + slot;
+        // Only surface a REAL assigned vocal mix — not the default "Vocal N" (which just echoes
+        // the badge and adds noise).
+        const packs = state.config.voxIemPacks || [];
+        const pack = slot ? (packs[slot - 1] || '') : '';
+        if (pack && pack !== ('Vocal ' + slot)) iem = pack;
         micText = (vv.micAssigned || '').trim();
       }
     } else {
+      // Band: only show an IEM note when a pack is explicitly assigned (inst.pack) — never the
+      // label fallback, so a drummer with no pack doesn't read "IEM Drums".
       const inst = (state.instruments || []).find(i => i && !i.vocalistPlayer && normFullName(i.assignedTo) === nn);
-      if (inst) iem = iemPackFor(inst) || '';
+      if (inst && (inst.pack || '').trim()) iem = inst.pack.trim();
     }
     const flatBucket = p.isVoc ? vocItems : bandItems;
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
@@ -10755,6 +10787,8 @@ function showSetupLockScreen() {
   }
 }
 
+// ⚠️ DEAD: no callers. The ✓ Items nav button uses openSetupChecklistView() instead. Kept only
+// so the renderAll view-dispatch stays total; see the note on renderSetupItemsView().
 function enterSetupItemsView() {
   if (!state.config.enableSetupItems) return;
   state.viewMode = 'setup-items';

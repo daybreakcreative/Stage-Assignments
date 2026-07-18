@@ -74,6 +74,30 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!/No setup items configured/i.test(doc.getElementById('setupChecklistView').textContent)) throw new Error('missing whole-view empty state');
  });
 
+ check('MD gets an auto "Boom mic stand" chip on their instrument card', ()=>{
+   seedAndRender(); // Pat Reed = MD on Keys
+   const pat=card(/Pat Reed/);
+   if(!pat) throw new Error('no Pat card (MD boom should give him an item)');
+   if(!/Boom mic stand/.test(pat.textContent)) throw new Error('MD boom-mic chip missing');
+ });
+
+ check('a band position with no assigned pack shows NO IEM note (no "IEM Drums")', ()=>{
+   ev(`toast=function(){};renderAll=function(){};saveState=function(){};updateSetupProgressBadge=function(){};`);
+   ev(`state.setupItems={}; state.checklistState={}; state.shadows=[]; state.config.stageFeatures=[]; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.musicDirectorId=null;`);
+   ev(`state.instruments=[{id:'i_dr',label:'Drums',assignedTo:'Marcus Lee'}];`); // no .pack
+   ev(`state.service={name:'S',date:'2026-07-19'};`);
+   const k=ev(`stableSetupKey('Marcus Lee','band','drums')`);
+   ev(`(function(){seedPersonSetup(${JSON.stringify(k)},'drums'); var b=state.setupItems[${JSON.stringify(k)}]; b.items=[{id:'d1',text:'House kit',doneThisService:false}];})();`);
+   ev(`renderSetupChecklist();`);
+   const marcus=card(/Marcus Lee/);
+   if(!marcus) throw new Error('no Marcus card');
+   if(marcus.querySelector('.si-iem-note')) throw new Error('drummer with no pack should have NO IEM note');
+   // but WITH a pack, it should show
+   ev(`state.instruments[0].pack='Aviom 4'; renderSetupChecklist();`);
+   const marcus2=card(/Marcus Lee/);
+   if(!marcus2.querySelector('.si-iem-note')||!/Aviom 4/.test(marcus2.querySelector('.si-iem-note').textContent)) throw new Error('assigned pack should show as IEM note');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
