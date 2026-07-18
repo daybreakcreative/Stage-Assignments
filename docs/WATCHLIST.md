@@ -60,8 +60,16 @@ Behaviors that must keep working. **The executable version of this list is `test
       single-page grid (`openBulkPreadd`/`renderBulkPreadd`/`commitBulkPreadd`): add rows (name +
       instrument/role, "also MD") or "Add everyone on the current plan", expand each to set their
       setup (`renderPersonSetupEditor`) + vocal mic, Save writes the stable buckets + a remembered
-      mic + `musicianPreferences` "known" markers (so they aren't re-prompted). Phase 2 (PCO "last
-      6 months" auto-populate) is still backlogged. → `bulkpreadd`
+      mic + `musicianPreferences` "known" markers (so they aren't re-prompted). → `bulkpreadd`
+    - **Bulk pre-add — Phase 2 (PCO-linked).** In the bulk grid: "＋ Bulk add regulars on your team
+      (anyone scheduled from the last 6 months)" (`fetchPcoRegulars`) walks the selected service
+      type's past plans (`filter=past`, stops >6mo), collects `team_members`, and appends deduped
+      rows via the pure `bulkRowsFromPcoTeamData` (one row per role; band/vocal/MD only; MD-also-
+      plays → `isMD` on the instrument row; MD-only → a `role:'md'` row with an on/off-stage
+      select, stored on `musicianPreferences[name|md].onStage` — capture only, no placement yet).
+      The manual name field is a PCO people search (`bulkPeopleSearch` → `/people/v2/people`,
+      canonical name) when connected; plain text when offline. Button disabled without PCO + a
+      service type. → `bulkpreaddpco`
     - **Stable per-person keys, seeded once.** Buckets are keyed
       `stableSetupKey(name, role, typeKey)` (role ∈ band/vocalist/shadow) and seeded a
       single time via `seedPersonSetup`. A re-pull that re-mints instrument ids does NOT

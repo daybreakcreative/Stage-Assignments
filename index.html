@@ -729,6 +729,14 @@ background-size:5% 10%}
 .bulk-mic-lbl{font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
 .bulk-mic{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12.5px;padding:5px 8px}
 .bulk-md-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:12px 0 6px}
+.bulk-mdstage-row{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.bulk-md-stage{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12.5px;padding:5px 8px}
+.bulk-name-wrap{flex:1;min-width:90px;position:relative}
+.bulk-name-wrap .bulk-name{width:100%}
+.bulk-name-results{position:absolute;top:100%;left:0;right:0;z-index:20;background:var(--bg-elev);border:1px solid var(--border);border-radius:6px;margin-top:2px;max-height:200px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.bulk-name-results:empty{display:none}
+.bulk-name-result{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12.5px;padding:7px 10px;cursor:pointer}
+.bulk-name-result:hover{background:var(--surface);color:var(--accent)}
 .wiz-setup-insts{margin-top:14px;display:flex;flex-direction:column;gap:10px}
 .wiz-setup-inst{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
 .wiz-setup-inst-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
@@ -6784,7 +6792,8 @@ let bulkPreaddRows = [];
 const BULK_ROLE_OPTS = [
   { v: 'vocalist', label: 'Vocalist' },
   { v: 'drums', label: 'Drums' }, { v: 'bass', label: 'Bass' }, { v: 'keys', label: 'Keys' },
-  { v: 'eg', label: 'Electric Gtr' }, { v: 'ag', label: 'Acoustic Gtr' }, { v: 'strings', label: 'Strings' }
+  { v: 'eg', label: 'Electric Gtr' }, { v: 'ag', label: 'Acoustic Gtr' }, { v: 'strings', label: 'Strings' },
+  { v: 'md', label: 'MD (tracks, no instrument)' }
 ];
 function addBulkRow(partial) {
   bulkPreaddRows.push(Object.assign(
@@ -6827,6 +6836,7 @@ function openBulkPreadd() {
     <div class="sa-panel">
       <div class="sa-header">
         <span class="sa-title">Bulk pre-add people</span>
+        <button class="draw-tool-btn" id="bulkRegulars">＋ Bulk add regulars on your team (anyone scheduled from the last 6 months)</button>
         <button class="draw-tool-btn" id="bulkAddRow">＋ Add person</button>
         <button class="draw-tool-btn" id="bulkSeedRoster">Add everyone on the current plan</button>
         <button class="sa-close" id="bulkClose" title="Close">✕</button>
@@ -6841,6 +6851,10 @@ function openBulkPreadd() {
       </div>
     </div>`;
   document.body.appendChild(modal);
+  const regBtn = modal.querySelector('#bulkRegulars');
+  regBtn.disabled = !(pcoTokens && state.pcoConfig.selectedServiceTypeId);
+  if (regBtn.disabled) regBtn.title = 'Connect Planning Center and pick a service type first';
+  regBtn.addEventListener('click', fetchPcoRegulars);
   modal.querySelector('#bulkAddRow').addEventListener('click', () => { addBulkRow({ open: true }); renderBulkPreadd(); });
   modal.querySelector('#bulkSeedRoster').addEventListener('click', () => { seedBulkFromRoster(); renderBulkPreadd(); });
   modal.querySelector('#bulkClose').addEventListener('click', closeBulkPreadd);
@@ -6858,21 +6872,32 @@ function renderBulkPreadd() {
     list.innerHTML = `<div class="bulk-empty">No one yet. Use <b>＋ Add person</b> or <b>Add everyone on the current plan</b> to begin.</div>`;
     return;
   }
+  const canSearch = !!pcoTokens;
   list.innerHTML = bulkPreaddRows.map(r => {
-    const roleVal = r.role === 'vocalist' ? 'vocalist' : r.typeKey;
+    const roleVal = r.role === 'vocalist' ? 'vocalist' : (r.role === 'md' ? 'md' : r.typeKey);
     const roleOpts = BULK_ROLE_OPTS.map(o => `<option value="${o.v}"${roleVal === o.v ? ' selected' : ''}>${o.label}</option>`).join('');
     const micOpts = (state.inventory || []).map(m => `<option value="${esc(m.name)}|${m.wireless ? 'wl' : 'wd'}"${r.mic === m.name ? ' selected' : ''}>${esc(m.name + (m.wireless ? ' (Wireless)' : ''))}</option>`).join('');
-    const body = r.open ? `<div class="bulk-body">
-      ${r.role === 'vocalist' ? `<div class="bulk-mic-row"><span class="bulk-mic-lbl">Mic</span><select class="bulk-mic"><option value="">— No preference —</option>${micOpts}</select></div>` : ''}
-      <div class="bulk-editor"></div>
-      ${r.isMD ? `<div class="bulk-md-label">Setup as Music Director</div><div class="bulk-editor-md"></div>` : ''}
-    </div>` : '';
+    let body = '';
+    if (r.open) {
+      if (r.role === 'md') {
+        body = `<div class="bulk-body">
+          <div class="bulk-mdstage-row"><span class="bulk-mic-lbl">On stage?</span><select class="bulk-md-stage"><option value="on"${r.onStage !== false ? ' selected' : ''}>On stage</option><option value="off"${r.onStage === false ? ' selected' : ''}>Off stage</option></select></div>
+          <div class="bulk-md-label">Setup as Music Director</div><div class="bulk-editor-md"></div>
+        </div>`;
+      } else {
+        body = `<div class="bulk-body">
+          ${r.role === 'vocalist' ? `<div class="bulk-mic-row"><span class="bulk-mic-lbl">Mic</span><select class="bulk-mic"><option value="">— No preference —</option>${micOpts}</select></div>` : ''}
+          <div class="bulk-editor"></div>
+          ${r.isMD ? `<div class="bulk-md-label">Setup as Music Director</div><div class="bulk-editor-md"></div>` : ''}
+        </div>`;
+      }
+    }
     return `<div class="bulk-row" data-bulk-row data-id="${esc(r.id)}">
       <div class="bulk-row-head">
         <button class="bulk-expand" data-bulk-expand title="Expand">${r.open ? '▾' : '▸'}</button>
-        <input type="text" class="bulk-name" placeholder="Name" value="${esc(r.name)}" />
+        <div class="bulk-name-wrap"><input type="text" class="bulk-name" placeholder="${canSearch ? 'Search Planning Center people…' : 'Name'}" value="${esc(r.name)}" autocomplete="off" /><div class="bulk-name-results"></div></div>
         <select class="bulk-role">${roleOpts}</select>
-        <label class="bulk-md-lbl"><input type="checkbox" class="bulk-md"${r.isMD ? ' checked' : ''}/> also MD</label>
+        ${r.role === 'md' ? '' : `<label class="bulk-md-lbl"><input type="checkbox" class="bulk-md"${r.isMD ? ' checked' : ''}/> also MD</label>`}
         <span class="bulk-summary">${esc(bulkRowSummary(r))}</span>
         <button class="bulk-remove" data-bulk-remove title="Remove">✕</button>
       </div>
@@ -6881,22 +6906,37 @@ function renderBulkPreadd() {
   }).join('');
   bulkPreaddRows.forEach(r => {
     const rowEl = list.querySelector(`[data-id="${r.id}"]`); if (!rowEl) return;
-    rowEl.querySelector('.bulk-name').addEventListener('change', e => { r.name = e.target.value.trim(); renderBulkPreadd(); });
+    const nameInp = rowEl.querySelector('.bulk-name');
+    nameInp.addEventListener('change', e => { r.name = e.target.value.trim(); renderBulkPreadd(); });
+    if (canSearch) {
+      let t = null;
+      nameInp.addEventListener('input', e => { const q = e.target.value; clearTimeout(t); t = setTimeout(() => bulkPeopleSearch(r, q), 220); });
+    }
     rowEl.querySelector('.bulk-role').addEventListener('change', e => {
       const v = e.target.value;
-      if (v === 'vocalist') r.role = 'vocalist'; else { r.role = 'band'; r.typeKey = v; }
+      if (v === 'vocalist') r.role = 'vocalist';
+      else if (v === 'md') { r.role = 'md'; if (r.onStage === undefined) r.onStage = true; }
+      else { r.role = 'band'; r.typeKey = v; }
       renderBulkPreadd();
     });
-    rowEl.querySelector('.bulk-md').addEventListener('change', e => { r.isMD = e.target.checked; renderBulkPreadd(); });
+    const mdChk = rowEl.querySelector('.bulk-md');
+    if (mdChk) mdChk.addEventListener('change', e => { r.isMD = e.target.checked; renderBulkPreadd(); });
     rowEl.querySelector('[data-bulk-expand]').addEventListener('click', () => { r.open = !r.open; renderBulkPreadd(); });
     rowEl.querySelector('[data-bulk-remove]').addEventListener('click', () => { bulkPreaddRows = bulkPreaddRows.filter(x => x.id !== r.id); renderBulkPreadd(); });
     if (r.open && r.name) {
-      const ed = rowEl.querySelector('.bulk-editor');
-      if (ed) { const { key, typeKey } = bulkRowSetupKey(r); renderPersonSetupEditor(ed, key, typeKey); }
-      const mic = rowEl.querySelector('.bulk-mic');
-      if (mic) mic.addEventListener('change', e => { r.mic = e.target.value ? e.target.value.split('|')[0] : ''; });
-      const edMd = rowEl.querySelector('.bulk-editor-md');
-      if (edMd) renderPersonSetupEditor(edMd, stableSetupKey(r.name, 'md', 'md'), 'md');
+      if (r.role === 'md') {
+        const stage = rowEl.querySelector('.bulk-md-stage');
+        if (stage) stage.addEventListener('change', e => { r.onStage = e.target.value !== 'off'; });
+        const edMd = rowEl.querySelector('.bulk-editor-md');
+        if (edMd) renderPersonSetupEditor(edMd, stableSetupKey(r.name, 'md', 'md'), 'md');
+      } else {
+        const ed = rowEl.querySelector('.bulk-editor');
+        if (ed) { const { key, typeKey } = bulkRowSetupKey(r); renderPersonSetupEditor(ed, key, typeKey); }
+        const mic = rowEl.querySelector('.bulk-mic');
+        if (mic) mic.addEventListener('change', e => { r.mic = e.target.value ? e.target.value.split('|')[0] : ''; });
+        const edMd = rowEl.querySelector('.bulk-editor-md');
+        if (edMd) renderPersonSetupEditor(edMd, stableSetupKey(r.name, 'md', 'md'), 'md');
+      }
     }
   });
 }
@@ -6905,15 +6945,121 @@ function commitBulkPreadd() {
   bulkPreaddRows.forEach(r => {
     const name = (r.name || '').trim(); if (!name) return;
     const nn = normFullName(name);
+    if (r.role === 'md') {
+      // tracks-only MD: capture on/off-stage on the marker (placement use is future).
+      state.musicianPreferences[nn + '|md'] = { askedAt: now, onStage: r.onStage !== false };
+      return;
+    }
     if (r.role === 'vocalist') {
       if (r.mic) setMicRemembered(name, r.mic);
       state.musicianPreferences[nn + '|vocal'] = { askedAt: now };
     } else {
       state.musicianPreferences[nn + '|' + r.typeKey] = { askedAt: now };
     }
-    if (r.isMD) state.musicianPreferences[nn + '|md'] = { askedAt: now };
+    if (r.isMD) state.musicianPreferences[nn + '|md'] = { askedAt: now, onStage: r.onStage !== false };
   });
   saveState();
+}
+// Pure: turn PCO team-member rows [{name, position}] into deduped grid rows. One row per distinct
+// role; band/vocal/MD only (host/ignore/shadow skipped); a person seen as MD gets isMD on their
+// instrument row, or an md-only row (on-stage default) if they never played an instrument.
+// `existingKeys` = array of `${normFullName}|${role}|${typeKey||''}` already in the grid (deduped out).
+function bulkRowsFromPcoTeamData(members, existingKeys) {
+  const existing = new Set(existingKeys || []);
+  const keyOf = (name, role, typeKey) => normFullName(name) + '|' + role + '|' + (typeKey || '');
+  const rowMap = new Map();
+  const mdNames = new Map(); // normFullName -> display name
+  (members || []).forEach(m => {
+    const name = (m.name || '').trim(); if (!name) return;
+    const cls = classifyPosition(m.position || '');
+    if (cls.kind === 'vocalist') {
+      const k = keyOf(name, 'vocalist', ''); if (!rowMap.has(k)) rowMap.set(k, { name, role: 'vocalist' });
+    } else if (cls.kind === 'band' && cls.position) {
+      const k = keyOf(name, 'band', cls.position); if (!rowMap.has(k)) rowMap.set(k, { name, role: 'band', typeKey: cls.position });
+    } else if (cls.kind === 'md_flag') {
+      mdNames.set(normFullName(name), name);
+    }
+  });
+  mdNames.forEach((disp, nn) => {
+    let flagged = false;
+    for (const row of rowMap.values()) { if (normFullName(row.name) === nn) { row.isMD = true; flagged = true; break; } }
+    if (!flagged) rowMap.set(keyOf(disp, 'md', ''), { name: disp, role: 'md', onStage: true });
+  });
+  const out = [];
+  rowMap.forEach((row, k) => { if (!existing.has(k)) out.push(row); });
+  return out;
+}
+// "Bulk add regulars" — scan the selected service type's past plans over the last ~6 months,
+// collect team members, and append deduped rows to the grid.
+async function fetchPcoRegulars() {
+  if (!pcoTokens || !state.pcoConfig.selectedServiceTypeId) return;
+  const stId = state.pcoConfig.selectedServiceTypeId;
+  const btn = document.getElementById('bulkRegulars');
+  const orig = btn ? btn.textContent : '';
+  const setLabel = t => { if (btn) btn.textContent = t; };
+  const cutoff = Date.now() - 183 * 86400000; // ~6 months
+  try {
+    if (btn) btn.disabled = true;
+    setLabel('Finding plans…');
+    const planIds = [];
+    let path = `/services/v2/service_types/${stId}/plans?filter=past&order=-sort_date&per_page=50`;
+    let stop = false, guard = 0;
+    while (path && !stop && guard < 20) {
+      guard++;
+      const res = await pcoFetch(path);
+      (res.data || []).forEach(p => {
+        if (stop) return;
+        const sd = p.attributes && p.attributes.sort_date;
+        const t = sd ? Date.parse(sd) : NaN;
+        if (!isNaN(t) && t < cutoff) { stop = true; return; }
+        planIds.push(p.id);
+      });
+      path = (!stop && res.links && res.links.next) ? res.links.next : null;
+    }
+    const members = [];
+    let read = 0, failed = 0;
+    for (let i = 0; i < planIds.length; i++) {
+      setLabel(`Scanning plan ${i + 1} of ${planIds.length}…`);
+      try {
+        const tm = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planIds[i]}/team_members?per_page=100`);
+        (tm.data || []).forEach(d => {
+          const a = d.attributes || {};
+          if ((a.status || '') === 'D') return; // declined
+          if (a.name) members.push({ name: a.name, position: a.team_position_name || '' });
+        });
+        read++;
+      } catch (e) { failed++; }
+    }
+    const existingKeys = bulkPreaddRows.map(r => normFullName(r.name) + '|' + r.role + '|' + (r.typeKey || ''));
+    const rows = bulkRowsFromPcoTeamData(members, existingKeys);
+    rows.forEach(r => addBulkRow(r));
+    renderBulkPreadd();
+    toast(`Added ${rows.length} regular${rows.length === 1 ? '' : 's'} from ${read} plan${read === 1 ? '' : 's'}` + (failed ? ` (${failed} couldn't be read)` : ''), rows.length ? 'success' : 'info');
+  } catch (e) {
+    toast('PCO fetch failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; setLabel(orig); }
+  }
+}
+// PCO people search for a manual row's name field. Renders a results dropdown into rowEl.
+async function bulkPeopleSearch(row, q) {
+  const rowEl = document.querySelector(`#bulkPreaddModal [data-id="${row.id}"]`);
+  const box = rowEl && rowEl.querySelector('.bulk-name-results');
+  if (!box) return;
+  const query = (q || '').trim();
+  if (!pcoTokens || query.length < 2) { box.innerHTML = ''; return; }
+  let data = [];
+  try {
+    const res = await pcoFetch(`/people/v2/people?where[search_name_or_email]=${encodeURIComponent(query)}&per_page=8`);
+    data = res.data || [];
+  } catch (e) {
+    try { const res2 = await pcoFetch(`/people/v2/people?where[search_name]=${encodeURIComponent(query)}&per_page=8`); data = res2.data || []; }
+    catch (e2) { box.innerHTML = ''; return; }
+  }
+  box.innerHTML = data.map(p => `<button type="button" class="bulk-name-result" data-pid="${esc(p.id)}" data-name="${esc((p.attributes && p.attributes.name) || '')}">${esc((p.attributes && p.attributes.name) || '(unnamed)')}</button>`).join('');
+  box.querySelectorAll('.bulk-name-result').forEach(b => b.addEventListener('click', () => {
+    row.name = b.dataset.name; row.pcoId = b.dataset.pid; renderBulkPreadd();
+  }));
 }
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
