@@ -985,10 +985,11 @@ body.setup-items-mode .container{display:none}
 .si-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;position:relative;transition:border-color .2s,background .2s}
 .si-card.status-green{border-color:rgba(123,169,104,.35);background:rgba(123,169,104,.05)}
 .si-card.status-empty{opacity:.72}
-.si-card-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.si-card-name{font-family:var(--ff-display);font-size:14.5px;font-weight:600;color:var(--text)}
+.si-card-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px}
+.si-card-id{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.si-card-name{font-family:var(--ff-display);font-size:15px;font-weight:600;color:var(--text);line-height:1.15}
 .si-card-name .wl-star{color:var(--wl);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.05em;margin-right:4px}
-.si-card-role{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.08em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.si-card-role{font-family:var(--ff-mono);font-size:9px;letter-spacing:.11em;color:var(--text-faint);font-weight:600;text-transform:uppercase}
 .si-ring{margin-left:auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;
   background:conic-gradient(var(--accent) calc(var(--pct,0)*1%),var(--bg-inset) 0)}
 .si-ring .si-person-count{background:var(--surface);border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--text-muted);padding:0}
@@ -1566,6 +1567,11 @@ body>*:not(.summary-overlay){display:none!important}
 .scv-btn { padding:7px 18px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:13px; cursor:pointer }
 .scv-btn.primary { border-color:var(--accent); color:var(--accent) }
 .scv-btn.primary:hover { background:var(--accent); color:#000 }
+/* Footer Display button: muted until every item is checked, then illuminates. */
+.scv-btn.scv-display { border-color:var(--border-2); color:var(--text-muted) }
+.scv-btn.scv-display:hover { border-color:var(--accent); color:var(--text) }
+.scv-btn.scv-display.ready { background:var(--accent); color:#000; border-color:var(--accent); box-shadow:0 0 10px rgba(212,161,71,.45); font-weight:700 }
+.scv-btn.scv-display.ready:hover { background:var(--accent-2); border-color:var(--accent-2) }
 /* Progress badge on ✓ Items nav button */
 .nav-setup-badge { display:inline-flex; align-items:center; justify-content:center; background:#e55; color:#fff; border-radius:8px; font-size:9px; font-weight:700; padding:1px 5px; margin-left:4px; min-width:16px }
 /* Setup lock screen */
@@ -8645,6 +8651,16 @@ function toast(msg, kind='') {
 }
 
 /* ===================== DISPLAY VIEW ===================== */
+// Go to Display view, honoring the opt-in "block until setup" gate (off by default). Shared by
+// the nav ▶ Display button and the checklist footer's Display button so they can't drift apart.
+function goToDisplay() {
+  if (!sessionSetupBypass && state.config.blockDisplayUntilSetup && !isSetupComplete()) {
+    enterDisplayMode();
+    showSetupLockScreen();
+    return;
+  }
+  enterDisplayMode();
+}
 function enterDisplayMode() {
   document.body.classList.add('display-mode');
   state.viewMode = 'display';
@@ -10605,8 +10621,10 @@ function renderSetupChecklist() {
             : '<div class="si-none">No setup needed</div>';
           return `<div class="si-card${pTotal > 0 && pDone === pTotal ? ' status-green' : ''}">
             <div class="si-card-head">
-              <span class="si-card-name">${esc(p.name)}</span>
-              ${p.roleLabel ? `<span class="si-card-role">${esc(p.roleLabel)}</span>` : ''}
+              <div class="si-card-id">
+                <span class="si-card-name">${esc(p.name)}</span>
+                ${p.roleLabel ? `<span class="si-card-role">${esc(p.roleLabel)}</span>` : ''}
+              </div>
               ${pTotal > 0 ? `<span class="si-ring" style="--pct:${pct}"><span class="si-person-count">${pDone}/${pTotal}</span></span>` : ''}
             </div>
             <div class="si-chips">${chipsHtml}</div>
@@ -10635,7 +10653,7 @@ function renderSetupChecklist() {
     <div class="scv-body">${sectionsHtml}</div>
     <div class="scv-footer">
       <button class="scv-btn" id="scvResetBtn">Reset all</button>
-      <button class="scv-btn primary" id="scvMarkAllBtn">Mark all done</button>
+      <button class="scv-btn scv-display${total > 0 && done === total ? ' ready' : ''}" id="scvDisplayBtn">▶ Display</button>
     </div>
   `;
 
@@ -10673,6 +10691,9 @@ function renderSetupChecklist() {
       if (fill) fill.style.width = pctNow + '%';
       const lbl = container.querySelector('.scv-progress-label');
       if (lbl) lbl.textContent = allDone + ' / ' + allRows + ' items done';
+      // Illuminate the Display button the moment everything is checked (and dim it if unchecked).
+      const disp = container.querySelector('#scvDisplayBtn');
+      if (disp) disp.classList.toggle('ready', allRows > 0 && allDone === allRows);
       updateSetupProgressBadge();
     });
   });
@@ -10685,13 +10706,12 @@ function renderSetupChecklist() {
   const scvAddSetup = container.querySelector('#scvAddSetupBtn');
   if (scvAddSetup) scvAddSetup.addEventListener('click', () => { exitSetupChecklistView(); openSettings('setups'); });
 
-  // Mark all done
-  const markAll = container.querySelector('#scvMarkAllBtn');
-  if (markAll) markAll.addEventListener('click', () => {
-    sections.forEach(sec => sec.items.forEach(it => { cs[it.key] = true; }));
-    saveState();
-    updateSetupProgressBadge();
-    renderSetupChecklist();
+  // Display: close the checklist and go to Display view (reusing the block-until-setup gate).
+  const scvDisplay = container.querySelector('#scvDisplayBtn');
+  if (scvDisplay) scvDisplay.addEventListener('click', () => {
+    container.style.display = 'none';
+    document.body.classList.remove('setup-items-mode');
+    goToDisplay();
   });
 
   // Reset all
@@ -13249,15 +13269,7 @@ function init() {
   document.getElementById('summaryBtn').addEventListener('click', showSummary);
   document.getElementById('packWarnBtn').addEventListener('click', openPackConflictDialog);
   document.getElementById('summaryCloseBtn').addEventListener('click', hideSummary);
-  document.getElementById('displayBtn').addEventListener('click', () => {
-    // Hard lock only when the user has opted in (Advanced Settings → Display). Off by default.
-    if (!sessionSetupBypass && state.config.blockDisplayUntilSetup && !isSetupComplete()) {
-      enterDisplayMode();
-      showSetupLockScreen();
-      return;
-    }
-    enterDisplayMode();
-  });
+  document.getElementById('displayBtn').addEventListener('click', goToDisplay);
   document.getElementById('displayBackBtn').addEventListener('click', exitDisplayMode);
 
   // wireHoverSlider is defined at module scope (above init)
