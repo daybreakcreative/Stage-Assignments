@@ -35,7 +35,7 @@ const seed=()=>ev(`
 
 window.addEventListener('load',()=>setTimeout(()=>{
  // don't let the check-off renderer or full re-render fire during manager/checklist tests
- ev('renderSetupItemsView=function(){}; renderAll=function(){}; renderStage=function(){}; renderBand=function(){}; renderDisplayView=function(){}; toast=function(){};');
+ ev('renderAll=function(){}; renderStage=function(){}; renderBand=function(){}; renderDisplayView=function(){}; toast=function(){};');
 
  check('enumerateSetupRoles: Cam Lee yields 4 role entries (keys/eg band, vocals, md) w/ specific labels', ()=>{
    seed();
@@ -136,13 +136,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!cs[k]) throw new Error('click did not persist under key '+k);
  });
 
- // Bug #13: the ✓ Items page ⚙ button must open a REAL Settings tab (setups),
- // not a non-existent 'templates' tab that leaves the sheet blank.
- check('✓ Items ⚙ (siSettingsBtn) opens Settings on the Setup Items tab', ()=>{
+ // Bug #13: opening the Setup Items settings must land on a REAL tab (setups), not a
+ // non-existent 'templates' tab that leaves the sheet blank. (The old ✓ Items ⚙ button was
+ // removed with the legacy view 2026-07-18; the live entry point is openSettings('setups'),
+ // used by the checklist's empty-state "+ Set up items" action.)
+ check("openSettings('setups') opens Settings on the Setup Items tab", ()=>{
    ev('closeSettings && closeSettings()');
-   const btn=doc.getElementById('siSettingsBtn');
-   if(!btn) throw new Error('no siSettingsBtn');
-   btn.click();
+   ev("openSettings('setups')");
    const ov=doc.getElementById('settingsOverlay');
    if(!ov || !ov.classList.contains('show')) throw new Error('settings overlay not shown');
    const activeTab=doc.querySelector('.tab.active');

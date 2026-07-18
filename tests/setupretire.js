@@ -36,19 +36,22 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     }
   });
 
-  // Render a live person card and inspect its markup for the removed affordances.
+  // The dead per-person card view was removed (2026-07-18); the retained editing surface is
+  // Settings → Setup Items (renderSetupManager). Inspect its markup for the removed flat
+  // affordances and confirm the grouped per-bucket editor entry survives.
   ev(`state.instruments.find(i=>i.id==='inst_keys').assignedTo='Jordan Kim';
-      state.setupItems={}; renderSetupItemsView();`);
-  check('(a2) person card markup has no flat-setup affordances', ()=>{
-    const root = doc.getElementById('setupItemsView');
-    if (!root) throw new Error('setupItemsView not rendered');
+      state.setupItems={};
+      enumerateSetupRoles().forEach(r=>{ seedPersonSetup(r.stableKey,r.typeKey); var b=state.setupItems[r.stableKey]; if(!b.items.length) b.items.push({id:'x'+Math.random(),text:'Seed line',doneThisService:false,scopeOneTime:false}); });
+      openSettings && openSettings('setups'); renderSetupManager();`);
+  check('(a2) setup manager has no flat-setup affordances; grouped editing survives', ()=>{
+    const root = doc.getElementById('setupMgrList');
+    if (!root) throw new Error('setupMgrList not rendered');
     const html = root.innerHTML;
     for (const bad of ['data-action="edit-presets"','data-action="apply-template"','data-action="save-options"','data-preset-idx','data-preset-defaults','si-preset-btn','data-add-onetime']){
       if (html.indexOf(bad) !== -1) throw new Error('flat affordance still present: '+bad);
     }
-    // The grouped editor + check-off + add-item must survive.
-    if (html.indexOf('data-action="edit-setup"') === -1) throw new Error('grouped "Edit setup" button missing');
-    if (html.indexOf('data-action="add-item"') === -1) throw new Error('add-item affordance missing');
+    // The grouped per-person editor entry point (opens the grouped question flow) must survive.
+    if (html.indexOf('setup-bucket-edit') === -1) throw new Error('grouped "Edit setup items" entry missing');
   });
 
   // ---- (b) data-loss repro: church default + custom item survives rebuild ----
@@ -70,18 +73,19 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if (!after.some(t=>seeded.includes(t))) throw new Error('church-default lines lost after rebuild: '+after.join('|'));
   });
 
-  check('(b2) addItemForPerson writes a custom item that survives a later rebuild', ()=>{
+  check('(b2) grouped editor add-custom writes a custom item that survives a later rebuild', ()=>{
     const k = ev(`stableSetupKey('Casey Byrd','band','keys')`);
-    // Simulate the card's add-item flow: put text in the add input, then call the handler.
+    // Exercise the live grouped-editor add flow (renderPersonSetupEditor's custom-item row),
+    // which replaced the removed card-level addItemForPerson handler.
     ev(`(function(){
-      var root=document.getElementById('setupItemsView');
-      // Ensure the card exists for this player.
       state.instruments.find(i=>i.id==='inst_keys').assignedTo='Casey Byrd';
-      renderSetupItemsView();
-      var inp=document.querySelector('[data-add-input="'+cssEscape('${k}')+'"]');
-      if(!inp) throw new Error('no add input for card');
+      if(!state.setupItems['${k}']) seedPersonSetup('${k}','keys');
+      var host=document.createElement('div'); document.body.appendChild(host);
+      renderPersonSetupEditor(host,'${k}','keys');
+      var inp=host.querySelector('.sp-custom-input');
+      if(!inp) throw new Error('no custom-item input in grouped editor');
       inp.value='Extra XLR';
-      addItemForPerson('${k}','keys');
+      host.querySelector('.sp-custom-add').click();
     })();`);
     if (!ev(`(state.setupItems['${k}'].customItems||[]).some(c=>c.text==='Extra XLR')`)) throw new Error('add did not write to customItems');
     ev(`rebuildPersonItems('${k}','keys');`);

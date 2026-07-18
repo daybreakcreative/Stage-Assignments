@@ -13,7 +13,6 @@ function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAI
 const fire=(el,t)=>el.dispatchEvent(new window.Event(t,{bubbles:true}));
 const keys=()=>ev('Object.keys(state.setupItems)');
 window.addEventListener('load',()=>setTimeout(()=>{
- ev('renderSetupItemsView=function(){}');
  // NOTE: seeds STABLE-KEY buckets (name|role|typeKey) — the current setup model.
  // (Old-format keys like "grayson|vocal" are folded into these by
  // migrateLegacySetupBuckets() at init in the real app.) renderSetupManager now
