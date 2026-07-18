@@ -113,6 +113,11 @@ Behaviors that must keep working. **The executable version of this list is `test
       `stagepreview`, `stagelayout`
 - [ ] Custom outline editor: drag corners, add/remove, curve edges; Reset to rectangle. →
       `smoke2`, `stagepreview`
+- [ ] Front edge supports MULTIPLE edges (an angled/peaked front): the Front-edge tool is a
+      multi-select toggle with an active indication (pressed button + crosshair cursor + hint),
+      `state.config.stageFrontEdges` (array; legacy `stageFrontEdge` kept synced to the first),
+      and vocalists spread by ARC LENGTH across the combined front polyline. Single edge / slider
+      shape unchanged; saved-stage round-trips `frontEdges`. → `frontedge`
 - [ ] Stage features (stairs/doors/risers/wedges) place and persist. → `fixtures`,
       `fixtures2`
 - [ ] Move-people drag repositions and saves; Reset to Auto clears. → `editlayout`

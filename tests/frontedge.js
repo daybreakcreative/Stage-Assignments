@@ -91,17 +91,30 @@ window.addEventListener('load',()=>setTimeout(()=>{
  });
 
  // Editor: the "Front edge" affordance actually re-picks the front and passes it to onSave.
- check('outline editor: Front-edge mode picks an edge and onSave receives its index', ()=>{
-   ev(`state.config.customStagePoints=${HOUSE}; state.config.stageFrontEdge=null;`);
-   ev('window.__savedFront=undefined; openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, getInitialFront:()=>state.config.stageFrontEdge, onSave:(p,fi)=>{ window.__savedPts=p; window.__savedFront=fi; } })');
-   // enter front-pick mode, then click edge 0 (the bottom edge pick target)
+ check('outline editor: Front-edge mode picks an edge and onSave receives an array', ()=>{
+   ev(`state.config.customStagePoints=${HOUSE}; state.config.stageFrontEdges=null; state.config.stageFrontEdge=null;`);
+   ev('window.__savedFront=undefined; openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, getInitialFronts:()=>frontsOf(state.config), onSave:(p,fronts)=>{ window.__savedPts=p; window.__savedFront=fronts; } })');
+   // enter front-pick mode (active indication), then click edge 0 (the bottom edge pick target)
    doc.getElementById('saPolyFront').click();
+   if(!doc.getElementById('saPolyFront').classList.contains('active')) throw new Error('Front-edge button not marked active in pick mode');
    const svg=doc.getElementById('saPolySvg');
    const pick=svg.querySelector('[data-frontedge="0"]');
    if(!pick) throw new Error('no front-pick target rendered in front mode');
    pdown(pick,0,0);
    doc.getElementById('saPolySave').click();
-   if(window.__savedFront!==0) throw new Error('onSave did not receive chosen front index 0, got '+window.__savedFront);
+   if(JSON.stringify(window.__savedFront)!=='[0]') throw new Error('onSave did not receive [0], got '+JSON.stringify(window.__savedFront));
+ });
+
+ check('outline editor: multi-select — clicking two edges saves both; clicking one again removes it', ()=>{
+   ev(`state.config.customStagePoints=${HOUSE}; state.config.stageFrontEdges=null; state.config.stageFrontEdge=null;`);
+   ev('window.__mf=undefined; openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, getInitialFronts:()=>frontsOf(state.config), onSave:(p,fronts)=>{ window.__mf=fronts; } })');
+   doc.getElementById('saPolyFront').click(); // enter mode (stays in mode across picks)
+   const svg=doc.getElementById('saPolySvg');
+   pdown(svg.querySelector('[data-frontedge="2"]'),0,0); // add edge 2
+   pdown(svg.querySelector('[data-frontedge="3"]'),0,0); // add edge 3 (still in mode)
+   pdown(svg.querySelector('[data-frontedge="2"]'),0,0); // toggle edge 2 back off
+   doc.getElementById('saPolySave').click();
+   if(JSON.stringify(window.__mf)!=='[3]') throw new Error('multi toggle wrong, expected [3], got '+JSON.stringify(window.__mf));
  });
  check('outline editor: no front pick → onSave gets null (keeps auto)', ()=>{
    ev(`state.config.customStagePoints=${HOUSE}; state.config.stageFrontEdge=null;`);
@@ -114,6 +127,49 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const up=new window.PointerEvent('pointerup',{bubbles:true,clientX:60,clientY:320,pointerId:1});svg.dispatchEvent(up);
    doc.getElementById('saPolySave').click();
    if(window.__savedFront2!==null) throw new Error('untouched front should save as null, got '+window.__savedFront2);
+ });
+
+ // ---- MULTIPLE front edges -------------------------------------------------------
+ // Pentagon whose front is the two top segments (edges 0 & 1) meeting at a peak:
+ //  0(20,100) -e0-> 1(400,40) peak -e1-> 2(780,100) -e2-> 3(780,340) -e3-> 4(20,340) -e4-> 0
+ const PEAK='[{"x":20,"y":100},{"x":400,"y":40},{"x":780,"y":100},{"x":780,"y":340},{"x":20,"y":340}]';
+
+ check('resolveFrontEdges: array wins > legacy int > auto', ()=>{
+   ev(`state.config.customStagePoints=${PEAK}; state.config.stageFrontEdges=[0,1]; state.config.stageFrontEdge=null;`);
+   let r=JSON.parse(ev(`JSON.stringify(resolveFrontEdges(state.config.customStagePoints))`));
+   if(JSON.stringify(r)!=='[0,1]') throw new Error('array not honored: '+JSON.stringify(r));
+   ev(`state.config.stageFrontEdges=null; state.config.stageFrontEdge=2;`);
+   r=JSON.parse(ev(`JSON.stringify(resolveFrontEdges(state.config.customStagePoints))`));
+   if(JSON.stringify(r)!=='[2]') throw new Error('legacy int not migrated: '+JSON.stringify(r));
+   ev(`state.config.stageFrontEdges=[9,-1,1,1,0]; state.config.stageFrontEdge=null;`); // invalid filtered, deduped, sorted
+   r=JSON.parse(ev(`JSON.stringify(resolveFrontEdges(state.config.customStagePoints))`));
+   if(JSON.stringify(r)!=='[0,1]') throw new Error('not filtered/deduped/sorted: '+JSON.stringify(r));
+ });
+
+ check('getStageShape builds a right→left front polyline across the selected edges', ()=>{
+   ev(`state.config.customStagePoints=${PEAK}; state.config.stageFrontEdges=[0,1]; state.config.stageFrontEdge=null;`);
+   const s=JSON.parse(ev('JSON.stringify(getStageShape())'));
+   if(!Array.isArray(s.frontPolyline)||s.frontPolyline.length!==3) throw new Error('expected 3-point polyline, got '+JSON.stringify(s.frontPolyline));
+   if(!(s.frontPolyline[0].x>s.frontPolyline[2].x)) throw new Error('polyline not ordered right→left: '+JSON.stringify(s.frontPolyline.map(p=>p.x)));
+   if(JSON.stringify(s.frontEdgeIndices)!=='[0,1]') throw new Error('frontEdgeIndices wrong: '+JSON.stringify(s.frontEdgeIndices));
+   if(!Array.isArray(s.frontInward)||s.frontInward.length!==2) throw new Error('expected 2 segment normals');
+ });
+
+ check('getVoxPositions spreads vocalists across the combined front by arc length', ()=>{
+   ev(`state.config.customStagePoints=${PEAK}; state.config.customStageEnabled=false; state.config.customStagePositions=null; state.config.stageFrontEdges=[0,1]; state.config.stageFrontEdge=null;`);
+   const pos=JSON.parse(ev('JSON.stringify(getVoxPositions(3))'));
+   if(pos.length!==3) throw new Error('expected 3');
+   if(!(pos[0].x>500)) throw new Error('VOCAL 1 should be toward stage right, got x='+pos[0].x);
+   if(!(pos[2].x<300)) throw new Error('last vocal should be toward stage left, got x='+pos[2].x);
+   if(!(pos[1].x>300&&pos[1].x<500)) throw new Error('middle vocal should sit near the peak x, got '+pos[1].x);
+   pos.forEach(p=>{ if(!(p.y>40)) throw new Error('vocalist not inset inward of the top edge: '+JSON.stringify(p)); });
+ });
+
+ check('front highlight strokes the combined front with exactly one FRONT label', ()=>{
+   ev(`state.config.customStagePoints=${PEAK}; state.config.stageFrontEdges=[0,1]; state.config.stageFrontEdge=null;`);
+   const svg=ev('frontEdgeHighlightSvg(getStageShape(), {label:true})');
+   if((svg.match(/<path/g)||[]).length<1) throw new Error('no highlight path');
+   if((svg.match(/FRONT/g)||[]).length!==1) throw new Error('expected exactly one FRONT label');
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
