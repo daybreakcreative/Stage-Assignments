@@ -52,6 +52,10 @@ Behaviors that must keep working. **The executable version of this list is `test
     - **Church defaults in the wizard.** The wizard's per-instrument default cards write
       `state.config.setupDefaults`; `churchSetupDefaults`/`defaultSelectionsFor` read it
       (falling back to catalog defaults). → `setupwizard`
+    - **Church defaults editable in Advanced Settings.** Setup Items tab has a collapsible
+      "Default setup items per instrument" section (`renderSetupDefaultsEditor` → all 8 catalog
+      keys incl. MD) that edits `state.config.setupDefaults[key]` via the same grouped selector,
+      applying to NEW people as they're seeded — non-destructive to existing buckets. → `setupdefaults`
     - **Stable per-person keys, seeded once.** Buckets are keyed
       `stableSetupKey(name, role, typeKey)` (role ∈ band/vocalist/shadow) and seeded a
       single time via `seedPersonSetup`. A re-pull that re-mints instrument ids does NOT

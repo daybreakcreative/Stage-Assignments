@@ -707,6 +707,12 @@ background-size:5% 10%}
 .wiz-setup-intro-icon{font-size:22px;line-height:1;flex-shrink:0}
 .wiz-setup-intro-text{font-size:13px;color:var(--text);line-height:1.5}
 .wiz-setup-intro-text strong{color:var(--text);font-weight:600}
+.setup-defaults-disclosure{margin-bottom:16px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elev);padding:4px 14px 12px}
+.setup-defaults-summary{cursor:pointer;font-family:var(--ff-display);font-size:14px;font-weight:600;color:var(--text);padding:10px 2px;list-style:none}
+.setup-defaults-summary::-webkit-details-marker{display:none}
+.setup-defaults-summary::before{content:'▸ ';color:var(--accent)}
+.setup-defaults-disclosure[open] .setup-defaults-summary::before{content:'▾ '}
+.setup-defaults-note{font-size:12px;color:var(--text-muted);margin:0 0 6px 2px}
 .wiz-setup-insts{margin-top:14px;display:flex;flex-direction:column;gap:10px}
 .wiz-setup-inst{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
 .wiz-setup-inst-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
@@ -1766,6 +1772,7 @@ body>*:not(.summary-overlay){display:none!important}
       <div id="pcoSettingsContent"></div>
     </div>
     <div class="tab-panel" id="tab-setups">
+      <div id="setupDefaultsEditor"></div>
       <div id="setupsEdit"></div>
     </div>
     <div class="tab-panel" id="tab-venues">
@@ -5776,6 +5783,7 @@ function openSettings(tab='inventory') {
   renderInstrumentsEditor();
   renderLayoutEditor();
   renderPCOSettings();
+  renderSetupDefaultsEditor(document.getElementById('setupDefaultsEditor'));
   renderSetupManager();
   renderVenuesEditor();
   renderDataEditor();
@@ -6688,6 +6696,67 @@ function appendSetupItemsChecklistToggle(el) {
   }
 }
 
+// Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
+// selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
+// (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
+const SETUP_DEFAULT_KEYS = ['drums', 'bass', 'ag', 'eg', 'keys', 'md', 'strings', 'vocals'];
+function renderSetupDefaultsEditor(container) {
+  if (!container) return;
+  if (!state.config.setupDefaults) state.config.setupDefaults = {};
+  const cardsHtml = SETUP_DEFAULT_KEYS.map(key => {
+    const cat = setupCatalogFor(key);
+    if (!cat) return '';
+    return `
+      <div class="wiz-setup-inst" data-def-key="${esc(key)}">
+        <div class="wiz-setup-inst-title">${esc(cat.label || key)}</div>
+        <div class="wiz-setup-inst-groups"></div>
+        <div class="wiz-setup-inst-custom def-custom-list"></div>
+        <div class="wiz-setup-inst-addrow">
+          <input type="text" class="wiz-setup-custom-input def-custom-input" placeholder="Add a custom setup item…" />
+          <button class="btn ghost wiz-setup-custom-add def-custom-add" type="button">+ Add</button>
+        </div>
+      </div>`;
+  }).join('');
+  container.innerHTML = `
+    <details class="setup-defaults-disclosure">
+      <summary class="setup-defaults-summary">Default setup items per instrument</summary>
+      <div class="setup-defaults-note">Applied to new people as they're added. Edit someone already on a plan below.</div>
+      <div class="wiz-setup-insts">${cardsHtml}</div>
+    </details>`;
+  container.querySelectorAll('.wiz-setup-inst[data-def-key]').forEach(card => {
+    const key = card.dataset.defKey;
+    if (!state.config.setupDefaults[key]) state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
+    const def = state.config.setupDefaults[key];
+    if (!Array.isArray(def.customOptions)) def.customOptions = [];
+    const groupsEl = card.querySelector('.wiz-setup-inst-groups');
+    if (groupsEl) renderSetupGroups(groupsEl, key, def.selections, newSel => { def.selections = newSel; saveState(); });
+    const customEl = card.querySelector('.def-custom-list');
+    const input = card.querySelector('.def-custom-input');
+    const addBtn = card.querySelector('.def-custom-add');
+    const renderCustom = () => {
+      if (!customEl) return;
+      customEl.innerHTML = def.customOptions.map((o, i) =>
+        `<span class="wiz-setup-custom-chip">${esc(o.text)}<button type="button" class="wiz-setup-custom-del def-custom-del" data-idx="${i}" title="Remove">✕</button></span>`
+      ).join('');
+      customEl.querySelectorAll('.def-custom-del').forEach(b => b.addEventListener('click', () => {
+        def.customOptions.splice(parseInt(b.dataset.idx, 10), 1);
+        saveState();
+        renderCustom();
+      }));
+    };
+    const addCustom = () => {
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      def.customOptions.push({ id: 'sc_' + Math.random().toString(36).slice(2, 8), text });
+      if (input) input.value = '';
+      saveState();
+      renderCustom();
+    };
+    if (addBtn) addBtn.addEventListener('click', addCustom);
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
+    renderCustom();
+  });
+}
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
   if (!el) return;
