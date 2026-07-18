@@ -56,6 +56,12 @@ Behaviors that must keep working. **The executable version of this list is `test
       "Default setup items per instrument" section (`renderSetupDefaultsEditor` → all 8 catalog
       keys incl. MD) that edits `state.config.setupDefaults[key]` via the same grouped selector,
       applying to NEW people as they're seeded — non-destructive to existing buckets. → `setupdefaults`
+    - **Bulk pre-add people (Phase 1).** Setup Items tab → "＋ Bulk pre-add people" opens a
+      single-page grid (`openBulkPreadd`/`renderBulkPreadd`/`commitBulkPreadd`): add rows (name +
+      instrument/role, "also MD") or "Add everyone on the current plan", expand each to set their
+      setup (`renderPersonSetupEditor`) + vocal mic, Save writes the stable buckets + a remembered
+      mic + `musicianPreferences` "known" markers (so they aren't re-prompted). Phase 2 (PCO "last
+      6 months" auto-populate) is still backlogged. → `bulkpreadd`
     - **Stable per-person keys, seeded once.** Buckets are keyed
       `stableSetupKey(name, role, typeKey)` (role ∈ band/vocalist/shadow) and seeded a
       single time via `seedPersonSetup`. A re-pull that re-mints instrument ids does NOT

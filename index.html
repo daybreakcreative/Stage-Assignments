@@ -713,6 +713,22 @@ background-size:5% 10%}
 .setup-defaults-summary::before{content:'▸ ';color:var(--accent)}
 .setup-defaults-disclosure[open] .setup-defaults-summary::before{content:'▾ '}
 .setup-defaults-note{font-size:12px;color:var(--text-muted);margin:0 0 6px 2px}
+.bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px}
+.bulk-empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px}
+.bulk-row{background:var(--surface);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;overflow:hidden}
+.bulk-row-head{display:flex;align-items:center;gap:8px;padding:8px 10px}
+.bulk-expand{background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;width:18px;flex:none}
+.bulk-name{flex:1;min-width:90px;background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:5px 8px}
+.bulk-role{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12.5px;padding:5px 6px}
+.bulk-md-lbl{font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.bulk-summary{flex:1;font-size:11.5px;color:var(--text-faint);font-family:var(--ff-mono);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bulk-remove{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;flex:none}
+.bulk-remove:hover{color:var(--danger)}
+.bulk-body{padding:6px 12px 12px 30px;border-top:1px solid var(--border)}
+.bulk-mic-row{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.bulk-mic-lbl{font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
+.bulk-mic{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12.5px;padding:5px 8px}
+.bulk-md-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:12px 0 6px}
 .wiz-setup-insts{margin-top:14px;display:flex;flex-direction:column;gap:10px}
 .wiz-setup-inst{background:var(--bg-inset);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
 .wiz-setup-inst-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
@@ -6722,7 +6738,10 @@ function renderSetupDefaultsEditor(container) {
       <summary class="setup-defaults-summary">Default setup items per instrument</summary>
       <div class="setup-defaults-note">Applied to new people as they're added. Edit someone already on a plan below.</div>
       <div class="wiz-setup-insts">${cardsHtml}</div>
-    </details>`;
+    </details>
+    <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>`;
+  const bulkBtn = container.querySelector('#bulkPreaddOpenBtn');
+  if (bulkBtn) bulkBtn.addEventListener('click', openBulkPreadd);
   container.querySelectorAll('.wiz-setup-inst[data-def-key]').forEach(card => {
     const key = card.dataset.defKey;
     if (!state.config.setupDefaults[key]) state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
@@ -6756,6 +6775,145 @@ function renderSetupDefaultsEditor(container) {
     if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
     renderCustom();
   });
+}
+// ── Bulk pre-add people (Phase 1) ─────────────────────────────────────────
+// A single-page grid to list people (name + instrument/role) and pre-fill their setup + mic
+// preferences up front, so they're ready when they show up on a future service. Writes the SAME
+// stores the check-off / post-pull use (setup buckets, micPrefs, musicianPreferences markers).
+let bulkPreaddRows = [];
+const BULK_ROLE_OPTS = [
+  { v: 'vocalist', label: 'Vocalist' },
+  { v: 'drums', label: 'Drums' }, { v: 'bass', label: 'Bass' }, { v: 'keys', label: 'Keys' },
+  { v: 'eg', label: 'Electric Gtr' }, { v: 'ag', label: 'Acoustic Gtr' }, { v: 'strings', label: 'Strings' }
+];
+function addBulkRow(partial) {
+  bulkPreaddRows.push(Object.assign(
+    { id: 'br_' + Math.random().toString(36).slice(2, 8), name: '', role: 'band', typeKey: 'keys', isMD: false, mic: '', open: false },
+    partial || {}));
+}
+function seedBulkFromRoster() {
+  const have = new Set(bulkPreaddRows.map(r => normFullName(r.name)));
+  (state.vocalists || []).forEach(v => {
+    const n = (v.name || '').trim(); if (!n || have.has(normFullName(n))) return;
+    have.add(normFullName(n)); addBulkRow({ name: n, role: 'vocalist' });
+  });
+  (state.instruments || []).forEach(i => {
+    if (!i || i.vocalistPlayer) return;
+    const n = (i.assignedTo || '').trim(); if (!n || have.has(normFullName(n))) return;
+    have.add(normFullName(n));
+    addBulkRow({ name: n, role: 'band', typeKey: detectPresetKey(i) || 'keys', isMD: state.musicDirectorId === i.id });
+  });
+}
+function bulkRowSetupKey(r) {
+  const tk = r.role === 'vocalist' ? 'vocals' : r.typeKey;
+  return { key: stableSetupKey(r.name, r.role === 'vocalist' ? 'vocalist' : 'band', tk), typeKey: tk };
+}
+function bulkRowSummary(r) {
+  if (!r.name) return '';
+  const { key } = bulkRowSetupKey(r);
+  const b = state.setupItems[key];
+  const n = (b && Array.isArray(b.items)) ? b.items.length : 0;
+  const bits = [];
+  if (n) bits.push(n + ' item' + (n === 1 ? '' : 's'));
+  if (r.role === 'vocalist' && r.mic) bits.push(r.mic);
+  return bits.join(' · ');
+}
+function openBulkPreadd() {
+  const existing = document.getElementById('bulkPreaddModal'); if (existing) existing.remove();
+  bulkPreaddRows = [];
+  const modal = document.createElement('div');
+  modal.id = 'bulkPreaddModal'; modal.className = 'sa-modal';
+  modal.innerHTML = `
+    <div class="sa-panel">
+      <div class="sa-header">
+        <span class="sa-title">Bulk pre-add people</span>
+        <button class="draw-tool-btn" id="bulkAddRow">＋ Add person</button>
+        <button class="draw-tool-btn" id="bulkSeedRoster">Add everyone on the current plan</button>
+        <button class="sa-close" id="bulkClose" title="Close">✕</button>
+      </div>
+      <div class="sa-body">
+        <div class="bulk-hint">Pre-fill setup + mic preferences so these people are ready on their next service — saved to the same place the ✓ Items page reads.</div>
+        <div id="bulkList"></div>
+      </div>
+      <div class="sa-footer">
+        <button class="btn ghost" id="bulkCancel">Discard</button>
+        <button class="btn" id="bulkSave" style="background:var(--accent);border-color:var(--accent);color:#000;">Save all</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#bulkAddRow').addEventListener('click', () => { addBulkRow({ open: true }); renderBulkPreadd(); });
+  modal.querySelector('#bulkSeedRoster').addEventListener('click', () => { seedBulkFromRoster(); renderBulkPreadd(); });
+  modal.querySelector('#bulkClose').addEventListener('click', closeBulkPreadd);
+  modal.querySelector('#bulkCancel').addEventListener('click', closeBulkPreadd);
+  modal.querySelector('#bulkSave').addEventListener('click', () => { commitBulkPreadd(); closeBulkPreadd(); });
+  renderBulkPreadd();
+}
+function closeBulkPreadd() {
+  const m = document.getElementById('bulkPreaddModal'); if (m) m.remove();
+  if (typeof renderSetupManager === 'function') renderSetupManager();
+}
+function renderBulkPreadd() {
+  const list = document.getElementById('bulkList'); if (!list) return;
+  if (!bulkPreaddRows.length) {
+    list.innerHTML = `<div class="bulk-empty">No one yet. Use <b>＋ Add person</b> or <b>Add everyone on the current plan</b> to begin.</div>`;
+    return;
+  }
+  list.innerHTML = bulkPreaddRows.map(r => {
+    const roleVal = r.role === 'vocalist' ? 'vocalist' : r.typeKey;
+    const roleOpts = BULK_ROLE_OPTS.map(o => `<option value="${o.v}"${roleVal === o.v ? ' selected' : ''}>${o.label}</option>`).join('');
+    const micOpts = (state.inventory || []).map(m => `<option value="${esc(m.name)}|${m.wireless ? 'wl' : 'wd'}"${r.mic === m.name ? ' selected' : ''}>${esc(m.name + (m.wireless ? ' (Wireless)' : ''))}</option>`).join('');
+    const body = r.open ? `<div class="bulk-body">
+      ${r.role === 'vocalist' ? `<div class="bulk-mic-row"><span class="bulk-mic-lbl">Mic</span><select class="bulk-mic"><option value="">— No preference —</option>${micOpts}</select></div>` : ''}
+      <div class="bulk-editor"></div>
+      ${r.isMD ? `<div class="bulk-md-label">Setup as Music Director</div><div class="bulk-editor-md"></div>` : ''}
+    </div>` : '';
+    return `<div class="bulk-row" data-bulk-row data-id="${esc(r.id)}">
+      <div class="bulk-row-head">
+        <button class="bulk-expand" data-bulk-expand title="Expand">${r.open ? '▾' : '▸'}</button>
+        <input type="text" class="bulk-name" placeholder="Name" value="${esc(r.name)}" />
+        <select class="bulk-role">${roleOpts}</select>
+        <label class="bulk-md-lbl"><input type="checkbox" class="bulk-md"${r.isMD ? ' checked' : ''}/> also MD</label>
+        <span class="bulk-summary">${esc(bulkRowSummary(r))}</span>
+        <button class="bulk-remove" data-bulk-remove title="Remove">✕</button>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+  bulkPreaddRows.forEach(r => {
+    const rowEl = list.querySelector(`[data-id="${r.id}"]`); if (!rowEl) return;
+    rowEl.querySelector('.bulk-name').addEventListener('change', e => { r.name = e.target.value.trim(); renderBulkPreadd(); });
+    rowEl.querySelector('.bulk-role').addEventListener('change', e => {
+      const v = e.target.value;
+      if (v === 'vocalist') r.role = 'vocalist'; else { r.role = 'band'; r.typeKey = v; }
+      renderBulkPreadd();
+    });
+    rowEl.querySelector('.bulk-md').addEventListener('change', e => { r.isMD = e.target.checked; renderBulkPreadd(); });
+    rowEl.querySelector('[data-bulk-expand]').addEventListener('click', () => { r.open = !r.open; renderBulkPreadd(); });
+    rowEl.querySelector('[data-bulk-remove]').addEventListener('click', () => { bulkPreaddRows = bulkPreaddRows.filter(x => x.id !== r.id); renderBulkPreadd(); });
+    if (r.open && r.name) {
+      const ed = rowEl.querySelector('.bulk-editor');
+      if (ed) { const { key, typeKey } = bulkRowSetupKey(r); renderPersonSetupEditor(ed, key, typeKey); }
+      const mic = rowEl.querySelector('.bulk-mic');
+      if (mic) mic.addEventListener('change', e => { r.mic = e.target.value ? e.target.value.split('|')[0] : ''; });
+      const edMd = rowEl.querySelector('.bulk-editor-md');
+      if (edMd) renderPersonSetupEditor(edMd, stableSetupKey(r.name, 'md', 'md'), 'md');
+    }
+  });
+}
+function commitBulkPreadd() {
+  const now = new Date().toISOString();
+  bulkPreaddRows.forEach(r => {
+    const name = (r.name || '').trim(); if (!name) return;
+    const nn = normFullName(name);
+    if (r.role === 'vocalist') {
+      if (r.mic) setMicRemembered(name, r.mic);
+      state.musicianPreferences[nn + '|vocal'] = { askedAt: now };
+    } else {
+      state.musicianPreferences[nn + '|' + r.typeKey] = { askedAt: now };
+    }
+    if (r.isMD) state.musicianPreferences[nn + '|md'] = { askedAt: now };
+  });
+  saveState();
 }
 function renderSetupManager() {
   const el = document.getElementById('setupsEdit');
