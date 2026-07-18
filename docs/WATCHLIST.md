@@ -164,6 +164,7 @@ Behaviors that must keep working. **The executable version of this list is `test
       click-to-toggle `.si-chip`s, the assigned vocal mic as a highlighted chip, and IEM as an
       uncounted note. Toggling a chip persists to `getChecklistState()` and updates the ring +
       counts in place. Done-state marks the chip with the `ck` class. → `scvredesign`
-      (Note: `renderSetupItemsView`/`renderPersonCard` — the `.si-*` card view reached only by
-      the unwired `enterSetupItemsView` — also carries a parallel copy of this design but is
-      NOT reachable from the nav; the live path is `renderSetupChecklist`.)
+      (Note: the old unreachable `renderSetupItemsView`/`renderPersonCard`/`enterSetupItemsView`
+      `.si-*` card view was removed 2026-07-18; `renderSetupChecklist` is now the only path.
+      The `.si-*` CSS and shared helpers — `vocalSlotFor`, `syncAssignedMicItem`,
+      `renderPersonSetupEditor`, `refreshSetupItemsUI` — remain in use.)

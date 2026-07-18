@@ -39,7 +39,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments.forEach(i=>{i.assignedTo='';i.vocalistPlayer=null;});
        state.instruments.find(i=>i.id==='inst_bass').vocalistPlayer='v2';
        state.vocalists=[{id:'v1',name:'Mo'},{id:'v2',name:'Grayson Kredit'}]; state.assignments=[]; state.assignments[1]='v2';
-       state.setupItems={}; renderSetupItemsView();`);
+       state.setupItems={}; collectChecklistItems();`);
    // Boom lands on the STABLE per-person key (name|vocalist|vocals), the same key
    // the check-off view + grouped editor share — not the legacy setupKeyForVocal(name).
    const items=JSON.parse(Q(`JSON.stringify((state.setupItems[stableSetupKey('Grayson Kredit','vocalist','vocals')]||{}).items||[])`));
@@ -49,7 +49,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments.forEach(i=>{i.assignedTo='';i.vocalistPlayer=null;});
        var eg=state.instruments.find(i=>i.id==='inst_eg1'); eg.assignedTo='Brian';
        state.vocalists=[{id:'vb',name:'Brian'}]; state.assignments=[]; state.assignments[0]='vb';
-       state.setupItems={}; renderSetupItemsView();`);
+       state.setupItems={}; collectChecklistItems();`);
    // Read the stable band key (name|band|eg) — same key the render path uses for this player.
    const items=JSON.parse(Q(`JSON.stringify((state.setupItems[stableSetupKey('Brian','band','eg')]||{}).items||[])`));
    if(items.some(it=>it.text==='Boom mic stand')) throw new Error('boom wrongly auto-added on name match: '+JSON.stringify(items.map(i=>i.text)));
