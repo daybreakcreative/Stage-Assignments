@@ -9,6 +9,19 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 
 ## Open
 
+### Setup items
+- **[FEATURE] Default setup items per instrument in Advanced Settings.** Today the church
+  defaults (`state.config.setupDefaults[key]`, incl. `md`) can only be set by re-running the
+  wizard's last "Setup" step. Add a section in Advanced Settings to view/edit those per-instrument
+  defaults directly (reuse `renderSetupGroups` bound to `setupDefaults[key].selections`). Directly
+  fixes the MD-defaults friction found 2026-07-17 (an MD's checklist is empty unless selected).
+  _Queued 2026-07-18 — NEXT; brainstorm then build._
+- **[FEATURE] Bulk pre-add everyone's setup preferences.** A place to input all vocalists' & band
+  members' preferences at once so someone who knows the team can pre-populate them — including a
+  "add the last 6 months' band" button that runs the preference questions for everyone on recently.
+  **[BIG]** — the "last 6 months" part depends on available history (PCO plan history vs. only
+  locally-stored people); scope that first. _Queued 2026-07-18 — after the defaults section._
+
 ### Display / green-room
 - **[FEATURE] ~~Live countdown + idle screen~~ — DEPRIORITIZED.** A big clock counting down to
   service time, custom labels ("Band Load", "Rehearsal"), an edge-glow alarm at zero, and an
