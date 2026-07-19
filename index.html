@@ -713,7 +713,8 @@ background-size:5% 10%}
 .setup-defaults-summary::before{content:'▸ ';color:var(--accent)}
 .setup-defaults-disclosure[open] .setup-defaults-summary::before{content:'▾ '}
 .setup-defaults-note{font-size:12px;color:var(--text-muted);margin:0 0 6px 2px}
-.bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px}
+#bulkList{flex:1;overflow-y:auto;min-height:0}
+.bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;flex:none}
 .bulk-empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px}
 .bulk-row{background:var(--surface);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;overflow:hidden}
 .bulk-row-head{display:flex;align-items:center;gap:8px;padding:8px 10px}
@@ -1874,7 +1875,7 @@ body>*:not(.summary-overlay){display:none!important}
 <!-- ========== PCO SECONDARY MODAL (after wizard finish) ========== -->
 <div class="pco-secondary-overlay" id="pcoSecondaryOverlay">
   <div class="pco-secondary-sheet">
-    <div class="pco-secondary-icon">📅</div>
+    <div class="pco-secondary-icon"></div>
     <div class="pco-secondary-eyebrow">ONE LAST THING</div>
     <h2 class="pco-secondary-title">Connect Planning Center?</h2>
     <p class="pco-secondary-sub">Optional — but if you use PCO Services, connecting now lets the app pull your weekly schedule and team automatically. Every Sunday, just click "Pull Plan" and your team appears here.</p>
@@ -1917,7 +1918,7 @@ body>*:not(.summary-overlay){display:none!important}
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
-    <div class="lock-icon">🔒</div>
+    <div class="lock-icon"></div>
     <div class="lock-title">Setup not complete</div>
     <div class="lock-subtitle" id="lockSubtitle">Items still need to be checked off before going live.</div>
     <div class="lock-progress-track"><div class="lock-progress-fill" id="lockProgressFill"></div></div>
@@ -3466,12 +3467,12 @@ function renderVocalists() {
             <option value="">— pick —</option>
             ${micOptions}
           </select>
-          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
-          ${mpref.lock ? `<span class="pref-tag" title="Locked to ${esc(mpref.lock)}">🔒</span>`
+          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">${esc(t)}</span>`).join('')}
+          ${mpref.lock ? `<span class="pref-tag" title="Locked to ${esc(mpref.lock)}"></span>`
             : (mpref.remembered ? `<span class="pref-tag" title="Usually on ${esc(mpref.remembered)}">★</span>` : '')}
         </div>` : `
         <div class="mic-pick" style="border-top:none;padding-top:6px;">
-          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">🎸 ${esc(t)}</span>`).join('')}
+          ${vocalistInstrumentTags(v.id).map(t => `<span class="ag-badge" title="Plays ${esc(t)}">${esc(t)}</span>`).join('')}
         </div>`}
       </div>
     `;
@@ -3551,10 +3552,10 @@ function renderVocalists() {
             </select>
           </div>
           <div class="mic-pick" style="border-top:none;padding-top:6px;gap:6px;flex-wrap:wrap;">
-            <span class="shadow-pack-pill" title="IEM Pack" style="${noMix ? 'opacity:.5;' : ''}">🎧</span>
+            <span class="shadow-pack-pill" title="IEM Pack" style="${noMix ? 'opacity:.5;' : ''}"></span>
             <select class="shadow-pack-sel" data-shadow-id="${esc(s.id)}" title="IEM pack for this shadow"${noMix ? ' disabled' : ''}>${packOptions}</select>
-            ${s.mic ? `<span class="shadow-mic-pill" title="Lowest free mic (auto-assigned)">🎤 ${esc(s.mic)}</span>` : ''}
-            ${noMix ? `<span class="shadow-nomix-pill" title="No monitor mix needed">🚫 no mix</span>` : ''}
+            ${s.mic ? `<span class="shadow-mic-pill" title="Lowest free mic (auto-assigned)">${esc(s.mic)}</span>` : ''}
+            ${noMix ? `<span class="shadow-nomix-pill" title="No monitor mix needed">no mix</span>` : ''}
           </div>
         </div>
       `;
@@ -3959,7 +3960,7 @@ function migrateHostChannels(loadedConfig, p) {
 function renderHosts() {
   const wrap = document.getElementById('hostsList');
   if (!wrap) return;
-  const invOptions = (cur) => `<option value="">🎤 (none set)</option>` +
+  const invOptions = (cur) => `<option value="">(none set)</option>` +
     state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===cur?' selected':''}>${esc(m.name)}</option>`).join('');
   wrap.innerHTML = hostChannels().map(ch => `
     <div class="host-row" data-ch="${esc(ch.id)}">
@@ -5751,7 +5752,7 @@ function renderStage() {
   if (!hasAssignedBand && !hasAssignedVocals && stageWrapEl) {
     const hint = document.createElement('div');
     hint.className = 'stage-empty-hint';
-    hint.innerHTML = '<div class="seh-icon">🎸</div><div class="seh-text">Pull from PCO or assign names below to populate the stage</div>';
+    hint.innerHTML = '<div class="seh-icon"></div><div class="seh-text">Pull from PCO or assign names below to populate the stage</div>';
     stageWrapEl.appendChild(hint);
   }
 
@@ -6358,14 +6359,14 @@ function renderLayoutEditor() {
     <p class="subtitle" style="margin-bottom:8px;font-size:11.5px;">How names appear in the Display View. Edit view always shows full names.</p>
     <div class="name-fmt-grid" style="margin-bottom:18px;">
       ${[
-        { key:'full',          title:'Full',     sample:'Carlos Brown' },
-        { key:'first-initial', title:'First L.', sample:'Marcus D.' },
-        { key:'first',         title:'First',    sample:'Marcus' },
-        { key:'initials',      title:'Initials', sample:'MD' }
+        { key:'full',          title:'Full' },
+        { key:'first-initial', title:'First L.' },
+        { key:'first',         title:'First' },
+        { key:'initials',      title:'Initials' }
       ].map(opt => `
         <button class="name-fmt-card${(state.config.displayNameFormat||'full') === opt.key ? ' active' : ''}" data-name-fmt="${opt.key}">
           <div class="nfc-title">${opt.title}</div>
-          <div class="nfc-sample">${esc(opt.sample)}</div>
+          <div class="nfc-sample">${esc(formatDisplayName('Marcus Donalson', opt.key))}</div>
         </button>
       `).join('')}
     </div>
@@ -7137,7 +7138,7 @@ function renderSetupManager() {
         <button data-sort="position" class="${setupMgrSort==='position'?'active':''}">Position</button>
       </div>
     </div>
-    ${orphanCount > 0 ? `<button class="btn ghost" id="setupPurgeOrphans" style="margin-bottom:14px;">🧹 Remove all ${orphanCount} setup${orphanCount === 1 ? '' : 's'} not in this week's lineup</button>` : ''}
+    ${orphanCount > 0 ? `<button class="btn ghost" id="setupPurgeOrphans" style="margin-bottom:14px;">Remove all ${orphanCount} setup${orphanCount === 1 ? '' : 's'} not in this week's lineup</button>` : ''}
     <div id="setupMgrList">
       ${persons.map(nn => {
         const buckets = byPerson[nn];
@@ -7292,9 +7293,9 @@ function renderDataEditor() {
   el.innerHTML = `
     <p class="subtitle" style="margin-bottom:18px;">Export your full configuration to a JSON file (good for backups or moving to another browser). Import overwrites everything currently in this browser.</p>
 
-    <div class="section-label" style="margin-bottom:10px;">🐞 Report a bug</div>
+    <div class="section-label" style="margin-bottom:10px;">Report a bug</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Something broken or off? Describe it, attach a screenshot — your current setup and app version are bundled automatically so it can be reproduced.</p>
-    <button class="btn primary" id="reportBugBtn" style="margin-bottom:24px;">🐞 Report a bug</button>
+    <button class="btn primary" id="reportBugBtn" style="margin-bottom:24px;">Report a bug</button>
 
     <div class="section-label" style="margin-bottom:10px;">Export</div>
     <p class="subtitle" style="margin-bottom:10px;font-size:12px;">Saves a snapshot of everything in this browser: your team, instruments, mic inventory, preferences, brand, and PCO config. Current size: ${sizeStr}.</p>
@@ -7496,7 +7497,7 @@ function renderInvEditor() {
 function renderHostChannelEditor() {
   const el = document.getElementById('hostChanEdit');
   if (!el) return;
-  const invOptions = (cur) => `<option value="">🎤 (none set)</option>` +
+  const invOptions = (cur) => `<option value="">(none set)</option>` +
     state.inventory.map(m => `<option value="${esc(m.name)}"${m.name===cur?' selected':''}>${esc(m.name)}</option>`).join('');
   el.innerHTML = `<div class="section-label" style="margin-bottom:6px;">Service Handhelds</div>
     <p class="subtitle" style="margin-bottom:12px;">How many handheld mics you have and what to grab for each. Names are entered per service on the main screen.</p>
@@ -9375,7 +9376,7 @@ function renderDisplayView() {
     const iemPackName = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || `Vocal ${i+1}`;
     const showMic = state.config.showMicCapsules;
     const tags = vocalistInstrumentTags(v.id);
-    const tagBadges = tags.map(t => `<span class="dv-voc-ag">🎸 ${esc(t)}</span>`).join('');
+    const tagBadges = tags.map(t => `<span class="dv-voc-ag">${esc(t)}</span>`).join('');
     const micLine = (d.vocShowMic !== false && showMic) ? `<div class="dv-voc-line"><span class="lbl">Mic</span><span class="val ${v.micAssigned?'':'empty'}">${esc(v.micAssigned||'—')}</span></div>` : '';
     const iemLine = d.vocShowIem !== false ? `<div class="dv-voc-line"><span class="lbl">IEM Pack</span><span class="val">${esc(iemPackName)}</span></div>` : '';
     const metaBlock = (micLine || iemLine)
@@ -9455,7 +9456,7 @@ function renderDisplayView() {
       const bits = [];
       if (noMix) bits.push('no IEM');
       else if (s.pack) bits.push(s.pack);
-      if (s.mic) bits.push('🎤 ' + s.mic);
+      if (s.mic) bits.push('' + s.mic);
       const li = document.createElement('li');
       li.className = 'dv-list-item';
       li.innerHTML = `<span class="pos">SH ${idx+1}</span><span class="name">${esc(formatDisplayName(s.name) || '—')}</span><span class="detail">${esc(bits.join(' · '))}</span>`;
@@ -9634,7 +9635,7 @@ function renderRunSheet() {
     if (counter) counter.textContent = '';
     grid.innerHTML = `
       <div class="rs-empty-state">
-        <div class="rs-empty-icon">📋</div>
+        <div class="rs-empty-icon"></div>
         <div class="rs-empty-title">No service order yet</div>
         <div class="rs-empty-sub">Add items like songs, announcements, or transitions to build your run sheet.</div>
         <button class="rs-empty-add-btn" id="rsEmptyAddBtn">+ Add first item</button>
@@ -10140,7 +10141,7 @@ function getStageAreas() {
     areas.push({
       id: 'area_vocals',
       name: 'Vocalists',
-      icon: '🎤',
+      icon: '',
       people: vocPeople
     });
   }
@@ -10166,7 +10167,7 @@ function getStageAreas() {
       areas.push({
         id: 'area_shadows',
         name: 'Shadows',
-        icon: '👤',
+        icon: '',
         people: shadowPeople
       });
     }
@@ -10198,7 +10199,7 @@ function getStageAreas() {
       areas.push({
         id: 'area_custom_' + ca.id,
         name: ca.name,
-        icon: '🎸',
+        icon: '',
         people
       });
     }
@@ -10213,7 +10214,7 @@ function getStageAreas() {
     areas.push({
       id: 'area_inst_' + inst.id,
       name: inst.label,
-      icon: '🎸',
+      icon: '',
       people: [{
         name,
         key: stableFor(name, 'band', detectPresetKey(inst)),
@@ -10238,7 +10239,7 @@ function getStageAreas() {
       areas.push({
         id: 'area_md',
         name: 'MD',
-        icon: '🎛️',
+        icon: '',
         people: [{
           name: mdName,
           key: stableFor(mdName, 'md', 'md'),
@@ -10254,7 +10255,7 @@ function getStageAreas() {
     areas.push({
       id: 'area_md_solo',
       name: 'MD',
-      icon: '🎛️',
+      icon: '',
       people: [{
         name: state.mdSoloName,
         key: stableFor(state.mdSoloName, 'md', 'md'),
@@ -10661,10 +10662,10 @@ function collectChecklistItems() {
     (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText });
   });
   if (vocItems.length > 0) {
-    sections.push({ title: '🎤 VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
+    sections.push({ title: 'VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
   }
   if (bandItems.length > 0) {
-    sections.push({ title: '🎸 BAND', key: 'band', items: bandItems, people: bandPeople });
+    sections.push({ title: 'BAND', key: 'band', items: bandItems, people: bandPeople });
   }
 
   // --- Stage / tech section (auto-derived from placed monitor & DI/power fixtures) ---
@@ -10687,7 +10688,7 @@ function collectChecklistItems() {
     stagePeople.push({ name, roleLabel: 'Stage', stableKey: key, items: [{ itemText: action, key }] });
   });
   if (stageItems.length > 0) {
-    sections.push({ title: '🔌 STAGE', key: 'stage', items: stageItems, people: stagePeople });
+    sections.push({ title: 'STAGE', key: 'stage', items: stageItems, people: stagePeople });
   }
 
   return sections;
@@ -10950,6 +10951,14 @@ function openSetupChecklistView() {
   state.viewMode = 'setup-checklist';
   saveState();
   renderSetupChecklist();
+  // Keep the checklist full screen (matches Display). Opened from a click/gesture, so the request
+  // is honored; re-requesting after a path that dropped fullscreen (e.g. the lock screen's "Go to
+  // setup", which routes through exitDisplayMode) restores it.
+  try {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req && !document.fullscreenElement) req.call(el);
+  } catch (e) { /* fullscreen blocked — ignore */ }
 }
 
 function exitSetupChecklistView() {
@@ -11367,7 +11376,7 @@ function sendBugReport(r) {
     r.desc, '', '---',
     '**Build:** ' + (build || 'unknown'),
     dateStr ? ('**Service date:** ' + dateStr) : '',
-    '', '📎 _Drag in the files that just downloaded: the config JSON' + (r.shotDataUrl ? ' and the screenshot' : '') + '._'
+    '', '_Drag in the files that just downloaded: the config JSON' + (r.shotDataUrl ? ' and the screenshot' : '') + '._'
   ].filter(Boolean).join('\n');
   const url = `https://github.com/${BUG_REPORT_REPO}/issues/new?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   window.open(url, '_blank');
@@ -11380,7 +11389,7 @@ function openBugReportModal() {
   const sheet = document.createElement('div'); sheet.className = 'setup-review-sheet'; overlay.appendChild(sheet);
   const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
   sheet.innerHTML = `
-    <div class="setup-review-head"><div class="setup-review-title">🐞 Report a bug</div><button type="button" class="setup-review-x" aria-label="Close">✕</button></div>
+    <div class="setup-review-head"><div class="setup-review-title">Report a bug</div><button type="button" class="setup-review-x" aria-label="Close">✕</button></div>
     <p class="setup-review-sub">Describe what went wrong — your current setup + app version get bundled so it can be reproduced. Submitting opens a GitHub issue draft; drag the downloaded file(s) in and click Submit.</p>
     <div class="setup-review-body" style="overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
       <label class="brf-field"><span class="brf-lbl">What happened? What did you expect?</span>
@@ -12359,7 +12368,7 @@ function renderWizardStepBody(step) {
 
           ${!useIems ? `
             <div class="wiz-setup-intro-card" style="margin-top:14px;">
-              <div class="wiz-setup-intro-icon">🎧</div>
+              <div class="wiz-setup-intro-icon"></div>
               <div class="wiz-setup-intro-text">
                 No problem — IEM packs are skipped. You can set them up any time later in <strong>Advanced Settings → Display</strong>.
               </div>
@@ -12523,11 +12532,11 @@ function renderWizardStepBody(step) {
     case 'display-layout': {
       const dl = wizardData.displayLayout || {};
       const sections = [
-        { key: 'showStage',    label: 'Stage diagram',    emoji: '🎸', desc: 'Visual map of where each person stands on stage' },
-        { key: 'showBand',     label: 'Band list',        emoji: '🥁', desc: 'Names and instruments for each band position' },
-        { key: 'showHosts',    label: 'Hosts / Handhelds',emoji: '🎤', desc: 'Who has a handheld mic — pastors, hosts, speakers' },
-        { key: 'showShadows',  label: 'Shadows',          emoji: '👁', desc: 'Background vocalists with IEMs but no mic on stage' },
-        { key: 'showRunSheet', label: 'Service order',    emoji: '📋', desc: 'Song list and service flow with keys and notes' },
+        { key: 'showStage',    label: 'Stage diagram',    emoji: '', desc: 'Visual map of where each person stands on stage' },
+        { key: 'showBand',     label: 'Band list',        emoji: '', desc: 'Names and instruments for each band position' },
+        { key: 'showHosts',    label: 'Hosts / Handhelds',emoji: '', desc: 'Who has a handheld mic — pastors, hosts, speakers' },
+        { key: 'showShadows',  label: 'Shadows',          emoji: '', desc: 'Background vocalists with IEMs but no mic on stage' },
+        { key: 'showRunSheet', label: 'Service order',    emoji: '', desc: 'Song list and service flow with keys and notes' },
       ];
       return `
         <div>
@@ -12620,7 +12629,7 @@ function renderWizardStepBody(step) {
 
           ${useSetup ? `
             <div class="wiz-setup-intro-card">
-              <div class="wiz-setup-intro-icon">📋</div>
+              <div class="wiz-setup-intro-icon"></div>
               <div class="wiz-setup-intro-text">
                 <strong>Great choice.</strong> For each instrument, select the default setup each <strong>player</strong> of that instrument should start with — leave everything unticked to start blank. You can also add your own custom items per instrument. These seed every musician's checklist; fine-tune per person later via <strong>✓ Items</strong> in the header.
               </div>
