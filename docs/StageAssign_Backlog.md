@@ -9,6 +9,37 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 
 ## Open
 
+### Punch list — 2026-07-18 (from Dillon, batched review)
+**Quick UI fixes (batch A):**
+- **[FIX] ✓ Items should stay full screen.** "Allow set up items to stay in full screen" —
+  clarify: does it currently drop out of fullscreen on an action? (needs a repro detail).
+- **[FIX] Bulk pre-add modal doesn't scroll.** Can't scroll down to reach lower rows / Save.
+- **[FIX] Name-format preview cards use one sample name.** Advanced Settings → "Vocalist cards —
+  name format": the FULL / FIRST L. / FIRST / INITIALS previews currently show *different* people
+  (Carlos Brown / Marcus D. / Marcus / MD); use the SAME sample name in all four.
+- **[POLISH] Remove all emoji/emoticon icons across the app** (area icons, ✓/▶ glyphs, 🐞, 🎛️, etc.).
+
+**Display view (batch B):**
+- **[FIX] Band IEM-pack column gradient is clipped** (cut off around the pack chip).
+- **[FEATURE] Instrumentalist who is also a vocalist** → show in the BAND section using their
+  **vocalist** IEM pack, labeled **"Instrument · Vocal N | Name | Pack"**.
+- **[FEATURE] Instrumentalist who is also MD** → label **"Instrument · MD | Name | Pack"** (today
+  it reads "Bass | Abraham Mata · MD | Bass").
+- **[FEATURE] Auto-link a vocalist who is also scheduled as an instrumentalist** (so they're one
+  person, not two entries) — ties into the two relabel items above.
+
+**Bulk pre-add (batch C):**
+- **[FEATURE] Show each scheduled position under a person instead of a role dropdown** — from the
+  PCO history, list the actual positions they've filled rather than making you pick one.
+
+**Bigger features (each its own brainstorm):**
+- **[FEATURE] Fix PCO host/pastor assignment.** PCO position "pastor"/"speaker" → the **Pastor**
+  mic; scheduled **live** hosts (NOT video-hosting/video-component roles) → **HH1/HH2/HH3**.
+  (`classifyPosition` + host-channel assignment need work.)
+- **[FEATURE] Cog on each person's ✓ Items card** to edit *their* default setup items inline.
+- **[FEATURE] Bug submission → KHARIS, not GitHub.** Repoint `sendBugReport()` transport at KHARIS.
+  (Long-standing queued item.)
+
 ### Setup items
 - ~~**Default setup items per instrument in Advanced Settings.**~~ ✅ SHIPPED 2026-07-18
   (`renderSetupDefaultsEditor` in the Setup Items tab; edits `setupDefaults[key]` for all 8 catalog
