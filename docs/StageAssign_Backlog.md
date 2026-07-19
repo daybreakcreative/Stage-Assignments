@@ -10,14 +10,13 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 ## Open
 
 ### Punch list — 2026-07-18 (from Dillon, batched review)
-**Quick UI fixes (batch A):**
-- **[FIX] ✓ Items should stay full screen.** "Allow set up items to stay in full screen" —
-  clarify: does it currently drop out of fullscreen on an action? (needs a repro detail).
-- **[FIX] Bulk pre-add modal doesn't scroll.** Can't scroll down to reach lower rows / Save.
-- **[FIX] Name-format preview cards use one sample name.** Advanced Settings → "Vocalist cards —
-  name format": the FULL / FIRST L. / FIRST / INITIALS previews currently show *different* people
-  (Carlos Brown / Marcus D. / Marcus / MD); use the SAME sample name in all four.
-- **[POLISH] Remove all emoji/emoticon icons across the app** (area icons, ✓/▶ glyphs, 🐞, 🎛️, etc.).
+**Quick UI fixes (batch A):** ✅ SHIPPED 2026-07-18 (`2f1549e`) → `uifixes`
+- ~~✓ Items should stay full screen~~ — `openSetupChecklistView` now requests fullscreen (fixes
+  the drop via the lock screen's "Go to setup" → `exitDisplayMode`). _Confirm at booth (fullscreen
+  API can't run in the preview pane)._
+- ~~Bulk pre-add modal doesn't scroll~~ — `#bulkList` scrolls.
+- ~~Name-format preview cards use one sample name~~ — all four show "Marcus Donalson" formatted.
+- ~~Remove all decorative emoji~~ — stripped app-wide; functional glyphs kept.
 
 **Display view (batch B):**
 - **[FIX] Band IEM-pack column gradient is clipped** (cut off around the pack chip).
