@@ -9389,20 +9389,32 @@ function renderDisplayView() {
   // their name cards on top of each other.
   const dvMarks = [];
   state.instruments.forEach(inst => {
-    if (inst.vocalistPlayer) return; // covered by vocalist — gets a /TAG instead
-    const name = (inst.assignedTo || '').trim();
+    const linkedVoc = inst.vocalistPlayer
+      ? state.vocalists.find(v => v.id === inst.vocalistPlayer)
+      : null;
+    const isDrums = detectPresetKey(inst) === 'drums';
+    let name;
+    if (inst.vocalistPlayer) {
+      // Melodic linked instrument → skip (the player shows at their vocal position). A singing
+      // drummer is the exception: keep the kit mark at its spot, labelled with the drummer.
+      if (!(isDrums && linkedVoc)) return;
+      name = (linkedVoc.name || '').trim();
+    } else {
+      name = (inst.assignedTo || '').trim();
+    }
     if (!name) return; // Display: only show positions that are actually filled
     const pos = bandPositions[inst.id]; if (!pos) return;
     const isMD = state.musicDirectorId === inst.id;
     dvMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(name), role: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), kind: 'band' });
   });
-  const filledIds = state.assignments.filter(a => a !== null);
+  const filledIds = state.assignments.filter(a => a !== null && !isLinkedDrummerVid(a));
   const count = filledIds.length;
   if (count > 0) {
     const voxPositions = getVoxPositions(count);
     let posIdx = 0;
     for (let i=0; i<MAX_VOCALISTS; i++) {
       const id = state.assignments[i]; if (!id) continue;
+      if (isLinkedDrummerVid(id)) continue; // singing drummer stays at the kit — no front mark
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[posIdx++];
       const tags = vocalistInstrumentTags(v.id);

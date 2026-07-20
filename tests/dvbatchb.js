@@ -106,6 +106,44 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(after['vl1']===maxX && after['vk']!==maxX) throw new Error('leader vl1 should not sit at the stage-right extreme');
  });
 
+ function renderStageMarks(setup){
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev(setup);
+   ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup";');
+   return [].slice.call(doc.querySelectorAll('#dvStagePeople .dv-sp')).map(el=>({
+     role:(el.querySelector('.dv-sp-role')||{}).textContent||'',
+     name:(el.querySelector('.dv-sp-name')||{}).textContent||''
+   }));
+ }
+
+ check('a singing drummer keeps the kit mark and gets NO front-line vocal mark', ()=>{
+   const marks=renderStageMarks(`
+     state.vocalists=[{id:'vd',name:'Drew Kit',leadsSongs:false,isWL:false,micAssigned:''},
+                      {id:'vs',name:'Sam Sing',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='vd'; state.assignments[1]='vs';
+     state.instruments=[{id:'inst_drums',label:'Drums',pack:'Drum',assignedTo:'',vocalistPlayer:'vd'}];
+     state.musicDirectorId='inst_keys';
+   `);
+   const drumKit=marks.find(m=>/DRUMS/i.test(m.role));
+   if(!drumKit) throw new Error('drum-kit stage mark should still render for a singing drummer');
+   if(!/Drew Kit/.test(drumKit.name)) throw new Error('drum-kit mark should be labelled with the drummer name, got: '+drumKit.name);
+   const drummerVocal=marks.filter(m=>/VOCAL/i.test(m.role) && /Drew Kit/.test(m.name));
+   if(drummerVocal.length) throw new Error('drummer must NOT get a front-line VOCAL mark');
+   if(!marks.some(m=>/VOCAL/i.test(m.role) && /Sam Sing/.test(m.name))) throw new Error('non-drummer singer should still show at a vocal position');
+ });
+
+ check('a linked MELODIC instrument still has NO band stage mark (player shows at vocal pos)', ()=>{
+   const marks=renderStageMarks(`
+     state.vocalists=[{id:'vb',name:'Bo Bass',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='vb';
+     state.instruments=[{id:'inst_bass',label:'Bass',pack:'Bass',assignedTo:'',vocalistPlayer:'vb'}];
+     state.musicDirectorId='inst_keys';
+   `);
+   // Only band-kind marks carry a bare instrument-label role; the vocal mark legitimately shows
+   // a "VOCAL N / Bass" tag suffix for a linked instrument, so exclude VOCAL roles from this check.
+   if(marks.some(m=>!/^VOCAL/i.test(m.role) && /BASS/i.test(m.role))) throw new Error('a linked bass should NOT get a band stage mark');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
