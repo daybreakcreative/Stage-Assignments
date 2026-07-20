@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–38):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–39):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
 > recent items (23–33) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–38, detailed)
+## Recently shipped — must not regress (items 23–39, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -114,6 +114,10 @@ Behaviors that must keep working. **The executable version of this list is `test
 38. **Singing drummer stays at the kit.** The drum-kit stage mark renders (labelled with the
     drummer) and the drummer gets NO front-line vocal mark; they still appear in the Band list as
     "DRUMS · Vocal N" and keep their vocalist card.
+39. **Bulk pre-add is person-cards.** Each person is one card listing their scheduled positions as
+    read-only chips (Vocals / instrument / MD); MD is its own chip (no "also MD" checkbox); the only
+    dropdown is a per-card "+ add position" picker. Commit still writes `musicianPreferences`
+    markers per position. (`renderBulkPreadd`, `bulkPeople`; `tests/bulkpreadd*.js`.)
 
 ---
 

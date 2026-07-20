@@ -11,7 +11,6 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 }});
 const{window,window:{document:doc}}=dom;const ev=c=>window.eval(c);
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
-const rowFor=re=>[].find.call(doc.querySelectorAll('#bulkPreaddModal [data-bulk-row]'), r=>re.test(r.textContent) || re.test((r.querySelector('.bulk-name')||{}).value||''));
 
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('toast=function(){};renderAll=function(){};saveState=function(){};');

@@ -25,9 +25,10 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~Instrumentalist who is also MD~~ — "Instr · MD | Name | Pack" (tag moved to the position cell).
 - ~~Auto-link a vocalist who is also an instrumentalist~~ — full-name auto-link, all instruments.
 
-**Bulk pre-add (batch C):**
-- **[FEATURE] Show each scheduled position under a person instead of a role dropdown** — from the
-  PCO history, list the actual positions they've filled rather than making you pick one.
+**Bulk pre-add (batch C):** ✅ SHIPPED 2026-07-20 → `bulkpreadd`, `bulkpreaddpco`
+- ~~Show each scheduled position under a person instead of a role dropdown~~ — the grid is now one
+  card per person; positions are read-only chips; MD is its own chip; a "+ add position" picker is
+  the only remaining dropdown.
 
 **Bigger features (each its own brainstorm):**
 - **[FEATURE] Fix PCO host/pastor assignment.** PCO position "pastor"/"speaker" → the **Pastor**

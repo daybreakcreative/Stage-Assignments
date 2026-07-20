@@ -129,6 +129,33 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    if(!btn.disabled) throw new Error('regulars button should be disabled without PCO');
  });
 
+ check('two PCO positions for one person render under ONE card as two chips', ()=>{
+   ev('openBulkPreadd();');
+   ev(`var pid=bulkFindOrCreatePerson('Ava Chen',null);
+       addBulkRow({pid,name:'Ava Chen',role:'vocalist'});
+       addBulkRow({pid,name:'Ava Chen',role:'band',typeKey:'keys'});
+       renderBulkPreadd();`);
+   const cards=doc.querySelectorAll('#bulkPreaddModal .bulk-person');
+   if(cards.length!==1) throw new Error('expected 1 person card, got '+cards.length);
+   const chips=cards[0].querySelectorAll('.bulk-pos');
+   if(chips.length!==2) throw new Error('expected 2 position chips under Ava, got '+chips.length);
+ });
+
+ check('band+MD person: Bass chip + MD chip; commit writes both markers', ()=>{
+   ev('state.setupItems={}; state.musicianPreferences={};');
+   ev('openBulkPreadd();');
+   ev(`var pid=bulkFindOrCreatePerson('Pat Reed',null);
+       addBulkRow({pid,name:'Pat Reed',role:'band',typeKey:'bass'});
+       addBulkRow({pid,name:'Pat Reed',role:'md',onStage:true});
+       renderBulkPreadd();`);
+   const labels=[].slice.call(doc.querySelectorAll('#bulkPreaddModal .bulk-person .bulk-pos-label')).map(n=>n.textContent);
+   if(!labels.some(l=>/Bass/i.test(l)) || !labels.some(l=>/MD/i.test(l))) throw new Error('expected Bass + MD chips, got '+labels.join(','));
+   ev('commitBulkPreadd();');
+   const nn=ev(`normFullName('Pat Reed')`);
+   if(!ev(`!!state.musicianPreferences['${nn}|bass']`)) throw new Error('missing bass marker');
+   if(!ev(`!!state.musicianPreferences['${nn}|md']`)) throw new Error('missing md marker');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
