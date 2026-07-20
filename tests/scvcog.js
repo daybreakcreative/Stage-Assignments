@@ -44,6 +44,60 @@ window.addEventListener('load',()=>setTimeout(()=>{
    stage.forEach(p=>{ if(p.buckets&&p.buckets.length) throw new Error('stage card should have no buckets'); });
  });
 
+ function openChecklist(){
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev(`
+     state.vocalists=[{id:'v1',name:'Ava Chen',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='v1';
+     state.instruments=[{id:'inst_keys',label:'Keys',pack:'',assignedTo:'Ben Rowe',vocalistPlayer:null}];
+     state.musicDirectorId='';
+     if(!state.config.setupDefaults) state.config.setupDefaults={};
+     state.config.setupDefaults.vocals={selections:{options:['v_stand']},customOptions:[]};
+     state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};
+     seedPersonSetup(stableSetupKey('Ava Chen','vocalist','vocals'),'vocals');
+     seedPersonSetup(stableSetupKey('Ben Rowe','band','keys'),'keys');
+   `);
+   ev('renderSetupChecklist();');
+ }
+
+ check('each person card has a cog; stage cards do not', ()=>{
+   openChecklist();
+   const cards=[].slice.call(doc.querySelectorAll('#setupChecklistView .si-card'));
+   if(!cards.length) throw new Error('no cards');
+   cards.forEach(c=>{ if(!c.querySelector('.si-cog')) throw new Error('a person card is missing its cog'); });
+ });
+
+ check('clicking the cog opens a per-person editor modal', ()=>{
+   openChecklist();
+   const cog=doc.querySelector('#setupChecklistView .si-cog');
+   cog.dispatchEvent(new window.Event('click',{bubbles:true}));
+   const modal=doc.querySelector('.setup-review-modal.show');
+   if(!modal) throw new Error('no modal opened');
+   if(!modal.querySelector('.sp-groups')) throw new Error('modal should mount a setup editor (.sp-groups)');
+ });
+
+ check('editing via the cog grows the person bucket and leaves church defaults untouched', ()=>{
+   // A prior check leaves its modal open (it never clicks "Done"); clear it so the
+   // upcoming querySelector('.show') can't pick up that stale, earlier modal instead
+   // of the one this check opens.
+   [].slice.call(doc.querySelectorAll('.setup-review-modal.show')).forEach(m=>m.remove());
+   openChecklist();
+   const before=ev('JSON.stringify(state.config.setupDefaults||{})');
+   const key=ev(`stableSetupKey('Ben Rowe','band','keys')`);
+   const n0=ev(`(state.setupItems['${key}'].items||[]).length`);
+   const cards=[].slice.call(doc.querySelectorAll('#setupChecklistView .si-card'));
+   const benCard=cards.find(c=>/Ben Rowe/.test((c.querySelector('.si-card-name')||{}).textContent||''));
+   benCard.querySelector('.si-cog').dispatchEvent(new window.Event('click',{bubbles:true}));
+   const modal=doc.querySelector('.setup-review-modal.show');
+   const opt=[].slice.call(modal.querySelectorAll('.sp-opt input[type=checkbox]')).find(i=>!i.checked);
+   if(!opt) throw new Error('no checkbox option to toggle in the editor');
+   opt.checked=true; opt.dispatchEvent(new window.Event('change',{bubbles:true}));
+   const n1=ev(`(state.setupItems['${key}'].items||[]).length`);
+   if(!(n1>n0)) throw new Error('bucket items should grow after checking an option ('+n0+'→'+n1+')');
+   const after=ev('JSON.stringify(state.config.setupDefaults||{})');
+   if(after!==before) throw new Error('church setupDefaults must be untouched');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
