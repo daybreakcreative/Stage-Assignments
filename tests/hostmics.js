@@ -120,6 +120,51 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(ev('("hh3IsBaptismal" in state) || Object.keys(state.hosts).some(k=>/baptis/i.test(k))')) throw new Error('no baptism flag allowed on state');
  });
 
+ check('classify: Daybreak host positions map to the right kind', ()=>{
+   const c = n => JSON.parse(ev(`JSON.stringify(classifyPosition(${JSON.stringify(n)}))`));
+   if(c('Announcement Video Host').kind!=='ignore') throw new Error('Announcement Video Host should be ignore');
+   if(c('Pre Service Communion').kind!=='ignore') throw new Error('Pre Service Communion should be ignore');
+   if(c('Pre Service Prayer').kind!=='ignore') throw new Error('Pre Service Prayer should be ignore');
+   const sp=c('Speaker'); if(sp.kind!=='host'||sp.host!=='speaker') throw new Error('Speaker should be host/speaker: '+JSON.stringify(sp));
+   const wh=c('Welcome Host'); if(wh.kind!=='host'||wh.host!=='welcome') throw new Error('Welcome Host should be host/welcome: '+JSON.stringify(wh));
+   const pb=c('Pastor Baptizing'); if(pb.kind!=='host'||pb.host!=='baptismal') throw new Error('Pastor Baptizing should be host/baptismal: '+JSON.stringify(pb));
+ });
+
+ check('pco: speaker → the "Pastor"-labelled channel; live hosts → HH; baptism → last HH', ()=>{
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev('state.config.hostChannels=[{id:"h1",label:"Pastor",capsule:""},{id:"h2",label:"HH 1",capsule:""},{id:"h3",label:"HH 2",capsule:""},{id:"h4",label:"HH 3",capsule:""}]; state.hosts={};');
+   const roster=JSON.stringify({data:[
+     {id:'t1',attributes:{name:'Jeff Speaker',team_position_name:'Speaker',status:'C'}},
+     {id:'t2',attributes:{name:'Logan Kelley',team_position_name:'Welcome Host',status:'C'}},
+     {id:'t3',attributes:{name:'Second Host',team_position_name:'Welcome Host',status:'C'}},
+     {id:'t4',attributes:{name:'Jeff Myers',team_position_name:'Pastor Baptizing',status:'C'}}
+   ]});
+   ev(`applyPCOPlanData({attributes:{}}, ${roster}, {data:[],included:[]})`);
+   if(ev('state.hosts.h1')!=='Jeff Speaker') throw new Error('speaker should be on the Pastor channel h1, got '+ev('state.hosts.h1'));
+   if(ev('state.hosts.h2')!=='Logan Kelley') throw new Error('first live host should be HH 1 (h2), got '+ev('state.hosts.h2'));
+   if(ev('state.hosts.h3')!=='Second Host') throw new Error('second live host should be HH 2 (h3), got '+ev('state.hosts.h3'));
+   if(ev('state.hosts.h4')!=='Jeff Myers') throw new Error('baptizing pastor should be on the last HH (h4), got '+ev('state.hosts.h4'));
+ });
+
+ check('pco: speaker lands on the Pastor channel even when it is NOT first', ()=>{
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev('state.config.hostChannels=[{id:"h1",label:"HH 1",capsule:""},{id:"h2",label:"Pastor",capsule:""},{id:"h3",label:"HH 2",capsule:""}]; state.hosts={};');
+   const roster=JSON.stringify({data:[
+     {id:'t1',attributes:{name:'Rev Green',team_position_name:'Speaker',status:'C'}},
+     {id:'t2',attributes:{name:'Host One',team_position_name:'Welcome Host',status:'C'}}
+   ]});
+   ev(`applyPCOPlanData({attributes:{}}, ${roster}, {data:[],included:[]})`);
+   if(ev('state.hosts.h2')!=='Rev Green') throw new Error('speaker should be on the Pastor channel h2, got '+ev('state.hosts.h2'));
+   if(ev('state.hosts.h1')!=='Host One') throw new Error('live host should fill the first non-pastor channel h1, got '+ev('state.hosts.h1'));
+ });
+
+ check('pcoAddHost: a speaker add lands on the "Pastor"-labelled channel when free', ()=>{
+   ev('state.config.hostChannels=[{id:"h1",label:"HH 1",capsule:""},{id:"h2",label:"Pastor",capsule:""},{id:"h3",label:"HH 2",capsule:""}]; state.hosts={};');
+   ev(`pcoAddHost({name:'Rev Green', host:'speaker'})`);
+   if(ev('state.hosts.h2')!=='Rev Green') throw new Error('speaker add should target the Pastor channel h2, got '+ev('JSON.stringify(state.hosts)'));
+   if(ev('state.hosts.h1')) throw new Error('speaker should NOT land on h1 when a Pastor channel exists');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

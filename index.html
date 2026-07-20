@@ -8196,18 +8196,28 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   // configured channel count are dropped. Labels/count are user config; ordering is the mapping.
   {
     const chs = hostChannels();
-    const baptismCh = baptismalName
-      ? (chs.find(ch => (ch.label || '').replace(/\s+/g, '').toLowerCase() === 'hh3') || chs[2] || null)
-      : null;
-    const queue = [];
-    if (speakerName) queue.push(speakerName);
-    welcomeNames.forEach(n => queue.push(n));
-    if (baptismalName && !baptismCh) queue.push(baptismalName);  // no HH 3 to reserve → next open channel
+    const norm = s => (s || '').replace(/\s+/g, '').toLowerCase();
+    // Pastor/speaker → a channel labelled "Pastor" (else the first channel).
+    const pastorCh = speakerName ? (chs.find(ch => norm(ch.label).includes('pastor')) || chs[0] || null) : null;
+    // Baptizing pastor → a channel labelled "HH 3" (else the LAST channel, never the pastor channel).
+    let baptismCh = null;
+    if (baptismalName) {
+      baptismCh = chs.find(ch => norm(ch.label) === 'hh3')
+        || [...chs].reverse().find(ch => !pastorCh || ch.id !== pastorCh.id)
+        || null;
+      if (pastorCh && baptismCh && baptismCh.id === pastorCh.id) baptismCh = null; // collision guard
+    }
     state.hosts = {};
-    if (baptismCh) state.hosts[baptismCh.id] = baptismalName;
+    if (pastorCh && speakerName) state.hosts[pastorCh.id] = speakerName;
+    if (baptismCh && baptismalName) state.hosts[baptismCh.id] = baptismalName;
+    // Live/welcome hosts fill the remaining channels in order; then any un-placed speaker/baptismal.
+    const taken = new Set([pastorCh && pastorCh.id, baptismCh && baptismCh.id].filter(Boolean));
+    const queue = welcomeNames.slice();
+    if (speakerName && !pastorCh) queue.push(speakerName);
+    if (baptismalName && !baptismCh) queue.push(baptismalName);
     let qi = 0;
     chs.forEach(ch => {
-      if (baptismCh && ch.id === baptismCh.id) return;           // reserved for the baptizing pastor
+      if (taken.has(ch.id)) return;
       if (qi < queue.length) state.hosts[ch.id] = queue[qi++];
     });
   }
@@ -8576,9 +8586,13 @@ function pcoAddBand(p) {
 
 function pcoAddHost(p) {
   const channels = hostChannels();
+  const norm = s => (s || '').replace(/\s+/g, '').toLowerCase();
   const isFree = id => !((state.hosts[id] || '').trim());
-  // Speaker/pastor prefers channel 0; otherwise (and as fallback) take the first free channel.
-  if (p.host === 'speaker' && channels[0] && isFree(channels[0].id)) { state.hosts[channels[0].id] = p.name; return; }
+  // Speaker/pastor prefers the channel labelled "Pastor" (else channel 0); otherwise first free.
+  if (p.host === 'speaker') {
+    const pastorCh = channels.find(ch => norm(ch.label).includes('pastor')) || channels[0];
+    if (pastorCh && isFree(pastorCh.id)) { state.hosts[pastorCh.id] = p.name; return; }
+  }
   const free = channels.find(ch => isFree(ch.id));
   if (free) state.hosts[free.id] = p.name;
 }

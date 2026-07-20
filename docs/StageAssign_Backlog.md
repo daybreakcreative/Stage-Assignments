@@ -31,9 +31,9 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   the only remaining dropdown.
 
 **Bigger features (each its own brainstorm):**
-- **[FEATURE] Fix PCO host/pastor assignment.** PCO position "pastor"/"speaker" → the **Pastor**
-  mic; scheduled **live** hosts (NOT video-hosting/video-component roles) → **HH1/HH2/HH3**.
-  (`classifyPosition` + host-channel assignment need work.)
+- ~~**[FEATURE] Fix PCO host/pastor assignment.**~~ ✅ SHIPPED 2026-07-20 → `hostmics`. Speaker/
+  pastor → the "Pastor"-labelled channel; live hosts → HH channels; baptizing pastor → last HH;
+  video/communion/prayer positions ignored. Default channels stay relabelable HH 1–HH 4.
 - **[FEATURE] Cog on each person's ✓ Items card** to edit *their* default setup items inline.
 - **[FEATURE] Bug submission → KHARIS, not GitHub.** Repoint `sendBugReport()` transport at KHARIS.
   (Long-standing queued item.)
