@@ -79,22 +79,28 @@ Four display-view relabels/fixes plus a placement heuristic, from Dillon's punch
   (`[data-look="aurora"][data-theme="dark"] .dv-list-item .detail`); the preview pane can't confirm
   it. Light mode already suppresses the glow (`~1352`), so this is visual-only there.
 
-### D. Auto-link all instruments on PCO pull (`distributeBucket`, `~index.html:8117-8182`)
+### D. Auto-link all instruments on PCO pull (`autoLinkBandToVocalists`, `~index.html:3708`)
 
-- The vocalist-link check is currently gated to `positionShort === 'ag'` in two places:
-  the existing-slot loop (`~8141-8144`) and the auto-create loop (`~8169-8172`).
-- **Ungate to all positions** and match on **`normFullName`** (not the looser `normName`):
+- **Seam:** the dedicated `autoLinkBandToVocalists()` already runs once, right after distribution +
+  vocal ordering (`~index.html:8305`), and today is a maintenance no-op (drops links to deleted
+  vocalists). This is a cleaner home for the rule than ungating `distributeBucket` in two places, so
+  the full-name auto-link is centralized here. `distributeBucket`'s AG-only link (`~8141`, `~8169`)
+  is left untouched (redundant with this, harmless — an already-linked AG is skipped below).
+- Extend `autoLinkBandToVocalists()`: after the stale-link cleanup, for each instrument with a typed
+  `assignedTo` and no `vocalistPlayer`, link it to a vocalist matching on **`normFullName`**:
   ```js
-  const v = state.vocalists.find(x => normFullName(x.name) === normFullName(name));
-  if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; continue; }   // existing-slot loop
+  state.instruments.forEach(inst => {
+    if (inst.vocalistPlayer) return;
+    const nm = (inst.assignedTo || '').trim();
+    if (!nm) return;
+    const v = state.vocalists.find(x => normFullName(x.name) === normFullName(nm));
+    if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; changed = true; }
+  });
   ```
-  and the analogous `newInst.vocalistPlayer = v.id` in the auto-create loop.
 - `normFullName` honors the CLAUDE.md rule: two different people who share only a first name do
   **not** link; a link requires the same full name on both a vocal spot and an instrument in the
-  pulled plan (= the same scheduled person).
-- The AG-specific first pass (`acousticPlayers`, `~8023-8032`) and the vocalist-creation AG link
-  (`~8072-8075`) become redundant but are left in place (harmless; distribution re-links AG the
-  same way). No behavior change for AG beyond the `normName`→`normFullName` tightening.
+  pulled plan (= the same scheduled person). CLAUDE.md's "NO name-based auto-linking" invariant is
+  reversed to "full-name auto-linking only" and must be updated (see task 6).
 
 ### E. Front-line auto-placement — new `placeLinkedInstrumentalists()`
 
