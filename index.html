@@ -1030,6 +1030,9 @@ body.setup-items-mode .container{display:none}
   background:conic-gradient(var(--accent) calc(var(--pct,0)*1%),var(--bg-inset) 0)}
 .si-ring .si-person-count{background:var(--surface);border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--text-muted);padding:0}
 .si-ring .si-person-count.green{color:#7ba968}.si-ring .si-person-count.red{color:#c8554d}
+.si-cog{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;flex:none;opacity:.6}
+.si-cog:hover{color:var(--accent);opacity:1}
+.si-cog-section-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:4px 0 2px}
 .si-chips{display:flex;flex-wrap:wrap;gap:6px}
 .si-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text);background:var(--bg-inset);border:1px solid var(--border);border-radius:20px;padding:3px 9px;cursor:pointer;user-select:none;transition:all .12s}
 .si-chip:hover{border-color:var(--accent)}
@@ -7338,6 +7341,60 @@ function renderSetupManager() {
   appendSetupItemsChecklistToggle(el);
 }
 
+// Per-person setup editor launched from the ✓ Items card cog. Shows one editor section per role
+// bucket (Vocals / an instrument / MD). Edits the person's OWN buckets (renderPersonSetupEditor
+// saves live); never touches church setupDefaults. Closes back to the checklist so it resyncs.
+function openChecklistPersonEditor(person) {
+  if (!person || !Array.isArray(person.buckets) || !person.buckets.length) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'setup-review-modal show';
+  const sheet = document.createElement('div');
+  sheet.className = 'setup-review-sheet';
+  overlay.appendChild(sheet);
+  const close = () => {
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    renderSetupChecklist();
+    if (typeof updateSetupProgressBadge === 'function') updateSetupProgressBadge();
+  };
+  const head = document.createElement('div');
+  head.className = 'setup-review-head';
+  const title = document.createElement('div');
+  title.className = 'setup-review-title';
+  title.textContent = person.name || 'Setup items';
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'setup-review-x'; x.setAttribute('aria-label', 'Close'); x.textContent = '✕';
+  x.addEventListener('click', close);
+  head.appendChild(title); head.appendChild(x); sheet.appendChild(head);
+  const sub = document.createElement('p');
+  sub.className = 'setup-review-sub';
+  sub.textContent = 'Edit this person’s setup items. Changes save automatically.';
+  sheet.appendChild(sub);
+  const body = document.createElement('div');
+  body.className = 'setup-review-body';
+  body.style.overflow = 'auto'; body.style.flex = '1'; body.style.minHeight = '0';
+  person.buckets.forEach(b => {
+    if (person.buckets.length > 1) {
+      const h = document.createElement('div');
+      h.className = 'si-cog-section-label';
+      h.textContent = b.label;
+      body.appendChild(h);
+    }
+    const sec = document.createElement('div');
+    body.appendChild(sec);
+    renderPersonSetupEditor(sec, b.stableKey, b.typeKey);
+  });
+  sheet.appendChild(body);
+  const actions = document.createElement('div');
+  actions.className = 'setup-review-actions';
+  const done = document.createElement('button');
+  done.type = 'button'; done.className = 'btn primary'; done.textContent = 'Done';
+  done.addEventListener('click', close);
+  actions.appendChild(done); sheet.appendChild(actions);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
 // Open one person's full setup question flow (the same grouped questions + custom
 // add/remove a new team member gets) in a modal. renderPersonSetupEditor saves on
 // every change; closing re-renders the manager + checklist so counts stay in sync.
@@ -10772,9 +10829,15 @@ function collectChecklistItems() {
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
     const nn = normFullName(en.name);
     let p = byPerson.get(nn);
-    if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set() }; byPerson.set(nn, p); order.push(nn); }
+    if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set(), buckets: [] }; byPerson.set(nn, p); order.push(nn); }
     if (en.role === 'vocalist') p.isVoc = true;
     if (en.label && p.roles.indexOf(en.label) === -1) p.roles.push(en.label);
+    {
+      const bLabel = en.label || (en.role === 'vocalist' ? 'Vocals' : (en.role === 'md' ? 'MD' : (en.typeKey || 'Setup')));
+      if (!p.buckets.some(b => b.stableKey === en.stableKey)) {
+        p.buckets.push({ stableKey: en.stableKey, typeKey: en.typeKey, label: bLabel });
+      }
+    }
     items.forEach(it => {
       const text = (it.text || '').trim();
       if (!text) return;
@@ -10817,7 +10880,7 @@ function collectChecklistItems() {
     }
     const flatBucket = p.isVoc ? vocItems : bandItems;
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
-    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText });
+    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText, buckets: p.buckets });
   });
   if (vocItems.length > 0) {
     sections.push({ title: 'VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
@@ -10960,6 +11023,7 @@ function renderSetupChecklist() {
   const titleText = (state.service && state.service.name ? state.service.name : 'Service') + (dateStr ? ' · ' + dateStr : '');
 
   let sectionsHtml = '';
+  const cogPeople = [];
   if (sections.length === 0) {
     sectionsHtml = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">No setup items configured yet.<br>Add per-person setup items in <strong>Settings → Setup Items</strong>.<br><button class="scv-btn primary" id="scvAddSetupBtn" style="margin-top:18px;">+ Set up items</button></div>';
   } else {
@@ -10978,6 +11042,9 @@ function renderSetupChecklist() {
       let bodyHtml;
       if (groups) {
         bodyHtml = '<div class="si-grid">' + groups.map(p => {
+          const hasBuckets = Array.isArray(p.buckets) && p.buckets.length > 0;
+          const cogIdx = cogPeople.length;
+          if (hasBuckets) cogPeople.push(p);
           const pTotal = p.items.length;
           const pDone = p.items.filter(it => !!cs[it.key]).length;
           const pct = pTotal > 0 ? Math.round((pDone / pTotal) * 100) : 0;
@@ -10995,6 +11062,7 @@ function renderSetupChecklist() {
                 ${p.roleLabel ? `<span class="si-card-role">${esc(p.roleLabel)}</span>` : ''}
               </div>
               ${pTotal > 0 ? `<span class="si-ring" style="--pct:${pct}"><span class="si-person-count">${pDone}/${pTotal}</span></span>` : ''}
+              ${hasBuckets ? `<button class="si-cog" data-cog-idx="${cogIdx}" title="Edit setup items" aria-label="Edit setup items">⚙</button>` : ''}
             </div>
             <div class="si-chips">${chipsHtml}</div>
             ${p.iem ? `<div class="si-iem-note"><span class="k">IEM</span> ${esc(p.iem)}</div>` : ''}
@@ -11025,6 +11093,15 @@ function renderSetupChecklist() {
       <button class="scv-btn scv-display${total > 0 && done === total ? ' ready' : ''}" id="scvDisplayBtn">▶ Display</button>
     </div>
   `;
+
+  // Per-person cog → opens the buckets-based editor for that person.
+  container.querySelectorAll('.si-cog').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation(); e.preventDefault();
+      const p = cogPeople[+btn.dataset.cogIdx];
+      if (p) openChecklistPersonEditor(p);
+    });
+  });
 
   // Wire checkbox clicks. Update IN PLACE (toggle the row + recompute counts/progress) rather
   // than re-rendering the whole view — a full innerHTML rebuild reset the scroll position to the
