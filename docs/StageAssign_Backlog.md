@@ -34,7 +34,9 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**[FEATURE] Fix PCO host/pastor assignment.**~~ ✅ SHIPPED 2026-07-20 → `hostmics`. Speaker/
   pastor → the "Pastor"-labelled channel; live hosts → HH channels; baptizing pastor → last HH;
   video/communion/prayer positions ignored. Default channels stay relabelable HH 1–HH 4.
-- **[FEATURE] Cog on each person's ✓ Items card** to edit *their* default setup items inline.
+- ~~**[FEATURE] Cog on each person's ✓ Items card**~~ ✅ SHIPPED 2026-07-20 → `scvcog`. A ⚙ on each
+  ✓ Items card opens that person's setup editor inline (a section per role); edits their bucket
+  only. Church defaults stay in the Advanced Settings editor.
 - **[FEATURE] Bug submission → KHARIS, not GitHub.** Repoint `sendBugReport()` transport at KHARIS.
   (Long-standing queued item.)
 

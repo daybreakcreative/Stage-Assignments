@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–40):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–41):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
 > recent items (23–33) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–40, detailed)
+## Recently shipped — must not regress (items 23–41, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -124,6 +124,11 @@ Behaviors that must keep working. **The executable version of this list is `test
     Positions with "video"/"communion"/"pre service prayer" stay ignored. Same pastor-target in
     `pcoAddHost`. Default channels remain the relabelable HH 1–HH 4. (`applyPCOPlanData`,
     `pcoAddHost`; `tests/hostmics.js`.)
+41. **✓ Items per-person cog.** Each person card in the ✓ Items view has a ⚙ that opens an inline
+    editor for THAT person's setup items — one section per role for a multi-role person
+    (`openChecklistPersonEditor` → `renderPersonSetupEditor`). Edits the person's bucket only (church
+    `setupDefaults` untouched); the cog click never toggles a check-off chip; stage-fixture cards
+    have no cog. (`collectChecklistItems` buckets, `renderSetupChecklist`; `tests/scvcog.js`.)
 
 ---
 
