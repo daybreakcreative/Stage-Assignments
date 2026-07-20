@@ -92,19 +92,18 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    stubPco();
    ev('openBulkPreadd();');
    await ev('fetchPcoRegulars()');
-   const names=JSON.parse(ev(`JSON.stringify(bulkPreaddRows.map(r=>r.name).sort())`));
-   if(JSON.stringify(names)!==JSON.stringify(['Ava Chen','Dana Lee','Jo Vane','Pat Reed','Pat Reed','Sam Fox'])) throw new Error('rows wrong: '+JSON.stringify(names));
-   if(ev(`bulkPreaddRows.some(r=>r.name==='TooOld')`)) throw new Error('old plan should not be scanned');
-   if(ev(`bulkPreaddRows.some(r=>r.name==='Declined Person')`)) throw new Error('declined member should be skipped');
+   const names=JSON.parse(ev(`JSON.stringify(bulkPeople.map(x=>x.name).sort())`));
+   if(JSON.stringify(names)!==JSON.stringify(['Ava Chen','Dana Lee','Jo Vane','Pat Reed','Sam Fox'])) throw new Error('rows wrong: '+JSON.stringify(names));
+   if(ev(`bulkPeople.some(x=>x.name==='TooOld')`)) throw new Error('old plan should not be scanned');
+   if(ev(`bulkPeople.some(x=>x.name==='Declined Person')`)) throw new Error('declined member should be skipped');
    if(!ev(`window.__calls.some(p=>/plans\\/p3\\/team_members/.test(p))`)===false) {/* p3 tm not fetched */}
    if(ev(`window.__calls.some(p=>/plans\\/p3\\/team_members/.test(p))`)) throw new Error('should not fetch team_members for the >6mo plan');
  });
 
  check('MD-only row: on/off-stage select shown; Save stores onStage on the |md marker', ()=>{
    ev(`state.setupItems={}; state.musicianPreferences={};`);
-   ev('openBulkPreadd(); addBulkRow({name:"Dana Lee",role:"md",onStage:true,open:true}); renderBulkPreadd();');
-   const row=[].find.call(doc.querySelectorAll('#bulkPreaddModal [data-bulk-row]'), r=>/Dana Lee/.test((r.querySelector('.bulk-name')||{}).value||''));
-   const stage=row.querySelector('.bulk-md-stage'); if(!stage) throw new Error('no on/off-stage select on md row');
+   ev(`openBulkPreadd(); var pid=addBulkPerson({name:'Dana Lee'}); addBulkRow({pid,name:'Dana Lee',role:'md',onStage:true,open:true}); renderBulkPreadd();`);
+   const stage=doc.querySelector('#bulkPreaddModal .bulk-pos .bulk-md-stage'); if(!stage) throw new Error('no on/off-stage select on md row');
    stage.value='off'; stage.dispatchEvent(new window.Event('change',{bubbles:true}));
    ev('commitBulkPreadd();');
    const marker=JSON.parse(ev(`JSON.stringify(state.musicianPreferences['dana lee|md']||null)`));
@@ -115,12 +114,12 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
  await checkA('people-search: typing yields a PCO dropdown; selecting sets the canonical name', async ()=>{
    ev(`pcoTokens={access_token:'x',expires_at:Date.now()+1e6};`);
    ev(`window.pcoFetch=function(path){ if(/people/.test(path)) return Promise.resolve({data:[{id:'ppl1',attributes:{name:'Avaline Chen'}},{id:'ppl2',attributes:{name:'Ava Reed'}}]}); return Promise.resolve({data:[]}); };`);
-   ev('openBulkPreadd(); addBulkRow({name:"",role:"band",typeKey:"keys",open:false}); renderBulkPreadd();');
-   await ev(`bulkPeopleSearch(bulkPreaddRows[0],'Ava')`);
+   ev('openBulkPreadd(); var pid=addBulkPerson(); renderBulkPreadd();');
+   await ev(`bulkPeopleSearch(bulkPeople[0],'Ava')`);
    const results=doc.querySelectorAll('#bulkPreaddModal .bulk-name-result');
    if(results.length!==2) throw new Error('expected 2 people results, got '+results.length);
    results[0].dispatchEvent(new window.Event('click',{bubbles:true}));
-   if(ev('bulkPreaddRows[0].name')!=='Avaline Chen') throw new Error('select did not set canonical name: '+ev('bulkPreaddRows[0].name'));
+   if(ev('bulkPeople[0].name')!=='Avaline Chen') throw new Error('select did not set canonical name: '+ev('bulkPeople[0].name'));
  });
 
  check('regulars button is disabled without PCO connected', ()=>{

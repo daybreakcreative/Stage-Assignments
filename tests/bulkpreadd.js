@@ -24,14 +24,23 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!doc.getElementById('bulkSave')) throw new Error('no save control');
  });
 
- check('Add person appends an empty row with a role select (Vocalist + instruments)', ()=>{
+ check('Add person appends a person CARD (no role dropdown)', ()=>{
    ev('openBulkPreadd();');
-   doc.getElementById('bulkAddRow').dispatchEvent(new window.Event('click',{bubbles:true}));
-   const rows=doc.querySelectorAll('#bulkPreaddModal [data-bulk-row]');
-   if(rows.length!==1) throw new Error('expected 1 row, got '+rows.length);
-   const opts=[].map.call(rows[0].querySelectorAll('.bulk-role option'), o=>o.value);
-   if(opts.indexOf('vocalist')===-1) throw new Error('role select missing vocalist');
-   ['drums','bass','keys','eg','ag'].forEach(k=>{ if(opts.indexOf(k)===-1) throw new Error('role select missing '+k); });
+   ev('addBulkPerson(); renderBulkPreadd();');
+   const cards=doc.querySelectorAll('#bulkPreaddModal .bulk-person');
+   if(cards.length!==1) throw new Error('expected 1 person card, got '+cards.length);
+   if(doc.querySelector('#bulkPreaddModal .bulk-role')) throw new Error('the per-row role dropdown should be gone');
+   if(!cards[0].querySelector('.bulk-addpos-select')) throw new Error('card should have a "+ add position" picker');
+ });
+
+ check('add a position via the card picker appends a read-only .bulk-pos chip', ()=>{
+   ev('openBulkPreadd();');
+   ev(`var pid=addBulkPerson({name:'Jo Vane'}); addBulkRow({pid,name:'Jo Vane',role:'band',typeKey:'bass',open:true}); renderBulkPreadd();`);
+   const card=doc.querySelector('#bulkPreaddModal .bulk-person');
+   const chips=card.querySelectorAll('.bulk-pos');
+   if(chips.length!==1) throw new Error('expected 1 position chip, got '+chips.length);
+   const label=chips[0].querySelector('.bulk-pos-label').textContent;
+   if(!/Bass/i.test(label)) throw new Error('chip label should read Bass, got: '+label);
  });
 
  check('Add everyone on the current plan seeds rows from roster (MD becomes its own row)', ()=>{
@@ -39,30 +48,31 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments=[{id:'ik',label:'Keys',assignedTo:'Pat'},{id:'ib',label:'Bass',assignedTo:'Sam'}]; state.musicDirectorId='ik';`);
    ev('openBulkPreadd(); document.getElementById("bulkSeedRoster").dispatchEvent(new Event("click",{bubbles:true}));');
    const names=[].map.call(doc.querySelectorAll('#bulkPreaddModal .bulk-name'), n=>n.value).sort();
-   if(JSON.stringify(names)!==JSON.stringify(['Ava','Pat','Pat','Sam'])) throw new Error('roster seed wrong: '+JSON.stringify(names));
+   if(JSON.stringify(names)!==JSON.stringify(['Ava','Pat','Sam'])) throw new Error('roster seed wrong: '+JSON.stringify(names));
    if(!ev(`bulkPreaddRows.some(r=>r.role==='md' && normFullName(r.name)===normFullName('Pat'))`)) throw new Error('MD person should get a standalone md row');
+   if(!ev(`bulkPreaddRows.some(r=>r.role==='band' && r.typeKey==='keys' && normFullName(r.name)===normFullName('Pat'))`)) throw new Error('Pat should still have a band/keys row too (same card, two chips)');
    if(ev('bulkPreaddRows.some(r=>r.isMD)')) throw new Error('no row should carry isMD anymore');
  });
 
- check('expanding a band row mounts a setup editor that writes the stable bucket', ()=>{
+ check('expanding a band position mounts a setup editor that writes the stable bucket', ()=>{
    ev(`state.setupItems={};`);
-   ev('openBulkPreadd(); addBulkRow({name:"Jo",role:"band",typeKey:"bass"}); renderBulkPreadd();');
-   rowFor(/Jo/).querySelector('[data-bulk-expand]').dispatchEvent(new window.Event('click',{bubbles:true}));
-   const jo=rowFor(/Jo/); // re-query: expand re-renders the list
-   const ed=jo.querySelector('.bulk-editor'); if(!ed||!ed.children.length) throw new Error('no editor mounted');
-   const cb=jo.querySelector('.bulk-editor input'); if(!cb) throw new Error('no option in the band editor');
+   ev(`openBulkPreadd(); var pid=addBulkPerson({name:'Jo'}); addBulkRow({pid,name:'Jo',role:'band',typeKey:'bass'}); renderBulkPreadd();`);
+   let card=doc.querySelector('#bulkPreaddModal .bulk-person');
+   card.querySelector('.bulk-pos [data-bulk-expand]').dispatchEvent(new window.Event('click',{bubbles:true}));
+   card=doc.querySelector('#bulkPreaddModal .bulk-person'); // re-query: expand re-renders the list
+   const ed=card.querySelector('.bulk-pos .bulk-editor'); if(!ed||!ed.children.length) throw new Error('no editor mounted');
+   const cb=card.querySelector('.bulk-pos .bulk-editor input'); if(!cb) throw new Error('no option in the band editor');
    cb.checked=true; cb.dispatchEvent(new window.Event('change',{bubbles:true}));
    const key=ev(`stableSetupKey('Jo','band','bass')`);
    const n=ev(`(state.setupItems[${JSON.stringify(key)}]&&state.setupItems[${JSON.stringify(key)}].items||[]).length`);
    if(!(n>0)) throw new Error('band setup not written to bucket');
  });
 
- check('vocalist row: mic select present; Save remembers the mic + marks known', ()=>{
+ check('vocalist position: mic select present; Save remembers the mic + marks known', ()=>{
    ev(`state.setupItems={}; state.musicianPreferences={}; state.inventory=[{name:'Beta 58A',wireless:false},{name:'QLX',wireless:true}];`);
-   ev('openBulkPreadd(); addBulkRow({name:"Mia",role:"vocalist"}); renderBulkPreadd();');
-   rowFor(/Mia/).querySelector('[data-bulk-expand]').dispatchEvent(new window.Event('click',{bubbles:true}));
-   const mia=rowFor(/Mia/); // re-query: expand re-renders the list
-   const mic=mia.querySelector('.bulk-mic'); if(!mic) throw new Error('no mic select for vocalist');
+   ev('openBulkPreadd();');
+   ev(`var pid=addBulkPerson({name:'Mia'}); addBulkRow({pid,name:'Mia',role:'vocalist',open:true}); renderBulkPreadd();`);
+   const mic=doc.querySelector('#bulkPreaddModal .bulk-pos .bulk-mic'); if(!mic) throw new Error('no mic select for vocalist');
    if(![].some.call(mic.options, o=>/Beta 58A/.test(o.textContent))) throw new Error('mic options not from inventory');
    mic.value='Beta 58A|wd'; mic.dispatchEvent(new window.Event('change',{bubbles:true}));
    ev('commitBulkPreadd();');
