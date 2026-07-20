@@ -144,6 +144,59 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(marks.some(m=>!/^VOCAL/i.test(m.role) && /BASS/i.test(m.role))) throw new Error('a linked bass should NOT get a band stage mark');
  });
 
+ check('top leader stays centered on the STAGE when a singing drummer shares the front line', ()=>{
+   // Regression for the compaction bug: excluding a linked drummer must NOT shift the leaders'
+   // centered positions. Keep full-count positions and leave the drummer's spot empty.
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev(`
+     state.vocalists=[
+       {id:'vd',name:'Dan Drum',leadsSongs:false,isWL:false,micAssigned:''},
+       {id:'vk',name:'Ken Keys',leadsSongs:false,isWL:false,micAssigned:''},
+       {id:'vl1',name:'Lee One',leadsSongs:true,isWL:true,micAssigned:''},
+       {id:'vl2',name:'Lyn Two',leadsSongs:true,isWL:false,micAssigned:''}
+     ];
+     state.serviceOrder=[{kind:'song',title:'A',leader:'Lee One',length:0},{kind:'song',title:'B',leader:'Lee One',length:0},{kind:'song',title:'C',leader:'Lyn Two',length:0}];
+     state.assignments=computePositions(state.vocalists);
+     state.instruments=[{id:'inst_drums',label:'Drums',pack:'Drum',assignedTo:'',vocalistPlayer:'vd'},
+                        {id:'inst_keys',label:'Keys',pack:'Keys',assignedTo:'',vocalistPlayer:'vk'}];
+     state.musicDirectorId='inst_keys';
+     placeLinkedInstrumentalists();
+   `);
+   ev('state.viewMode="display"; renderDisplayView(); state.viewMode="setup";');
+   const marks=[].slice.call(doc.querySelectorAll('#dvStagePeople .dv-sp')).map(el=>({
+     role:(el.querySelector('.dv-sp-role')||{}).textContent||'',
+     name:(el.querySelector('.dv-sp-name')||{}).textContent||'',
+     left:parseFloat(el.style.left)||0
+   }));
+   const vocalMarks=marks.filter(m=>/^VOCAL/i.test(m.role));
+   const lee=vocalMarks.find(m=>/Lee One/.test(m.name));
+   if(!lee) throw new Error('top leader not drawn');
+   if(Math.abs(lee.left-50) >= 25) throw new Error('top leader should stay near center, got left='+lee.left+'%');
+   const keys=vocalMarks.find(m=>/Ken Keys/.test(m.name));
+   if(!keys || keys.left <= 60) throw new Error('keys player should be near stage-right, got left='+(keys&&keys.left)+'%');
+   if(vocalMarks.some(m=>/Dan Drum/.test(m.name))) throw new Error('drummer must NOT have a front-line vocal mark');
+ });
+
+ check('print summary: a singing drummer shows at the kit, not a front-line mic (matches display)', ()=>{
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev(`
+     state.vocalists=[{id:'vd',name:'Dan Drum',leadsSongs:false,isWL:false,micAssigned:''},
+                      {id:'vs',name:'Sam Sing',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='vd'; state.assignments[1]='vs';
+     state.instruments=[{id:'inst_drums',label:'Drums',pack:'Drum',assignedTo:'',vocalistPlayer:'vd'}];
+     state.musicDirectorId='inst_keys';
+   `);
+   ev('fillSummaryStage();');
+   const marks=[].slice.call(doc.querySelectorAll('#s_stagePeople .dv-sp')).map(el=>({
+     role:(el.querySelector('.dv-sp-role')||{}).textContent||'',
+     name:(el.querySelector('.dv-sp-name')||{}).textContent||''
+   }));
+   const kit=marks.find(m=>/DRUMS/i.test(m.role) && /Dan Drum/.test(m.name));
+   if(!kit) throw new Error('summary should render the drum-kit mark for the singing drummer');
+   if(marks.some(m=>/VOCAL/i.test(m.role) && /Dan Drum/.test(m.name))) throw new Error('drummer should NOT be at a front-line vocal mic in the summary');
+   if(!marks.some(m=>/VOCAL/i.test(m.role) && /Sam Sing/.test(m.name))) throw new Error('non-drummer singer should show at a vocal position in the summary');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
