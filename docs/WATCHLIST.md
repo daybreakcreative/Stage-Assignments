@@ -101,6 +101,17 @@ Behaviors that must keep working. **The executable version of this list is `test
       grouped selections (which also rebuilds items from `selections`+`customItems`) must
       NOT wipe manually-added items. This was the confirmed data-loss bug the retirement
       fixes. → `setupretire`, `setupeditor`
+35. **Display band rows label roles on the POSITION cell.** An MD reads "BASS · MD | Name | Bass";
+    an instrumentalist who also sings reads "BASS · Vocal N | Name | <their vocal pack>" and also
+    keeps their vocalist card. (`renderDisplayView` #dvBandList loop; `tests/dvbatchb.js`.)
+36. **Full-name auto-link on PCO pull.** Same full name on a vocal spot + any instrument →
+    `inst.vocalistPlayer` linked (`autoLinkBandToVocalists`). Shared first name only → NOT linked.
+37. **Front-line placement of melodic instrumentalist-vocalists.** After vocal ordering, a
+    non-leader instrumentalist-vocalist moves to the vocal slot nearest their instrument's X;
+    song-leaders stay centered. Drums excepted (`placeLinkedInstrumentalists`).
+38. **Singing drummer stays at the kit.** The drum-kit stage mark renders (labelled with the
+    drummer) and the drummer gets NO front-line vocal mark; they still appear in the Band list as
+    "DRUMS · Vocal N" and keep their vocalist card.
 
 ---
 

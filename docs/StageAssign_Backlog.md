@@ -18,14 +18,12 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~Name-format preview cards use one sample name~~ — all four show "Marcus Donalson" formatted.
 - ~~Remove all decorative emoji~~ — stripped app-wide; functional glyphs kept.
 
-**Display view (batch B):**
-- **[FIX] Band IEM-pack column gradient is clipped** (cut off around the pack chip).
-- **[FEATURE] Instrumentalist who is also a vocalist** → show in the BAND section using their
-  **vocalist** IEM pack, labeled **"Instrument · Vocal N | Name | Pack"**.
-- **[FEATURE] Instrumentalist who is also MD** → label **"Instrument · MD | Name | Pack"** (today
-  it reads "Bass | Abraham Mata · MD | Bass").
-- **[FEATURE] Auto-link a vocalist who is also scheduled as an instrumentalist** (so they're one
-  person, not two entries) — ties into the two relabel items above.
+**Display view (batch B):** ✅ SHIPPED 2026-07-19 → `dvbatchb`
+- ~~Band IEM-pack column gradient clipped~~ — `.dv-list` interior padding (booth-verify the glow).
+- ~~Instrumentalist who is also a vocalist~~ — now shows in the Band section as
+  "Instr · Vocal N | Name | <vocal pack>"; also front-lined near their instrument (drums excepted).
+- ~~Instrumentalist who is also MD~~ — "Instr · MD | Name | Pack" (tag moved to the position cell).
+- ~~Auto-link a vocalist who is also an instrumentalist~~ — full-name auto-link, all instruments.
 
 **Bulk pre-add (batch C):**
 - **[FEATURE] Show each scheduled position under a person instead of a role dropdown** — from the
