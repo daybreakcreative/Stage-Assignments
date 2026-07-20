@@ -77,6 +77,35 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(eg.vocalistPlayer) throw new Error('must NOT link Jane Roe(EG) to Jane Doe(vocal)');
  });
 
+ check('placeLinkedInstrumentalists moves a non-leader keys player to the stage-right-nearest non-leader slot', ()=>{
+   ev(`
+     state.vocalists=[
+       {id:'vk',name:'Kay Board',leadsSongs:false,isWL:false,micAssigned:''},
+       {id:'vl1',name:'Lea One',leadsSongs:true,isWL:true,micAssigned:''},
+       {id:'vl2',name:'Lou Two',leadsSongs:true,isWL:false,micAssigned:''},
+       {id:'ve',name:'Ed Edge',leadsSongs:false,isWL:false,micAssigned:''}
+     ];
+     state.serviceOrder=[];
+     state.assignments=computePositions(state.vocalists);
+     state.instruments=[{id:'inst_keys',label:'Keys',pack:'Keys',assignedTo:'',vocalistPlayer:'vk'}];
+     state.musicDirectorId='inst_keys';
+   `);
+   ev('placeLinkedInstrumentalists();');
+   const after=JSON.parse(ev(`(function(){
+     var filled=state.assignments.filter(a=>a!==null);
+     var vp=getVoxPositions(filled.length);
+     var byId={}; var k=0;
+     for(var i=0;i<state.assignments.length;i++){ if(state.assignments[i]) byId[state.assignments[i]]=vp[k++].x; }
+     return JSON.stringify(byId);
+   })()`));
+   // keys player's slot X after placement must be >= the other non-leader's slot X (stage-right)
+   if(!(after['vk'] >= after['ve'])) throw new Error('keys player not moved stage-right: vk='+after['vk']+' ve='+after['ve']);
+   // a leader should not sit at the stage-right extreme (they stay centered)
+   const xs=Object.keys(after).map(k=>after[k]).sort((a,b)=>a-b);
+   const maxX=xs[xs.length-1];
+   if(after['vl1']===maxX && after['vk']!==maxX) throw new Error('leader vl1 should not sit at the stage-right extreme');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

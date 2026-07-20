@@ -3267,6 +3267,7 @@ function autoAssign() {
   // silently dropped; leader-centering still applies to the named vocalists.
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists(true);   // deliberate click — seed the "usual" mic (FIX #9)
+  placeLinkedInstrumentalists();  // Batch B: front-line melodic instrumentalist-vocalists
   saveState();
   renderAll();
   toast('Mics assigned ✓','success');
@@ -3722,6 +3723,60 @@ function autoLinkBandToVocalists() {
     if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; changed = true; }
   });
   return changed;
+}
+
+// After vocal ordering, move each linked instrumentalist-vocalist to the FRONT-LINE vocal slot
+// nearest where their instrument sits — WITHOUT displacing song-leaders (who stay centered). Drums
+// are excluded: a singing drummer stays at the kit (see renderDisplayView). Operates only on the
+// front-line singers (linked drummers are excluded from the ordered domain). Do NOT re-run
+// computePositions afterwards — it would re-center and undo this.
+function isLinkedDrummerVid(vid) {
+  return state.instruments.some(i => i.vocalistPlayer === vid && detectPresetKey(i) === 'drums');
+}
+function placeLinkedInstrumentalists() {
+  const leaderNames = new Set(getLeaderFrequencyOrder().map(n => normFullName(n)));
+  const isProtected = (vid) => {
+    const v = state.vocalists.find(x => x.id === vid);
+    if (!v) return false;
+    if (v.leadsSongs) return true;
+    if (v.isWL && (v.name || '').trim()) return true;
+    return leaderNames.has(normFullName(v.name));
+  };
+  // Front-line domain = filled slots that are NOT linked drummers, in slot order.
+  const frontIdx = [];
+  for (let i = 0; i < state.assignments.length; i++) {
+    const id = state.assignments[i];
+    if (id && !isLinkedDrummerVid(id)) frontIdx.push(i);
+  }
+  const ordered = frontIdx.map(i => state.assignments[i]); // ordered[k] ↔ voxPos[k]
+  const count = ordered.length;
+  if (count < 2) return;
+  const voxPos = getVoxPositions(count);
+  const bandPos = getBandStagePositions();
+  // Melodic (non-drums) linked instrumentalists whose vocalist is on the front line and unprotected.
+  const movers = state.instruments
+    .filter(inst => inst.vocalistPlayer && detectPresetKey(inst) !== 'drums')
+    .filter(inst => ordered.indexOf(inst.vocalistPlayer) !== -1 && !isProtected(inst.vocalistPlayer))
+    .map(inst => ({ vid: inst.vocalistPlayer, x: (bandPos[inst.id] || {}).x }))
+    .filter(m => typeof m.x === 'number')
+    .sort((a, b) => b.x - a.x); // stage-right instruments claim first
+  const claimed = new Set(); // ordered-position indices already taken
+  movers.forEach(m => {
+    let best = -1, bestD = Infinity;
+    for (let k = 0; k < count; k++) {
+      if (claimed.has(k)) continue;
+      if (isProtected(ordered[k])) continue;
+      const d = Math.abs(voxPos[k].x - m.x);
+      if (d < bestD) { bestD = d; best = k; }
+    }
+    if (best < 0) return;
+    const cur = ordered.indexOf(m.vid);
+    if (cur < 0) return;
+    if (cur !== best) { const t = ordered[best]; ordered[best] = ordered[cur]; ordered[cur] = t; }
+    claimed.add(best);
+  });
+  // Write the reordered front-line ids back into their slot indices (drummer slots untouched).
+  frontIdx.forEach((slotI, k) => { state.assignments[slotI] = ordered[k]; });
 }
 
 // Optional band slots that the user manually revealed this session via the "+ Add"
@@ -8311,6 +8366,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists();
   autoLinkBandToVocalists(); // catch any band positions that match a vocalist's name
+  placeLinkedInstrumentalists();  // Batch B: front-line melodic instrumentalist-vocalists
   saveState();
   // Record PCO's side of the truth so the next merge-refresh can diff against it.
   state.pcoBaseline = derivePcoModel(planData, tmRes, itemsRes);
