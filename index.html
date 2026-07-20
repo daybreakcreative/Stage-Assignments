@@ -3701,10 +3701,11 @@ function vocalistByName(name) {
   return null;
 }
 
-// Maintenance only: clear any vocalistPlayer link that points to a deleted vocalist.
-// We do NOT auto-link by name anymore — a band member and a vocalist who happen to share
-// a (first) name are treated as separate people unless the user explicitly links them
-// via the "★ link" / "also a vocalist" control.
+// Runs after a PCO pull's band distribution + vocal ordering. Two jobs:
+//   1) drop any vocalistPlayer link that points to a deleted vocalist;
+//   2) auto-link a band position to a vocalist when they are the SAME person, matched on FULL name
+//      (normFullName). Two people who share only a first name are NOT linked. This is the only
+//      name-based auto-link in the app; the "★ link" control still handles manual/edge cases.
 function autoLinkBandToVocalists() {
   let changed = false;
   state.instruments.forEach(inst => {
@@ -3712,6 +3713,13 @@ function autoLinkBandToVocalists() {
     if (inst.vocalistPlayer && !state.vocalists.some(v => v.id === inst.vocalistPlayer)) {
       inst.vocalistPlayer = null; changed = true;
     }
+  });
+  state.instruments.forEach(inst => {
+    if (inst.vocalistPlayer) return;
+    const nm = (inst.assignedTo || '').trim();
+    if (!nm) return;
+    const v = state.vocalists.find(x => normFullName(x.name) === normFullName(nm));
+    if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; changed = true; }
   });
   return changed;
 }

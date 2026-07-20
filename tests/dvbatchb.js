@@ -54,6 +54,29 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(detail!=='Vocal C') throw new Error('detail should be the VOCAL pack (Vocal C), got: '+detail);
  });
 
+ check('autoLinkBandToVocalists links a same-FULL-name instrument to its vocalist', ()=>{
+   ev(`
+     state.vocalists=[{id:'v9',name:'Jane Smith',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='v9';
+     state.instruments=[{id:'inst_bass',label:'Bass',pack:'Bass',assignedTo:'Jane Smith',vocalistPlayer:null}];
+   `);
+   ev('autoLinkBandToVocalists();');
+   const b=JSON.parse(ev(`JSON.stringify(state.instruments.find(i=>i.id==='inst_bass'))`));
+   if(b.vocalistPlayer!=='v9') throw new Error('bass should link to v9, got '+b.vocalistPlayer);
+   if((b.assignedTo||'')!=='') throw new Error('assignedTo should be cleared after linking');
+ });
+
+ check('shared FIRST name only does NOT auto-link', ()=>{
+   ev(`
+     state.vocalists=[{id:'v10',name:'Jane Doe',leadsSongs:false,isWL:false,micAssigned:''}];
+     state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='v10';
+     state.instruments=[{id:'inst_eg1',label:'Electric 1',pack:'EG',assignedTo:'Jane Roe',vocalistPlayer:null}];
+   `);
+   ev('autoLinkBandToVocalists();');
+   const eg=JSON.parse(ev(`JSON.stringify(state.instruments.find(i=>i.id==='inst_eg1'))`));
+   if(eg.vocalistPlayer) throw new Error('must NOT link Jane Roe(EG) to Jane Doe(vocal)');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
