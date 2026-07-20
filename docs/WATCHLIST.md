@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–33):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–38):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
 > recent items (23–33) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–33, detailed)
+## Recently shipped — must not regress (items 23–38, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -18,12 +18,14 @@ Behaviors that must keep working. **The executable version of this list is `test
 24. **PCO header button** is a single "Planning Center" button — red + tooltip
     "PCO: Not Connected" when disconnected, blue + "Planning Center — connected" when
     connected. The old separate "not connected" pill is gone.
-25. **No name-based auto-linking.** A guitarist and a vocalist who share a first name
-    stay separate. Linking only via the explicit "★ link / also a vocalist" control
-    (`inst.vocalistPlayer`). → `setuppresets`
-26. **Boom-mic auto-add** fires for a typed-name MD band person OR a vocalist who has
-    an instrument explicitly linked to them (lands on the vocalist's bucket) — never on
-    a name match. → `setuppresets`
+25. **Full-name auto-linking only** (updated 2026-07-19). On a PCO pull a band position
+    auto-links to a vocalist with the SAME full name (`autoLinkBandToVocalists`, matched by
+    `normFullName`); a guitarist and a vocalist who share only a *first* name still stay
+    separate. The explicit "★ link / also a vocalist" control also sets `inst.vocalistPlayer`.
+    → `setuppresets`, `dvbatchb`
+26. **Boom-mic auto-add** fires for a typed-name MD band person OR a vocalist who has an
+    instrument linked to them (lands on the vocalist's bucket) — via a full-name auto-link
+    or an explicit link, never on a shared first name alone. → `setuppresets`
 27. **Service-order rows reorder** with ▲▼ (disabled at the ends), swapping in state.
     → `summary`, `nav`
 28. **Lock Mic / No Mic buttons removed** from vocalist cards. Locking still lives in
@@ -101,6 +103,17 @@ Behaviors that must keep working. **The executable version of this list is `test
       grouped selections (which also rebuilds items from `selections`+`customItems`) must
       NOT wipe manually-added items. This was the confirmed data-loss bug the retirement
       fixes. → `setupretire`, `setupeditor`
+35. **Display band rows label roles on the POSITION cell.** An MD reads "BASS · MD | Name | Bass";
+    an instrumentalist who also sings reads "BASS · Vocal N | Name | <their vocal pack>" and also
+    keeps their vocalist card. (`renderDisplayView` #dvBandList loop; `tests/dvbatchb.js`.)
+36. **Full-name auto-link on PCO pull.** Same full name on a vocal spot + any instrument →
+    `inst.vocalistPlayer` linked (`autoLinkBandToVocalists`). Shared first name only → NOT linked.
+37. **Front-line placement of melodic instrumentalist-vocalists.** After vocal ordering, a
+    non-leader instrumentalist-vocalist moves to the vocal slot nearest their instrument's X;
+    song-leaders stay centered. Drums excepted (`placeLinkedInstrumentalists`).
+38. **Singing drummer stays at the kit.** The drum-kit stage mark renders (labelled with the
+    drummer) and the drummer gets NO front-line vocal mark; they still appear in the Band list as
+    "DRUMS · Vocal N" and keep their vocalist card.
 
 ---
 

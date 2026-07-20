@@ -1304,11 +1304,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 /* When the user has explicitly dragged the Band block, it gets a fixed height */
 #dvBandBlock.has-explicit-height{flex:0 0 var(--dv-band-h, auto);height:var(--dv-band-h)}
 #dvHostsBlock.has-explicit-height{flex:0 0 var(--dv-hosts-h, auto);height:var(--dv-hosts-h)}
-.dv-list{list-style:none;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.dv-list{list-style:none;display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding:6px 16px}
 .dv-list-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:baseline;font-family:var(--ff-display);font-size:14px;padding:2px 0}
 .dv-list-item .pos{font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;font-weight:500;text-transform:uppercase;min-width:54px}
 .dv-list-item .name{color:var(--text);font-weight:600}
-.dv-list-item .name.is-md::after{content:' · MD';color:var(--accent);font-family:var(--ff-mono);font-size:.7em;font-weight:600;letter-spacing:.1em}
+.dv-list-item .pos .pos-role{color:var(--accent);font-weight:600}
 .dv-list-item .detail{font-family:var(--ff-mono);font-size:12px;color:var(--text);font-weight:700;letter-spacing:.03em;white-space:nowrap}
 .dv-list-item.empty .name{color:var(--text-faint);font-style:italic;font-weight:400}
 .dv-list-item.empty .detail{color:var(--text-faint);font-style:italic}
@@ -3267,6 +3267,7 @@ function autoAssign() {
   // silently dropped; leader-centering still applies to the named vocalists.
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists(true);   // deliberate click — seed the "usual" mic (FIX #9)
+  placeLinkedInstrumentalists();  // Batch B: front-line melodic instrumentalist-vocalists
   saveState();
   renderAll();
   toast('Mics assigned ✓','success');
@@ -3701,10 +3702,11 @@ function vocalistByName(name) {
   return null;
 }
 
-// Maintenance only: clear any vocalistPlayer link that points to a deleted vocalist.
-// We do NOT auto-link by name anymore — a band member and a vocalist who happen to share
-// a (first) name are treated as separate people unless the user explicitly links them
-// via the "★ link" / "also a vocalist" control.
+// Runs after a PCO pull's band distribution + vocal ordering. Two jobs:
+//   1) drop any vocalistPlayer link that points to a deleted vocalist;
+//   2) auto-link a band position to a vocalist when they are the SAME person, matched on FULL name
+//      (normFullName). Two people who share only a first name are NOT linked. This is the only
+//      name-based auto-link in the app; the "★ link" control still handles manual/edge cases.
 function autoLinkBandToVocalists() {
   let changed = false;
   state.instruments.forEach(inst => {
@@ -3713,7 +3715,70 @@ function autoLinkBandToVocalists() {
       inst.vocalistPlayer = null; changed = true;
     }
   });
+  state.instruments.forEach(inst => {
+    if (inst.vocalistPlayer) return;
+    const nm = (inst.assignedTo || '').trim();
+    if (!nm) return;
+    const v = state.vocalists.find(x => normFullName(x.name) === normFullName(nm));
+    if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; changed = true; }
+  });
   return changed;
+}
+
+// After vocal ordering, move each linked instrumentalist-vocalist to the vocal slot nearest where
+// their instrument sits — WITHOUT displacing song-leaders (who stay centered). Drums are excluded:
+// a singing drummer stays at the kit (see renderDisplayView) and is never a mover or a swap target.
+// This operates on the FULL filled front line (getVoxPositions(fullCount)) so the leader-centering
+// computePositions produced is preserved exactly; the drummer keeps their slot (drawn at the kit,
+// their front-line spot simply left empty). Do NOT re-run computePositions afterwards — it would
+// re-center and undo this.
+function isLinkedDrummerVid(vid) {
+  return state.instruments.some(i => i.vocalistPlayer === vid && detectPresetKey(i) === 'drums');
+}
+function placeLinkedInstrumentalists() {
+  const leaderNames = new Set(getLeaderFrequencyOrder().map(n => normFullName(n)));
+  const isProtected = (vid) => {
+    const v = state.vocalists.find(x => x.id === vid);
+    if (!v) return false;
+    if (v.leadsSongs) return true;
+    if (v.isWL && (v.name || '').trim()) return true;
+    return leaderNames.has(normFullName(v.name));
+  };
+  // Full filled front line, in slot order — voxPos index k ↔ ids[k]. Keeping the FULL count means
+  // every non-mover (leaders especially) stays exactly where computePositions centered them.
+  const filledIdx = [];
+  for (let i = 0; i < state.assignments.length; i++) {
+    if (state.assignments[i]) filledIdx.push(i);
+  }
+  const ids = filledIdx.map(i => state.assignments[i]);
+  const count = ids.length;
+  if (count < 2) return;
+  const voxPos = getVoxPositions(count);
+  const bandPos = getBandStagePositions();
+  // Melodic (non-drums) linked instrumentalists whose vocalist is filled and unprotected.
+  const movers = state.instruments
+    .filter(inst => inst.vocalistPlayer && detectPresetKey(inst) !== 'drums')
+    .filter(inst => ids.indexOf(inst.vocalistPlayer) !== -1 && !isProtected(inst.vocalistPlayer))
+    .map(inst => ({ vid: inst.vocalistPlayer, x: (bandPos[inst.id] || {}).x }))
+    .filter(m => typeof m.x === 'number')
+    .sort((a, b) => b.x - a.x); // stage-right instruments claim first
+  const claimed = new Set(); // position indices already taken
+  movers.forEach(m => {
+    let best = -1, bestD = Infinity;
+    for (let k = 0; k < count; k++) {
+      if (claimed.has(k)) continue;
+      const occ = ids[k];
+      if (isProtected(occ) || isLinkedDrummerVid(occ)) continue; // never displace a leader or a kit drummer
+      const d = Math.abs(voxPos[k].x - m.x);
+      if (d < bestD) { bestD = d; best = k; }
+    }
+    if (best < 0) return;
+    const cur = ids.indexOf(m.vid);
+    if (cur < 0) return;
+    if (cur !== best) { const t = ids[best]; ids[best] = ids[cur]; ids[cur] = t; }
+    claimed.add(best);
+  });
+  filledIdx.forEach((slotI, k) => { state.assignments[slotI] = ids[k]; });
 }
 
 // Optional band slots that the user manually revealed this session via the "+ Add"
@@ -8303,6 +8368,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.assignments = computePositions(state.vocalists);
   assignMicsToVocalists();
   autoLinkBandToVocalists(); // catch any band positions that match a vocalist's name
+  placeLinkedInstrumentalists();  // Batch B: front-line melodic instrumentalist-vocalists
   saveState();
   // Record PCO's side of the truth so the next merge-refresh can diff against it.
   state.pcoBaseline = derivePcoModel(planData, tmRes, itemsRes);
@@ -9035,24 +9101,37 @@ function fillSummaryStage() {
   // Collect band + vocal markers, resolve label collisions, then position (matches the display).
   const bandPositions = getBandStagePositions();
   const sMarks = [];
-  // Band (skip vocalist-played positions and empty slots — same rule as the display)
+  // Band (skip vocalist-played positions and empty slots — same rule as the display). A singing
+  // drummer is the exception: their kit mark stays (labelled with the drummer); melodic linked
+  // instruments are skipped (the player shows at their vocal position).
   state.instruments.forEach(inst => {
-    if (inst.vocalistPlayer) return;
-    const name = (inst.assignedTo || '').trim();
+    const linkedVoc = inst.vocalistPlayer
+      ? state.vocalists.find(v => v.id === inst.vocalistPlayer)
+      : null;
+    const isDrums = detectPresetKey(inst) === 'drums';
+    let name;
+    if (inst.vocalistPlayer) {
+      if (!(isDrums && linkedVoc)) return;
+      name = (linkedVoc.name || '').trim();
+    } else {
+      name = (inst.assignedTo || '').trim();
+    }
     if (!name) return;
     const pos = bandPositions[inst.id]; if (!pos) return;
     const isMD = state.musicDirectorId === inst.id;
     sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(name), role: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), kind: 'band', isWL: false });
   });
-  // Vocalists
+  // Vocalists — matches the display: consume a slot per assigned vocalist so positions stay put; a
+  // linked drummer is shown at the kit (above), so their front-line spot is left empty here too.
   const count = state.assignments.filter(a => a !== null).length;
   if (count > 0) {
     const voxPositions = getVoxPositions(count);
     let pi = 0;
     for (let i=0; i<MAX_VOCALISTS; i++) {
       const id = state.assignments[i]; if (!id) continue;
-      const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const pos = voxPositions[pi++];
+      if (isLinkedDrummerVid(id)) continue; // singing drummer is shown at the kit — no front-line mic
+      const v = state.vocalists.find(x => x.id === id); if (!v) continue;
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
       sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal', isWL: !!v.isWL });
@@ -9325,8 +9404,19 @@ function renderDisplayView() {
   // their name cards on top of each other.
   const dvMarks = [];
   state.instruments.forEach(inst => {
-    if (inst.vocalistPlayer) return; // covered by vocalist — gets a /TAG instead
-    const name = (inst.assignedTo || '').trim();
+    const linkedVoc = inst.vocalistPlayer
+      ? state.vocalists.find(v => v.id === inst.vocalistPlayer)
+      : null;
+    const isDrums = detectPresetKey(inst) === 'drums';
+    let name;
+    if (inst.vocalistPlayer) {
+      // Melodic linked instrument → skip (the player shows at their vocal position). A singing
+      // drummer is the exception: keep the kit mark at its spot, labelled with the drummer.
+      if (!(isDrums && linkedVoc)) return;
+      name = (linkedVoc.name || '').trim();
+    } else {
+      name = (inst.assignedTo || '').trim();
+    }
     if (!name) return; // Display: only show positions that are actually filled
     const pos = bandPositions[inst.id]; if (!pos) return;
     const isMD = state.musicDirectorId === inst.id;
@@ -9339,8 +9429,9 @@ function renderDisplayView() {
     let posIdx = 0;
     for (let i=0; i<MAX_VOCALISTS; i++) {
       const id = state.assignments[i]; if (!id) continue;
+      const pos = voxPositions[posIdx++]; // consume a slot per assigned vocalist so the rest stay centered
+      if (isLinkedDrummerVid(id)) continue; // singing drummer is shown at the kit — front-line spot left empty
       const v = state.vocalists.find(x => x.id === id); if (!v) continue;
-      const pos = voxPositions[posIdx++];
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
       // Display view intentionally does NOT highlight worship leaders (no is-wl).
@@ -9411,13 +9502,29 @@ function renderDisplayView() {
   const bandList = document.getElementById('dvBandList');
   if (bandList) bandList.innerHTML = '';
   state.instruments.forEach(inst => {
-    if (inst.vocalistPlayer) return;
-    const name = inst.assignedTo || '';
-    if (!name.trim()) return; // Display: skip unassigned positions
+    const linkedVoc = inst.vocalistPlayer
+      ? state.vocalists.find(v => v.id === inst.vocalistPlayer)
+      : null;
+    let name, packName, slot = -1;
+    if (inst.vocalistPlayer) {
+      // Instrumentalist who also sings: one entry, shown here with their VOCAL pack.
+      if (!linkedVoc || !(linkedVoc.name || '').trim()) return;
+      name = linkedVoc.name;
+      slot = state.assignments.indexOf(inst.vocalistPlayer);
+      packName = (state.config.voxIemPacks && state.config.voxIemPacks[slot]) || ('Vocal ' + (slot + 1));
+    } else {
+      name = (inst.assignedTo || '').trim();
+      if (!name) return; // Display: skip unassigned positions
+      packName = iemPackFor(inst);
+    }
     const isMD = state.musicDirectorId === inst.id;
+    const roleParts = [];
+    if (isMD) roleParts.push('· MD');
+    if (inst.vocalistPlayer && slot >= 0) roleParts.push('· Vocal ' + (slot + 1));
+    const roleTag = roleParts.length ? `<span class="pos-role"> ${roleParts.join(' ')}</span>` : '';
     const li = document.createElement('li');
-    li.className = 'dv-list-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}</span><span class="name ${isMD?'is-md':''}">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(iemPackFor(inst))}</span>`;
+    li.className = 'dv-list-item';
+    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}${roleTag}</span><span class="name">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(packName)}</span>`;
     if (bandList) bandList.appendChild(li);
   });
 

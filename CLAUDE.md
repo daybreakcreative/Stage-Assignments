@@ -102,10 +102,11 @@ this release** — single venue only.
   drums/bass/ag/eg/keys/md/strings/vocals) each `{label, defaults, presets}`;
   `detectPresetKey` maps tags → a key. Boom-mic auto-add fires for a typed-name MD
   band person OR a vocalist who has an instrument explicitly linked to them
-  (`inst.vocalistPlayer`) — never on a mere name match.
-- **Band ↔ vocalist linking**: only the explicit "★ link / also a vocalist" control
-  sets `inst.vocalistPlayer`. There is NO name-based auto-linking (two people who
-  share a first name stay separate).
+  (`inst.vocalistPlayer`) — on a full-name match or an explicit link.
+- **Band ↔ vocalist linking**: on a PCO pull, `autoLinkBandToVocalists()` auto-links a band
+  position to a vocalist when they are the **same person, matched on FULL name** (`normFullName`).
+  Two people who share only a *first* name are NOT linked. The explicit "★ link / also a vocalist"
+  control still sets `inst.vocalistPlayer` for manual/edge cases.
 - **Display view**: `renderDisplayView` (full-viewport). Renders stage + band/hosts/
   vocalists + the service-order rail (`#dvRunSheetBlock`/`#dvRunSheetList`), gated by
   `d.showServiceOrder && serviceOrder.length && runSheetPosition!=='hidden'`. Element
