@@ -51,6 +51,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
      state.assignments=new Array(MAX_VOCALISTS).fill(null); state.assignments[0]='v1';
      state.instruments=[{id:'inst_keys',label:'Keys',pack:'',assignedTo:'Ben Rowe',vocalistPlayer:null}];
      state.musicDirectorId='';
+     state.config.stageFeatures=[{id:'fx1',type:'wedge',label:'Wedge 1'}];
      if(!state.config.setupDefaults) state.config.setupDefaults={};
      state.config.setupDefaults.vocals={selections:{options:['v_stand']},customOptions:[]};
      state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};
@@ -64,7 +65,12 @@ window.addEventListener('load',()=>setTimeout(()=>{
    openChecklist();
    const cards=[].slice.call(doc.querySelectorAll('#setupChecklistView .si-card'));
    if(!cards.length) throw new Error('no cards');
-   cards.forEach(c=>{ if(!c.querySelector('.si-cog')) throw new Error('a person card is missing its cog'); });
+   const stageCard=cards.find(c=>/Wedge 1/.test((c.querySelector('.si-card-name')||{}).textContent||''));
+   if(!stageCard) throw new Error('expected a STAGE fixture card to render');
+   if(stageCard.querySelector('.si-cog')) throw new Error('stage-fixture card must NOT have a cog');
+   const personCards=cards.filter(c=>c!==stageCard);
+   if(!personCards.length) throw new Error('no person cards');
+   personCards.forEach(c=>{ if(!c.querySelector('.si-cog')) throw new Error('a person card is missing its cog'); });
  });
 
  check('clicking the cog opens a per-person editor modal', ()=>{
