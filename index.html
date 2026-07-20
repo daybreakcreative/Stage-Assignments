@@ -9411,13 +9411,29 @@ function renderDisplayView() {
   const bandList = document.getElementById('dvBandList');
   if (bandList) bandList.innerHTML = '';
   state.instruments.forEach(inst => {
-    if (inst.vocalistPlayer) return;
-    const name = inst.assignedTo || '';
-    if (!name.trim()) return; // Display: skip unassigned positions
+    const linkedVoc = inst.vocalistPlayer
+      ? state.vocalists.find(v => v.id === inst.vocalistPlayer)
+      : null;
+    let name, packName, slot = -1;
+    if (inst.vocalistPlayer) {
+      // Instrumentalist who also sings: one entry, shown here with their VOCAL pack.
+      if (!linkedVoc || !(linkedVoc.name || '').trim()) return;
+      name = linkedVoc.name;
+      slot = state.assignments.indexOf(inst.vocalistPlayer);
+      packName = (state.config.voxIemPacks && state.config.voxIemPacks[slot]) || ('Vocal ' + (slot + 1));
+    } else {
+      name = (inst.assignedTo || '').trim();
+      if (!name) return; // Display: skip unassigned positions
+      packName = iemPackFor(inst);
+    }
     const isMD = state.musicDirectorId === inst.id;
+    const roleParts = [];
+    if (isMD) roleParts.push('· MD');
+    if (inst.vocalistPlayer && slot >= 0) roleParts.push('· Vocal ' + (slot + 1));
+    const roleTag = roleParts.length ? `<span class="pos-role"> ${roleParts.join(' ')}</span>` : '';
     const li = document.createElement('li');
-    li.className = 'dv-list-item' + (name ? '' : ' empty');
-    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}</span><span class="name ${isMD?'is-md':''}">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(iemPackFor(inst))}</span>`;
+    li.className = 'dv-list-item';
+    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}${roleTag}</span><span class="name">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(packName)}</span>`;
     if (bandList) bandList.appendChild(li);
   });
 
