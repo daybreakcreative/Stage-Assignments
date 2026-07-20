@@ -10772,9 +10772,15 @@ function collectChecklistItems() {
     const items = (bucket && Array.isArray(bucket.items)) ? bucket.items : [];
     const nn = normFullName(en.name);
     let p = byPerson.get(nn);
-    if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set() }; byPerson.set(nn, p); order.push(nn); }
+    if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set(), buckets: [] }; byPerson.set(nn, p); order.push(nn); }
     if (en.role === 'vocalist') p.isVoc = true;
     if (en.label && p.roles.indexOf(en.label) === -1) p.roles.push(en.label);
+    {
+      const bLabel = en.label || (en.role === 'vocalist' ? 'Vocals' : (en.role === 'md' ? 'MD' : (en.typeKey || 'Setup')));
+      if (!p.buckets.some(b => b.stableKey === en.stableKey)) {
+        p.buckets.push({ stableKey: en.stableKey, typeKey: en.typeKey, label: bLabel });
+      }
+    }
     items.forEach(it => {
       const text = (it.text || '').trim();
       if (!text) return;
@@ -10817,7 +10823,7 @@ function collectChecklistItems() {
     }
     const flatBucket = p.isVoc ? vocItems : bandItems;
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
-    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText });
+    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText, buckets: p.buckets });
   });
   if (vocItems.length > 0) {
     sections.push({ title: 'VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
