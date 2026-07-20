@@ -6863,7 +6863,7 @@ const BULK_ROLE_OPTS = [
 ];
 function addBulkRow(partial) {
   bulkPreaddRows.push(Object.assign(
-    { id: 'br_' + Math.random().toString(36).slice(2, 8), name: '', role: 'band', typeKey: 'keys', isMD: false, mic: '', open: false },
+    { id: 'br_' + Math.random().toString(36).slice(2, 8), pid: '', name: '', role: 'band', typeKey: 'keys', mic: '', open: false },
     partial || {}));
 }
 function seedBulkFromRoster() {
@@ -6876,7 +6876,9 @@ function seedBulkFromRoster() {
     if (!i || i.vocalistPlayer) return;
     const n = (i.assignedTo || '').trim(); if (!n || have.has(normFullName(n))) return;
     have.add(normFullName(n));
-    addBulkRow({ name: n, role: 'band', typeKey: detectPresetKey(i) || 'keys', isMD: state.musicDirectorId === i.id });
+    const tk = detectPresetKey(i) || 'keys';
+    addBulkRow({ name: n, role: 'band', typeKey: tk });
+    if (state.musicDirectorId === i.id) addBulkRow({ name: n, role: 'md', onStage: true });
   });
 }
 function bulkRowSetupKey(r) {
@@ -7022,13 +7024,12 @@ function commitBulkPreadd() {
     } else {
       state.musicianPreferences[nn + '|' + r.typeKey] = { askedAt: now };
     }
-    if (r.isMD) state.musicianPreferences[nn + '|md'] = { askedAt: now, onStage: r.onStage !== false };
   });
   saveState();
 }
 // Pure: turn PCO team-member rows [{name, position}] into deduped grid rows. One row per distinct
-// role; band/vocal/MD only (host/ignore/shadow skipped); a person seen as MD gets isMD on their
-// instrument row, or an md-only row (on-stage default) if they never played an instrument.
+// role; band/vocal/MD only (host/ignore/shadow skipped); a person seen as MD gets a standalone md row
+// (on-stage default), whether or not they also have a band/vocal row.
 // `existingKeys` = array of `${normFullName}|${role}|${typeKey||''}` already in the grid (deduped out).
 function bulkRowsFromPcoTeamData(members, existingKeys) {
   const existing = new Set(existingKeys || []);
@@ -7046,12 +7047,11 @@ function bulkRowsFromPcoTeamData(members, existingKeys) {
       mdNames.set(normFullName(name), name);
     }
   });
-  mdNames.forEach((disp, nn) => {
-    // A vocalist is never the MD — only flag a band (instrument) row. If they never played an
-    // instrument, they become a tracks-only MD row instead.
-    let flagged = false;
-    for (const row of rowMap.values()) { if (normFullName(row.name) === nn && row.role === 'band') { row.isMD = true; flagged = true; break; } }
-    if (!flagged) rowMap.set(keyOf(disp, 'md', ''), { name: disp, role: 'md', onStage: true });
+  mdNames.forEach((disp) => {
+    // MD is its own position chip: every md_flag person gets a standalone md row (whether or not
+    // they also play an instrument or sing). A vocalist row is never turned into the MD.
+    const k = keyOf(disp, 'md', '');
+    if (!rowMap.has(k) && !existing.has(k)) rowMap.set(k, { name: disp, role: 'md', onStage: true });
   });
   const out = [];
   rowMap.forEach((row, k) => { if (!existing.has(k)) out.push(row); });

@@ -34,13 +34,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ['drums','bass','keys','eg','ag'].forEach(k=>{ if(opts.indexOf(k)===-1) throw new Error('role select missing '+k); });
  });
 
- check('Add everyone on the current plan seeds rows from roster (with MD flagged)', ()=>{
+ check('Add everyone on the current plan seeds rows from roster (MD becomes its own row)', ()=>{
    ev(`state.vocalists=[{id:'v1',name:'Ava',micAssigned:''}]; state.assignments=['v1'].concat(new Array(MAX_VOCALISTS-1).fill(null));`);
    ev(`state.instruments=[{id:'ik',label:'Keys',assignedTo:'Pat'},{id:'ib',label:'Bass',assignedTo:'Sam'}]; state.musicDirectorId='ik';`);
    ev('openBulkPreadd(); document.getElementById("bulkSeedRoster").dispatchEvent(new Event("click",{bubbles:true}));');
    const names=[].map.call(doc.querySelectorAll('#bulkPreaddModal .bulk-name'), n=>n.value).sort();
-   if(JSON.stringify(names)!==JSON.stringify(['Ava','Pat','Sam'])) throw new Error('roster seed wrong: '+JSON.stringify(names));
-   const pat=rowFor(/Pat/); if(!pat.querySelector('.bulk-md').checked) throw new Error('Pat (MD) should be MD-flagged');
+   if(JSON.stringify(names)!==JSON.stringify(['Ava','Pat','Pat','Sam'])) throw new Error('roster seed wrong: '+JSON.stringify(names));
+   if(!ev(`bulkPreaddRows.some(r=>r.role==='md' && normFullName(r.name)===normFullName('Pat'))`)) throw new Error('MD person should get a standalone md row');
+   if(ev('bulkPreaddRows.some(r=>r.isMD)')) throw new Error('no row should carry isMD anymore');
  });
 
  check('expanding a band row mounts a setup editor that writes the stable bucket', ()=>{

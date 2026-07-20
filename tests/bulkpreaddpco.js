@@ -31,7 +31,11 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    const rows=JSON.parse(ev(`JSON.stringify(bulkRowsFromPcoTeamData(${members}, []))`));
    const byName=n=>rows.filter(r=>r.name===n);
    if(byName('Ava Chen').length!==1||byName('Ava Chen')[0].role!=='vocalist') throw new Error('Ava should be 1 vocalist row');
-   const pat=byName('Pat Reed'); if(pat.length!==1||pat[0].role!=='band'||pat[0].typeKey!=='keys'||pat[0].isMD!==true) throw new Error('Pat should be band/keys + isMD: '+JSON.stringify(pat));
+   const pat=byName('Pat Reed');
+   const patBand=pat.find(r=>r.role==='band'); const patMd=pat.find(r=>r.role==='md');
+   if(!patBand||patBand.typeKey!=='keys') throw new Error('Pat should have a band/keys row: '+JSON.stringify(pat));
+   if(!patMd||patMd.onStage!==true) throw new Error('Pat should ALSO have a standalone md row (onStage true): '+JSON.stringify(pat));
+   if(pat.some(r=>r.isMD)) throw new Error('no row should carry isMD anymore: '+JSON.stringify(pat));
    if(byName('Jo Vane')[0].typeKey!=='bass') throw new Error('Jo bass');
    if(byName('Sam Fox')[0].typeKey!=='ag') throw new Error('Sam ag');
    const dana=byName('Dana Lee'); if(dana.length!==1||dana[0].role!=='md'||dana[0].onStage!==true) throw new Error('Dana should be an md-only row, onStage true: '+JSON.stringify(dana));
@@ -89,7 +93,7 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    ev('openBulkPreadd();');
    await ev('fetchPcoRegulars()');
    const names=JSON.parse(ev(`JSON.stringify(bulkPreaddRows.map(r=>r.name).sort())`));
-   if(JSON.stringify(names)!==JSON.stringify(['Ava Chen','Dana Lee','Jo Vane','Pat Reed','Sam Fox'])) throw new Error('rows wrong: '+JSON.stringify(names));
+   if(JSON.stringify(names)!==JSON.stringify(['Ava Chen','Dana Lee','Jo Vane','Pat Reed','Pat Reed','Sam Fox'])) throw new Error('rows wrong: '+JSON.stringify(names));
    if(ev(`bulkPreaddRows.some(r=>r.name==='TooOld')`)) throw new Error('old plan should not be scanned');
    if(ev(`bulkPreaddRows.some(r=>r.name==='Declined Person')`)) throw new Error('declined member should be skipped');
    if(!ev(`window.__calls.some(p=>/plans\\/p3\\/team_members/.test(p))`)===false) {/* p3 tm not fetched */}
