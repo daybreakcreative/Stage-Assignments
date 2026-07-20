@@ -146,6 +146,25 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(ev('state.hosts.h4')!=='Jeff Myers') throw new Error('baptizing pastor should be on the last HH (h4), got '+ev('state.hosts.h4'));
  });
 
+ check('pco: speaker lands on the Pastor channel even when it is NOT first', ()=>{
+   ev('renderAll=function(){};saveState=function(){};toast=function(){};');
+   ev('state.config.hostChannels=[{id:"h1",label:"HH 1",capsule:""},{id:"h2",label:"Pastor",capsule:""},{id:"h3",label:"HH 2",capsule:""}]; state.hosts={};');
+   const roster=JSON.stringify({data:[
+     {id:'t1',attributes:{name:'Rev Green',team_position_name:'Speaker',status:'C'}},
+     {id:'t2',attributes:{name:'Host One',team_position_name:'Welcome Host',status:'C'}}
+   ]});
+   ev(`applyPCOPlanData({attributes:{}}, ${roster}, {data:[],included:[]})`);
+   if(ev('state.hosts.h2')!=='Rev Green') throw new Error('speaker should be on the Pastor channel h2, got '+ev('state.hosts.h2'));
+   if(ev('state.hosts.h1')!=='Host One') throw new Error('live host should fill the first non-pastor channel h1, got '+ev('state.hosts.h1'));
+ });
+
+ check('pcoAddHost: a speaker add lands on the "Pastor"-labelled channel when free', ()=>{
+   ev('state.config.hostChannels=[{id:"h1",label:"HH 1",capsule:""},{id:"h2",label:"Pastor",capsule:""},{id:"h3",label:"HH 2",capsule:""}]; state.hosts={};');
+   ev(`pcoAddHost({name:'Rev Green', host:'speaker'})`);
+   if(ev('state.hosts.h2')!=='Rev Green') throw new Error('speaker add should target the Pastor channel h2, got '+ev('JSON.stringify(state.hosts)'));
+   if(ev('state.hosts.h1')) throw new Error('speaker should NOT land on h1 when a Pastor channel exists');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;

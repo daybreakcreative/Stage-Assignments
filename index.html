@@ -8586,9 +8586,13 @@ function pcoAddBand(p) {
 
 function pcoAddHost(p) {
   const channels = hostChannels();
+  const norm = s => (s || '').replace(/\s+/g, '').toLowerCase();
   const isFree = id => !((state.hosts[id] || '').trim());
-  // Speaker/pastor prefers channel 0; otherwise (and as fallback) take the first free channel.
-  if (p.host === 'speaker' && channels[0] && isFree(channels[0].id)) { state.hosts[channels[0].id] = p.name; return; }
+  // Speaker/pastor prefers the channel labelled "Pastor" (else channel 0); otherwise first free.
+  if (p.host === 'speaker') {
+    const pastorCh = channels.find(ch => norm(ch.label).includes('pastor')) || channels[0];
+    if (pastorCh && isFree(pastorCh.id)) { state.hosts[pastorCh.id] = p.name; return; }
+  }
   const free = channels.find(ch => isFree(ch.id));
   if (free) state.hosts[free.id] = p.name;
 }
