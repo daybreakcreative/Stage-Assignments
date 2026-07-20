@@ -31,7 +31,11 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    const rows=JSON.parse(ev(`JSON.stringify(bulkRowsFromPcoTeamData(${members}, []))`));
    const byName=n=>rows.filter(r=>r.name===n);
    if(byName('Ava Chen').length!==1||byName('Ava Chen')[0].role!=='vocalist') throw new Error('Ava should be 1 vocalist row');
-   const pat=byName('Pat Reed'); if(pat.length!==1||pat[0].role!=='band'||pat[0].typeKey!=='keys'||pat[0].isMD!==true) throw new Error('Pat should be band/keys + isMD: '+JSON.stringify(pat));
+   const pat=byName('Pat Reed');
+   const patBand=pat.find(r=>r.role==='band'); const patMd=pat.find(r=>r.role==='md');
+   if(!patBand||patBand.typeKey!=='keys') throw new Error('Pat should have a band/keys row: '+JSON.stringify(pat));
+   if(!patMd||patMd.onStage!==true) throw new Error('Pat should ALSO have a standalone md row (onStage true): '+JSON.stringify(pat));
+   if(pat.some(r=>r.isMD)) throw new Error('no row should carry isMD anymore: '+JSON.stringify(pat));
    if(byName('Jo Vane')[0].typeKey!=='bass') throw new Error('Jo bass');
    if(byName('Sam Fox')[0].typeKey!=='ag') throw new Error('Sam ag');
    const dana=byName('Dana Lee'); if(dana.length!==1||dana[0].role!=='md'||dana[0].onStage!==true) throw new Error('Dana should be an md-only row, onStage true: '+JSON.stringify(dana));
@@ -88,19 +92,18 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    stubPco();
    ev('openBulkPreadd();');
    await ev('fetchPcoRegulars()');
-   const names=JSON.parse(ev(`JSON.stringify(bulkPreaddRows.map(r=>r.name).sort())`));
+   const names=JSON.parse(ev(`JSON.stringify(bulkPeople.map(x=>x.name).sort())`));
    if(JSON.stringify(names)!==JSON.stringify(['Ava Chen','Dana Lee','Jo Vane','Pat Reed','Sam Fox'])) throw new Error('rows wrong: '+JSON.stringify(names));
-   if(ev(`bulkPreaddRows.some(r=>r.name==='TooOld')`)) throw new Error('old plan should not be scanned');
-   if(ev(`bulkPreaddRows.some(r=>r.name==='Declined Person')`)) throw new Error('declined member should be skipped');
+   if(ev(`bulkPeople.some(x=>x.name==='TooOld')`)) throw new Error('old plan should not be scanned');
+   if(ev(`bulkPeople.some(x=>x.name==='Declined Person')`)) throw new Error('declined member should be skipped');
    if(!ev(`window.__calls.some(p=>/plans\\/p3\\/team_members/.test(p))`)===false) {/* p3 tm not fetched */}
    if(ev(`window.__calls.some(p=>/plans\\/p3\\/team_members/.test(p))`)) throw new Error('should not fetch team_members for the >6mo plan');
  });
 
  check('MD-only row: on/off-stage select shown; Save stores onStage on the |md marker', ()=>{
    ev(`state.setupItems={}; state.musicianPreferences={};`);
-   ev('openBulkPreadd(); addBulkRow({name:"Dana Lee",role:"md",onStage:true,open:true}); renderBulkPreadd();');
-   const row=[].find.call(doc.querySelectorAll('#bulkPreaddModal [data-bulk-row]'), r=>/Dana Lee/.test((r.querySelector('.bulk-name')||{}).value||''));
-   const stage=row.querySelector('.bulk-md-stage'); if(!stage) throw new Error('no on/off-stage select on md row');
+   ev(`openBulkPreadd(); var pid=addBulkPerson({name:'Dana Lee'}); addBulkRow({pid,name:'Dana Lee',role:'md',onStage:true,open:true}); renderBulkPreadd();`);
+   const stage=doc.querySelector('#bulkPreaddModal .bulk-pos .bulk-md-stage'); if(!stage) throw new Error('no on/off-stage select on md row');
    stage.value='off'; stage.dispatchEvent(new window.Event('change',{bubbles:true}));
    ev('commitBulkPreadd();');
    const marker=JSON.parse(ev(`JSON.stringify(state.musicianPreferences['dana lee|md']||null)`));
@@ -111,12 +114,12 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
  await checkA('people-search: typing yields a PCO dropdown; selecting sets the canonical name', async ()=>{
    ev(`pcoTokens={access_token:'x',expires_at:Date.now()+1e6};`);
    ev(`window.pcoFetch=function(path){ if(/people/.test(path)) return Promise.resolve({data:[{id:'ppl1',attributes:{name:'Avaline Chen'}},{id:'ppl2',attributes:{name:'Ava Reed'}}]}); return Promise.resolve({data:[]}); };`);
-   ev('openBulkPreadd(); addBulkRow({name:"",role:"band",typeKey:"keys",open:false}); renderBulkPreadd();');
-   await ev(`bulkPeopleSearch(bulkPreaddRows[0],'Ava')`);
+   ev('openBulkPreadd(); var pid=addBulkPerson(); renderBulkPreadd();');
+   await ev(`bulkPeopleSearch(bulkPeople[0],'Ava')`);
    const results=doc.querySelectorAll('#bulkPreaddModal .bulk-name-result');
    if(results.length!==2) throw new Error('expected 2 people results, got '+results.length);
    results[0].dispatchEvent(new window.Event('click',{bubbles:true}));
-   if(ev('bulkPreaddRows[0].name')!=='Avaline Chen') throw new Error('select did not set canonical name: '+ev('bulkPreaddRows[0].name'));
+   if(ev('bulkPeople[0].name')!=='Avaline Chen') throw new Error('select did not set canonical name: '+ev('bulkPeople[0].name'));
  });
 
  check('regulars button is disabled without PCO connected', ()=>{
@@ -124,6 +127,33 @@ window.addEventListener('load',()=>setTimeout(async ()=>{
    ev('openBulkPreadd();');
    const btn=doc.getElementById('bulkRegulars'); if(!btn) throw new Error('no regulars button');
    if(!btn.disabled) throw new Error('regulars button should be disabled without PCO');
+ });
+
+ check('two PCO positions for one person render under ONE card as two chips', ()=>{
+   ev('openBulkPreadd();');
+   ev(`var pid=bulkFindOrCreatePerson('Ava Chen',null);
+       addBulkRow({pid,name:'Ava Chen',role:'vocalist'});
+       addBulkRow({pid,name:'Ava Chen',role:'band',typeKey:'keys'});
+       renderBulkPreadd();`);
+   const cards=doc.querySelectorAll('#bulkPreaddModal .bulk-person');
+   if(cards.length!==1) throw new Error('expected 1 person card, got '+cards.length);
+   const chips=cards[0].querySelectorAll('.bulk-pos');
+   if(chips.length!==2) throw new Error('expected 2 position chips under Ava, got '+chips.length);
+ });
+
+ check('band+MD person: Bass chip + MD chip; commit writes both markers', ()=>{
+   ev('state.setupItems={}; state.musicianPreferences={};');
+   ev('openBulkPreadd();');
+   ev(`var pid=bulkFindOrCreatePerson('Pat Reed',null);
+       addBulkRow({pid,name:'Pat Reed',role:'band',typeKey:'bass'});
+       addBulkRow({pid,name:'Pat Reed',role:'md',onStage:true});
+       renderBulkPreadd();`);
+   const labels=[].slice.call(doc.querySelectorAll('#bulkPreaddModal .bulk-person .bulk-pos-label')).map(n=>n.textContent);
+   if(!labels.some(l=>/Bass/i.test(l)) || !labels.some(l=>/MD/i.test(l))) throw new Error('expected Bass + MD chips, got '+labels.join(','));
+   ev('commitBulkPreadd();');
+   const nn=ev(`normFullName('Pat Reed')`);
+   if(!ev(`!!state.musicianPreferences['${nn}|bass']`)) throw new Error('missing bass marker');
+   if(!ev(`!!state.musicianPreferences['${nn}|md']`)) throw new Error('missing md marker');
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
