@@ -2154,6 +2154,7 @@ const DEFAULT_STATE = {
   brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Inter' },
   config: {
     autoRefreshPaused: false,
+    bugIntakeUrl: 'https://daybreak.up.railway.app/bug',
     setupDefaults: null,
     showMicCapsules: true,
     vocalDirection: DEFAULT_VOCAL_DIRECTION,
@@ -11594,11 +11595,15 @@ function downloadBlob(content, filename, type) {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-function sendBugReport(r) {
-  const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
-  const dateStr = (state.service && state.service.date) || '';
+function sanitizedConfigJSON() {
+  let clone;
+  try { clone = JSON.parse(JSON.stringify(state)); } catch (e) { clone = {}; }
+  if (clone && clone.pcoConfig) { delete clone.pcoConfig.clientId; delete clone.pcoConfig.clientSecret; }
+  return JSON.stringify(clone, null, 2);
+}
+function sendBugReportFallback(r, build, dateStr) {
   const safe = (state.service && state.service.name ? state.service.name : 'stageassign').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  downloadBlob(JSON.stringify(state, null, 2), `${safe}-config.json`, 'application/json');
+  downloadBlob(sanitizedConfigJSON(), `${safe}-config.json`, 'application/json');
   if (r.shotDataUrl) {
     try {
       const bin = atob(r.shotDataUrl.split(',')[1]); const arr = new Uint8Array(bin.length);
@@ -11615,8 +11620,26 @@ function sendBugReport(r) {
   ].filter(Boolean).join('\n');
   const url = `https://github.com/${BUG_REPORT_REPO}/issues/new?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   window.open(url, '_blank');
-  toast('Files downloaded — drag them into the GitHub issue and Submit', 'success');
+  toast('Couldn’t reach KHARIS — files downloaded, drag them into the GitHub issue', 'warn');
   return url;
+}
+async function sendBugReport(r) {
+  const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
+  const dateStr = (state.service && state.service.date) || '';
+  const url = (state.config && state.config.bugIntakeUrl) || 'https://daybreak.up.railway.app/bug';
+  const payload = {
+    description: r.desc, build, serviceDate: dateStr,
+    config: sanitizedConfigJSON(),
+    screenshot: r.shotDataUrl ? { dataUrl: r.shotDataUrl, name: r.shotName || 'screenshot.png' } : null
+  };
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    toast('Bug report sent to KHARIS ✓', 'success');
+    return { ok: true };
+  } catch (e) {
+    return sendBugReportFallback(r, build, dateStr);
+  }
 }
 function openBugReportModal() {
   let shotDataUrl = '', shotName = '';
@@ -11625,7 +11648,7 @@ function openBugReportModal() {
   const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
   sheet.innerHTML = `
     <div class="setup-review-head"><div class="setup-review-title">Report a bug</div><button type="button" class="setup-review-x" aria-label="Close">✕</button></div>
-    <p class="setup-review-sub">Describe what went wrong — your current setup + app version get bundled so it can be reproduced. Submitting opens a GitHub issue draft; drag the downloaded file(s) in and click Submit.</p>
+    <p class="setup-review-sub">Describe what went wrong — your current setup + app version get bundled so it can be reproduced. Sent straight to KHARIS.</p>
     <div class="setup-review-body" style="overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
       <label class="brf-field"><span class="brf-lbl">What happened? What did you expect?</span>
         <textarea id="brf_desc" rows="5" placeholder="e.g. After pulling the plan, the band IEM column on the display was blank…"></textarea></label>
@@ -11636,7 +11659,7 @@ function openBugReportModal() {
     </div>
     <div class="setup-review-actions">
       <button type="button" class="btn ghost" id="brf_cancel">Cancel</button>
-      <button type="button" class="btn primary" id="brf_send">Download &amp; open GitHub issue</button>
+      <button type="button" class="btn primary" id="brf_send">Send to KHARIS</button>
     </div>`;
   sheet.querySelector('.setup-review-x').addEventListener('click', close);
   sheet.querySelector('#brf_cancel').addEventListener('click', close);
