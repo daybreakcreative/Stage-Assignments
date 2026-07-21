@@ -70,18 +70,21 @@ window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150)
    if(typeof body.config!=='string'||/SECRET|CID/.test(body.config)) throw new Error('config must be sanitized string');
  });
 
- await check('on fetch failure it falls back to download + GitHub issue', async ()=>{
+ await check('on fetch failure: NO download, NO github, modal stays open, warn toast', async ()=>{
    let opened=null; window.open=(u)=>{opened=u;return{};};
-   ev('downloadBlob=function(){window.__dl=(window.__dl||0)+1;};');
+   ev('window.__dl=0; downloadBlob=function(){window.__dl++;};');
+   let toasted=''; ev('toast=function(m,k){window.__toast=(m||"")+"|"+(k||"");};');
    window.fetch=()=>Promise.reject(new Error('network'));
-   ev('openBugReportModal(); window.__dl=0;');
+   ev('openBugReportModal();');
    fireDrop(doc.getElementById('brf_drop'), [mkFile('a.png','image/png')]);
    await wait(60);
    doc.getElementById('brf_desc').value='fallback test';
    doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
    await wait(60);
-   if(!opened||!/github\.com\/daybreakcreative\/Stage-Assignments\/issues\/new/.test(opened)) throw new Error('fallback should open GitHub URL');
-   if((window.__dl||0) < 2) throw new Error('fallback should download config + attachment (>=2 downloadBlob calls), got '+(window.__dl||0));
+   if(opened) throw new Error('must NOT open a GitHub issue on failure');
+   if((ev('window.__dl')||0) !== 0) throw new Error('must NOT download anything on failure, got '+ev('window.__dl'));
+   if(!doc.getElementById('brfOverlay')) throw new Error('modal should stay OPEN on failure (for retry)');
+   if(!/try again/i.test(ev('window.__toast')||'')) throw new Error('should warn-toast "try again", got '+ev('window.__toast'));
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
