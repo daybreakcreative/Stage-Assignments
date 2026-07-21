@@ -35,10 +35,14 @@ window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150)
    if(!/Submit/i.test(doc.getElementById('brf_send').textContent)) throw new Error('send button should read Submit');
  });
 
- check('send with an EMPTY description does not open an issue', ()=>{
+ check('send with an EMPTY description shows inline error, does not call fetch', ()=>{
    ev('window.__opened=null');
+   let fetchCalled=false; window.fetch=()=>{fetchCalled=true; return Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({ok:true})});};
    doc.querySelector('.setup-review-modal.show #brf_send').click();
    if(ev('window.__opened')) throw new Error('opened an issue with no description');
+   if(fetchCalled) throw new Error('should not call fetch with no description');
+   const errEl=doc.getElementById('brf_error');
+   if(!errEl || errEl.style.display==='none' || !errEl.textContent) throw new Error('should show inline description-required error');
  });
 
  await check('dropping two files lists two removable rows; removing one leaves one', async ()=>{
@@ -70,21 +74,37 @@ window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150)
    if(typeof body.config!=='string'||/SECRET|CID/.test(body.config)) throw new Error('config must be sanitized string');
  });
 
- await check('on fetch failure: NO download, NO github, modal stays open, warn toast', async ()=>{
+ await check('successful submit shows a completion screen with Back-to-home (no auto-close)', async ()=>{
+   window.fetch=()=>Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({ok:true})});
+   ev('openBugReportModal();');
+   doc.getElementById('brf_desc').value='done test';
+   const btn=doc.getElementById('brf_send');
+   btn.dispatchEvent(new window.Event('click',{bubbles:true}));
+   if(!btn.disabled) throw new Error('Submit should disable immediately (loading state)');
+   await wait(60);
+   if(!doc.getElementById('brfOverlay')) throw new Error('modal should stay open on success (completion screen)');
+   const home=doc.getElementById('brf_home');
+   if(!home) throw new Error('completion screen should have a Back-to-home button');
+   if(!/thank|sent/i.test(doc.querySelector('#brfOverlay .setup-review-sheet').textContent)) throw new Error('completion screen should thank the user');
+   home.dispatchEvent(new window.Event('click',{bubbles:true}));
+   if(doc.getElementById('brfOverlay')) throw new Error('Back-to-home should close the modal');
+ });
+
+ await check('failed submit: inline error in modal, no download, no github, retryable', async ()=>{
    let opened=null; window.open=(u)=>{opened=u;return{};};
    ev('window.__dl=0; downloadBlob=function(){window.__dl++;};');
-   let toasted=''; ev('toast=function(m,k){window.__toast=(m||"")+"|"+(k||"");};');
    window.fetch=()=>Promise.reject(new Error('network'));
    ev('openBugReportModal();');
-   fireDrop(doc.getElementById('brf_drop'), [mkFile('a.png','image/png')]);
+   doc.getElementById('brf_desc').value='fail test';
+   const btn=doc.getElementById('brf_send');
+   btn.dispatchEvent(new window.Event('click',{bubbles:true}));
    await wait(60);
-   doc.getElementById('brf_desc').value='fallback test';
-   doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
-   await wait(60);
-   if(opened) throw new Error('must NOT open a GitHub issue on failure');
-   if((ev('window.__dl')||0) !== 0) throw new Error('must NOT download anything on failure, got '+ev('window.__dl'));
-   if(!doc.getElementById('brfOverlay')) throw new Error('modal should stay OPEN on failure (for retry)');
-   if(!/try again/i.test(ev('window.__toast')||'')) throw new Error('should warn-toast "try again", got '+ev('window.__toast'));
+   if(opened) throw new Error('must NOT open GitHub on failure');
+   if((ev('window.__dl')||0)!==0) throw new Error('must NOT download on failure');
+   const errEl=doc.getElementById('brf_error');
+   if(!errEl || errEl.style.display==='none' || !/try again/i.test(errEl.textContent)) throw new Error('should show inline "try again" error');
+   if(doc.getElementById('brf_send').disabled) throw new Error('Submit should be re-enabled to retry');
+   if(!doc.getElementById('brfOverlay')) throw new Error('modal should stay open on failure');
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
