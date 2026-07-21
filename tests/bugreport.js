@@ -1,5 +1,5 @@
-// #2 — Report-a-bug form: opens a modal (description + screenshot), and on send downloads the
-// config and opens a PRE-FILLED GitHub issue in the repo (no token/backend).
+// #2 — Report-a-bug form: opens a modal (description + drag-drop attachments), and on send
+// downloads the config + attachments and opens a PRE-FILLED GitHub issue in the repo (no token/backend).
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push((e.detail&&e.detail.message)||e.message));
@@ -18,13 +18,21 @@ window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150)
  ev('toast=function(){};');
  ev('window.__opened=null; window.open=function(u){window.__opened=u; return {};};');
 
- check('modal renders a description field, screenshot input, and send button', ()=>{
-   ev('openBugReportModal()');
-   const m=doc.querySelector('.setup-review-modal.show');
-   if(!m) throw new Error('no modal opened');
-   if(!m.querySelector('#brf_desc')) throw new Error('no description field');
-   if(!m.querySelector('#brf_shot')) throw new Error('no screenshot input');
-   if(!m.querySelector('#brf_send')) throw new Error('no send button');
+ function mkFile(name, type, text){ return new window.File([text||'x'], name, {type:type||'application/octet-stream'}); }
+ function fireDrop(zone, files){
+   const ev2 = new window.Event('drop', {bubbles:true, cancelable:true});
+   Object.defineProperty(ev2, 'dataTransfer', { value: { files } });
+   zone.dispatchEvent(ev2);
+ }
+ const wait = ms => new Promise(r=>setTimeout(r, ms));
+
+ check('modal shows a clickable drop zone + hidden multi-file input; old single input gone', ()=>{
+   ev('openBugReportModal();');
+   if(!doc.getElementById('brf_drop')) throw new Error('drop zone #brf_drop missing');
+   const inp=doc.getElementById('brf_files');
+   if(!inp || !inp.multiple) throw new Error('#brf_files should be a multiple file input');
+   if(doc.getElementById('brf_shot')) throw new Error('old single #brf_shot input should be gone');
+   if(!/Submit/i.test(doc.getElementById('brf_send').textContent)) throw new Error('send button should read Submit');
  });
 
  check('send with an EMPTY description does not open an issue', ()=>{
@@ -33,30 +41,47 @@ window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150)
    if(ev('window.__opened')) throw new Error('opened an issue with no description');
  });
 
- await check('submitting POSTs sanitized JSON to the KHARIS intake URL', async ()=>{
+ await check('dropping two files lists two removable rows; removing one leaves one', async ()=>{
+   ev('openBugReportModal();');
+   fireDrop(doc.getElementById('brf_drop'), [mkFile('a.png','image/png'), mkFile('log.txt','text/plain')]);
+   await wait(60);
+   let rows=doc.querySelectorAll('#brf_list [data-att-idx]');
+   if(rows.length!==2) throw new Error('expected 2 attachment rows, got '+rows.length);
+   rows[0].querySelector('[data-att-remove]').dispatchEvent(new window.Event('click',{bubbles:true}));
+   rows=doc.querySelectorAll('#brf_list [data-att-idx]');
+   if(rows.length!==1) throw new Error('expected 1 row after remove, got '+rows.length);
+ });
+
+ await check('Submit POSTs attachments[] + sanitized config to the intake URL', async ()=>{
    ev(`state.pcoConfig=state.pcoConfig||{}; state.pcoConfig.clientId='CID'; state.pcoConfig.clientSecret='SECRET';`);
    let captured=null;
    window.fetch=(url,opts)=>{ captured={url,opts}; return Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({ok:true})}); };
    ev('openBugReportModal();');
-   doc.getElementById('brf_desc').value='display went blank';
+   fireDrop(doc.getElementById('brf_drop'), [mkFile('a.png','image/png'), mkFile('b.log','text/plain')]);
+   await wait(60);
+   doc.getElementById('brf_desc').value='multi attach test';
    doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
-   await new Promise(r=>setTimeout(r,30));
-   if(!captured) throw new Error('fetch was not called');
-   if(!/\/bug$/.test(captured.url)) throw new Error('should POST to the /bug intake URL, got '+captured.url);
+   await wait(60);
+   if(!captured) throw new Error('fetch not called');
+   if(!/\/bug$/.test(captured.url)) throw new Error('should POST to /bug, got '+captured.url);
    const body=JSON.parse(captured.opts.body);
-   if(body.description!=='display went blank') throw new Error('description not sent');
-   if(typeof body.config!=='string') throw new Error('config should be a JSON string');
-   if(/SECRET|CID/.test(body.config)) throw new Error('PCO secrets must be stripped from config');
+   if(!Array.isArray(body.attachments)||body.attachments.length!==2) throw new Error('attachments should be an array of 2, got '+JSON.stringify(body.attachments&&body.attachments.length));
+   if(!body.attachments[0].dataUrl||!body.attachments[0].name) throw new Error('attachment missing dataUrl/name');
+   if(typeof body.config!=='string'||/SECRET|CID/.test(body.config)) throw new Error('config must be sanitized string');
  });
 
- await check('on fetch failure it falls back to the download + GitHub issue flow', async ()=>{
-   let opened=null; window.open=(u)=>{ opened=u; return {}; };
+ await check('on fetch failure it falls back to download + GitHub issue', async ()=>{
+   let opened=null; window.open=(u)=>{opened=u;return{};};
+   ev('downloadBlob=function(){window.__dl=(window.__dl||0)+1;};');
    window.fetch=()=>Promise.reject(new Error('network'));
-   ev('openBugReportModal();');
-   doc.getElementById('brf_desc').value='still broken';
+   ev('openBugReportModal(); window.__dl=0;');
+   fireDrop(doc.getElementById('brf_drop'), [mkFile('a.png','image/png')]);
+   await wait(60);
+   doc.getElementById('brf_desc').value='fallback test';
    doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
-   await new Promise(r=>setTimeout(r,30));
-   if(!opened||!/github\.com\/daybreakcreative\/Stage-Assignments\/issues\/new/.test(opened)) throw new Error('fallback should open the GitHub issue URL, got '+opened);
+   await wait(60);
+   if(!opened||!/github\.com\/daybreakcreative\/Stage-Assignments\/issues\/new/.test(opened)) throw new Error('fallback should open GitHub URL');
+   if((window.__dl||0) < 2) throw new Error('fallback should download config + attachment (>=2 downloadBlob calls), got '+(window.__dl||0));
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
