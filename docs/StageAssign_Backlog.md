@@ -37,8 +37,10 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**[FEATURE] Cog on each person's ✓ Items card**~~ ✅ SHIPPED 2026-07-20 → `scvcog`. A ⚙ on each
   ✓ Items card opens that person's setup editor inline (a section per role); edits their bucket
   only. Church defaults stay in the Advanced Settings editor.
-- **[FEATURE] Bug submission → KHARIS, not GitHub.** Repoint `sendBugReport()` transport at KHARIS.
-  (Long-standing queued item.)
+- ~~**[FEATURE] Bug submission → KHARIS, not GitHub.**~~ ✅ SHIPPED 2026-07-20. `sendBugReport` POSTs
+  to the KHARIS `POST /bug` endpoint (→ Basecamp campfire with screenshot + sanitized config
+  attached); GitHub-issue flow retained as the offline fallback. KHARIS side in
+  `daybreak-production-ai` (`flags/bugFormat.js`, `POST /bug`).
 
 ### Setup items
 - ~~**Default setup items per instrument in Advanced Settings.**~~ ✅ SHIPPED 2026-07-18

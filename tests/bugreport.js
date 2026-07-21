@@ -12,9 +12,11 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
  w.Element.prototype.getBoundingClientRect=function(){return{left:0,top:0,width:800,height:380,right:800,bottom:380,x:0,y:0,toJSON(){}}};
 }});
 const{window,window:{document:doc}}=dom;const ev=c=>window.eval(c);
-function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
-window.addEventListener('load',()=>setTimeout(()=>{
- ev('toast=function(){}; window.__opened=null; window.open=function(u){window.__opened=u; return {};};');
+function check(l,f){try{const p=f();if(p&&typeof p.then==='function'){return p.then(()=>console.log('  OK  ',l)).catch(e=>{console.log('  FAIL',l,'->',e.message);errs.push(l);});}console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
+window.addEventListener('load',async ()=>{await new Promise(r=>setTimeout(r,150));
+ ev('downloadBlob=function(){};');
+ ev('toast=function(){};');
+ ev('window.__opened=null; window.open=function(u){window.__opened=u; return {};};');
 
  check('modal renders a description field, screenshot input, and send button', ()=>{
    ev('openBugReportModal()');
@@ -31,25 +33,33 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(ev('window.__opened')) throw new Error('opened an issue with no description');
  });
 
- check('send with a description opens a prefilled GitHub issue in the repo', ()=>{
-   ev('window.__opened=null');
-   const m=doc.querySelector('.setup-review-modal.show');
-   m.querySelector('#brf_desc').value='Band IEM column blank after pull';
-   m.querySelector('#brf_send').click();
-   const u=ev('window.__opened');
-   if(!u) throw new Error('no issue opened');
-   if(!/github\.com\/daybreakcreative\/Stage-Assignments\/issues\/new/.test(u)) throw new Error('not the repo issue URL: '+u);
-   if(!/Band%20IEM%20column%20blank/.test(u)) throw new Error('description not carried into the issue: '+u);
+ await check('submitting POSTs sanitized JSON to the KHARIS intake URL', async ()=>{
+   ev(`state.pcoConfig=state.pcoConfig||{}; state.pcoConfig.clientId='CID'; state.pcoConfig.clientSecret='SECRET';`);
+   let captured=null;
+   window.fetch=(url,opts)=>{ captured={url,opts}; return Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({ok:true})}); };
+   ev('openBugReportModal();');
+   doc.getElementById('brf_desc').value='display went blank';
+   doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
+   await new Promise(r=>setTimeout(r,30));
+   if(!captured) throw new Error('fetch was not called');
+   if(!/\/bug$/.test(captured.url)) throw new Error('should POST to the /bug intake URL, got '+captured.url);
+   const body=JSON.parse(captured.opts.body);
+   if(body.description!=='display went blank') throw new Error('description not sent');
+   if(typeof body.config!=='string') throw new Error('config should be a JSON string');
+   if(/SECRET|CID/.test(body.config)) throw new Error('PCO secrets must be stripped from config');
  });
 
- check('the issue body includes the build stamp + a label', ()=>{
-   const u=ev(`sendBugReport({desc:'x', shotDataUrl:'', shotName:''})`);
-   const dec=decodeURIComponent(u);
-   if(!/labels=bug/.test(u)) throw new Error('no bug label');
-   if(!/Build/.test(dec)) throw new Error('no build stamp in body');
+ await check('on fetch failure it falls back to the download + GitHub issue flow', async ()=>{
+   let opened=null; window.open=(u)=>{ opened=u; return {}; };
+   window.fetch=()=>Promise.reject(new Error('network'));
+   ev('openBugReportModal();');
+   doc.getElementById('brf_desc').value='still broken';
+   doc.getElementById('brf_send').dispatchEvent(new window.Event('click',{bubbles:true}));
+   await new Promise(r=>setTimeout(r,30));
+   if(!opened||!/github\.com\/daybreakcreative\/Stage-Assignments\/issues\/new/.test(opened)) throw new Error('fallback should open the GitHub issue URL, got '+opened);
  });
 
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
-},150));
+});
