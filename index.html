@@ -797,6 +797,15 @@ background-size:5% 10%}
 .brf-field textarea{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-family:var(--ff-body);font-size:13px;resize:vertical;outline:none}
 .brf-field textarea:focus{border-color:var(--accent)}
 .brf-thumb{max-width:100%;max-height:160px;border-radius:8px;border:1px solid var(--border)}
+.brf-drop{border:1.5px dashed var(--border-2);border-radius:9px;padding:16px;text-align:center;font-size:12.5px;color:var(--text-muted);cursor:pointer;transition:border-color .15s,background .15s}
+.brf-drop:hover,.brf-drop.drag{border-color:var(--accent);background:var(--bg-inset);color:var(--text)}
+.brf-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.brf-att{display:flex;align-items:center;gap:8px;background:var(--bg-inset);border:1px solid var(--border);border-radius:7px;padding:5px 8px}
+.brf-att .brf-thumb{width:34px;height:34px;object-fit:cover;border-radius:5px;flex:none}
+.brf-att .brf-file-ic{width:34px;text-align:center;flex:none;font-size:16px}
+.brf-att-name{flex:1;font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brf-att-x{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;flex:none}
+.brf-att-x:hover{color:var(--danger)}
 .brf-note{font-size:11px;color:var(--text-faint)}
 .setup-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .setup-review-title{font-size:17px;font-weight:700}
@@ -11604,19 +11613,20 @@ function sanitizedConfigJSON() {
 function sendBugReportFallback(r, build, dateStr) {
   const safe = (state.service && state.service.name ? state.service.name : 'stageassign').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
   downloadBlob(sanitizedConfigJSON(), `${safe}-config.json`, 'application/json');
-  if (r.shotDataUrl) {
+  const atts = r.attachments || [];
+  atts.forEach(a => {
     try {
-      const bin = atob(r.shotDataUrl.split(',')[1]); const arr = new Uint8Array(bin.length);
+      const bin = atob((a.dataUrl || '').split(',')[1] || ''); const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      downloadBlob(arr, r.shotName || 'screenshot.png', 'image/png');
-    } catch (e) { /* ignore a bad screenshot */ }
-  }
+      downloadBlob(arr, a.name || 'attachment', a.type || 'application/octet-stream');
+    } catch (e) { /* ignore a bad attachment */ }
+  });
   const title = 'Bug: ' + (r.desc.split('\n')[0] || 'report').slice(0, 70);
   const body = [
     r.desc, '', '---',
     '**Build:** ' + (build || 'unknown'),
     dateStr ? ('**Service date:** ' + dateStr) : '',
-    '', '_Drag in the files that just downloaded: the config JSON' + (r.shotDataUrl ? ' and the screenshot' : '') + '._'
+    '', '_Drag in the files that just downloaded: the config JSON' + (atts.length ? ` and ${atts.length} attachment${atts.length === 1 ? '' : 's'}` : '') + '._'
   ].filter(Boolean).join('\n');
   const url = `https://github.com/${BUG_REPORT_REPO}/issues/new?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   window.open(url, '_blank');
@@ -11627,11 +11637,8 @@ async function sendBugReport(r) {
   const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
   const dateStr = (state.service && state.service.date) || '';
   const url = (state.config && state.config.bugIntakeUrl) || 'https://daybreak.up.railway.app/bug';
-  const payload = {
-    description: r.desc, build, serviceDate: dateStr,
-    config: sanitizedConfigJSON(),
-    screenshot: r.shotDataUrl ? { dataUrl: r.shotDataUrl, name: r.shotName || 'screenshot.png' } : null
-  };
+  const atts = (r.attachments || []).map(a => ({ dataUrl: a.dataUrl, name: a.name, type: a.type }));
+  const payload = { description: r.desc, build, serviceDate: dateStr, config: sanitizedConfigJSON(), attachments: atts };
   try {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -11642,8 +11649,9 @@ async function sendBugReport(r) {
   }
 }
 function openBugReportModal() {
-  let shotDataUrl = '', shotName = '';
-  const overlay = document.createElement('div'); overlay.className = 'setup-review-modal show';
+  const existingBrf = document.getElementById('brfOverlay'); if (existingBrf) existingBrf.remove();
+  const attachments = []; // { dataUrl, name, type }
+  const overlay = document.createElement('div'); overlay.id = 'brfOverlay'; overlay.className = 'setup-review-modal show';
   const sheet = document.createElement('div'); sheet.className = 'setup-review-sheet'; overlay.appendChild(sheet);
   const close = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
   sheet.innerHTML = `
@@ -11652,31 +11660,63 @@ function openBugReportModal() {
     <div class="setup-review-body" style="overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
       <label class="brf-field"><span class="brf-lbl">What happened? What did you expect?</span>
         <textarea id="brf_desc" rows="5" placeholder="e.g. After pulling the plan, the band IEM column on the display was blank…"></textarea></label>
-      <label class="brf-field"><span class="brf-lbl">Screenshot (optional)</span>
-        <input type="file" id="brf_shot" accept="image/*" /></label>
-      <div id="brf_shot_preview"></div>
+      <div class="brf-field"><span class="brf-lbl">Attachments (optional)</span>
+        <div id="brf_drop" class="brf-drop" tabindex="0">Drag files here, or click to choose — screenshots, logs, exported config…</div>
+        <input type="file" id="brf_files" multiple style="display:none" />
+        <div id="brf_list" class="brf-list"></div></div>
       <div class="brf-note">Bundled automatically: your setup JSON + ${esc(((document.getElementById('buildStamp') || {}).textContent) || 'build')}.</div>
     </div>
     <div class="setup-review-actions">
       <button type="button" class="btn ghost" id="brf_cancel">Cancel</button>
-      <button type="button" class="btn primary" id="brf_send">Send to KHARIS</button>
+      <button type="button" class="btn primary" id="brf_send">Submit</button>
     </div>`;
   sheet.querySelector('.setup-review-x').addEventListener('click', close);
   sheet.querySelector('#brf_cancel').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-  sheet.querySelector('#brf_shot').addEventListener('change', e => {
-    const f = e.target.files && e.target.files[0];
-    const prev = sheet.querySelector('#brf_shot_preview');
-    if (!f) { shotDataUrl = ''; shotName = ''; prev.innerHTML = ''; return; }
-    shotName = f.name;
-    const reader = new FileReader();
-    reader.onload = ev => { shotDataUrl = ev.target.result; prev.innerHTML = `<img src="${shotDataUrl}" class="brf-thumb" alt="screenshot preview" />`; };
-    reader.readAsDataURL(f);
-  });
+  const MAX_TOTAL = 8 * 1024 * 1024; // ~8MB soft cap (server hard cap 10MB)
+  const totalBytes = () => attachments.reduce((n, a) => n + Math.floor(((a.dataUrl || '').length) * 0.75), 0);
+  function renderBugAttachments() {
+    const list = sheet.querySelector('#brf_list'); if (!list) return;
+    list.innerHTML = attachments.map((a, i) => {
+      const thumb = /^data:image\//.test(a.dataUrl)
+        ? `<img src="${a.dataUrl}" class="brf-thumb" alt="">`
+        : `<span class="brf-file-ic"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9z" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M9.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></span>`;
+      return `<div class="brf-att" data-att-idx="${i}">${thumb}<span class="brf-att-name">${esc(a.name)}</span><button type="button" class="brf-att-x" data-att-remove aria-label="Remove">✕</button></div>`;
+    }).join('');
+    list.querySelectorAll('[data-att-remove]').forEach(btn => btn.addEventListener('click', () => {
+      const row = btn.closest('[data-att-idx]'); const idx = row && +row.getAttribute('data-att-idx');
+      if (idx > -1) { attachments.splice(idx, 1); renderBugAttachments(); }
+    }));
+  }
+  function addBugFiles(fileList) {
+    const files = Array.prototype.slice.call(fileList || []);
+    let remaining = files.length;
+    if (!remaining) return;
+    files.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = ev2 => {
+        const dataUrl = ev2.target.result;
+        const approxBytes = Math.floor(((dataUrl || '').length) * 0.75);
+        if (totalBytes() + approxBytes > MAX_TOTAL) { toast('That attachment is too large to send', 'warn'); }
+        else attachments.push({ dataUrl, name: f.name || 'attachment', type: f.type || 'application/octet-stream' });
+        if (--remaining === 0) renderBugAttachments();
+      };
+      reader.onerror = () => { if (--remaining === 0) renderBugAttachments(); };
+      reader.readAsDataURL(f);
+    });
+  }
+  const drop = sheet.querySelector('#brf_drop');
+  const fileInput = sheet.querySelector('#brf_files');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+  fileInput.addEventListener('change', e => { addBugFiles(e.target.files); fileInput.value = ''; });
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave', 'dragend'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('drag')));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addBugFiles(e.dataTransfer && e.dataTransfer.files); });
   sheet.querySelector('#brf_send').addEventListener('click', () => {
     const desc = (sheet.querySelector('#brf_desc').value || '').trim();
     if (!desc) { toast('Add a short description first', 'warn'); return; }
-    sendBugReport({ desc, shotDataUrl, shotName });
+    sendBugReport({ desc, attachments });
     close();
   });
   document.body.appendChild(overlay);
