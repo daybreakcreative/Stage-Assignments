@@ -382,7 +382,7 @@ background-size:5% 10%}
 .host-row.pastor .lbl{color:var(--accent)}
 .section-label{font-family:var(--ff-mono);font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--text-faint);padding:0 2px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:10px 18px;border-radius:10px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:200;font-family:var(--ff-body);max-width:360px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:10px 18px;border-radius:10px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:9999;font-family:var(--ff-body);max-width:360px}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{border-color:var(--success)}
 .toast.error{border-color:var(--danger)}
@@ -807,6 +807,8 @@ background-size:5% 10%}
 .brf-att-x{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;flex:none}
 .brf-att-x:hover{color:var(--danger)}
 .brf-note{font-size:11px;color:var(--text-faint)}
+.brf-error{color:var(--danger);font-size:12.5px;padding:2px 0}
+.brf-done-check{width:46px;height:46px;border-radius:50%;margin:6px auto 0;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--success) 18%,transparent);color:var(--success);font-size:24px;font-weight:700}
 .setup-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .setup-review-title{font-size:17px;font-weight:700}
 .setup-review-x{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px}
@@ -11618,10 +11620,8 @@ async function sendBugReport(r) {
   try {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    toast('Bug report sent to KHARIS ✓', 'success');
     return { ok: true };
   } catch (e) {
-    toast('Couldn’t reach KHARIS — try again in a moment.', 'warn');
     return { ok: false };
   }
 }
@@ -11643,6 +11643,7 @@ function openBugReportModal() {
         <div id="brf_list" class="brf-list"></div></div>
       <div class="brf-note">Bundled automatically: your setup JSON + ${esc(((document.getElementById('buildStamp') || {}).textContent) || 'build')}.</div>
     </div>
+      <div id="brf_error" class="brf-error" style="display:none;"></div>
     <div class="setup-review-actions">
       <button type="button" class="btn ghost" id="brf_cancel">Cancel</button>
       <button type="button" class="btn primary" id="brf_send">Submit</button>
@@ -11690,11 +11691,29 @@ function openBugReportModal() {
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('drag'); }));
   ['dragleave', 'dragend'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('drag')));
   drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addBugFiles(e.dataTransfer && e.dataTransfer.files); });
-  sheet.querySelector('#brf_send').addEventListener('click', async () => {
+  const sendBtn = sheet.querySelector('#brf_send');
+  const showErr = m => { const e = sheet.querySelector('#brf_error'); if (e) { e.textContent = m; e.style.display = ''; } };
+  sendBtn.addEventListener('click', async () => {
     const desc = (sheet.querySelector('#brf_desc').value || '').trim();
-    if (!desc) { toast('Add a short description first', 'warn'); return; }
+    if (!desc) { showErr('Add a short description first.'); return; }
+    const e = sheet.querySelector('#brf_error'); if (e) e.style.display = 'none';
+    sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
     const res = await sendBugReport({ desc, attachments });
-    if (res && res.ok) close();
+    if (res && res.ok) {
+      sheet.innerHTML = `
+        <div class="setup-review-head"><div class="setup-review-title">Bug report sent</div><button type="button" class="setup-review-x" aria-label="Close">✕</button></div>
+        <div class="setup-review-body" style="text-align:center;padding:20px 8px;display:block;">
+          <div class="brf-done-check">✓</div>
+          <p style="font-size:15px;color:var(--text);font-weight:600;margin:14px 0 6px;">Thanks — your bug report was sent to KHARIS.</p>
+          <p class="setup-review-sub" style="margin:0;">We’ll take a look. You’re all set.</p>
+        </div>
+        <div class="setup-review-actions"><button type="button" class="btn primary" id="brf_home">Back to home</button></div>`;
+      sheet.querySelector('.setup-review-x').addEventListener('click', close);
+      sheet.querySelector('#brf_home').addEventListener('click', () => { close(); if (typeof closeSettings === 'function') closeSettings(); });
+    } else {
+      sendBtn.disabled = false; sendBtn.textContent = 'Submit';
+      showErr('Couldn’t reach KHARIS — try again.');
+    }
   });
   document.body.appendChild(overlay);
   return overlay;
