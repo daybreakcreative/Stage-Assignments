@@ -11596,7 +11596,6 @@ function openPackConflictDialog() {
 // (no token/backend: the logged-in user reviews + clicks Submit; the issue lands in the repo
 // where Claude reads it). A serverless proxy could later auto-attach files, but this needs
 // zero setup. sendBugReport() is the transport seam.
-const BUG_REPORT_REPO = 'daybreakcreative/Stage-Assignments';
 function downloadBlob(content, filename, type) {
   const blob = new Blob([content], { type: type || 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
@@ -11610,29 +11609,6 @@ function sanitizedConfigJSON() {
   if (clone && clone.pcoConfig) { delete clone.pcoConfig.clientId; delete clone.pcoConfig.clientSecret; }
   return JSON.stringify(clone, null, 2);
 }
-function sendBugReportFallback(r, build, dateStr) {
-  const safe = (state.service && state.service.name ? state.service.name : 'stageassign').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  downloadBlob(sanitizedConfigJSON(), `${safe}-config.json`, 'application/json');
-  const atts = r.attachments || [];
-  atts.forEach(a => {
-    try {
-      const bin = atob((a.dataUrl || '').split(',')[1] || ''); const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      downloadBlob(arr, a.name || 'attachment', a.type || 'application/octet-stream');
-    } catch (e) { /* ignore a bad attachment */ }
-  });
-  const title = 'Bug: ' + (r.desc.split('\n')[0] || 'report').slice(0, 70);
-  const body = [
-    r.desc, '', '---',
-    '**Build:** ' + (build || 'unknown'),
-    dateStr ? ('**Service date:** ' + dateStr) : '',
-    '', '_Drag in the files that just downloaded: the config JSON' + (atts.length ? ` and ${atts.length} attachment${atts.length === 1 ? '' : 's'}` : '') + '._'
-  ].filter(Boolean).join('\n');
-  const url = `https://github.com/${BUG_REPORT_REPO}/issues/new?labels=bug&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
-  window.open(url, '_blank');
-  toast('Couldn’t reach KHARIS — files downloaded, drag them into the GitHub issue', 'warn');
-  return url;
-}
 async function sendBugReport(r) {
   const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
   const dateStr = (state.service && state.service.date) || '';
@@ -11645,7 +11621,8 @@ async function sendBugReport(r) {
     toast('Bug report sent to KHARIS ✓', 'success');
     return { ok: true };
   } catch (e) {
-    return sendBugReportFallback(r, build, dateStr);
+    toast('Couldn’t reach KHARIS — try again in a moment.', 'warn');
+    return { ok: false };
   }
 }
 function openBugReportModal() {
@@ -11713,11 +11690,11 @@ function openBugReportModal() {
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('drag'); }));
   ['dragleave', 'dragend'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('drag')));
   drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addBugFiles(e.dataTransfer && e.dataTransfer.files); });
-  sheet.querySelector('#brf_send').addEventListener('click', () => {
+  sheet.querySelector('#brf_send').addEventListener('click', async () => {
     const desc = (sheet.querySelector('#brf_desc').value || '').trim();
     if (!desc) { toast('Add a short description first', 'warn'); return; }
-    sendBugReport({ desc, attachments });
-    close();
+    const res = await sendBugReport({ desc, attachments });
+    if (res && res.ok) close();
   });
   document.body.appendChild(overlay);
   return overlay;
