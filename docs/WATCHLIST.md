@@ -129,10 +129,13 @@ Behaviors that must keep working. **The executable version of this list is `test
     (`openChecklistPersonEditor` → `renderPersonSetupEditor`). Edits the person's bucket only (church
     `setupDefaults` untouched); the cog click never toggles a check-off chip; stage-fixture cards
     have no cog. (`collectChecklistItems` buckets, `renderSetupChecklist`; `tests/scvcog.js`.)
-42. **Bug report goes to KHARIS.** "Report a bug" POSTs `{description, build, serviceDate, config,
-    screenshot}` to `state.config.bugIntakeUrl` (default `daybreak.up.railway.app/bug`); PCO
-    `clientId`/`clientSecret` are stripped from the config first. On any failure it falls back to
-    the old download + prefilled-GitHub-issue flow (also sanitized). (`sendBugReport`; `tests/bugreport.js`.)
+42. **Bug report goes to KHARIS.** "Report a bug" (button "Submit") POSTs
+    `{description, build, serviceDate, config, attachments[]}` to `state.config.bugIntakeUrl`
+    (default `daybreak.up.railway.app/bug`); PCO `clientId`/`clientSecret` are stripped from the
+    config first. Attachments come from a clickable drag-and-drop zone (any file type, multiple).
+    On any failure it falls back to the old download + prefilled-GitHub-issue flow (also sanitized).
+    KHARIS `POST /bug` uploads each attachment + config to Basecamp and posts one campfire line.
+    (`sendBugReport`/`openBugReportModal`; `tests/bugreport.js`.)
 
 ---
 
