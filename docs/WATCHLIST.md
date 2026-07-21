@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–41):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–42):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
 > recent items (23–33) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–41, detailed)
+## Recently shipped — must not regress (items 23–42, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -129,6 +129,10 @@ Behaviors that must keep working. **The executable version of this list is `test
     (`openChecklistPersonEditor` → `renderPersonSetupEditor`). Edits the person's bucket only (church
     `setupDefaults` untouched); the cog click never toggles a check-off chip; stage-fixture cards
     have no cog. (`collectChecklistItems` buckets, `renderSetupChecklist`; `tests/scvcog.js`.)
+42. **Bug report goes to KHARIS.** "Report a bug" POSTs `{description, build, serviceDate, config,
+    screenshot}` to `state.config.bugIntakeUrl` (default `daybreak.up.railway.app/bug`); PCO
+    `clientId`/`clientSecret` are stripped from the config first. On any failure it falls back to
+    the old download + prefilled-GitHub-issue flow (also sanitized). (`sendBugReport`; `tests/bugreport.js`.)
 
 ---
 
