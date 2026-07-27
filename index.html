@@ -107,6 +107,13 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pco-bar .pco-status.err{color:var(--danger)}
 .pco-filter{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px;width:96px}
 .pco-filter:focus{border-color:var(--accent);outline:none;width:140px}
+.pco-fav-section{margin-top:20px}
+.st-fav-controls{display:flex;gap:8px;align-items:center;margin:8px 0}
+.st-fav-list{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px}
+.st-fav-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
+.st-fav-row:hover{background:var(--bg-inset)}
+.st-fav-name{flex:1}
+.st-fav-folder{font-size:10.5px;color:var(--text-faint);font-family:var(--ff-mono)}
 /* --- Mobile / tablet: the top bar wraps into rows instead of overflowing.
    Works because the body is now a flex column, so the workspace below reflows to whatever
    height the bar takes. --- */
@@ -9118,6 +9125,43 @@ function renderPCOSettings() {
   });
   document.getElementById('pcoDemoBtn').addEventListener('click', () => { closeSettings(); pcoLoadDemo(); });
   if (isConnected) document.getElementById('pcoSettingsDisconnectBtn').addEventListener('click', pcoDisconnect);
+
+  // --- Service-type filter (favorites) ---
+  const favWrap = document.createElement('div');
+  favWrap.className = 'pco-fav-section';
+  if (!pcoServiceTypes.length) {
+    favWrap.innerHTML = `<div class="section-label">Service types in the pull dropdown</div>
+      <p class="subtitle" style="font-size:12px;">Connect to Planning Center to choose which service types appear in the dropdown.</p>`;
+  } else {
+    const fav = new Set(state.pcoConfig.favoriteServiceTypeIds || []);
+    const rows = [...pcoServiceTypes].sort((a,b)=>(a.folderName||'').localeCompare(b.folderName||'')||a.name.localeCompare(b.name))
+      .map(s => `<label class="st-fav-row" data-name="${esc((s.name+' '+(s.folderName||'')).toLowerCase())}">
+        <input type="checkbox" class="st-fav-cb" value="${esc(s.id)}"${fav.has(s.id)?' checked':''}/>
+        <span class="st-fav-name">${esc(s.name)}</span>${s.folderName?`<span class="st-fav-folder">${esc(s.folderName)}</span>`:''}</label>`).join('');
+    favWrap.innerHTML = `<div class="section-label">Service types in the pull dropdown</div>
+      <p class="subtitle" style="font-size:12px;">Check the service types this room uses — only those show in the pull dropdown. Leave all unchecked to show everything.</p>
+      <div class="st-fav-controls"><input type="text" id="stFavSearch" class="setup-mgr-search" placeholder="Search service types…" autocomplete="off"/>
+      <button type="button" class="btn ghost" id="stFavClear">Clear</button></div>
+      <div class="st-fav-list" id="stFavList">${rows}</div>`;
+  }
+  el.appendChild(favWrap);
+  favWrap.querySelectorAll('.st-fav-cb').forEach(cb => cb.addEventListener('change', e => {
+    const id = e.target.value; let arr = state.pcoConfig.favoriteServiceTypeIds || (state.pcoConfig.favoriteServiceTypeIds = []);
+    if (e.target.checked) { if (arr.indexOf(id) === -1) arr.push(id); } else { state.pcoConfig.favoriteServiceTypeIds = arr.filter(x => x !== id); }
+    saveState();
+    if (typeof populateServiceTypeSelect === 'function') populateServiceTypeSelect();
+  }));
+  const favSearch = favWrap.querySelector('#stFavSearch');
+  if (favSearch) favSearch.addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    favWrap.querySelectorAll('.st-fav-row').forEach(r => { r.style.display = (!q || (r.dataset.name||'').includes(q)) ? '' : 'none'; });
+  });
+  const favClear = favWrap.querySelector('#stFavClear');
+  if (favClear) favClear.addEventListener('click', () => {
+    state.pcoConfig.favoriteServiceTypeIds = []; saveState();
+    if (typeof populateServiceTypeSelect === 'function') populateServiceTypeSelect();
+    renderPCOSettings();
+  });
 }
 
 /* ===================== SUMMARY ===================== */
