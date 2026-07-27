@@ -34,6 +34,11 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**[FEATURE] Fix PCO host/pastor assignment.**~~ ✅ SHIPPED 2026-07-20 → `hostmics`. Speaker/
   pastor → the "Pastor"-labelled channel; live hosts → HH channels; baptizing pastor → last HH;
   video/communion/prayer positions ignored. Default channels stay relabelable HH 1–HH 4.
+- ~~**[FEATURE] PCO service-type filter.**~~ ✅ SHIPPED 2026-07-26 → `pcofilter`. A favorites
+  allow-list (`pcoConfig.favoriteServiceTypeIds`, checkbox picker w/ search in Advanced
+  Settings → Planning Center) trims the pull dropdown to the service types a room actually
+  uses; a live filter box on the PCO-bar dropdown narrows further; empty favorites = show
+  everything; the currently-selected service type is always kept.
 - ~~**[FEATURE] Cog on each person's ✓ Items card**~~ ✅ SHIPPED 2026-07-20 → `scvcog`. A ⚙ on each
   ✓ Items card opens that person's setup editor inline (a section per role); edits their bucket
   only. Church defaults stay in the Advanced Settings editor.
