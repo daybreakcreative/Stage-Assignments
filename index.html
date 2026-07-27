@@ -105,6 +105,8 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .pco-bar .pco-status{color:var(--text-faint);font-size:11px}
 .pco-bar .pco-status.ok{color:var(--success)}
 .pco-bar .pco-status.err{color:var(--danger)}
+.pco-filter{background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px;width:96px}
+.pco-filter:focus{border-color:var(--accent);outline:none;width:140px}
 /* --- Mobile / tablet: the top bar wraps into rows instead of overflowing.
    Works because the body is now a flex column, so the workspace below reflows to whatever
    height the bar takes. --- */
@@ -1666,6 +1668,7 @@ body>*:not(.summary-overlay){display:none!important}
 
 <div class="pco-bar" id="pcoBar" style="display:none;">
   <span class="pco-label">PCO</span>
+  <input type="text" id="pcoServiceTypeSearch" class="pco-filter" placeholder="Filter…" autocomplete="off" disabled />
   <select id="pcoServiceTypeSelect" disabled><option>— Service Type —</option></select>
   <select id="pcoPlanSelect" disabled><option>— Plan —</option></select>
   <button class="btn" id="pcoPullBtn" disabled>Pull Plan</button>
@@ -2160,7 +2163,7 @@ const DEFAULT_STATE = {
   serviceOrder: [],
   inventory: structuredClone(DEFAULT_INVENTORY),
   preferences: structuredClone(DEFAULT_PREFERENCES),
-  pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'' },
+  pcoConfig: { clientId:'', clientSecret:'', selectedServiceTypeId:'', selectedPlanId:'', selectedServiceTypeName:'', selectedPlanName:'', favoriteServiceTypeIds: [] },
   pcoBaseline: null,
   brand: { accent:'#d4a147', accent2:'#e8b857', wl:'#e8b857', font:'Inter' },
   config: {
@@ -2466,6 +2469,7 @@ let state = loadState();
 ensureVocalCapacity();
 let pcoTokens = loadPCOTokens();
 let pcoServiceTypes = [];
+let pcoStFilter = '';
 let pcoPlans = [];
 
 // IEM mixes no longer carry a redundant " Pack" suffix. Strip it from any stored name once
@@ -7996,9 +8000,15 @@ async function pcoLoadServiceTypes() {
 }
 function populateServiceTypeSelect() {
   const sel = document.getElementById('pcoServiceTypeSelect');
+  const favSet = new Set(state.pcoConfig.favoriteServiceTypeIds || []);
+  const selId = state.pcoConfig.selectedServiceTypeId || '';
+  const q = (pcoStFilter || '').trim().toLowerCase();
+  let list = pcoServiceTypes.slice();
+  if (favSet.size) list = list.filter(s => favSet.has(s.id) || s.id === selId);
+  if (q) list = list.filter(s => (s.name || '').toLowerCase().includes(q) || s.id === selId);
   // Group by folder name; alphabetize folders and items within
   const byFolder = {};
-  pcoServiceTypes.forEach(s => {
+  list.forEach(s => {
     const key = s.folderName || '(Unfiled)';
     if (!byFolder[key]) byFolder[key] = [];
     byFolder[key].push(s);
@@ -8023,6 +8033,8 @@ function populateServiceTypeSelect() {
   });
   sel.innerHTML = html;
   sel.disabled = false;
+  const fInp = document.getElementById('pcoServiceTypeSearch'); if (fInp) fInp.disabled = false;
+  if (selId) sel.value = selId; // keep the current selection across re-renders
 }
 async function pcoLoadPlans(serviceTypeId) {
   if (!serviceTypeId) return;
@@ -13838,6 +13850,7 @@ function init() {
     openSettings('pco');
   });
   document.getElementById('pcoServiceTypeSelect').addEventListener('change', e => { if (e.target.value) pcoLoadPlans(e.target.value); });
+  { const f = document.getElementById('pcoServiceTypeSearch'); if (f) f.addEventListener('input', e => { pcoStFilter = e.target.value; populateServiceTypeSelect(); }); }
   document.getElementById('pcoPlanSelect').addEventListener('change', e => { document.getElementById('pcoPullBtn').disabled = !e.target.value; });
   document.getElementById('pcoPullBtn').addEventListener('click', () => {
     const planId = document.getElementById('pcoPlanSelect').value;
