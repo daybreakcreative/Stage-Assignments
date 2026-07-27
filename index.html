@@ -1933,7 +1933,7 @@ body>*:not(.summary-overlay){display:none!important}
   <!-- rendered by renderSetupChecklist() -->
 </div>
 
-<div id="buildStamp">build 2026-07-10·f</div>
+<div id="buildStamp"></div>
 <!-- ========== DISPLAY VIEW (full-screen takeover) ========== -->
 <div class="display-view" id="displayView">
   <div id="setupLockScreen" style="display:none;">
@@ -13751,6 +13751,16 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
 
 /* ===================== INIT ===================== */
 function init() {
+  // Build stamp = the served file's real last-modified date (self-maintaining; no manual bump).
+  // Reflects the version actually running — an old date here means the browser is on a stale cache.
+  (function setBuildStamp() {
+    const el = document.getElementById('buildStamp');
+    if (!el) return;
+    let d = new Date(document.lastModified);
+    if (isNaN(d.getTime())) d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    el.textContent = `build ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  })();
   ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
   migrateLegacySetupBuckets(); // one-time: fold OLD volatile setup buckets into stable per-person keys
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
