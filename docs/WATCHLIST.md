@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–42):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–43):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
 > recent items (23–33) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–42, detailed)
+## Recently shipped — must not regress (items 23–43, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -136,6 +136,10 @@ Behaviors that must keep working. **The executable version of this list is `test
     On any failure it falls back to the old download + prefilled-GitHub-issue flow (also sanitized).
     KHARIS `POST /bug` uploads each attachment + config to Basecamp and posts one campfire line.
     (`sendBugReport`/`openBugReportModal`; `tests/bugreport.js`.)
+43. **PCO service-type dropdown honors `pcoConfig.favoriteServiceTypeIds`** (checkbox picker
+    in Advanced Settings → Planning Center, with search) + a live PCO-bar filter box; empty
+    favorites = show all; selected id always kept. (`populateServiceTypeSelect`;
+    `tests/pcofilter.js`.)
 
 ---
 
