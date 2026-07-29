@@ -2165,6 +2165,7 @@ const DEFAULT_STATE = {
   instruments: structuredClone(DEFAULT_INSTRUMENTS),
   musicDirectorId: 'inst_keys',  // points to instrument id (not key string)
   mdSoloName: null,              // MD who runs tracks but plays no instrument (rare); name-keyed md setup
+  mdSoloPack: null,              // spare IEM pack handed to a solo MD (not on stage; shows on the IEM list)
   hosts: {},  // per-service person assignments, keyed by host channel id → name. Channels live in config.hostChannels.
   notes: '',
   serviceOrder: [],
@@ -3669,6 +3670,52 @@ function iemPackFor(instOrId) {
   return inst ? (inst.pack || inst.label) : '';
 }
 
+// IEM packs currently spoken for this week: named band instruments (not vocalist-linked),
+// shadows that are on an IEM, and one reserved vocal pack per assigned vocalist slot. (The solo
+// MD's own pack is NOT counted here, so its pack can be tested for collisions against everyone else.)
+function usedIemPacks() {
+  const used = new Set();
+  (state.instruments || []).forEach(i => {
+    if (i && !i.vocalistPlayer && (i.assignedTo || '').trim() && i.pack) used.add(i.pack.trim());
+  });
+  (state.shadows || []).forEach(s => {
+    if (s && (s.name || '').trim() && s.setup && !shadowNeedsNoMix(s.setup) && s.pack) used.add(s.pack.trim());
+  });
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const id = state.assignments && state.assignments[i];
+    if (!id) continue;
+    const p = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1));
+    used.add(String(p).trim());
+  }
+  return used;
+}
+
+// Pick an unused IEM pack for a solo MD: prefer a spare "Misc" preset, then any free preset, then a
+// spare vocal pack beyond the active vocalists, then the shadow-pack default. (Dillon's rule: a
+// non-instrumentalist MD doesn't go on stage — they ride a spare pack on the IEM list.)
+function pickSpareIemPack() {
+  const used = usedIemPacks();
+  const presets = Array.isArray(state.config.iemPackPresets) ? state.config.iemPackPresets.slice() : [];
+  const free = presets.filter(p => p && !used.has(p.trim()));
+  const misc = free.find(p => /misc/i.test(p));
+  if (misc) return misc;
+  if (free.length) return free[0];
+  for (let i = 0; i < MAX_VOCALISTS; i++) {
+    const p = (state.config.voxIemPacks && state.config.voxIemPacks[i]) || ('Vocal ' + (i + 1));
+    if (!used.has(String(p).trim())) return p;
+  }
+  return state.config.shadowPack || 'Misc 2';
+}
+
+// Keep state.mdSoloPack in sync with mdSoloName: assign a spare pack when a solo MD is present,
+// keep an already-spare pack stable across refreshes, re-pick if it now collides, clear otherwise.
+function ensureSoloMdPack() {
+  if (!(state.mdSoloName || '').trim()) { state.mdSoloPack = null; return; }
+  const cur = (state.mdSoloPack || '').trim();
+  if (cur && !usedIemPacks().has(cur)) return; // still a spare (nobody else on it) — leave it be
+  state.mdSoloPack = pickSpareIemPack();
+}
+
 // #9 conflict engine — who wears an IEM belt pack this week, and where do they collide?
 // Consumers = unlinked band instruments + shadows on IEM. Vocalists use RESERVED vocal mixes
 // (one each) so they never collide and aren't in this set; a vocalist-linked instrument's player
@@ -3691,6 +3738,11 @@ function findPackConflicts() {
     const off = s.setup === 'off-stage-iem';
     consumers.push({ id: s.id, name: s.name.trim(), kind: 'shadow', label: off ? 'Shadow · off stage' : 'Shadow', mix: (s.pack || '').trim(), priority: off ? 0 : 1 });
   });
+  // Solo MD (runs tracks, no instrument, not on stage): rides a spare IEM pack. Include as a
+  // consumer so a pack collision still surfaces. Priority 1 — like an on-stage shadow.
+  if ((state.mdSoloName || '').trim() && (state.mdSoloPack || '').trim()) {
+    consumers.push({ id: 'md_solo', name: state.mdSoloName.trim(), kind: 'md', label: 'MD', mix: state.mdSoloPack.trim(), priority: 1 });
+  }
 
   const generalMixes = Array.isArray(state.config.iemPackPresets) ? state.config.iemPackPresets.slice() : [];
   const used = new Set(consumers.map(c => c.mix).filter(Boolean));
@@ -4584,6 +4636,37 @@ function resolveStageLabelLayout(marks, opts) {
     }));
 }
 
+// De-overlap fixture CAPTION labels (stairs/doors/monitors — the ones that hang BELOW their
+// fixture). Same idea as resolveStageLabelLayout, but simpler: these are single-line, centered
+// on their fixture's x, and only ever get pushed straight DOWN. Marker text (which sits INSIDE
+// its box) is handled by the caller and never passed in here.
+// Each box: { cx, top, w, h }. Mutates + returns `boxes` with `top` adjusted so none overlap.
+function resolveFeatureLabelLayout(boxes, opts) {
+  opts = opts || {};
+  const gap  = opts.gap  != null ? opts.gap  : 2;   // min vertical gap between two caption boxes
+  const step = opts.step != null ? opts.step : 3;   // min downward nudge per pass
+  const maxY = opts.maxY != null ? opts.maxY : 380; // stage viewBox height
+  const xOverlap = (a, b) => !((a.cx + a.w / 2) <= (b.cx - b.w / 2) || (b.cx + b.w / 2) <= (a.cx - a.w / 2));
+  const yOverlap = (a, b) => !((a.top + a.h + gap) <= b.top || (b.top + b.h + gap) <= a.top);
+  const overlaps = (a, b) => xOverlap(a, b) && yOverlap(a, b);
+  // Place top-to-bottom, left-to-right so higher labels anchor the packing.
+  const order = boxes.slice().sort((a, b) => (a.top - b.top) || (a.cx - b.cx));
+  const placed = [];
+  order.forEach(it => {
+    let guard = 0;
+    while (placed.some(p => overlaps(it, p)) && guard < 60) {
+      let lowest = it.top;
+      placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.top + p.h + gap); });
+      it.top = Math.max(it.top + step, lowest);
+      guard++;
+    }
+    // Don't run a caption off the bottom of the stage.
+    if (it.top + it.h > maxY) it.top = Math.max(0, maxY - it.h);
+    placed.push(it);
+  });
+  return boxes;
+}
+
 // Build SVG markup that highlights the FRONT edge of the stage (where vocalists line up).
 // Draws a thicker accent-colored stroke over shape.edge, plus an optional "FRONT" label nudged
 // inward from the edge midpoint. Only meaningful when a custom outline has a resolvable front edge.
@@ -4719,6 +4802,7 @@ function renderStageFeatures(layer, opts) {
     const r = layer.getBoundingClientRect();
     return { x: (clientX - r.left) / r.width * 800, y: (clientY - r.top) / r.height * 380 };
   };
+  const captionBoxes = []; // non-marker labels that hang below a fixture — de-overlapped after the loop
   feats.forEach(f => {
     // Label sits below the fixture's rotated bounding box and never rotates, so it stays upright.
     const labelY = (ff) => {
@@ -4750,6 +4834,8 @@ function renderStageFeatures(layer, opts) {
       lbl.style.left = pct(f.x, 800);
       lbl.style.top = pct(isMarker ? f.y : labelY(f), 380);
       layer.appendChild(lbl);
+      // Below-fixture captions get a de-overlap pass after the loop (markers sit inside, skip them).
+      if (!isMarker) captionBoxes.push({ lbl, cx: f.x, top: labelY(f), w: Math.max(24, (f.label || '').length * 5.6), h: 11 });
     }
     const syncLabel = () => { if (lbl) { lbl.style.left = pct(f.x, 800); lbl.style.top = pct(isMarker ? f.y : labelY(f), 380); } };
 
@@ -4828,6 +4914,13 @@ function renderStageFeatures(layer, opts) {
       if (opts.onDelete) opts.onDelete(f.id);
     });
   });
+
+  // Keep two nearby fixture captions from printing on top of each other: nudge overlapping
+  // labels straight down until they clear. (Interactive drag still repositions live via syncLabel.)
+  if (captionBoxes.length > 1) {
+    resolveFeatureLabelLayout(captionBoxes);
+    captionBoxes.forEach(b => { b.lbl.style.top = (b.top / 380) * 100 + '%'; });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -8434,6 +8527,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   } else {
     state.mdSoloName = null;
   }
+  ensureSoloMdPack(); // solo MD (if any) gets a spare IEM pack; cleared otherwise
 
   // Process service order items (songs, headers, media, etc.) with their PCO "sequence" preserved
   if (itemsRes && itemsRes.data) {
@@ -9237,6 +9331,13 @@ function fillSummary() {
     li.innerHTML = `<span class="pos">${esc(s.pack||'')}</span><span class="name">${esc(s.name||'—')} <span style="color:var(--text-faint);font-size:.85em;">shadow ${idx+1}</span></span><span class="detail"></span>`;
     iemList.appendChild(li);
   });
+  // Solo MD in IEM list — not on stage, rides a spare pack, labeled MD.
+  if ((state.mdSoloName||'').trim()) {
+    const li = document.createElement('li');
+    li.className = 's-item';
+    li.innerHTML = `<span class="pos">${esc(state.mdSoloPack||'')}</span><span class="name">${esc(state.mdSoloName)} <span style="color:var(--text-faint);font-size:.85em;">MD</span></span><span class="detail"></span>`;
+    iemList.appendChild(li);
+  }
   // Service Order block (hidden when empty)
   const orderWrap = document.getElementById('s_orderWrap');
   const orderList = document.getElementById('s_orderList');
@@ -9703,6 +9804,13 @@ function renderDisplayView() {
     li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}${roleTag}</span><span class="name">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(packName)}</span>`;
     if (bandList) bandList.appendChild(li);
   });
+  // Solo MD: not on the stage, but rides a spare IEM pack — list them under Band as "MD · tracks".
+  if ((state.mdSoloName||'').trim() && bandList) {
+    const li = document.createElement('li');
+    li.className = 'dv-list-item';
+    li.innerHTML = `<span class="pos">MD<span class="pos-role"> · tracks</span></span><span class="name">${esc(formatDisplayName(state.mdSoloName)||'—')}</span><span class="detail">${esc(state.mdSoloPack||'')}</span>`;
+    bandList.appendChild(li);
+  }
 
   // Hosts list. Resolve resiliently: the side-block re-order above detaches/re-appends
   // #dvHostsBlock, which trips jsdom's id cache so document.getElementById('dvHostsList')
