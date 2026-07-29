@@ -4584,6 +4584,37 @@ function resolveStageLabelLayout(marks, opts) {
     }));
 }
 
+// De-overlap fixture CAPTION labels (stairs/doors/monitors — the ones that hang BELOW their
+// fixture). Same idea as resolveStageLabelLayout, but simpler: these are single-line, centered
+// on their fixture's x, and only ever get pushed straight DOWN. Marker text (which sits INSIDE
+// its box) is handled by the caller and never passed in here.
+// Each box: { cx, top, w, h }. Mutates + returns `boxes` with `top` adjusted so none overlap.
+function resolveFeatureLabelLayout(boxes, opts) {
+  opts = opts || {};
+  const gap  = opts.gap  != null ? opts.gap  : 2;   // min vertical gap between two caption boxes
+  const step = opts.step != null ? opts.step : 3;   // min downward nudge per pass
+  const maxY = opts.maxY != null ? opts.maxY : 380; // stage viewBox height
+  const xOverlap = (a, b) => !((a.cx + a.w / 2) <= (b.cx - b.w / 2) || (b.cx + b.w / 2) <= (a.cx - a.w / 2));
+  const yOverlap = (a, b) => !((a.top + a.h + gap) <= b.top || (b.top + b.h + gap) <= a.top);
+  const overlaps = (a, b) => xOverlap(a, b) && yOverlap(a, b);
+  // Place top-to-bottom, left-to-right so higher labels anchor the packing.
+  const order = boxes.slice().sort((a, b) => (a.top - b.top) || (a.cx - b.cx));
+  const placed = [];
+  order.forEach(it => {
+    let guard = 0;
+    while (placed.some(p => overlaps(it, p)) && guard < 60) {
+      let lowest = it.top;
+      placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.top + p.h + gap); });
+      it.top = Math.max(it.top + step, lowest);
+      guard++;
+    }
+    // Don't run a caption off the bottom of the stage.
+    if (it.top + it.h > maxY) it.top = Math.max(0, maxY - it.h);
+    placed.push(it);
+  });
+  return boxes;
+}
+
 // Build SVG markup that highlights the FRONT edge of the stage (where vocalists line up).
 // Draws a thicker accent-colored stroke over shape.edge, plus an optional "FRONT" label nudged
 // inward from the edge midpoint. Only meaningful when a custom outline has a resolvable front edge.
@@ -4719,6 +4750,7 @@ function renderStageFeatures(layer, opts) {
     const r = layer.getBoundingClientRect();
     return { x: (clientX - r.left) / r.width * 800, y: (clientY - r.top) / r.height * 380 };
   };
+  const captionBoxes = []; // non-marker labels that hang below a fixture — de-overlapped after the loop
   feats.forEach(f => {
     // Label sits below the fixture's rotated bounding box and never rotates, so it stays upright.
     const labelY = (ff) => {
@@ -4750,6 +4782,8 @@ function renderStageFeatures(layer, opts) {
       lbl.style.left = pct(f.x, 800);
       lbl.style.top = pct(isMarker ? f.y : labelY(f), 380);
       layer.appendChild(lbl);
+      // Below-fixture captions get a de-overlap pass after the loop (markers sit inside, skip them).
+      if (!isMarker) captionBoxes.push({ lbl, cx: f.x, top: labelY(f), w: Math.max(24, (f.label || '').length * 5.6), h: 11 });
     }
     const syncLabel = () => { if (lbl) { lbl.style.left = pct(f.x, 800); lbl.style.top = pct(isMarker ? f.y : labelY(f), 380); } };
 
@@ -4828,6 +4862,13 @@ function renderStageFeatures(layer, opts) {
       if (opts.onDelete) opts.onDelete(f.id);
     });
   });
+
+  // Keep two nearby fixture captions from printing on top of each other: nudge overlapping
+  // labels straight down until they clear. (Interactive drag still repositions live via syncLabel.)
+  if (captionBoxes.length > 1) {
+    resolveFeatureLabelLayout(captionBoxes);
+    captionBoxes.forEach(b => { b.lbl.style.top = (b.top / 380) * 100 + '%'; });
+  }
 }
 
 // ---------------------------------------------------------------------------
