@@ -54,9 +54,13 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**Bulk pre-add everyone's setup preferences.**~~ ✅ SHIPPED 2026-07-18. Phase 1 = single-page
   grid (manual rows / "add current plan"). Phase 2 = PCO-linked: "＋ Bulk add regulars on your team
   (anyone scheduled from the last 6 months)" + PCO people search on the name field; tracks-only MD
-  → its own row with on/off-stage. → `bulkpreadd`, `bulkpreaddpco`. **Follow-on (future):** nothing
-  yet *uses* the captured MD on/off-stage (`musicianPreferences[name|md].onStage`) — a solo MD
-  isn't placed on/off stage on pull. Wire that up when solo-MD placement is tackled.
+  → its own row with on/off-stage. → `bulkpreadd`, `bulkpreaddpco`. ~~**Follow-on:** a solo MD isn't
+  placed on/off stage on pull.~~ ✅ RESOLVED 2026-07-28 → `mdsolo`. Dillon's rule: a Music Director
+  with **no instrument** (runs tracks) does **not** go on the stage — they appear on the **IEM list
+  labeled "MD" with a spare pack** (a Misc preset or an unused vocal pack; `pickSpareIemPack`).
+  `ensureSoloMdPack` keeps `state.mdSoloPack` in sync on pull/refresh; `findPackConflicts` includes
+  the MD so a pack clash still surfaces. (The captured `onStage` marker is now moot for solo MDs —
+  they're always off-stage-on-IEM by this rule; an MD who *does* play stays at their instrument.)
 
 ### Display / green-room
 - **[FEATURE] ~~Live countdown + idle screen~~ — DEPRIORITIZED.** A big clock counting down to
@@ -72,9 +76,11 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   only print path needed (the display is the on-screen/TV view).
 
 ### Stage editor
-- **[POLISH] Fixture label overlap.** A FIXTURE's label (stairs/doors/monitors) can overlap an
-  adjacent fixture on a crowded stage. (Distinct from the person name-label resolver — that shipped
-  2026-07-10 ·d.)
+- ~~**[POLISH] Fixture label overlap.**~~ ✅ SHIPPED 2026-07-28 → `featurelabel`. Two fixtures placed
+  close together printed their below-fixture captions (stairs/doors/monitors) at the same top, so
+  the labels sat on top of each other. `resolveFeatureLabelLayout` runs a vertical de-overlap pass
+  (mirrors the person name-label resolver) — captions are nudged straight down until they clear;
+  markers (labels inside their box) are excluded. Applied in every `renderStageFeatures` pass.
 
 ### Vocalists
 - ✅ **[DONE 2026-07-10 ·f] Seeded WL on an empty slot.** A blank starred vocalist no longer renders
