@@ -2208,6 +2208,8 @@ const DEFAULT_STATE = {
     voxIemPacks: ['Vocal 1','Vocal 2','Vocal 3','Vocal 4','Vocal 5','Vocal 6','Vocal 7','Vocal 8'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
     shadowPack: 'Misc 2',
+    setupCatalog: null,            // overlay of edited/custom setup catalogs (null = all factory)
+    setupTypeRules: [],            // [{id,keyword,key}] — keyword→setup-type auto-map (Phase 2)
     enableShadows: true, // shadows are always processed; retained as a harmless legacy field
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
@@ -2405,7 +2407,17 @@ const SETUP_TEMPLATES = {
   ]},
 };
 
-function setupCatalogFor(key) { return SETUP_TEMPLATES[key] || null; }
+function setupCatalogFor(key) {
+  return (state.config.setupCatalog && state.config.setupCatalog[key]) || SETUP_TEMPLATES[key] || null;
+}
+const BUILTIN_SETUP_KEYS = ['drums','bass','ag','eg','keys','md','strings','vocals'];
+function isCustomSetupKey(key) { return !BUILTIN_SETUP_KEYS.includes(key); }
+function allSetupKeys() {
+  const keys = BUILTIN_SETUP_KEYS.slice();
+  const ov = state.config.setupCatalog || {};
+  Object.keys(ov).forEach(k => { if (!keys.includes(k)) keys.push(k); });
+  return keys;
+}
 function churchSetupDefaults(key) {
   const d = (state.config.setupDefaults && state.config.setupDefaults[key]) || null;
   return d ? { selections: d.selections || {}, customOptions: d.customOptions || [] }
@@ -2577,6 +2589,12 @@ function loadState() {
           voxIemPacks: voxPacks.map(stripPackName),
           iemPackPresets: (loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS]).map(stripPackName),
           shadowPack: stripPackName(loadedConfig.shadowPack || 'Misc 2'),
+          setupCatalog: (loadedConfig.setupCatalog && typeof loadedConfig.setupCatalog === 'object')
+            ? (function(sc){ const out={}; Object.keys(sc).forEach(k=>{ const c=sc[k]; if(c && typeof c==='object' && Array.isArray(c.groups)) out[k]={ label:String(c.label||k), groups:c.groups.filter(g=>g&&g.id&&Array.isArray(g.options)).map(g=>({ id:g.id, name:String(g.name||''), type:g.type==='radio'?'radio':'check', options:g.options.filter(o=>o&&o.id).map(o=>({ id:o.id, text:String(o.text||''), ...(Array.isArray(o.addItems)?{addItems:o.addItems.slice()}:{}) })) })) }; }); return Object.keys(out).length?out:null; })(loadedConfig.setupCatalog)
+            : null,
+          setupTypeRules: Array.isArray(loadedConfig.setupTypeRules)
+            ? loadedConfig.setupTypeRules.filter(r=>r && r.keyword && r.key).map(r=>({ id:r.id||('rule_'+Math.random().toString(36).slice(2,8)), keyword:String(r.keyword), key:String(r.key) }))
+            : [],
           // Shadows are always processed now (no user toggle). Retained as a harmless
           // legacy field; force true so any lingering read stays consistent.
           enableShadows: true,
@@ -6913,7 +6931,7 @@ function appendSetupItemsChecklistToggle(el) {
 // Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
 // selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
 // (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
-const SETUP_DEFAULT_KEYS = ['drums', 'bass', 'ag', 'eg', 'keys', 'md', 'strings', 'vocals'];
+const SETUP_DEFAULT_KEYS = BUILTIN_SETUP_KEYS;
 function renderSetupDefaultsEditor(container) {
   if (!container) return;
   if (!state.config.setupDefaults) state.config.setupDefaults = {};
