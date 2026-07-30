@@ -134,6 +134,84 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if(o.cat!==null) throw new Error('empty-object setupCatalog not coerced to null, got '+JSON.stringify(o.cat));
   });
 
+  console.log('--- catalog edit operations (Task 2: pure catalog-edit ops) ---');
+  const freshEg=()=>ev("state.config.setupCatalog=null; catalogMaterialize('eg');");
+
+  check('catalogMaterialize deep-copies the built-in into the overlay', ()=>{
+    ev('state.config.setupCatalog=null;');
+    ev("catalogMaterialize('eg');");
+    if(!ev("!!(state.config.setupCatalog && state.config.setupCatalog.eg)")) throw new Error('overlay eg not created');
+    ev("state.config.setupCatalog.eg.groups[0].options[0].text='ZZZ';");
+    if(ev("SETUP_TEMPLATES.eg.groups[0].options[0].text")==='ZZZ') throw new Error('overlay aliased the factory');
+  });
+
+  check('catalogRenameOption keeps the id, changes the text', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const oid=ev("setupCatalogFor('eg').groups[0].options[0].id");
+    ev(`catalogRenameOption('eg','${gid}','${oid}','Helix');`);
+    const o=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups[0].options[0])`));
+    if(o.text!=='Helix') throw new Error('text not renamed');
+    if(o.id!==oid) throw new Error('id changed on rename');
+  });
+
+  check('catalogAddOption appends a new option with a fresh id', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const before=ev(`setupCatalogFor('eg').groups[0].options.length`);
+    const newId=ev(`catalogAddOption('eg','${gid}','Second rig')`);
+    const after=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups[0].options)`));
+    if(after.length!==before+1) throw new Error('option not added');
+    if(after[after.length-1].text!=='Second rig') throw new Error('wrong text');
+    if(!after.some(o=>o.id===newId)) throw new Error('returned id not present');
+  });
+
+  check('catalogRemoveOption drops it', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const oid=ev("setupCatalogFor('eg').groups[0].options[0].id");
+    ev(`catalogRemoveOption('eg','${gid}','${oid}');`);
+    if(ev(`setupCatalogFor('eg').groups[0].options.some(o=>o.id==='${oid}')`)) throw new Error('option not removed');
+  });
+
+  check('catalogMoveOption reorders within the group', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const first=ev("setupCatalogFor('eg').groups[0].options[0].id");
+    ev(`catalogMoveOption('eg','${gid}','${first}',1);`);
+    if(ev(`setupCatalogFor('eg').groups[0].options[1].id`)!==first) throw new Error('option not moved down');
+  });
+
+  check('catalogAddGroup / RenameGroup / SetGroupType / RemoveGroup / MoveGroup', ()=>{
+    freshEg();
+    const gid=ev("catalogAddGroup('eg','New Section','check')");
+    if(!ev(`setupCatalogFor('eg').groups.some(g=>g.id==='${gid}' && g.type==='check')`)) throw new Error('group not added');
+    ev(`catalogRenameGroup('eg','${gid}','Renamed');`);
+    if(ev(`setupCatalogFor('eg').groups.find(g=>g.id==='${gid}').name`)!=='Renamed') throw new Error('group not renamed');
+    ev(`catalogSetGroupType('eg','${gid}','radio');`);
+    if(ev(`setupCatalogFor('eg').groups.find(g=>g.id==='${gid}').type`)!=='radio') throw new Error('type not set');
+    ev(`catalogMoveGroup('eg','${gid}',-1);`);
+    ev(`catalogRemoveGroup('eg','${gid}');`);
+    if(ev(`setupCatalogFor('eg').groups.some(g=>g.id==='${gid}')`)) throw new Error('group not removed');
+  });
+
+  check('catalogResetKey (built-in) drops the overlay entry', ()=>{
+    freshEg();
+    ev("catalogResetKey('eg');");
+    if(ev("!!(state.config.setupCatalog && state.config.setupCatalog.eg)")) throw new Error('overlay eg still present after reset');
+  });
+
+  check('renaming an option preserves a rebuilt checklist (id-based resolve)', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const oid=ev("setupCatalogFor('eg').groups[0].options[0].id");
+    const sel=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':'${oid}'},[]).map(x=>x.text))`));
+    ev(`catalogRenameOption('eg','${gid}','${oid}','Helix');`);
+    const sel2=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':'${oid}'},[]).map(x=>x.text))`));
+    if(!sel2.includes('Helix')) throw new Error('rebuilt items do not show renamed text: '+sel2.join(','));
+    if(sel.length!==sel2.length) throw new Error('item count changed on rename');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;

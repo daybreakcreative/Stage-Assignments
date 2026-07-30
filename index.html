@@ -2446,6 +2446,54 @@ function allSetupKeys() {
   Object.keys(ov).forEach(k => { if (!keys.includes(k)) keys.push(k); });
   return keys;
 }
+// ── Editable setup catalog operations (all mutate state.config.setupCatalog, then saveState) ──
+function catalogMaterialize(key) {
+  if (!state.config.setupCatalog) state.config.setupCatalog = {};
+  if (!state.config.setupCatalog[key]) {
+    const base = SETUP_TEMPLATES[key];
+    state.config.setupCatalog[key] = base
+      ? structuredClone(base)
+      : { label: key, groups: [] };
+  }
+  return state.config.setupCatalog[key];
+}
+function _catGroup(key, groupId) { const c = catalogMaterialize(key); return c.groups.find(g => g.id === groupId) || null; }
+function _newCatId(p) { return p + Math.random().toString(36).slice(2, 8); }
+function catalogRenameOption(key, groupId, optId, text) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  const o = g.options.find(x => x.id === optId); if (o) { o.text = text; saveState(); }
+}
+function catalogAddOption(key, groupId, text) {
+  const g = _catGroup(key, groupId); if (!g) return null;
+  const id = _newCatId('opt_'); g.options.push({ id, text: text || 'New option' }); saveState(); return id;
+}
+function catalogRemoveOption(key, groupId, optId) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  g.options = g.options.filter(o => o.id !== optId); saveState();
+}
+function catalogMoveOption(key, groupId, optId, dir) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  const i = g.options.findIndex(o => o.id === optId); const j = i + dir;
+  if (i < 0 || j < 0 || j >= g.options.length) return;
+  const [it] = g.options.splice(i, 1); g.options.splice(j, 0, it); saveState();
+}
+function catalogAddGroup(key, name, type) {
+  const c = catalogMaterialize(key); const id = _newCatId('grp_');
+  c.groups.push({ id, name: name || 'New section', type: type === 'radio' ? 'radio' : 'check', options: [] });
+  saveState(); return id;
+}
+function catalogRenameGroup(key, groupId, name) { const g = _catGroup(key, groupId); if (g) { g.name = name; saveState(); } }
+function catalogSetGroupType(key, groupId, type) { const g = _catGroup(key, groupId); if (g) { g.type = type === 'radio' ? 'radio' : 'check'; saveState(); } }
+function catalogRemoveGroup(key, groupId) { const c = catalogMaterialize(key); c.groups = c.groups.filter(g => g.id !== groupId); saveState(); }
+function catalogMoveGroup(key, groupId, dir) {
+  const c = catalogMaterialize(key); const i = c.groups.findIndex(g => g.id === groupId); const j = i + dir;
+  if (i < 0 || j < 0 || j >= c.groups.length) return;
+  const [it] = c.groups.splice(i, 1); c.groups.splice(j, 0, it); saveState();
+}
+function catalogResetKey(key) {
+  if (state.config.setupCatalog) { delete state.config.setupCatalog[key]; if (!Object.keys(state.config.setupCatalog).length) state.config.setupCatalog = null; }
+  saveState();
+}
 function churchSetupDefaults(key) {
   const d = (state.config.setupDefaults && state.config.setupDefaults[key]) || null;
   return d ? { selections: d.selections || {}, customOptions: d.customOptions || [] }
