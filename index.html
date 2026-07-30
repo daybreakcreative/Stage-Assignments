@@ -2410,6 +2410,34 @@ const SETUP_TEMPLATES = {
 function setupCatalogFor(key) {
   return (state.config.setupCatalog && state.config.setupCatalog[key]) || SETUP_TEMPLATES[key] || null;
 }
+// Coerce a loaded setupCatalog overlay to a safe shape (or null). Drops malformed
+// types/groups/options; stringifies all text + id fields; empty result → null.
+function coerceSetupCatalogOverlay(sc) {
+  if (!sc || typeof sc !== 'object') return null;
+  const out = {};
+  Object.keys(sc).forEach(k => {
+    const c = sc[k];
+    if (!c || typeof c !== 'object' || !Array.isArray(c.groups)) return;
+    out[k] = {
+      label: String(c.label || k),
+      groups: c.groups
+        .filter(g => g && g.id && Array.isArray(g.options))
+        .map(g => ({
+          id: String(g.id),
+          name: String(g.name || ''),
+          type: g.type === 'radio' ? 'radio' : 'check',
+          options: g.options
+            .filter(o => o && o.id)
+            .map(o => ({
+              id: String(o.id),
+              text: String(o.text || ''),
+              ...(Array.isArray(o.addItems) ? { addItems: o.addItems.slice() } : {})
+            }))
+        }))
+    };
+  });
+  return Object.keys(out).length ? out : null;
+}
 const BUILTIN_SETUP_KEYS = ['drums','bass','ag','eg','keys','md','strings','vocals'];
 function isCustomSetupKey(key) { return !BUILTIN_SETUP_KEYS.includes(key); }
 function allSetupKeys() {
@@ -2589,9 +2617,7 @@ function loadState() {
           voxIemPacks: voxPacks.map(stripPackName),
           iemPackPresets: (loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS]).map(stripPackName),
           shadowPack: stripPackName(loadedConfig.shadowPack || 'Misc 2'),
-          setupCatalog: (loadedConfig.setupCatalog && typeof loadedConfig.setupCatalog === 'object')
-            ? (function(sc){ const out={}; Object.keys(sc).forEach(k=>{ const c=sc[k]; if(c && typeof c==='object' && Array.isArray(c.groups)) out[k]={ label:String(c.label||k), groups:c.groups.filter(g=>g&&g.id&&Array.isArray(g.options)).map(g=>({ id:g.id, name:String(g.name||''), type:g.type==='radio'?'radio':'check', options:g.options.filter(o=>o&&o.id).map(o=>({ id:o.id, text:String(o.text||''), ...(Array.isArray(o.addItems)?{addItems:o.addItems.slice()}:{}) })) })) }; }); return Object.keys(out).length?out:null; })(loadedConfig.setupCatalog)
-            : null,
+          setupCatalog: coerceSetupCatalogOverlay(loadedConfig.setupCatalog),
           setupTypeRules: Array.isArray(loadedConfig.setupTypeRules)
             ? loadedConfig.setupTypeRules.filter(r=>r && r.keyword && r.key).map(r=>({ id:r.id||('rule_'+Math.random().toString(36).slice(2,8)), keyword:String(r.keyword), key:String(r.key) }))
             : [],
