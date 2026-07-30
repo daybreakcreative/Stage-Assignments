@@ -77,7 +77,10 @@ window.addEventListener('load', ()=>setTimeout(()=>{
 
   check('config has setupCatalog(null-ish) and setupTypeRules(array) defaults', ()=>{
     if(ev('typeof state.config.setupTypeRules')!=='object' || !ev('Array.isArray(state.config.setupTypeRules)')) throw new Error('setupTypeRules not an array');
-    ev('state.config.setupCatalog');
+    const cat=ev('state.config.setupCatalog');
+    if(cat!==null) throw new Error('setupCatalog default not null, got '+JSON.stringify(cat));
+    const rules=JSON.parse(ev('JSON.stringify(state.config.setupTypeRules)'));
+    if(rules.length!==0) throw new Error('setupTypeRules default not [], got '+JSON.stringify(rules));
   });
 
   check('setupCatalogFor returns the built-in when no overlay', ()=>{
@@ -115,6 +118,20 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if(o.cat!==null && typeof o.cat!=='object') throw new Error('setupCatalog not coerced, got '+o.cat);
     if(!Array.isArray(o.rules)) throw new Error('rules not array');
     if(o.rules.some(r=>!r||!r.keyword||!r.key)) throw new Error('malformed rule survived: '+JSON.stringify(o.rules));
+  });
+
+  check('loadState coerces a well-formed-but-all-entries-malformed setupCatalog object to null', ()=>{
+    ev("localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'),{config:Object.assign({},state.config,{setupCatalog:{ eg:{ label:'Electric' } }, setupTypeRules:[]})})));");
+    const s2=ev('(function(){var s=loadState(); return JSON.stringify({cat:s.config.setupCatalog});})()');
+    const o=JSON.parse(s2);
+    if(o.cat!==null) throw new Error('all-entries-malformed setupCatalog not coerced to null, got '+JSON.stringify(o.cat));
+  });
+
+  check('loadState coerces a literal {} setupCatalog to null', ()=>{
+    ev("localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'),{config:Object.assign({},state.config,{setupCatalog:{}, setupTypeRules:[]})})));");
+    const s2=ev('(function(){var s=loadState(); return JSON.stringify({cat:s.config.setupCatalog});})()');
+    const o=JSON.parse(s2);
+    if(o.cat!==null) throw new Error('empty-object setupCatalog not coerced to null, got '+JSON.stringify(o.cat));
   });
 
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
