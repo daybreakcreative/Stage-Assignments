@@ -145,6 +145,26 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if(ev("SETUP_TEMPLATES.eg.groups[0].options[0].text")==='ZZZ') throw new Error('overlay aliased the factory');
   });
 
+  check('catalogMaterialize on a non-built-in key returns a blank {label,groups:[]} shape', ()=>{
+    ev("state.config.setupCatalog=null;");
+    const c=JSON.parse(ev("JSON.stringify(catalogMaterialize('customwidget'))"));
+    if(c.label!=='customwidget') throw new Error('label not set to key, got '+JSON.stringify(c.label));
+    if(!Array.isArray(c.groups)||c.groups.length!==0) throw new Error('groups not blank, got '+JSON.stringify(c.groups));
+  });
+
+  check('mutating ops actually persist to localStorage (saveState is called, not just in-memory)', ()=>{
+    freshEg();
+    ev("localStorage.removeItem(STORAGE_KEY);");
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    ev(`catalogAddOption('eg','${gid}','Persisted option');`);
+    const raw=ev("localStorage.getItem(STORAGE_KEY)");
+    if(!raw) throw new Error('no localStorage write after catalogAddOption');
+    const saved=JSON.parse(raw);
+    const opts=(((saved.config||{}).setupCatalog||{}).eg||{}).groups||[];
+    const found=opts.some(g=>g.id===gid && g.options.some(o=>o.text==='Persisted option'));
+    if(!found) throw new Error('persisted state does not contain the new option');
+  });
+
   check('catalogRenameOption keeps the id, changes the text', ()=>{
     freshEg();
     const gid=ev("setupCatalogFor('eg').groups[0].id");
@@ -180,6 +200,27 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     const first=ev("setupCatalogFor('eg').groups[0].options[0].id");
     ev(`catalogMoveOption('eg','${gid}','${first}',1);`);
     if(ev(`setupCatalogFor('eg').groups[0].options[1].id`)!==first) throw new Error('option not moved down');
+  });
+
+  check('catalogMoveOption is bounds-safe at both edges (no throw, no change)', ()=>{
+    freshEg();
+    const gid=ev("setupCatalogFor('eg').groups[0].id");
+    const before=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups[0].options.map(o=>o.id))`));
+    const firstId=before[0], lastId=before[before.length-1];
+    ev(`catalogMoveOption('eg','${gid}','${firstId}',-1);`);
+    ev(`catalogMoveOption('eg','${gid}','${lastId}',1);`);
+    const after=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups[0].options.map(o=>o.id))`));
+    if(JSON.stringify(before)!==JSON.stringify(after)) throw new Error('out-of-range move mutated order: '+after.join(','));
+  });
+
+  check('catalogMoveGroup is bounds-safe at both edges (no throw, no change)', ()=>{
+    freshEg();
+    const before=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups.map(g=>g.id))`));
+    const firstId=before[0], lastId=before[before.length-1];
+    ev(`catalogMoveGroup('eg','${firstId}',-1);`);
+    ev(`catalogMoveGroup('eg','${lastId}',1);`);
+    const after=JSON.parse(ev(`JSON.stringify(setupCatalogFor('eg').groups.map(g=>g.id))`));
+    if(JSON.stringify(before)!==JSON.stringify(after)) throw new Error('out-of-range move mutated order: '+after.join(','));
   });
 
   check('catalogAddGroup / RenameGroup / SetGroupType / RemoveGroup / MoveGroup', ()=>{
