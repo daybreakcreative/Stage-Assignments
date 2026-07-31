@@ -50,5 +50,32 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev("state.config.setupTypeRules=[]; state.config.setupCatalog=null;");
  });
 
+ check('catalogAddType creates a custom key present in allSetupKeys', ()=>{
+   ev("state.config.setupCatalog=null;");
+   const k=ev("catalogAddType('Percussion')");
+   if(!/^custom_/.test(k)) throw new Error('unexpected key '+k);
+   if(!ev(`allSetupKeys().includes('${k}')`)) throw new Error('custom key not enumerated');
+   if(ev(`setupCatalogFor('${k}').label`)!=='Percussion') throw new Error('label not set');
+ });
+
+ check('bulkRoleOpts() includes custom types', ()=>{
+   ev("state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   const opts=JSON.parse(ev("JSON.stringify(bulkRoleOpts().map(o=>o.v))"));
+   if(!opts.includes(ev('window.__pk'))) throw new Error('custom type missing from bulkRoleOpts: '+opts.join(','));
+ });
+
+ check('catalogRemoveType deletes the type and its keyword rules', ()=>{
+   ev("state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion'); state.config.setupTypeRules=[{id:'r',keyword:'perc',key:window.__pk}];");
+   ev("catalogRemoveType(window.__pk);");
+   if(ev(`allSetupKeys().includes(window.__pk)`)) throw new Error('type not removed');
+   if(ev("state.config.setupTypeRules.some(r=>r.key===window.__pk)")) throw new Error('dangling rule left behind');
+ });
+
+ check('catalogRemoveType refuses to delete a built-in key', ()=>{
+   ev("state.config.setupCatalog=null; catalogMaterialize('eg'); catalogRemoveType('eg');");
+   // eg is built-in; removeType must be a no-op (overlay entry may remain, key still enumerated)
+   if(!ev("allSetupKeys().includes('eg')")) throw new Error('built-in eg wrongly removed');
+ });
+
  setTimeout(()=>{ console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','==='); process.exit(errs.length?1:0); },20);
 },60));

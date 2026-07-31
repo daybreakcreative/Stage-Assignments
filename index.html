@@ -2508,6 +2508,18 @@ function catalogResetKey(key) {
   if (state.config.setupCatalog) { delete state.config.setupCatalog[key]; if (!Object.keys(state.config.setupCatalog).length) state.config.setupCatalog = null; }
   saveState();
 }
+function catalogAddType(label) {
+  if (!state.config.setupCatalog) state.config.setupCatalog = {};
+  const key = _newCatId('custom_');
+  state.config.setupCatalog[key] = { label: label || 'New type', groups: [] };
+  saveState(); return key;
+}
+function catalogRemoveType(key) {
+  if (!isCustomSetupKey(key)) return; // built-ins can't be deleted, only reset
+  if (state.config.setupCatalog) { delete state.config.setupCatalog[key]; if (!Object.keys(state.config.setupCatalog).length) state.config.setupCatalog = null; }
+  state.config.setupTypeRules = (state.config.setupTypeRules || []).filter(r => r.key !== key);
+  saveState();
+}
 function churchSetupDefaults(key) {
   const d = (state.config.setupDefaults && state.config.setupDefaults[key]) || null;
   return d ? { selections: d.selections || {}, customOptions: d.customOptions || [] }
@@ -7107,7 +7119,7 @@ const SETUP_DEFAULT_KEYS = BUILTIN_SETUP_KEYS;
 function renderSetupDefaultsEditor(container) {
   if (!container) return;
   if (!state.config.setupDefaults) state.config.setupDefaults = {};
-  const cardsHtml = SETUP_DEFAULT_KEYS.map(key => {
+  const cardsHtml = allSetupKeys().map(key => {
     const cat = setupCatalogFor(key);
     if (!cat) return '';
     return `
@@ -7130,9 +7142,15 @@ function renderSetupDefaultsEditor(container) {
       <div class="setup-defaults-note">Applied to new people as they're added. Edit someone already on a plan below.</div>
       <div class="wiz-setup-insts">${cardsHtml}</div>
     </details>
-    <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>`;
+    <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>
+    <button class="btn ghost" id="catAddTypeBtn" style="margin-bottom:16px;">＋ New instrument type</button>`;
   const bulkBtn = container.querySelector('#bulkPreaddOpenBtn');
   if (bulkBtn) bulkBtn.addEventListener('click', openBulkPreadd);
+  const catAddBtn = container.querySelector('#catAddTypeBtn');
+  if (catAddBtn) catAddBtn.addEventListener('click', () => {
+    const label = prompt('Name for the new instrument type (e.g. Percussion):');
+    if (label && label.trim()) { catalogAddType(label.trim()); renderSetupDefaultsEditor(container); }
+  });
   container.querySelectorAll('.wiz-setup-inst[data-def-key]').forEach(card => {
     const key = card.dataset.defKey;
     if (!state.config.setupDefaults[key]) state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
@@ -7205,15 +7223,22 @@ function bulkPersonHasRow(pid, role, typeKey) {
 function bulkPosLabel(r) {
   if (r.role === 'vocalist') return 'Vocals';
   if (r.role === 'md') return 'MD';
-  const o = BULK_ROLE_OPTS.find(x => x.v === r.typeKey);
+  const o = bulkRoleOpts().find(x => x.v === r.typeKey);
   return o ? o.label : (r.typeKey || 'Band');
 }
-const BULK_ROLE_OPTS = [
+const BUILTIN_BULK_ROLE_OPTS = [
   { v: 'vocalist', label: 'Vocalist' },
   { v: 'drums', label: 'Drums' }, { v: 'bass', label: 'Bass' }, { v: 'keys', label: 'Keys' },
   { v: 'eg', label: 'Electric Gtr' }, { v: 'ag', label: 'Acoustic Gtr' }, { v: 'strings', label: 'Strings' },
   { v: 'md', label: 'MD (tracks, no instrument)' }
 ];
+function bulkRoleOpts() {
+  const opts = BUILTIN_BULK_ROLE_OPTS.slice();
+  (state.config.setupCatalog ? Object.keys(state.config.setupCatalog) : []).forEach(k => {
+    if (isCustomSetupKey(k)) opts.push({ v: k, label: (setupCatalogFor(k).label || k) });
+  });
+  return opts;
+}
 function addBulkRow(partial) {
   bulkPreaddRows.push(Object.assign(
     { id: 'br_' + Math.random().toString(36).slice(2, 8), pid: '', name: '', role: 'band', typeKey: 'keys', mic: '', open: false },
@@ -7296,7 +7321,7 @@ function renderBulkPreadd() {
   }
   const canSearch = !!pcoTokens;
   const micOptsFor = (r) => (state.inventory || []).map(m => `<option value="${esc(m.name)}|${m.wireless ? 'wl' : 'wd'}"${r.mic === m.name ? ' selected' : ''}>${esc(m.name + (m.wireless ? ' (Wireless)' : ''))}</option>`).join('');
-  const addOpts = BULK_ROLE_OPTS.map(o => `<option value="${o.v}">${o.label}</option>`).join('');
+  const addOpts = bulkRoleOpts().map(o => `<option value="${o.v}">${o.label}</option>`).join('');
   list.innerHTML = bulkPeople.map(p => {
     const rows = bulkPreaddRows.filter(r => r.pid === p.pid);
     const chips = rows.map(r => {
