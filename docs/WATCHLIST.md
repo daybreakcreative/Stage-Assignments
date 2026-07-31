@@ -164,6 +164,14 @@ Behaviors that must keep working. **The executable version of this list is `test
 - [ ] Flat setup UI + Settings "Templates" tab + old Template feature are RETIRED; the
       person card is grouped-only and "Add item" writes a custom item without data loss. →
       `setupretire`
+- [ ] **Editable setup catalog.** `setupCatalogFor` reads the `state.config.setupCatalog`
+      overlay first, else built-in `SETUP_TEMPLATES` (coerced safely on load via
+      `coerceSetupCatalogOverlay`). Editing an option/section preserves ids, so saved person
+      selections still resolve; removing an option/section leaves dangling selections inert;
+      reset-to-default drops the overlay entry. Custom instrument types appear in
+      `allSetupKeys()`, `bulkRoleOpts()`, and the Setup Items editor cards. `detectPresetKey`
+      priority: `inst.setupKey` → `setupTypeRules` keyword → built-in regex. The per-instrument
+      Setup-type override only shows when a custom type exists. → `setupcatalog`, `setuptypes`
 
 ### Stage & layout
 - [ ] Stage renders D-shape; curve/depth sliders reshape it; custom outline overrides. →

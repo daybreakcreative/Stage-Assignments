@@ -722,6 +722,29 @@ background-size:5% 10%}
 .setup-defaults-summary::before{content:'▸ ';color:var(--accent)}
 .setup-defaults-disclosure[open] .setup-defaults-summary::before{content:'▾ '}
 .setup-defaults-note{font-size:12px;color:var(--text-muted);margin:0 0 6px 2px}
+.cat-editor{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+.cat-group{border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg-inset)}
+.cat-group-head{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.cat-group-name{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px;font-weight:600}
+.cat-group-type,.cat-group-add-type{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 6px;font-size:11px}
+.cat-opts{display:flex;flex-direction:column;gap:4px;padding-left:6px}
+.cat-opt-row,.cat-opt-add-row{display:flex;gap:6px;align-items:center}
+.cat-opt-input,.cat-opt-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.cat-btn{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);padding:3px 7px;font-size:11px;cursor:pointer}
+.cat-btn:hover{color:var(--text);border-color:var(--accent)}
+.cat-editor-foot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.cat-group-add-input{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.cat-reset{margin-left:auto}
+.cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px;list-style:none}
+.cat-edit-summary::-webkit-details-marker{display:none}
+.cat-edit-summary::before{content:'▸ ';color:var(--accent)}
+.cat-edit-disclosure[open] .cat-edit-summary::before{content:'▾ '}
+.rules-note{font-size:12px;color:var(--text-muted);margin:6px 0}
+.rule-row{display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0}
+.rule-add-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.rule-kw{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.rule-key{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 6px;font-size:11px}
+.rule-kw-static{font-weight:600}
 #bulkList{flex:1;overflow-y:auto;min-height:0}
 .bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;flex:none}
 .bulk-empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px}
@@ -2208,6 +2231,8 @@ const DEFAULT_STATE = {
     voxIemPacks: ['Vocal 1','Vocal 2','Vocal 3','Vocal 4','Vocal 5','Vocal 6','Vocal 7','Vocal 8'],
     iemPackPresets: [...DEFAULT_IEM_PACK_PRESETS],
     shadowPack: 'Misc 2',
+    setupCatalog: null,            // overlay of edited/custom setup catalogs (null = all factory)
+    setupTypeRules: [],            // [{id,keyword,key}] — keyword→setup-type auto-map (Phase 2)
     enableShadows: true, // shadows are always processed; retained as a harmless legacy field
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
@@ -2405,7 +2430,105 @@ const SETUP_TEMPLATES = {
   ]},
 };
 
-function setupCatalogFor(key) { return SETUP_TEMPLATES[key] || null; }
+function setupCatalogFor(key) {
+  return (state.config.setupCatalog && state.config.setupCatalog[key]) || SETUP_TEMPLATES[key] || null;
+}
+// Coerce a loaded setupCatalog overlay to a safe shape (or null). Drops malformed
+// types/groups/options; stringifies all text + id fields; empty result → null.
+function coerceSetupCatalogOverlay(sc) {
+  if (!sc || typeof sc !== 'object') return null;
+  const out = {};
+  Object.keys(sc).forEach(k => {
+    const c = sc[k];
+    if (!c || typeof c !== 'object' || !Array.isArray(c.groups)) return;
+    out[k] = {
+      label: String(c.label || k),
+      groups: c.groups
+        .filter(g => g && g.id && Array.isArray(g.options))
+        .map(g => ({
+          id: String(g.id),
+          name: String(g.name || ''),
+          type: g.type === 'radio' ? 'radio' : 'check',
+          options: g.options
+            .filter(o => o && o.id)
+            .map(o => ({
+              id: String(o.id),
+              text: String(o.text || ''),
+              ...(Array.isArray(o.addItems) ? { addItems: o.addItems.slice() } : {})
+            }))
+        }))
+    };
+  });
+  return Object.keys(out).length ? out : null;
+}
+const BUILTIN_SETUP_KEYS = ['drums','bass','ag','eg','keys','md','strings','vocals'];
+function isCustomSetupKey(key) { return !BUILTIN_SETUP_KEYS.includes(key); }
+function allSetupKeys() {
+  const keys = BUILTIN_SETUP_KEYS.slice();
+  const ov = state.config.setupCatalog || {};
+  Object.keys(ov).forEach(k => { if (!keys.includes(k)) keys.push(k); });
+  return keys;
+}
+// ── Editable setup catalog operations (all mutate state.config.setupCatalog, then saveState) ──
+function catalogMaterialize(key) {
+  if (!state.config.setupCatalog) state.config.setupCatalog = {};
+  if (!state.config.setupCatalog[key]) {
+    const base = SETUP_TEMPLATES[key];
+    state.config.setupCatalog[key] = base
+      ? structuredClone(base)
+      : { label: key, groups: [] };
+  }
+  return state.config.setupCatalog[key];
+}
+function _catGroup(key, groupId) { const c = catalogMaterialize(key); return c.groups.find(g => g.id === groupId) || null; }
+function _newCatId(p) { return p + Math.random().toString(36).slice(2, 8); }
+function catalogRenameOption(key, groupId, optId, text) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  const o = g.options.find(x => x.id === optId); if (o) { o.text = text; saveState(); }
+}
+function catalogAddOption(key, groupId, text) {
+  const g = _catGroup(key, groupId); if (!g) return null;
+  const id = _newCatId('opt_'); g.options.push({ id, text: text || 'New option' }); saveState(); return id;
+}
+function catalogRemoveOption(key, groupId, optId) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  g.options = g.options.filter(o => o.id !== optId); saveState();
+}
+function catalogMoveOption(key, groupId, optId, dir) {
+  const g = _catGroup(key, groupId); if (!g) return;
+  const i = g.options.findIndex(o => o.id === optId); const j = i + dir;
+  if (i < 0 || j < 0 || j >= g.options.length) return;
+  const [it] = g.options.splice(i, 1); g.options.splice(j, 0, it); saveState();
+}
+function catalogAddGroup(key, name, type) {
+  const c = catalogMaterialize(key); const id = _newCatId('grp_');
+  c.groups.push({ id, name: name || 'New section', type: type === 'radio' ? 'radio' : 'check', options: [] });
+  saveState(); return id;
+}
+function catalogRenameGroup(key, groupId, name) { const g = _catGroup(key, groupId); if (g) { g.name = name; saveState(); } }
+function catalogSetGroupType(key, groupId, type) { const g = _catGroup(key, groupId); if (g) { g.type = type === 'radio' ? 'radio' : 'check'; saveState(); } }
+function catalogRemoveGroup(key, groupId) { const c = catalogMaterialize(key); c.groups = c.groups.filter(g => g.id !== groupId); saveState(); }
+function catalogMoveGroup(key, groupId, dir) {
+  const c = catalogMaterialize(key); const i = c.groups.findIndex(g => g.id === groupId); const j = i + dir;
+  if (i < 0 || j < 0 || j >= c.groups.length) return;
+  const [it] = c.groups.splice(i, 1); c.groups.splice(j, 0, it); saveState();
+}
+function catalogResetKey(key) {
+  if (state.config.setupCatalog) { delete state.config.setupCatalog[key]; if (!Object.keys(state.config.setupCatalog).length) state.config.setupCatalog = null; }
+  saveState();
+}
+function catalogAddType(label) {
+  if (!state.config.setupCatalog) state.config.setupCatalog = {};
+  const key = _newCatId('custom_');
+  state.config.setupCatalog[key] = { label: label || 'New type', groups: [] };
+  saveState(); return key;
+}
+function catalogRemoveType(key) {
+  if (!isCustomSetupKey(key)) return; // built-ins can't be deleted, only reset
+  if (state.config.setupCatalog) { delete state.config.setupCatalog[key]; if (!Object.keys(state.config.setupCatalog).length) state.config.setupCatalog = null; }
+  state.config.setupTypeRules = (state.config.setupTypeRules || []).filter(r => r.key !== key);
+  saveState();
+}
 function churchSetupDefaults(key) {
   const d = (state.config.setupDefaults && state.config.setupDefaults[key]) || null;
   return d ? { selections: d.selections || {}, customOptions: d.customOptions || [] }
@@ -2461,8 +2584,17 @@ function editSetupItemText(stableKey, typeKey, oldText, rawNewText) {
 
 function detectPresetKey(inst) {
   if (!inst) return null;
+  // 1) explicit per-instrument override
+  if (inst.setupKey && (BUILTIN_SETUP_KEYS.includes(inst.setupKey) || (state.config.setupCatalog && state.config.setupCatalog[inst.setupKey]))) return inst.setupKey;
   const tag = (inst.tag || '').toLowerCase();
   const label = (inst.label || '').toLowerCase();
+  // 2) user keyword rules (first match wins)
+  const rules = Array.isArray(state.config.setupTypeRules) ? state.config.setupTypeRules : [];
+  for (const r of rules) {
+    const kw = (r.keyword || '').toLowerCase().trim();
+    if (kw && (tag.includes(kw) || label.includes(kw))) return r.key;
+  }
+  // 3) built-in regex (unchanged below)
   if (/drum/.test(tag) || /drum/.test(label)) return 'drums';
   if (/bass/.test(tag) || /bass/.test(label)) return 'bass';
   if (/eg|electric/.test(tag) || /electric/.test(label)) return 'eg';
@@ -2577,6 +2709,10 @@ function loadState() {
           voxIemPacks: voxPacks.map(stripPackName),
           iemPackPresets: (loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS]).map(stripPackName),
           shadowPack: stripPackName(loadedConfig.shadowPack || 'Misc 2'),
+          setupCatalog: coerceSetupCatalogOverlay(loadedConfig.setupCatalog),
+          setupTypeRules: Array.isArray(loadedConfig.setupTypeRules)
+            ? loadedConfig.setupTypeRules.filter(r=>r && r.keyword && r.key).map(r=>({ id:r.id||('rule_'+Math.random().toString(36).slice(2,8)), keyword:String(r.keyword), key:String(r.key) }))
+            : [],
           // Shadows are always processed now (no user toggle). Retained as a harmless
           // legacy field; force true so any lingering read stays consistent.
           enableShadows: true,
@@ -6300,6 +6436,11 @@ function renderInstrumentsEditor() {
               ${c.iemPackPresets.map(p => `<option value="${esc(p)}"${p === inst.pack ? ' selected' : ''}>${esc(p)}</option>`).join('')}
               ${(c.iemPackPresets.indexOf(inst.pack) === -1 && inst.pack) ? `<option value="${esc(inst.pack)}" selected>${esc(inst.pack)} (custom)</option>` : ''}
             </select>
+            ${(state.config.setupCatalog && Object.keys(state.config.setupCatalog).some(isCustomSetupKey)) ? `
+            <select class="field-input inst-setupkey" data-id="${esc(inst.id)}" data-field="setupKey" title="Which setup questions this instrument uses">
+              <option value="">Setup: Auto (by name)</option>
+              ${allSetupKeys().map(k => `<option value="${esc(k)}"${inst.setupKey===k?' selected':''}>Setup: ${esc((setupCatalogFor(k)||{}).label||k)}</option>`).join('')}
+            </select>` : ''}
           </div>
           <div class="inst-vocalist">
             <select class="field-input" data-id="${esc(inst.id)}" data-field="vocalistPlayer">
@@ -6910,14 +7051,116 @@ function appendSetupItemsChecklistToggle(el) {
   }
 }
 
+// Inline structural editor for one setup type's catalog (sections + options). Mutates the overlay
+// through the catalog* ops and re-renders in place. `onDone` (optional) fires after Reset.
+function renderCatalogEditor(container, key, onDone) {
+  if (!container) return;
+  const cat = setupCatalogFor(key) || { label: key, groups: [] };
+  const custom = isCustomSetupKey(key);
+  const rerender = () => renderCatalogEditor(container, key, onDone);
+  const groupsHtml = cat.groups.map(g => `
+    <div class="cat-group" data-gid="${esc(g.id)}">
+      <div class="cat-group-head">
+        <input class="cat-group-name" value="${esc(g.name)}" />
+        <select class="cat-group-type">
+          <option value="check"${g.type!=='radio'?' selected':''}>pick any</option>
+          <option value="radio"${g.type==='radio'?' selected':''}>pick one</option>
+        </select>
+        <button class="cat-btn cat-g-up" type="button" title="Move up">↑</button>
+        <button class="cat-btn cat-g-dn" type="button" title="Move down">↓</button>
+        <button class="cat-btn cat-g-del" type="button" title="Remove section">✕</button>
+      </div>
+      <div class="cat-opts">
+        ${g.options.map(o => `
+          <div class="cat-opt-row" data-oid="${esc(o.id)}">
+            <input class="cat-opt-input" value="${esc(o.text)}" />
+            <button class="cat-btn cat-o-up" type="button" title="Move up">↑</button>
+            <button class="cat-btn cat-o-dn" type="button" title="Move down">↓</button>
+            <button class="cat-btn cat-o-del" type="button" title="Remove option">✕</button>
+          </div>`).join('')}
+        <div class="cat-opt-add-row">
+          <input class="cat-opt-add-input" placeholder="Add an option…" />
+          <button class="cat-btn cat-o-add" type="button">+ Add</button>
+        </div>
+      </div>
+    </div>`).join('');
+  container.innerHTML = `
+    <div class="cat-editor">
+      ${groupsHtml}
+      <div class="cat-editor-foot">
+        <input class="cat-group-add-input" placeholder="New section name…" />
+        <select class="cat-group-add-type"><option value="check">pick any</option><option value="radio">pick one</option></select>
+        <button class="cat-btn cat-add-group" type="button">+ Section</button>
+        <button class="cat-btn cat-reset" type="button">${custom ? 'Delete this type' : 'Reset to default'}</button>
+      </div>
+    </div>`;
+  container.querySelectorAll('.cat-group').forEach(gEl => {
+    const gid = gEl.dataset.gid;
+    gEl.querySelector('.cat-group-name').addEventListener('change', e => { catalogRenameGroup(key, gid, e.target.value.trim()); });
+    gEl.querySelector('.cat-group-type').addEventListener('change', e => { catalogSetGroupType(key, gid, e.target.value); });
+    gEl.querySelector('.cat-g-up').addEventListener('click', () => { catalogMoveGroup(key, gid, -1); rerender(); });
+    gEl.querySelector('.cat-g-dn').addEventListener('click', () => { catalogMoveGroup(key, gid, 1); rerender(); });
+    gEl.querySelector('.cat-g-del').addEventListener('click', () => { if (confirm('Remove this section?')) { catalogRemoveGroup(key, gid); rerender(); } });
+    gEl.querySelectorAll('.cat-opt-row').forEach(oEl => {
+      const oid = oEl.dataset.oid;
+      oEl.querySelector('.cat-opt-input').addEventListener('input', e => { catalogRenameOption(key, gid, oid, e.target.value); });
+      oEl.querySelector('.cat-o-up').addEventListener('click', () => { catalogMoveOption(key, gid, oid, -1); rerender(); });
+      oEl.querySelector('.cat-o-dn').addEventListener('click', () => { catalogMoveOption(key, gid, oid, 1); rerender(); });
+      oEl.querySelector('.cat-o-del').addEventListener('click', () => { catalogRemoveOption(key, gid, oid); rerender(); });
+    });
+    const addInp = gEl.querySelector('.cat-opt-add-input');
+    const addOpt = () => { const t = addInp.value.trim(); if (!t) return; catalogAddOption(key, gid, t); rerender(); };
+    gEl.querySelector('.cat-o-add').addEventListener('click', addOpt);
+    addInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addOpt(); } });
+  });
+  const gAddInp = container.querySelector('.cat-group-add-input');
+  const gAddType = container.querySelector('.cat-group-add-type');
+  const addGroup = () => { const n = gAddInp.value.trim(); if (!n) return; catalogAddGroup(key, n, gAddType.value); rerender(); };
+  container.querySelector('.cat-add-group').addEventListener('click', addGroup);
+  gAddInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addGroup(); } });
+  container.querySelector('.cat-reset').addEventListener('click', () => {
+    const msg = custom ? 'Delete this instrument type entirely?' : 'Reset this instrument’s questions to the built-in default?';
+    if (!confirm(msg)) return;
+    if (custom) { catalogRemoveType(key); } else { catalogResetKey(key); }
+    if (onDone) onDone(); else rerender();
+  });
+}
+
+function renderSetupTypeRules(container) {
+  if (!container) return;
+  const rules = state.config.setupTypeRules || (state.config.setupTypeRules = []);
+  const keyOpts = allSetupKeys().map(k => `<option value="${esc(k)}">${esc((setupCatalogFor(k).label)||k)}</option>`).join('');
+  container.innerHTML = `
+    <div class="rules-note">Auto-map a Planning Center position to a setup type when its name contains a keyword.</div>
+    <div class="rules-list">${rules.map(r => `
+      <div class="rule-row" data-rid="${esc(r.id)}">
+        <span class="rule-kw-static">“${esc(r.keyword)}”</span> → <span class="rule-key-static">${esc(((setupCatalogFor(r.key)||{}).label)||r.key)}</span>
+        <button class="cat-btn rule-del" type="button">✕</button>
+      </div>`).join('')}</div>
+    <div class="rule-add-row">
+      <input class="rule-kw" placeholder="keyword (e.g. percussion)" />
+      <select class="rule-key">${keyOpts}</select>
+      <button class="cat-btn rule-add" type="button">+ Rule</button>
+    </div>`;
+  container.querySelectorAll('.rule-row').forEach(row => {
+    row.querySelector('.rule-del').addEventListener('click', () => {
+      state.config.setupTypeRules = rules.filter(r => r.id !== row.dataset.rid); saveState(); renderSetupTypeRules(container);
+    });
+  });
+  const kw = container.querySelector('.rule-kw'); const key = container.querySelector('.rule-key');
+  container.querySelector('.rule-add').addEventListener('click', () => {
+    const k = kw.value.trim(); if (!k || !key.value) return;
+    rules.push({ id: 'rule_' + Math.random().toString(36).slice(2, 8), keyword: k, key: key.value }); saveState(); renderSetupTypeRules(container);
+  });
+}
+
 // Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
 // selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
 // (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
-const SETUP_DEFAULT_KEYS = ['drums', 'bass', 'ag', 'eg', 'keys', 'md', 'strings', 'vocals'];
 function renderSetupDefaultsEditor(container) {
   if (!container) return;
   if (!state.config.setupDefaults) state.config.setupDefaults = {};
-  const cardsHtml = SETUP_DEFAULT_KEYS.map(key => {
+  const cardsHtml = allSetupKeys().map(key => {
     const cat = setupCatalogFor(key);
     if (!cat) return '';
     return `
@@ -6929,6 +7172,9 @@ function renderSetupDefaultsEditor(container) {
           <input type="text" class="wiz-setup-custom-input def-custom-input" placeholder="Add a custom setup item…" />
           <button class="btn ghost wiz-setup-custom-add def-custom-add" type="button">+ Add</button>
         </div>
+        <details class="cat-edit-disclosure"><summary class="cat-edit-summary">Edit questions</summary>
+          <div class="cat-edit-mount"></div>
+        </details>
       </div>`;
   }).join('');
   container.innerHTML = `
@@ -6937,9 +7183,20 @@ function renderSetupDefaultsEditor(container) {
       <div class="setup-defaults-note">Applied to new people as they're added. Edit someone already on a plan below.</div>
       <div class="wiz-setup-insts">${cardsHtml}</div>
     </details>
-    <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>`;
+    <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>
+    <button class="btn ghost" id="catAddTypeBtn" style="margin-bottom:16px;">＋ New instrument type</button>
+    <details class="setup-defaults-disclosure"><summary class="setup-defaults-summary">PCO keyword → setup type rules</summary>
+      <div id="setupTypeRulesMount"></div>
+    </details>`;
   const bulkBtn = container.querySelector('#bulkPreaddOpenBtn');
   if (bulkBtn) bulkBtn.addEventListener('click', openBulkPreadd);
+  const catAddBtn = container.querySelector('#catAddTypeBtn');
+  if (catAddBtn) catAddBtn.addEventListener('click', () => {
+    const label = prompt('Name for the new instrument type (e.g. Percussion):');
+    if (label && label.trim()) { catalogAddType(label.trim()); renderSetupDefaultsEditor(container); }
+  });
+  const rulesMount = container.querySelector('#setupTypeRulesMount');
+  if (rulesMount) renderSetupTypeRules(rulesMount);
   container.querySelectorAll('.wiz-setup-inst[data-def-key]').forEach(card => {
     const key = card.dataset.defKey;
     if (!state.config.setupDefaults[key]) state.config.setupDefaults[key] = { selections: {}, customOptions: [] };
@@ -6972,6 +7229,11 @@ function renderSetupDefaultsEditor(container) {
     if (addBtn) addBtn.addEventListener('click', addCustom);
     if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
     renderCustom();
+    const catMount = card.querySelector('.cat-edit-mount');
+    const catDisc = card.querySelector('.cat-edit-disclosure');
+    if (catMount && catDisc) {
+      catDisc.addEventListener('toggle', () => { if (catDisc.open) renderCatalogEditor(catMount, key, () => renderSetupDefaultsEditor(container)); });
+    }
   });
 }
 // ── Bulk pre-add people (Phase 1) ─────────────────────────────────────────
@@ -7007,15 +7269,22 @@ function bulkPersonHasRow(pid, role, typeKey) {
 function bulkPosLabel(r) {
   if (r.role === 'vocalist') return 'Vocals';
   if (r.role === 'md') return 'MD';
-  const o = BULK_ROLE_OPTS.find(x => x.v === r.typeKey);
+  const o = bulkRoleOpts().find(x => x.v === r.typeKey);
   return o ? o.label : (r.typeKey || 'Band');
 }
-const BULK_ROLE_OPTS = [
+const BUILTIN_BULK_ROLE_OPTS = [
   { v: 'vocalist', label: 'Vocalist' },
   { v: 'drums', label: 'Drums' }, { v: 'bass', label: 'Bass' }, { v: 'keys', label: 'Keys' },
   { v: 'eg', label: 'Electric Gtr' }, { v: 'ag', label: 'Acoustic Gtr' }, { v: 'strings', label: 'Strings' },
   { v: 'md', label: 'MD (tracks, no instrument)' }
 ];
+function bulkRoleOpts() {
+  const opts = BUILTIN_BULK_ROLE_OPTS.slice();
+  (state.config.setupCatalog ? Object.keys(state.config.setupCatalog) : []).forEach(k => {
+    if (isCustomSetupKey(k)) opts.push({ v: k, label: (setupCatalogFor(k).label || k) });
+  });
+  return opts;
+}
 function addBulkRow(partial) {
   bulkPreaddRows.push(Object.assign(
     { id: 'br_' + Math.random().toString(36).slice(2, 8), pid: '', name: '', role: 'band', typeKey: 'keys', mic: '', open: false },
@@ -7098,7 +7367,7 @@ function renderBulkPreadd() {
   }
   const canSearch = !!pcoTokens;
   const micOptsFor = (r) => (state.inventory || []).map(m => `<option value="${esc(m.name)}|${m.wireless ? 'wl' : 'wd'}"${r.mic === m.name ? ' selected' : ''}>${esc(m.name + (m.wireless ? ' (Wireless)' : ''))}</option>`).join('');
-  const addOpts = BULK_ROLE_OPTS.map(o => `<option value="${o.v}">${o.label}</option>`).join('');
+  const addOpts = bulkRoleOpts().map(o => `<option value="${o.v}">${o.label}</option>`).join('');
   list.innerHTML = bulkPeople.map(p => {
     const rows = bulkPreaddRows.filter(r => r.pid === p.pid);
     const chips = rows.map(r => {

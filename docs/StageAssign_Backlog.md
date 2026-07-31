@@ -48,6 +48,14 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   `daybreak-production-ai` (`flags/bugFormat.js`, `POST /bug`).
 
 ### Setup items
+- ~~**[FEATURE] Editable setup items/questions per instrument.**~~ ✅ SHIPPED 2026-07-30 →
+  `setupcatalog`, `setuptypes`. Overlay catalog (`state.config.setupCatalog`, read via
+  `setupCatalogFor`): rename/add/remove/reorder options AND sections (radio↔check), reset-to-default,
+  via an "Edit questions" disclosure per instrument in the Setup Items tab. Plus custom instrument
+  types ("＋ New instrument type"), a PCO keyword→type rules editor, and a per-instrument Setup-type
+  override — `detectPresetKey` priority is `inst.setupKey` → keyword rule → built-in regex. ID-stable
+  edits keep existing people's checklists intact. Built as 7 TDD tasks; spec + plan in
+  `docs/superpowers/`. (Answers the "change house rig → Helix / add option / remove sections" bug.)
 - ~~**Default setup items per instrument in Advanced Settings.**~~ ✅ SHIPPED 2026-07-18
   (`renderSetupDefaultsEditor` in the Setup Items tab; edits `setupDefaults[key]` for all 8 catalog
   keys incl. MD). → `setupdefaults`
