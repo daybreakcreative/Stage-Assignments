@@ -77,5 +77,64 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!ev("allSetupKeys().includes('eg')")) throw new Error('built-in eg wrongly removed');
  });
 
+ check('BUILTIN_BULK_ROLE_OPTS labels are verbatim identical to the pre-refactor BULK_ROLE_OPTS', ()=>{
+   const expected=[
+     {v:'vocalist',label:'Vocalist'},
+     {v:'drums',label:'Drums'},{v:'bass',label:'Bass'},{v:'keys',label:'Keys'},
+     {v:'eg',label:'Electric Gtr'},{v:'ag',label:'Acoustic Gtr'},{v:'strings',label:'Strings'},
+     {v:'md',label:'MD (tracks, no instrument)'}
+   ];
+   const actual=JSON.parse(ev('JSON.stringify(BUILTIN_BULK_ROLE_OPTS)'));
+   if(JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error('label/order regression: '+JSON.stringify(actual));
+ });
+
+ check('bulkRoleOpts() custom entry carries the catalog label, not the raw key', ()=>{
+   ev("state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   const opts=JSON.parse(ev("JSON.stringify(bulkRoleOpts())"));
+   const mine=opts.find(o=>o.v===ev('window.__pk'));
+   if(!mine) throw new Error('custom type missing from bulkRoleOpts');
+   if(mine.label!=='Percussion') throw new Error('custom type label wrong, got '+mine.label);
+   // built-ins must still be present alongside the custom addition
+   if(!opts.some(o=>o.v==='drums'&&o.label==='Drums')) throw new Error('built-in drums entry dropped');
+ });
+
+ check('renderCatalogEditor on a fresh custom type (empty groups) renders without throwing', ()=>{
+   ev("state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   const host=doc.createElement('div'); host.id='__catEditCustom'; doc.body.appendChild(host);
+   ev("renderCatalogEditor(document.getElementById('__catEditCustom'), window.__pk);");
+   if(doc.querySelectorAll('#__catEditCustom .cat-group').length!==0) throw new Error('expected zero sections for an empty custom type');
+   if(!doc.querySelector('#__catEditCustom .cat-add-group')) throw new Error('missing add-section control');
+   const resetBtn=doc.querySelector('#__catEditCustom .cat-reset');
+   if(!resetBtn) throw new Error('missing footer action button');
+   if(resetBtn.textContent!=='Delete this type') throw new Error('custom type footer button should read "Delete this type", got '+resetBtn.textContent);
+   host.remove();
+ });
+
+ check('renderSetupDefaultsEditor enumerates a custom type as a full card and its Edit-questions disclosure renders lazily', ()=>{
+   ev("state.config.setupDefaults={}; state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   ev("renderSetupDefaultsEditor(document.getElementById('setupDefaultsEditor'));");
+   const card=doc.querySelector(`#setupDefaultsEditor .wiz-setup-inst[data-def-key="${ev('window.__pk')}"]`);
+   if(!card) throw new Error('custom type card not rendered by allSetupKeys() enumeration');
+   const disc=card.querySelector('.cat-edit-disclosure');
+   if(!disc) throw new Error('custom card missing Edit-questions disclosure');
+   disc.open=true; disc.dispatchEvent(new window.Event('toggle'));
+   if(!card.querySelector('.cat-edit-mount .cat-reset')) throw new Error('lazy catalog editor did not render on toggle');
+ });
+
+ check('"＋ New instrument type" button wires prompt() -> catalogAddType -> re-render', ()=>{
+   ev("state.config.setupDefaults={}; state.config.setupCatalog=null;");
+   ev("renderSetupDefaultsEditor(document.getElementById('setupDefaultsEditor'));");
+   const before=doc.querySelectorAll('#setupDefaultsEditor .wiz-setup-inst').length;
+   ev("window.prompt=()=>'Percussion';");
+   const btn=doc.getElementById('catAddTypeBtn');
+   if(!btn) throw new Error('no ＋ New instrument type button rendered');
+   btn.dispatchEvent(new window.Event('click',{bubbles:true}));
+   ev("window.prompt=()=>null;");
+   const after=doc.querySelectorAll('#setupDefaultsEditor .wiz-setup-inst').length;
+   if(after!==before+1) throw new Error(`expected one new card after add (before=${before}, after=${after})`);
+   const added=Object.keys(JSON.parse(ev('JSON.stringify(state.config.setupCatalog||{})'))).some(k=>/^custom_/.test(k));
+   if(!added) throw new Error('catalogAddType was not invoked by the button');
+ });
+
  setTimeout(()=>{ console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','==='); process.exit(errs.length?1:0); },20);
 },60));
