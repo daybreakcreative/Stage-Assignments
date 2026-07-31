@@ -2563,8 +2563,17 @@ function editSetupItemText(stableKey, typeKey, oldText, rawNewText) {
 
 function detectPresetKey(inst) {
   if (!inst) return null;
+  // 1) explicit per-instrument override
+  if (inst.setupKey && (BUILTIN_SETUP_KEYS.includes(inst.setupKey) || (state.config.setupCatalog && state.config.setupCatalog[inst.setupKey]))) return inst.setupKey;
   const tag = (inst.tag || '').toLowerCase();
   const label = (inst.label || '').toLowerCase();
+  // 2) user keyword rules (first match wins)
+  const rules = Array.isArray(state.config.setupTypeRules) ? state.config.setupTypeRules : [];
+  for (const r of rules) {
+    const kw = (r.keyword || '').toLowerCase().trim();
+    if (kw && (tag.includes(kw) || label.includes(kw))) return r.key;
+  }
+  // 3) built-in regex (unchanged below)
   if (/drum/.test(tag) || /drum/.test(label)) return 'drums';
   if (/bass/.test(tag) || /bass/.test(label)) return 'bass';
   if (/eg|electric/.test(tag) || /electric/.test(label)) return 'eg';
