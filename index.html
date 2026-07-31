@@ -722,6 +722,20 @@ background-size:5% 10%}
 .setup-defaults-summary::before{content:'▸ ';color:var(--accent)}
 .setup-defaults-disclosure[open] .setup-defaults-summary::before{content:'▾ '}
 .setup-defaults-note{font-size:12px;color:var(--text-muted);margin:0 0 6px 2px}
+.cat-editor{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+.cat-group{border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg-inset)}
+.cat-group-head{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.cat-group-name{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px;font-weight:600}
+.cat-group-type,.cat-group-add-type{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 6px;font-size:11px}
+.cat-opts{display:flex;flex-direction:column;gap:4px;padding-left:6px}
+.cat-opt-row,.cat-opt-add-row{display:flex;gap:6px;align-items:center}
+.cat-opt-input,.cat-opt-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.cat-btn{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);padding:3px 7px;font-size:11px;cursor:pointer}
+.cat-btn:hover{color:var(--text);border-color:var(--accent)}
+.cat-editor-foot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.cat-group-add-input{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.cat-reset{margin-left:auto}
+.cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px}
 #bulkList{flex:1;overflow-y:auto;min-height:0}
 .bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;flex:none}
 .bulk-empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px}
@@ -7002,6 +7016,81 @@ function appendSetupItemsChecklistToggle(el) {
   }
 }
 
+// Inline structural editor for one setup type's catalog (sections + options). Mutates the overlay
+// through the catalog* ops and re-renders in place. `onDone` (optional) fires after Reset.
+function renderCatalogEditor(container, key, onDone) {
+  if (!container) return;
+  const cat = setupCatalogFor(key) || { label: key, groups: [] };
+  const custom = isCustomSetupKey(key);
+  const rerender = () => renderCatalogEditor(container, key, onDone);
+  const groupsHtml = cat.groups.map(g => `
+    <div class="cat-group" data-gid="${esc(g.id)}">
+      <div class="cat-group-head">
+        <input class="cat-group-name" value="${esc(g.name)}" />
+        <select class="cat-group-type">
+          <option value="check"${g.type!=='radio'?' selected':''}>pick any</option>
+          <option value="radio"${g.type==='radio'?' selected':''}>pick one</option>
+        </select>
+        <button class="cat-btn cat-g-up" title="Move up">↑</button>
+        <button class="cat-btn cat-g-dn" title="Move down">↓</button>
+        <button class="cat-btn cat-g-del" title="Remove section">✕</button>
+      </div>
+      <div class="cat-opts">
+        ${g.options.map(o => `
+          <div class="cat-opt-row" data-oid="${esc(o.id)}">
+            <input class="cat-opt-input" value="${esc(o.text)}" />
+            <button class="cat-btn cat-o-up" title="Move up">↑</button>
+            <button class="cat-btn cat-o-dn" title="Move down">↓</button>
+            <button class="cat-btn cat-o-del" title="Remove option">✕</button>
+          </div>`).join('')}
+        <div class="cat-opt-add-row">
+          <input class="cat-opt-add-input" placeholder="Add an option…" />
+          <button class="cat-btn cat-o-add">+ Add</button>
+        </div>
+      </div>
+    </div>`).join('');
+  container.innerHTML = `
+    <div class="cat-editor">
+      ${groupsHtml}
+      <div class="cat-editor-foot">
+        <input class="cat-group-add-input" placeholder="New section name…" />
+        <select class="cat-group-add-type"><option value="check">pick any</option><option value="radio">pick one</option></select>
+        <button class="cat-btn cat-add-group">+ Section</button>
+        <button class="cat-btn cat-reset">${custom ? 'Delete this type' : 'Reset to default'}</button>
+      </div>
+    </div>`;
+  container.querySelectorAll('.cat-group').forEach(gEl => {
+    const gid = gEl.dataset.gid;
+    gEl.querySelector('.cat-group-name').addEventListener('change', e => { catalogRenameGroup(key, gid, e.target.value.trim()); });
+    gEl.querySelector('.cat-group-type').addEventListener('change', e => { catalogSetGroupType(key, gid, e.target.value); });
+    gEl.querySelector('.cat-g-up').addEventListener('click', () => { catalogMoveGroup(key, gid, -1); rerender(); });
+    gEl.querySelector('.cat-g-dn').addEventListener('click', () => { catalogMoveGroup(key, gid, 1); rerender(); });
+    gEl.querySelector('.cat-g-del').addEventListener('click', () => { if (confirm('Remove this section?')) { catalogRemoveGroup(key, gid); rerender(); } });
+    gEl.querySelectorAll('.cat-opt-row').forEach(oEl => {
+      const oid = oEl.dataset.oid;
+      oEl.querySelector('.cat-opt-input').addEventListener('input', e => { catalogRenameOption(key, gid, oid, e.target.value); });
+      oEl.querySelector('.cat-o-up').addEventListener('click', () => { catalogMoveOption(key, gid, oid, -1); rerender(); });
+      oEl.querySelector('.cat-o-dn').addEventListener('click', () => { catalogMoveOption(key, gid, oid, 1); rerender(); });
+      oEl.querySelector('.cat-o-del').addEventListener('click', () => { catalogRemoveOption(key, gid, oid); rerender(); });
+    });
+    const addInp = gEl.querySelector('.cat-opt-add-input');
+    const addOpt = () => { const t = addInp.value.trim(); if (!t) return; catalogAddOption(key, gid, t); rerender(); };
+    gEl.querySelector('.cat-o-add').addEventListener('click', addOpt);
+    addInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addOpt(); } });
+  });
+  const gAddInp = container.querySelector('.cat-group-add-input');
+  const gAddType = container.querySelector('.cat-group-add-type');
+  const addGroup = () => { const n = gAddInp.value.trim(); if (!n) return; catalogAddGroup(key, n, gAddType.value); rerender(); };
+  container.querySelector('.cat-add-group').addEventListener('click', addGroup);
+  gAddInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addGroup(); } });
+  container.querySelector('.cat-reset').addEventListener('click', () => {
+    const msg = custom ? 'Delete this instrument type entirely?' : 'Reset this instrument’s questions to the built-in default?';
+    if (!confirm(msg)) return;
+    if (custom) { (typeof catalogRemoveType==='function'?catalogRemoveType(key):catalogResetKey(key)); } else { catalogResetKey(key); }
+    if (onDone) onDone(); else rerender();
+  });
+}
+
 // Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
 // selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
 // (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
@@ -7021,6 +7110,9 @@ function renderSetupDefaultsEditor(container) {
           <input type="text" class="wiz-setup-custom-input def-custom-input" placeholder="Add a custom setup item…" />
           <button class="btn ghost wiz-setup-custom-add def-custom-add" type="button">+ Add</button>
         </div>
+        <details class="cat-edit-disclosure"><summary class="cat-edit-summary">Edit questions</summary>
+          <div class="cat-edit-mount"></div>
+        </details>
       </div>`;
   }).join('');
   container.innerHTML = `
@@ -7064,6 +7156,11 @@ function renderSetupDefaultsEditor(container) {
     if (addBtn) addBtn.addEventListener('click', addCustom);
     if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
     renderCustom();
+    const catMount = card.querySelector('.cat-edit-mount');
+    const catDisc = card.querySelector('.cat-edit-disclosure');
+    if (catMount && catDisc) {
+      catDisc.addEventListener('toggle', () => { if (catDisc.open) renderCatalogEditor(catMount, key, () => renderSetupDefaultsEditor(container)); });
+    }
   });
 }
 // ── Bulk pre-add people (Phase 1) ─────────────────────────────────────────

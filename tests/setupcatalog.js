@@ -253,6 +253,26 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if(sel.length!==sel2.length) throw new Error('item count changed on rename');
   });
 
+  console.log('--- catalog editor UI (Task 3: inline structural editor) ---');
+  check('renderCatalogEditor renders a row per option and add-section + reset controls', ()=>{
+    ev('state.config.setupCatalog=null;');
+    const host=doc.createElement('div'); host.id='__catEdit'; doc.body.appendChild(host);
+    ev("renderCatalogEditor(document.getElementById('__catEdit'),'eg');");
+    const opts=doc.querySelectorAll('#__catEdit .cat-opt-row');
+    if(opts.length < 3) throw new Error('expected EG option rows, got '+opts.length);
+    if(!doc.querySelector('#__catEdit .cat-add-group')) throw new Error('no add-section control');
+    if(!doc.querySelector('#__catEdit .cat-reset')) throw new Error('no reset control');
+  });
+
+  check('editing an option text input writes through to the overlay', ()=>{
+    ev('state.config.setupCatalog=null;');
+    const host=doc.getElementById('__catEdit')||doc.body.appendChild(Object.assign(doc.createElement('div'),{id:'__catEdit'}));
+    ev("renderCatalogEditor(document.getElementById('__catEdit'),'eg');");
+    const inp=doc.querySelector('#__catEdit .cat-opt-input');
+    inp.value='Helix'; inp.dispatchEvent(new window.Event('input',{bubbles:true}));
+    if(!ev("JSON.stringify(state.config.setupCatalog.eg).includes('Helix')")) throw new Error('overlay not updated from input');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;
