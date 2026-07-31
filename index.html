@@ -736,6 +736,12 @@ background-size:5% 10%}
 .cat-group-add-input{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
 .cat-reset{margin-left:auto}
 .cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px}
+.rules-note{font-size:12px;color:var(--text-muted);margin:6px 0}
+.rule-row{display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0}
+.rule-add-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.rule-kw{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
+.rule-key{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 6px;font-size:11px}
+.rule-kw-static{font-weight:600}
 #bulkList{flex:1;overflow-y:auto;min-height:0}
 .bulk-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;flex:none}
 .bulk-empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px}
@@ -6427,6 +6433,11 @@ function renderInstrumentsEditor() {
               ${c.iemPackPresets.map(p => `<option value="${esc(p)}"${p === inst.pack ? ' selected' : ''}>${esc(p)}</option>`).join('')}
               ${(c.iemPackPresets.indexOf(inst.pack) === -1 && inst.pack) ? `<option value="${esc(inst.pack)}" selected>${esc(inst.pack)} (custom)</option>` : ''}
             </select>
+            ${(state.config.setupCatalog && Object.keys(state.config.setupCatalog).some(isCustomSetupKey)) ? `
+            <select class="field-input inst-setupkey" data-id="${esc(inst.id)}" data-field="setupKey" title="Which setup questions this instrument uses">
+              <option value="">Setup: Auto (by name)</option>
+              ${allSetupKeys().map(k => `<option value="${esc(k)}"${inst.setupKey===k?' selected':''}>Setup: ${esc((setupCatalogFor(k)||{}).label||k)}</option>`).join('')}
+            </select>` : ''}
           </div>
           <div class="inst-vocalist">
             <select class="field-input" data-id="${esc(inst.id)}" data-field="vocalistPlayer">
@@ -7112,6 +7123,34 @@ function renderCatalogEditor(container, key, onDone) {
   });
 }
 
+function renderSetupTypeRules(container) {
+  if (!container) return;
+  const rules = state.config.setupTypeRules || (state.config.setupTypeRules = []);
+  const keyOpts = allSetupKeys().map(k => `<option value="${esc(k)}">${esc((setupCatalogFor(k).label)||k)}</option>`).join('');
+  container.innerHTML = `
+    <div class="rules-note">Auto-map a Planning Center position to a setup type when its name contains a keyword.</div>
+    <div class="rules-list">${rules.map(r => `
+      <div class="rule-row" data-rid="${esc(r.id)}">
+        <span class="rule-kw-static">“${esc(r.keyword)}”</span> → <span class="rule-key-static">${esc(((setupCatalogFor(r.key)||{}).label)||r.key)}</span>
+        <button class="cat-btn rule-del">✕</button>
+      </div>`).join('')}</div>
+    <div class="rule-add-row">
+      <input class="rule-kw" placeholder="keyword (e.g. percussion)" />
+      <select class="rule-key">${keyOpts}</select>
+      <button class="cat-btn rule-add">+ Rule</button>
+    </div>`;
+  container.querySelectorAll('.rule-row').forEach(row => {
+    row.querySelector('.rule-del').addEventListener('click', () => {
+      state.config.setupTypeRules = rules.filter(r => r.id !== row.dataset.rid); saveState(); renderSetupTypeRules(container);
+    });
+  });
+  const kw = container.querySelector('.rule-kw'); const key = container.querySelector('.rule-key');
+  container.querySelector('.rule-add').addEventListener('click', () => {
+    const k = kw.value.trim(); if (!k || !key.value) return;
+    rules.push({ id: 'rule_' + Math.random().toString(36).slice(2, 8), keyword: k, key: key.value }); saveState(); renderSetupTypeRules(container);
+  });
+}
+
 // Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
 // selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
 // (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
@@ -7143,7 +7182,10 @@ function renderSetupDefaultsEditor(container) {
       <div class="wiz-setup-insts">${cardsHtml}</div>
     </details>
     <button class="btn ghost" id="bulkPreaddOpenBtn" style="margin-bottom:16px;">＋ Bulk pre-add people</button>
-    <button class="btn ghost" id="catAddTypeBtn" style="margin-bottom:16px;">＋ New instrument type</button>`;
+    <button class="btn ghost" id="catAddTypeBtn" style="margin-bottom:16px;">＋ New instrument type</button>
+    <details class="setup-defaults-disclosure"><summary class="setup-defaults-summary">PCO keyword → setup type rules</summary>
+      <div id="setupTypeRulesMount"></div>
+    </details>`;
   const bulkBtn = container.querySelector('#bulkPreaddOpenBtn');
   if (bulkBtn) bulkBtn.addEventListener('click', openBulkPreadd);
   const catAddBtn = container.querySelector('#catAddTypeBtn');
@@ -7151,6 +7193,8 @@ function renderSetupDefaultsEditor(container) {
     const label = prompt('Name for the new instrument type (e.g. Percussion):');
     if (label && label.trim()) { catalogAddType(label.trim()); renderSetupDefaultsEditor(container); }
   });
+  const rulesMount = container.querySelector('#setupTypeRulesMount');
+  if (rulesMount) renderSetupTypeRules(rulesMount);
   container.querySelectorAll('.wiz-setup-inst[data-def-key]').forEach(card => {
     const key = card.dataset.defKey;
     if (!state.config.setupDefaults[key]) state.config.setupDefaults[key] = { selections: {}, customOptions: [] };

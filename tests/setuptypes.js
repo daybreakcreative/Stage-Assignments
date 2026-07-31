@@ -136,5 +136,33 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!added) throw new Error('catalogAddType was not invoked by the button');
  });
 
+ check('renderSetupTypeRules lists rules and adds a new one', ()=>{
+   ev("state.config.setupTypeRules=[]; state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   const host=doc.createElement('div'); host.id='__rules'; doc.body.appendChild(host);
+   ev("renderSetupTypeRules(document.getElementById('__rules'));");
+   const kw=doc.querySelector('#__rules .rule-kw'); const sel=doc.querySelector('#__rules .rule-key'); const add=doc.querySelector('#__rules .rule-add');
+   if(!kw||!sel||!add) throw new Error('rules editor controls missing');
+   kw.value='percussion'; kw.dispatchEvent(new window.Event('input',{bubbles:true}));
+   sel.value=Array.from(sel.options).map(o=>o.value).find(v=>/^custom_/.test(v)); sel.dispatchEvent(new window.Event('change',{bubbles:true}));
+   add.dispatchEvent(new window.MouseEvent('click',{bubbles:true}));
+   if(!ev("state.config.setupTypeRules.some(r=>r.keyword==='percussion')")) throw new Error('rule not added');
+ });
+
+ check('instrument card exposes a Setup type override (only when custom types exist) that sets inst.setupKey', ()=>{
+   ev("state.instruments=[{id:'inst_x',label:'Thing',tag:'',assignedTo:'',pack:''}]; state.config.setupCatalog=null; window.__pk=catalogAddType('Percussion');");
+   ev("renderInstrumentsEditor();");
+   const sel=doc.querySelector('.inst-setupkey[data-id=\"inst_x\"]');
+   if(!sel) throw new Error('no setup-type override select on instrument card');
+   const custom=Array.from(sel.options).map(o=>o.value).find(v=>/^custom_/.test(v));
+   sel.value=custom; sel.dispatchEvent(new window.Event('change',{bubbles:true}));
+   if(ev("state.instruments.find(i=>i.id==='inst_x').setupKey")!==custom) throw new Error('setupKey not written, got '+ev("state.instruments.find(i=>i.id==='inst_x').setupKey"));
+ });
+
+ check('no Setup type override select when there are NO custom types (clean default UI)', ()=>{
+   ev("state.instruments=[{id:'inst_y',label:'Keys',tag:'keys',assignedTo:'',pack:''}]; state.config.setupCatalog=null;");
+   ev("renderInstrumentsEditor();");
+   if(doc.querySelector('.inst-setupkey[data-id=\"inst_y\"]')) throw new Error('override select shown with no custom types');
+ });
+
  setTimeout(()=>{ console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','==='); process.exit(errs.length?1:0); },20);
 },60));
