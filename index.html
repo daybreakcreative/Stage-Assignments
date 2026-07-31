@@ -735,7 +735,10 @@ background-size:5% 10%}
 .cat-editor-foot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .cat-group-add-input{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
 .cat-reset{margin-left:auto}
-.cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px}
+.cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px;list-style:none}
+.cat-edit-summary::-webkit-details-marker{display:none}
+.cat-edit-summary::before{content:'▸ ';color:var(--accent)}
+.cat-edit-disclosure[open] .cat-edit-summary::before{content:'▾ '}
 .rules-note{font-size:12px;color:var(--text-muted);margin:6px 0}
 .rule-row{display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0}
 .rule-add-row{display:flex;gap:6px;align-items:center;margin-top:6px}
@@ -7063,21 +7066,21 @@ function renderCatalogEditor(container, key, onDone) {
           <option value="check"${g.type!=='radio'?' selected':''}>pick any</option>
           <option value="radio"${g.type==='radio'?' selected':''}>pick one</option>
         </select>
-        <button class="cat-btn cat-g-up" title="Move up">↑</button>
-        <button class="cat-btn cat-g-dn" title="Move down">↓</button>
-        <button class="cat-btn cat-g-del" title="Remove section">✕</button>
+        <button class="cat-btn cat-g-up" type="button" title="Move up">↑</button>
+        <button class="cat-btn cat-g-dn" type="button" title="Move down">↓</button>
+        <button class="cat-btn cat-g-del" type="button" title="Remove section">✕</button>
       </div>
       <div class="cat-opts">
         ${g.options.map(o => `
           <div class="cat-opt-row" data-oid="${esc(o.id)}">
             <input class="cat-opt-input" value="${esc(o.text)}" />
-            <button class="cat-btn cat-o-up" title="Move up">↑</button>
-            <button class="cat-btn cat-o-dn" title="Move down">↓</button>
-            <button class="cat-btn cat-o-del" title="Remove option">✕</button>
+            <button class="cat-btn cat-o-up" type="button" title="Move up">↑</button>
+            <button class="cat-btn cat-o-dn" type="button" title="Move down">↓</button>
+            <button class="cat-btn cat-o-del" type="button" title="Remove option">✕</button>
           </div>`).join('')}
         <div class="cat-opt-add-row">
           <input class="cat-opt-add-input" placeholder="Add an option…" />
-          <button class="cat-btn cat-o-add">+ Add</button>
+          <button class="cat-btn cat-o-add" type="button">+ Add</button>
         </div>
       </div>
     </div>`).join('');
@@ -7087,8 +7090,8 @@ function renderCatalogEditor(container, key, onDone) {
       <div class="cat-editor-foot">
         <input class="cat-group-add-input" placeholder="New section name…" />
         <select class="cat-group-add-type"><option value="check">pick any</option><option value="radio">pick one</option></select>
-        <button class="cat-btn cat-add-group">+ Section</button>
-        <button class="cat-btn cat-reset">${custom ? 'Delete this type' : 'Reset to default'}</button>
+        <button class="cat-btn cat-add-group" type="button">+ Section</button>
+        <button class="cat-btn cat-reset" type="button">${custom ? 'Delete this type' : 'Reset to default'}</button>
       </div>
     </div>`;
   container.querySelectorAll('.cat-group').forEach(gEl => {
@@ -7132,12 +7135,12 @@ function renderSetupTypeRules(container) {
     <div class="rules-list">${rules.map(r => `
       <div class="rule-row" data-rid="${esc(r.id)}">
         <span class="rule-kw-static">“${esc(r.keyword)}”</span> → <span class="rule-key-static">${esc(((setupCatalogFor(r.key)||{}).label)||r.key)}</span>
-        <button class="cat-btn rule-del">✕</button>
+        <button class="cat-btn rule-del" type="button">✕</button>
       </div>`).join('')}</div>
     <div class="rule-add-row">
       <input class="rule-kw" placeholder="keyword (e.g. percussion)" />
       <select class="rule-key">${keyOpts}</select>
-      <button class="cat-btn rule-add">+ Rule</button>
+      <button class="cat-btn rule-add" type="button">+ Rule</button>
     </div>`;
   container.querySelectorAll('.rule-row').forEach(row => {
     row.querySelector('.rule-del').addEventListener('click', () => {
@@ -7154,7 +7157,6 @@ function renderSetupTypeRules(container) {
 // Church defaults per instrument (Advanced Settings → Setup Items). Reuses the wizard's grouped
 // selector; edits state.config.setupDefaults[key] and applies to NEW people as they're seeded
 // (non-destructive to existing buckets). Collapsed disclosure so the tab stays tidy.
-const SETUP_DEFAULT_KEYS = BUILTIN_SETUP_KEYS;
 function renderSetupDefaultsEditor(container) {
   if (!container) return;
   if (!state.config.setupDefaults) state.config.setupDefaults = {};
