@@ -27,6 +27,16 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(k!=='custom_perc') throw new Error('keyword rule not applied, got '+k);
  });
 
+ check('a garbage setupKey (not built-in, not in overlay) falls through to rules then regex', ()=>{
+   ev("state.config.setupCatalog={custom_perc:{label:'Percussion',groups:[]}}; state.config.setupTypeRules=[];");
+   const k1=ev("detectPresetKey({label:'Bass', tag:'bass', setupKey:'nonexistent_key'})");
+   if(k1!=='bass') throw new Error('garbage setupKey did not fall through to built-in regex, got '+k1);
+   ev("state.config.setupTypeRules=[{id:'r1',keyword:'perc',key:'custom_perc'}];");
+   const k2=ev("detectPresetKey({label:'Percussion 1', tag:'', setupKey:'nonexistent_key'})");
+   if(k2!=='custom_perc') throw new Error('garbage setupKey did not fall through to a matching rule, got '+k2);
+   ev("state.config.setupTypeRules=[]; state.config.setupCatalog=null;");
+ });
+
  check('built-in regex still works when no override/rule matches', ()=>{
    ev("state.config.setupTypeRules=[]; state.config.setupCatalog=null;");
    if(ev("detectPresetKey({label:'Bass', tag:'bass'})")!=='bass') throw new Error('built-in bass detection broke');
