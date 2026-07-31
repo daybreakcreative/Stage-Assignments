@@ -274,12 +274,15 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   });
 
   console.log('--- catalog editor mount location (critical: Advanced Settings only, wizard untouched) ---');
-  check('wizard setup-intro card has NO cat-edit-disclosure (first-run wizard path unchanged)', ()=>{
+  // The wizard setup-intro card ALSO exposes the "Edit questions" editor (added by user request
+  // 2026-07-30 — was previously settings-only). Deeper lazy-mount + write-through behavior is
+  // covered in tests/setupwizard.js; here we just lock that the disclosure is present.
+  check('wizard setup-intro card exposes the cat-edit-disclosure (parity with settings)', ()=>{
     ev(`state.config.setupDefaults=null; startWizard(); wizardData.instruments=[{key:'eg',selected:true,label:'Electric Guitar'}]; wizardData.useSetupChecklist=true;`);
     ev(`wizardStepIdx = WIZARD_STEPS.indexOf('setup-intro'); renderWizardStep();`);
     const card = doc.querySelector('#wizardBody .wiz-setup-inst[data-inst-key="eg"]');
     if (!card) throw new Error('eg wizard card not rendered');
-    if (card.querySelector('.cat-edit-disclosure')) throw new Error('wizard card must not gain the catalog-editor disclosure');
+    if (!card.querySelector('.cat-edit-disclosure')) throw new Error('wizard card should now have the catalog-editor disclosure');
   });
 
   check('Advanced Settings card has cat-edit-disclosure; editor renders lazily on first open', ()=>{

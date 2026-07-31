@@ -13371,6 +13371,9 @@ function renderWizardStepBody(step) {
                     <input type="text" class="wiz-setup-custom-input" placeholder="Add a custom setup item…" />
                     <button class="btn ghost wiz-setup-custom-add" type="button">+ Add</button>
                   </div>
+                  <details class="cat-edit-disclosure"><summary class="cat-edit-summary">Edit questions</summary>
+                    <div class="cat-edit-mount"></div>
+                  </details>
                 </div>`).join('') : `
                 <div class="wiz-setup-intro-text" style="opacity:.7;">No instruments added yet — go back to the Instruments step to add some, or skip this for now.</div>`}
             </div>
@@ -13913,6 +13916,13 @@ function wireWizardStep(step) {
         if (addBtn) addBtn.addEventListener('click', addCustom);
         if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
         renderCustom();
+        // Structural catalog editing (rename/add/remove options + sections) — same editor as
+        // Advanced Settings; lazily mounted on open. A reset re-renders the whole wizard step.
+        const catMount = card.querySelector('.cat-edit-mount');
+        const catDisc = card.querySelector('.cat-edit-disclosure');
+        if (catMount && catDisc) {
+          catDisc.addEventListener('toggle', () => { if (catDisc.open) renderCatalogEditor(catMount, key, () => renderWizardStep()); });
+        }
       });
     }
   }

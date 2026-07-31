@@ -56,6 +56,35 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (ev(`(state.config.setupDefaults&&state.config.setupDefaults.strings&&state.config.setupDefaults.strings.selections.pickup)`) !== 's_house') throw new Error('strings default not written');
  });
 
+ console.log('--- wizard exposes Edit questions (catalog editor) per instrument ---');
+ check('wizard setup card has a lazy Edit-questions disclosure that mounts the catalog editor', ()=>{
+   ev(`state.config.setupCatalog=null; state.config.setupDefaults=null;`);
+   ev(`startWizard(); wizardData.instruments=[{key:'eg',selected:true,label:'Electric'}]; wizardData.useSetupChecklist=true;`);
+   ev(`wizardStepIdx = WIZARD_STEPS.indexOf('setup-intro'); renderWizardStep();`);
+   const body = doc.getElementById('wizardBody');
+   const card = body.querySelector('.wiz-setup-inst[data-inst-key="eg"]');
+   if(!card) throw new Error('eg wizard card missing');
+   const disc = card.querySelector('.cat-edit-disclosure');
+   const mount = card.querySelector('.cat-edit-mount');
+   if(!disc || !mount) throw new Error('no Edit-questions disclosure in wizard card');
+   if(mount.querySelector('.cat-opt-row')) throw new Error('editor should be lazy (not rendered before open)');
+   disc.open = true; disc.dispatchEvent(new window.Event('toggle',{bubbles:true}));
+   if(!mount.querySelector('.cat-opt-row')) throw new Error('catalog editor did not mount on open');
+ });
+
+ check('editing a wizard option text writes through to the setupCatalog overlay', ()=>{
+   ev(`state.config.setupCatalog=null;`);
+   ev(`startWizard(); wizardData.instruments=[{key:'eg',selected:true,label:'Electric'}]; wizardData.useSetupChecklist=true;`);
+   ev(`wizardStepIdx = WIZARD_STEPS.indexOf('setup-intro'); renderWizardStep();`);
+   const body = doc.getElementById('wizardBody');
+   const card = body.querySelector('.wiz-setup-inst[data-inst-key="eg"]');
+   const disc = card.querySelector('.cat-edit-disclosure');
+   disc.open = true; disc.dispatchEvent(new window.Event('toggle',{bubbles:true}));
+   const inp = card.querySelector('.cat-opt-input');
+   inp.value='Helix'; inp.dispatchEvent(new window.Event('input',{bubbles:true}));
+   if(!ev("JSON.stringify(state.config.setupCatalog.eg).includes('Helix')")) throw new Error('overlay not updated from wizard editor');
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exitCode=errs.length?1:0;
