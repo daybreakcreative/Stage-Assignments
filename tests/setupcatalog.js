@@ -273,6 +273,29 @@ window.addEventListener('load', ()=>setTimeout(()=>{
     if(!ev("JSON.stringify(state.config.setupCatalog.eg).includes('Helix')")) throw new Error('overlay not updated from input');
   });
 
+  console.log('--- catalog editor mount location (critical: Advanced Settings only, wizard untouched) ---');
+  check('wizard setup-intro card has NO cat-edit-disclosure (first-run wizard path unchanged)', ()=>{
+    ev(`state.config.setupDefaults=null; startWizard(); wizardData.instruments=[{key:'eg',selected:true,label:'Electric Guitar'}]; wizardData.useSetupChecklist=true;`);
+    ev(`wizardStepIdx = WIZARD_STEPS.indexOf('setup-intro'); renderWizardStep();`);
+    const card = doc.querySelector('#wizardBody .wiz-setup-inst[data-inst-key="eg"]');
+    if (!card) throw new Error('eg wizard card not rendered');
+    if (card.querySelector('.cat-edit-disclosure')) throw new Error('wizard card must not gain the catalog-editor disclosure');
+  });
+
+  check('Advanced Settings card has cat-edit-disclosure; editor renders lazily on first open', ()=>{
+    ev(`state.config.setupDefaults={}; state.config.setupCatalog=null;`);
+    ev(`renderSetupDefaultsEditor(document.getElementById('setupDefaultsEditor'));`);
+    const card = doc.querySelector('#setupDefaultsEditor .wiz-setup-inst[data-def-key="eg"]');
+    if (!card) throw new Error('eg settings card not rendered');
+    const disc = card.querySelector('.cat-edit-disclosure');
+    if (!disc) throw new Error('settings card missing cat-edit-disclosure');
+    const mount = disc.querySelector('.cat-edit-mount');
+    if (!mount) throw new Error('missing cat-edit-mount');
+    if (mount.querySelector('.cat-opt-row')) throw new Error('editor should not be rendered before first open');
+    disc.open = true; disc.dispatchEvent(new window.Event('toggle'));
+    if (!mount.querySelector('.cat-opt-row')) throw new Error('editor did not lazily render on first open');
+  });
+
   console.log('\n=== RESULT:', errors.length? (errors.length+' ISSUE(S)') : 'ALL CHECKS PASSED','===');
   if(errors.length) console.log(errors.join('\n'));
   process.exitCode = errors.length?1:0;
