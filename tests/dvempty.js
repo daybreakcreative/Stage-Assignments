@@ -76,7 +76,9 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev('state.viewMode="setup"; renderVocalists();');
    const grid=doc.getElementById('vocGrid');
    if(!grid) throw new Error('no #vocGrid');
-   const cards=grid.querySelectorAll('.voc-card');
+   // Exclude the trailing ".voc-empty" drop slot — added 2026-08-02 so a vocalist can be dragged
+   // into an open position; it is a drop target, not an assigned vocalist card.
+   const cards=grid.querySelectorAll('.voc-card:not(.voc-empty)');
    if(cards.length!==5) throw new Error('expected 5 edit cards, got '+cards.length);
    // The blank-named slots render an empty name input (so a name can be typed).
    const names=[...grid.querySelectorAll('.voc-name')].map(i=>i.value);
