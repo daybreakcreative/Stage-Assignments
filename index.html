@@ -234,6 +234,9 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .voc-row{display:flex;align-items:center;gap:10px}
 .voc-pos{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-weight:500;background:var(--accent-dim);padding:3px 9px;border-radius:5px;flex-shrink:0;user-select:none}
 .voc-card.dragging{opacity:.35;transform:scale(.97)}
+.voc-card.voc-empty{border-style:dashed;opacity:.55;justify-content:flex-start}
+.voc-card.voc-empty:hover{opacity:.8}
+.voc-card.voc-empty .voc-empty-hint{display:flex;align-items:center;justify-content:center;flex:1;padding:14px 10px;font-size:11px;color:var(--text-faint);text-align:center}
 .voc-card.drop-target{border-color:var(--accent);background:var(--accent-dim);transform:translateY(-2px);box-shadow:0 8px 24px var(--accent-dim)}
 .voc-name{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--ff-display);font-size:22px;font-weight:600;letter-spacing:-.01em;width:100%;border-bottom:1px dashed transparent;padding:1px 0}
 .voc-name:hover,.voc-name:focus{border-bottom-color:var(--border-2)}
@@ -3349,7 +3352,50 @@ function computePositions(vocs) {
   }
   const full = new Array(MAX_VOCALISTS).fill(null);
   positions.forEach((v, i) => { if (v) full[i] = v.id; });
-  return full;
+  // Numbering pass: VOCAL N / PAC N come from the slot INDEX, and the display view hides unnamed
+  // vocalists — so a leftover blank slot sitting at a low index makes the visible numbering start
+  // at VOCAL 2 (and strands everyone a pack up). Pack the filled slots to the front with NAMED
+  // vocalists first, so the people you can actually see always read VOCAL 1..N / PAC 1..N.
+  // Relative order within each group is preserved, so the centered fan-out (and therefore where
+  // people physically stand — driven by count + order, not slot index) is unchanged.
+  return compactAssignments(full, vocs);
+}
+// Pack filled slots to the front of the array, preserving relative order, padding with null.
+// When `vocs` is supplied, NAMED vocalists sort ahead of unnamed placeholders (stable).
+// Pure, idempotent, length-preserving.
+function compactAssignments(arr, vocs) {
+  const src = Array.isArray(arr) ? arr : [];
+  const filled = src.filter(Boolean);
+  let ordered = filled;
+  if (Array.isArray(vocs)) {
+    const isNamed = id => {
+      const v = vocs.find(x => x && x.id === id);
+      return !!(v && (v.name || '').trim());
+    };
+    ordered = filled.filter(isNamed).concat(filled.filter(id => !isNamed(id)));
+  }
+  const out = new Array(src.length).fill(null);
+  ordered.forEach((id, i) => { out[i] = id; });
+  return out;
+}
+// Drop `vid` onto slot `toIdx`: swap when that slot is occupied, MOVE when it's empty (so a
+// vocalist can be dragged into an open position — e.g. up into VOCAL 1). Re-packs afterwards so
+// the numbering never grows a hole. Returns true when something changed.
+function vocalDropOnSlot(vid, toIdx) {
+  if (!vid || typeof toIdx !== 'number' || toIdx < 0 || toIdx >= state.assignments.length) return false;
+  const fromIdx = state.assignments.findIndex(a => a === vid);
+  if (fromIdx === -1 || fromIdx === toIdx) return false;
+  const target = state.assignments[toIdx];
+  if (target) {
+    state.assignments[toIdx] = vid;
+    state.assignments[fromIdx] = target;   // swap
+  } else {
+    state.assignments[toIdx] = vid;
+    state.assignments[fromIdx] = null;     // move into the open slot
+  }
+  // Preserve the drop order the user just expressed — pack without the named-first reshuffle.
+  state.assignments = compactAssignments(state.assignments);
+  return true;
 }
 function assignMicsToVocalists(seedRemembered = false) {
   const named = state.vocalists.filter(v => (v.name || '').trim().length > 0);
@@ -3676,16 +3722,39 @@ function renderVocalists() {
       const fromVid = e.dataTransfer.getData('text/plain');
       const toVid = v.id;
       if (!fromVid || fromVid === toVid) return;
-      const fromIdx = state.assignments.findIndex(a => a === fromVid);
       const toIdx = state.assignments.findIndex(a => a === toVid);
-      if (fromIdx === -1 || toIdx === -1) return;
-      const tmp = state.assignments[fromIdx];
-      state.assignments[fromIdx] = state.assignments[toIdx];
-      state.assignments[toIdx] = tmp;
+      if (toIdx === -1) return;
+      if (!vocalDropOnSlot(fromVid, toIdx)) return;
       saveState();
       renderAll();
     });
     grid.appendChild(card);
+  }
+
+  // One trailing "drop here" slot so a vocalist can be dragged into an open position (the
+  // numbering is always packed, so at most one open slot is ever useful).
+  {
+    const filledCount = state.assignments.filter(Boolean).length;
+    if (filledCount > 1 && filledCount < MAX_VOCALISTS) {
+      const slotIdx = filledCount;
+      const empty = document.createElement('div');
+      empty.className = 'voc-card voc-empty';
+      empty.dataset.slot = String(slotIdx);
+      empty.innerHTML = `
+        <div class="voc-pos-bar"><span class="voc-pos">VOCAL ${slotIdx + 1}</span></div>
+        <div class="voc-empty-hint">Drag a vocalist here</div>`;
+      empty.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; empty.classList.add('drop-target'); });
+      empty.addEventListener('dragleave', e => { if (!empty.contains(e.relatedTarget)) empty.classList.remove('drop-target'); });
+      empty.addEventListener('drop', e => {
+        e.preventDefault();
+        empty.classList.remove('drop-target');
+        const fromVid = e.dataTransfer.getData('text/plain');
+        if (!fromVid || !vocalDropOnSlot(fromVid, slotIdx)) return;
+        saveState();
+        renderAll();
+      });
+      grid.appendChild(empty);
+    }
   }
 
   // Shadow cards always render (existing + PCO-pulled shadows). Manual "add" is opt-in
