@@ -3378,6 +3378,20 @@ function compactAssignments(arr, vocs) {
   ordered.forEach((id, i) => { out[i] = id; });
   return out;
 }
+// state.vocalists in STAGE order (VOCAL 1, 2, 3…) rather than insertion/PCO-pull order.
+// Anyone not currently holding a slot is appended last, so nobody is ever dropped.
+function vocalistsInStageOrder() {
+  const all = state.vocalists || [];
+  const seen = new Set();
+  const out = [];
+  (state.assignments || []).forEach(id => {
+    if (!id || seen.has(id)) return;
+    const v = all.find(x => x && x.id === id);
+    if (v) { out.push(v); seen.add(id); }
+  });
+  all.forEach(v => { if (v && !seen.has(v.id)) out.push(v); });
+  return out;
+}
 // Drop `vid` onto slot `toIdx`: swap when that slot is occupied, MOVE when it's empty (so a
 // vocalist can be dragged into an open position — e.g. up into VOCAL 1). Re-packs afterwards so
 // the numbering never grows a hole. Returns true when something changed.
@@ -10797,8 +10811,11 @@ function enumerateSetupRoles() {
     });
   };
 
-  // Vocalists first (matches the check-off ordering).
-  (state.vocalists || []).forEach(v => push(v.name, 'vocalist', 'vocals', 'Vocals'));
+  // Vocalists first (matches the check-off ordering), in STAGE order — VOCAL 1, 2, 3… — so the
+  // ✓ Items cards read left-to-right like the stage does (easier when swapping capsules).
+  // state.vocalists is insertion/PCO-pull order (alphabetical off a pull), so walk
+  // state.assignments instead; anyone without a slot is appended last.
+  vocalistsInStageOrder().forEach(v => push(v.name, 'vocalist', 'vocals', 'Vocals'));
 
   // Shadows: only on-stage PLAYING instrumental shadows carry setup. A shadow who is
   // observing / IEM-only / off-stage (or any vocal shadow) has no setup bucket.
