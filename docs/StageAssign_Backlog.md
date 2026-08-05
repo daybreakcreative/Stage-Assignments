@@ -51,7 +51,9 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**[FEATURE] Editable setup items/questions per instrument.**~~ ✅ SHIPPED 2026-07-30 →
   `setupcatalog`, `setuptypes`. Overlay catalog (`state.config.setupCatalog`, read via
   `setupCatalogFor`): rename/add/remove/reorder options AND sections (radio↔check), reset-to-default,
-  via an "Edit questions" disclosure per instrument in the Setup Items tab. Plus custom instrument
+  via an "Edit questions" disclosure per instrument in the Setup Items tab **and in the first-run
+  wizard's setup-intro step** (added 2026-07-30 on Dillon's request — same editor, lazily mounted;
+  both write the one overlay). Plus custom instrument
   types ("＋ New instrument type"), a PCO keyword→type rules editor, and a per-instrument Setup-type
   override — `detectPresetKey` priority is `inst.setupKey` → keyword rule → built-in regex. ID-stable
   edits keep existing people's checklists intact. Built as 7 TDD tasks; spec + plan in
@@ -91,6 +93,25 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   markers (labels inside their box) are excluded. Applied in every `renderStageFeatures` pass.
 
 ### Vocalists
+- ~~**[FIX] Vocal numbering skipped a number; couldn't move a vocalist up a slot.**~~ ✅ SHIPPED
+  2026-08-02 → `vocalpos`. Reported: "Unable to move vocalists over 1 number. After Evan was removed
+  it kept everyone on their same mic/pac number" (screenshot showed VOCAL/PAC **2–5**, VOCAL 1 empty).
+  Cause: `VOCAL N`/`PAC N` come from the slot index, and `computePositions` fans people out
+  center-first, so a leftover **unnamed** vocalist (a name cleared instead of the card removed) could
+  take a low slot — and the display view *hides* unnamed vocalists, so the visible numbering started
+  at 2. Fix: `compactAssignments(arr, vocs)` packs filled slots to the front (named ahead of blanks);
+  `computePositions` returns through it, so add/remove/PCO-pull all land gap-free.
+  `vocalDropOnSlot(vid, toIdx)` swaps on an occupied card and **moves** onto an empty one, with one
+  trailing dashed drop slot rendered as the target. Stage placement is untouched (driven by
+  `getVoxPositions(count)` + order, not the slot index). Spec in `docs/superpowers/specs/`.
+  **Follow-on (not built):** no persistent "pin this person to VOCAL 3" mode — Dillon chose the
+  minimal fix and drag covers reassignment. Build it if the same people get re-dragged weekly.
+- ~~**[FIX] ✓ Items listed vocalists alphabetically, not in stage order.**~~ ✅ SHIPPED 2026-08-04 →
+  `scvorder`. `enumerateSetupRoles` walked `state.vocalists` (insertion/PCO-pull order, which comes
+  back alphabetical); now walks `vocalistsInStageOrder()` off `state.assignments`, so the cards read
+  VOCAL 1, 2, 3 left-to-right like the stage (easier when swapping capsules). A vocalist holding no
+  slot is appended last. Band order unchanged (already instrument-roster = stage left→right) and
+  locked by a test. Shared enumeration, so the check-off view + Setup Manager inherit it.
 - ✅ **[DONE 2026-07-10 ·f] Seeded WL on an empty slot.** A blank starred vocalist no longer renders
   as a highlighted/centered card (`computePositions` won't center a nameless WL; the card highlight
   is gated on a name). The ★ button still shows the designation.

@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–43):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–46):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
-> recent items (23–33) are reproduced in full here, and every area maps to a test file.
+> recent items (23–46) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–43, detailed)
+## Recently shipped — must not regress (items 23–46, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -140,6 +140,34 @@ Behaviors that must keep working. **The executable version of this list is `test
     in Advanced Settings → Planning Center, with search) + a live PCO-bar filter box; empty
     favorites = show all; selected id always kept. (`populateServiceTypeSelect`;
     `tests/pcofilter.js`.)
+44. **Editable setup catalog.** `setupCatalogFor` reads the `state.config.setupCatalog`
+    overlay first, else the built-in `SETUP_TEMPLATES` (coerced on load by
+    `coerceSetupCatalogOverlay`). The "Edit questions" disclosure — in **both** Advanced
+    Settings → Setup Items **and** the first-run wizard's setup-intro step, lazily mounted on
+    open — renames/adds/removes/reorders options AND sections (radio↔check) and resets to
+    default. Edits preserve option/section **ids**, so a person's saved selections still
+    resolve (rename "House EG rig" → "Helix" and their checklist keeps its ticks); a removed
+    option leaves dangling selections inert. Custom instrument types ("＋ New instrument type")
+    appear in `allSetupKeys()`, `bulkRoleOpts()`, and the Setup Items cards. `detectPresetKey`
+    priority is `inst.setupKey` → `setupTypeRules` keyword → built-in regex; the per-instrument
+    Setup-type override only renders when a custom type exists.
+    (`tests/setupcatalog.js`, `tests/setuptypes.js`, `tests/setupwizard.js`.)
+45. **Vocal numbering is gap-free; a vocalist can be dragged into an open slot.**
+    `VOCAL N`/`PAC N` come from the slot index, and the display view hides unnamed vocalists —
+    so a leftover blank slot used to steal a low number and start the visible list at VOCAL 2.
+    `compactAssignments(arr, vocs)` packs filled slots to the front preserving order, sorting
+    NAMED vocalists ahead of blank placeholders; `computePositions` returns through it, so
+    add / remove / PCO pull all land gap-free. `vocalDropOnSlot(vid, toIdx)` swaps on an
+    occupied card and MOVES onto an empty one, then re-packs; `renderVocalists` renders one
+    trailing dashed `.voc-empty` drop slot as the target. **Stage placement is unaffected** —
+    it comes from `getVoxPositions(count)` + order, never the slot index.
+    (`tests/vocalpos.js`; `dvempty.js` counts `.voc-card:not(.voc-empty)`.)
+46. **✓ Items lists vocalists in STAGE order.** `enumerateSetupRoles` walks
+    `vocalistsInStageOrder()` (driven by `state.assignments`), not the raw `state.vocalists`
+    array — which is insertion/PCO-pull order and comes back alphabetical. Cards read
+    VOCAL 1, 2, 3 left-to-right like the stage; a vocalist holding no slot is appended last so
+    nobody is dropped. Band order is unchanged (it already follows the instrument roster =
+    stage left→right) and is locked by a test. (`tests/scvorder.js`.)
 
 ---
 
@@ -157,6 +185,9 @@ Behaviors that must keep working. **The executable version of this list is `test
       person who is both a vocalist and an instrumentalist). → `checklist`, `setupmgr`
 - [ ] Adding/removing/reordering instruments works; optional instruments behave. →
       `newinst`
+- [ ] Vocal positions stay gap-free (VOCAL/PAC 1..N, blanks sort last) and a vocalist can be
+      dragged onto another card (swap) or the trailing empty slot (move) — see item **45**.
+      Stage placement must NOT shift when only the numbering compacts. → `vocalpos`, `dvempty`
 - [ ] Shadows (understudies) render and keep their own setup. → `shadows`
 - [ ] `detectPresetKey` maps tags to grouped-catalog keys (incl. md, strings); the
       grouped `SETUP_TEMPLATES` catalog exposes per-instrument options. → `setuppresets`,
@@ -164,14 +195,10 @@ Behaviors that must keep working. **The executable version of this list is `test
 - [ ] Flat setup UI + Settings "Templates" tab + old Template feature are RETIRED; the
       person card is grouped-only and "Add item" writes a custom item without data loss. →
       `setupretire`
-- [ ] **Editable setup catalog.** `setupCatalogFor` reads the `state.config.setupCatalog`
-      overlay first, else built-in `SETUP_TEMPLATES` (coerced safely on load via
-      `coerceSetupCatalogOverlay`). Editing an option/section preserves ids, so saved person
-      selections still resolve; removing an option/section leaves dangling selections inert;
-      reset-to-default drops the overlay entry. Custom instrument types appear in
-      `allSetupKeys()`, `bulkRoleOpts()`, and the Setup Items editor cards. `detectPresetKey`
-      priority: `inst.setupKey` → `setupTypeRules` keyword → built-in regex. The per-instrument
-      Setup-type override only shows when a custom type exists. → `setupcatalog`, `setuptypes`
+- [ ] The setup catalog is user-editable (overlay + custom types + PCO keyword rules) — see
+      item **44** above for the full contract. → `setupcatalog`, `setuptypes`, `setupwizard`
+- [ ] ✓ Items lists vocalists in STAGE order (`vocalistsInStageOrder`), band in instrument-roster
+      order — see item **46**. → `scvorder`
 
 ### Stage & layout
 - [ ] Stage renders D-shape; curve/depth sliders reshape it; custom outline overrides. →
