@@ -1090,6 +1090,15 @@ body.setup-items-mode .container{display:none}
 .si-chip.ck .si-chip-box{background:#7ba968;border-color:#7ba968;position:relative}
 .si-chip.ck .si-chip-box::after{content:"✓";position:absolute;inset:-3px 0 0 0;text-align:center;font-size:9px;color:var(--bg)}
 .si-iem-note{margin-top:9px;font-size:11px;color:var(--text-muted)}
+.si-mic-row{display:flex;align-items:center;gap:7px;margin-top:9px}
+.si-mic-row .k{font-family:var(--ff-mono);font-size:9px;letter-spacing:.06em;color:var(--text-faint);font-weight:700;text-transform:uppercase}
+.si-mic-select{flex:1;min-width:0;background:var(--bg-inset);border:1px solid rgba(212,161,71,.45);border-radius:20px;color:var(--accent);font-size:11.5px;padding:3px 9px;cursor:pointer}
+.si-mic-select:hover{border-color:var(--accent)}
+.si-mic-select:focus{outline:none;border-color:var(--accent)}
+.sp-mic-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sp-mic-label{font-family:var(--ff-mono);font-size:9px;letter-spacing:.09em;color:var(--text-faint);font-weight:700;text-transform:uppercase;flex:none}
+.sp-mic-select{flex:1;min-width:0;background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;cursor:pointer}
+.sp-mic-select:hover,.sp-mic-select:focus{border-color:var(--accent);outline:none}
 .si-iem-note .k{font-family:var(--ff-mono);font-size:9px;letter-spacing:.06em;color:var(--text-faint);font-weight:700;text-transform:uppercase;margin-right:5px}
 .si-none{font-size:11.5px;color:var(--text-faint);font-style:italic}
 .si-edit{display:inline-block;margin-top:10px;font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);text-decoration:none;cursor:pointer;opacity:0;transition:opacity .15s}
@@ -1275,6 +1284,12 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-voc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-content:start;align-items:start}
 .dv-voc-card{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .dv-voc-card.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 14px var(--accent-dim)}
+.dv-voc-idrow{display:flex;align-items:center;gap:9px;min-width:0}
+.dv-avatar{flex:none;width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--bg-inset);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.02em}
+.dv-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.dv-avatar.is-initials{background:var(--bg-inset)}
+.dv-avatar.sm{width:22px;height:22px;font-size:8.5px;margin-right:7px;vertical-align:middle}
+.dv-list-item .name{display:flex;align-items:center;min-width:0}
 .dv-voc-card.is-wl::after{content:'WL';position:absolute;top:8px;right:10px;color:var(--accent);font-family:var(--ff-mono);font-size:calc(10px * var(--dv-voc-scale, 1));font-weight:700;letter-spacing:.06em}
 .dv-voc-pos{font-family:var(--ff-mono);font-size:calc(18px * var(--dv-voc-scale, 1));font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px;line-height:1}
 .dv-voc-name{font-family:var(--ff-display);font-weight:600;font-size:calc(20px * var(--dv-voc-scale, 1));letter-spacing:-.01em;line-height:1.05;color:var(--text);margin-bottom:8px;padding-right:18px;white-space:normal;overflow-wrap:anywhere}
@@ -2289,6 +2304,7 @@ const DEFAULT_STATE = {
   // Per-musician preferences: keyed by 'normfullname|roletype' (e.g. 'andrew smith|drums' or 'esther kim|vocal')
   // value = { askedAt: ISO, mic?: 'KMS105', setupNotes?: '...', wireless?: bool }
   musicianPreferences: {},
+  peoplePhotos: {},             // normFullName -> PCO photo URL (URL only, never image bytes)
   // Preferred / "goes by" display names. Keyed by normFullName(officialPcoName) → preferred display string.
   // Applied at every PCO name-entry choke point so future pulls auto-rename (e.g. 'catherine smith' → 'Cat').
   nameAliases: {},
@@ -2770,6 +2786,7 @@ function loadState() {
           ? { lastServiceDate: p.setupServiceMeta.lastServiceDate || null, lastCompletionByKey: p.setupServiceMeta.lastCompletionByKey || {} }
           : { lastServiceDate: null, lastCompletionByKey: {} },
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
+        peoplePhotos: (p.peoplePhotos && typeof p.peoplePhotos === 'object') ? p.peoplePhotos : {},
         nameAliases: (p.nameAliases && typeof p.nameAliases === 'object') ? p.nameAliases : {},
         shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
         checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {},
@@ -6766,7 +6783,12 @@ function renderLayoutEditor() {
         <input type="checkbox" id="vocShowIemCb" ${c.display.vocShowIem!==false?'checked':''}>
         <span>Show IEM pack</span>
       </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="vocShowHeadshotsCb" ${c.display.showHeadshots!==false?'checked':''}>
+        <span>Show headshots</span>
+      </label>
     </div>
+    <p class="subtitle" style="margin:-10px 0 18px;font-size:11.5px;">Headshots come from Planning Center on a plan pull (photo URL only — nothing is stored locally). People without a PCO photo show their initials.</p>
 
     <div class="section-label" style="margin-bottom:8px;margin-top:0px;">Vocalist cards — Name format</div>
     <p class="subtitle" style="margin-bottom:8px;font-size:11.5px;">How names appear in the Display View. Edit view always shows full names.</p>
@@ -6924,6 +6946,14 @@ function renderLayoutEditor() {
   if (vocShowIemCb) {
     vocShowIemCb.addEventListener('change', e => {
       c.display.vocShowIem = e.target.checked;
+      saveState();
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+  }
+  const vocShowHeadshotsCb = el.querySelector('#vocShowHeadshotsCb');
+  if (vocShowHeadshotsCb) {
+    vocShowHeadshotsCb.addEventListener('change', e => {
+      c.display.showHeadshots = e.target.checked;
       saveState();
       if (state.viewMode === 'display') renderDisplayView();
     });
@@ -8655,11 +8685,14 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   let mdNameCandidate = null;
   // Buckets — collect all names per band-position type, then distribute below
   const bandBuckets = { drums:[], bass:[], keys:[], eg:[], ag:[] };
-  // First pass: figure out who plays acoustic
+  // First pass: figure out who plays acoustic — and capture headshot URLs while we're here.
+  // We store the URL ONLY (never the image bytes), so this costs a few hundred bytes of
+  // localStorage per person instead of megabytes of base64.
   const acousticPlayers = new Set();
   teamMembers.forEach(tm => {
     const a = tm.attributes;
     if ((a.status||'') === 'D') return;
+    rememberPersonPhoto(applyNameAlias(a.name || ''), a.photo_thumbnail_url || a.photo_url || '');
     const cls = classifyPosition(a.team_position_name || '');
     if (cls.kind === 'band' && cls.position === 'ag' && a.name) {
       acousticPlayers.add(normFullName(applyNameAlias(a.name || '')));
@@ -10104,7 +10137,7 @@ function renderDisplayView() {
       : '';
     card.innerHTML = `
       <div class="dv-voc-pos">VOCAL ${i+1}</div>
-      <div class="dv-voc-name">${esc(formatDisplayName(v.name)||'—')}${tagBadges}</div>
+      <div class="dv-voc-idrow">${headshotHtml(v.name)}<div class="dv-voc-name">${esc(formatDisplayName(v.name)||'—')}${tagBadges}</div></div>
       ${metaBlock}
     `;
     vocGrid.appendChild(card);
@@ -10153,7 +10186,7 @@ function renderDisplayView() {
     const roleTag = roleParts.length ? `<span class="pos-role"> ${roleParts.join(' ')}</span>` : '';
     const li = document.createElement('li');
     li.className = 'dv-list-item';
-    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}${roleTag}</span><span class="name">${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(packName)}</span>`;
+    li.innerHTML = `<span class="pos">${esc(shortInstLabel(inst.label))}${roleTag}</span><span class="name">${headshotHtml(name,'sm')}${esc(formatDisplayName(name)||'—')}</span><span class="detail">${esc(packName)}</span>`;
     if (bandList) bandList.appendChild(li);
   });
   // Solo MD: not on the stage, but rides a spare IEM pack — list them under Band as "MD · tracks".
@@ -11060,6 +11093,87 @@ function vocalSlotFor(vocId) {
 // track the current mic text on the bucket (`bucket.micItemText`, an untouched field that
 // survives reconstruction), reconcile by text, and re-tag `kind:'mic'` every call (styling
 // needs it fresh at render time). This mirrors how the Boom-mic auto-add stays idempotent.
+// ===== Headshots (PCO photos) =====
+// Photos come from the PCO team_members payload (`photo_thumbnail_url`). We keep only the URL,
+// keyed by normalised full name, so a re-pull or a rename never orphans an image blob and
+// localStorage stays small. No photo (or an offline booth) degrades to initials.
+function rememberPersonPhoto(name, url) {
+  const nn = normFullName(name || '');
+  const u = (url || '').trim();
+  if (!nn || !u) return;
+  if (!state.peoplePhotos || typeof state.peoplePhotos !== 'object') state.peoplePhotos = {};
+  state.peoplePhotos[nn] = u;
+}
+function personPhotoUrl(name) {
+  const nn = normFullName(name || '');
+  if (!nn || !state.peoplePhotos) return '';
+  return state.peoplePhotos[nn] || '';
+}
+function personInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  const first = parts[0][0] || '';
+  const last = parts.length > 1 ? (parts[parts.length - 1][0] || '') : '';
+  return (first + last).toUpperCase();
+}
+function headshotsOn() {
+  const d = (state.config && state.config.display) || {};
+  return d.showHeadshots !== false;   // default ON
+}
+// One avatar: the photo when we have one, initials otherwise. `onerror` falls back to initials
+// so a dead/expired PCO URL never leaves a broken-image icon on the green-room TV.
+function headshotHtml(name, cls) {
+  if (!headshotsOn()) return '';
+  const url = personPhotoUrl(name);
+  const initials = esc(personInitials(name));
+  const c = 'dv-avatar' + (cls ? ' ' + cls : '');
+  if (!url) return `<span class="${c} is-initials">${initials}</span>`;
+  return `<span class="${c}"><img src="${esc(url)}" alt="" loading="lazy" `
+    + `onerror="this.parentNode.classList.add('is-initials');this.parentNode.textContent='${initials}';"/></span>`;
+}
+// ===== Vocal mic (capsule) — shared editable control =====
+// The assigned vocal mic used to be read-only outside the vocalist card, so a mic could not be
+// changed from the per-person setup editor or the ✓ Items card. These two helpers back an
+// editable <select> in both places.
+
+// Find a vocalist by display name OR by an already-normalised full name (stable setup keys
+// store the normalised form), so callers can pass either.
+function vocalistByAnyName(name) {
+  const target = normFullName(name || '');
+  if (!target) return null;
+  return (state.vocalists || []).find(v => v && normFullName(v.name) === target) || null;
+}
+// <option> list for the mic picker. Mirrors the vocalist card: a mic already at its inventory
+// capacity is disabled UNLESS it is this person's own mic (so their current pick never vanishes).
+function micOptionsHtmlFor(vocalistId) {
+  const usage = {};
+  (state.vocalists || []).forEach(v => { if (v && v.micAssigned) usage[v.micAssigned] = (usage[v.micAssigned] || 0) + 1; });
+  const mine = (state.vocalists || []).find(v => v && v.id === vocalistId);
+  const current = (mine && mine.micAssigned) ? mine.micAssigned : '';
+  let html = `<option value="">— No mic —</option>`;
+  (state.inventory || []).forEach(m => {
+    const used = usage[m.name] || 0;
+    const effective = (m.name === current) ? used - 1 : used;
+    const atCap = effective >= m.total;
+    const remaining = m.total - effective;
+    const isSel = m.name === current;
+    const label = atCap ? `${m.name} — out` : `${m.name} (${remaining})`;
+    html += `<option value="${esc(m.name)}"${isSel ? ' selected' : ''}${atCap && !isSel ? ' disabled' : ''}>${esc(label)}</option>`;
+  });
+  return html;
+}
+// Set a vocalist's mic by name. Keeps the auto-added mic checklist item in sync and remembers the
+// pick for future pulls. Returns true when a vocalist was found (i.e. something was applied).
+function setVocalistMicByName(name, mic) {
+  const v = vocalistByAnyName(name);
+  if (!v) return false;
+  const next = (mic || '').trim();
+  v.micAssigned = next;
+  if (next) setMicRemembered(v.name, next);   // remember for future services
+  syncAssignedMicItem({ role: 'vocalist', vocId: v.id, key: stableSetupKey(v.name, 'vocalist', 'vocals') });
+  saveState();
+  return true;
+}
 function syncAssignedMicItem(p) {
   if (p.role !== 'vocalist' || !p.vocId) return;
   const v = state.vocalists.find(x => x.id === p.vocId);
@@ -11152,6 +11266,28 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
 
   container.innerHTML = '';
   container.classList.add('sp-editor');
+
+  // Vocal mic (capsule) — editable here, not just on the vocalist card. Only meaningful for a
+  // vocals bucket; the stable key carries the normalised name, so resolve the person from it.
+  if (typeKey === 'vocals') {
+    const vocName = String(stableKey).split('|')[0];
+    const voc = vocalistByAnyName(vocName);
+    if (voc) {
+      const micRow = document.createElement('div');
+      micRow.className = 'sp-mic-row';
+      micRow.innerHTML = `<span class="sp-mic-label">Vocal mic</span>
+        <select class="sp-mic-select" data-voc-id="${esc(voc.id)}">${micOptionsHtmlFor(voc.id)}</select>`;
+      micRow.querySelector('.sp-mic-select').addEventListener('change', e => {
+        setVocalistMicByName(voc.name, e.target.value);
+        // Narrow refresh only: this editor also runs inside the first-run wizard and the
+        // post-pull cards, where a full renderAll() would redraw the app behind a live modal.
+        if (typeof renderVocalists === 'function') renderVocalists();
+        if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+        renderPersonSetupEditor(container, stableKey, typeKey);
+      });
+      container.appendChild(micRow);
+    }
+  }
 
   const groupsWrap = document.createElement('div');
   groupsWrap.className = 'sp-groups';
@@ -11411,7 +11547,7 @@ function collectChecklistItems() {
     }
     const flatBucket = p.isVoc ? vocItems : bandItems;
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
-    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText, buckets: p.buckets });
+    (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText, buckets: p.buckets, isVoc: !!p.isVoc });
   });
   if (vocItems.length > 0) {
     sections.push({ title: 'VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
@@ -11575,6 +11711,13 @@ function renderSetupChecklist() {
         bodyHtml = '<div class="si-grid">' + groups.map(p => {
           const hasBuckets = Array.isArray(p.buckets) && p.buckets.length > 0;
           const cogIdx = cogPeople.length;
+          // Vocal mic is EDITABLE here (it used to be a read-only chip) so capsules can be
+          // swapped straight from the ✓ Items list.
+          const micVoc = p.isVoc ? vocalistByAnyName(p.name) : null;
+          const micPickerHtml = micVoc
+            ? `<div class="si-mic-row"><span class="k">MIC</span>` +
+              `<select class="si-mic-select" data-voc-name="${esc(micVoc.name)}">${micOptionsHtmlFor(micVoc.id)}</select></div>`
+            : '';
           if (hasBuckets) cogPeople.push(p);
           const pTotal = p.items.length;
           const pDone = p.items.filter(it => !!cs[it.key]).length;
@@ -11596,6 +11739,7 @@ function renderSetupChecklist() {
               ${hasBuckets ? `<button class="si-cog" data-cog-idx="${cogIdx}" title="Edit setup items" aria-label="Edit setup items">⚙</button>` : ''}
             </div>
             <div class="si-chips">${chipsHtml}</div>
+            ${micPickerHtml}
             ${p.iem ? `<div class="si-iem-note"><span class="k">IEM</span> ${esc(p.iem)}</div>` : ''}
           </div>`;
         }).join('') + '</div>';
@@ -11631,6 +11775,18 @@ function renderSetupChecklist() {
       e.stopPropagation(); e.preventDefault();
       const p = cogPeople[+btn.dataset.cogIdx];
       if (p) openChecklistPersonEditor(p);
+    });
+  });
+
+  // Per-person vocal mic picker → swap a capsule without leaving the ✓ Items list.
+  container.querySelectorAll('.si-mic-select').forEach(sel => {
+    // Stop the click reaching the chip/checkbox handlers below.
+    sel.addEventListener('click', e => e.stopPropagation());
+    sel.addEventListener('change', e => {
+      e.stopPropagation();
+      setVocalistMicByName(sel.dataset.vocName, e.target.value);
+      if (typeof renderAll === 'function') renderAll();
+      renderSetupChecklist();
     });
   });
 
