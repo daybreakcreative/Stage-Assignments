@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–46):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–50):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
-> recent items (23–46) are reproduced in full here, and every area maps to a test file.
+> recent items (23–50) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–46, detailed)
+## Recently shipped — must not regress (items 23–50, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -162,6 +162,31 @@ Behaviors that must keep working. **The executable version of this list is `test
     trailing dashed `.voc-empty` drop slot as the target. **Stage placement is unaffected** —
     it comes from `getVoxPositions(count)` + order, never the slot index.
     (`tests/vocalpos.js`; `dvempty.js` counts `.voc-card:not(.voc-empty)`.)
+47. **Vocal mic (capsule) is editable in three places, not just the vocalist card.**
+    A mic `<select>` appears in the per-person setup editor (vocals buckets only, via
+    `renderPersonSetupEditor`) and on each ✓ Items vocalist card (`.si-mic-select`), backed by
+    `vocalistByAnyName` / `micOptionsHtmlFor` / `setVocalistMicByName`. It honors inventory
+    capacity exactly like the vocalist card (a mic at capacity is disabled for others, never for
+    its owner), remembers the pick via `setMicRemembered`, and keeps the auto-mic checklist item
+    in sync. `isVoc` is threaded through `collectChecklistItems` so a sings-and-plays person gets
+    ONE picker (on their vocal card), not two. → `micedit`
+48. **The auto-added vocal mic is never swept into `customItems`.** `reconstructSetupBucket`
+    turns any item whose text isn't a catalog option into a custom item; the capsule isn't a
+    catalog option, so it used to become a permanent custom line — and changing someone's mic
+    left the OLD capsule on the checklist next to the new one. It is now excluded by
+    `kind === 'mic'`, `autoAdded`, or a match on `bucket.micItemText`. Genuine custom items are
+    unaffected. → `micstale`
+49. **Someone on the plan with NO setup items still gets a ✓ Items card.** Both the per-person
+    filter and the per-SECTION filter key off people, not items, so a band member with an empty
+    bucket renders the "No setup needed" state (`.si-none`) with a working ⚙ — previously they
+    were dropped entirely, which also made their setup unreachable from that page. Zero-item
+    people contribute nothing to the progress counts. → `scvnoitems`
+50. **Headshots on the display.** A PCO pull captures `photo_thumbnail_url` into
+    `state.peoplePhotos[normFullName]` — **the URL only, never image bytes** (that is what kept
+    this feature parked). `headshotHtml` renders an avatar on display vocalist cards and band
+    rows; no photo → initials (`personInitials`), and a dead URL falls back to initials via
+    `onerror` rather than showing a broken-image glyph. "Show headshots" toggle in Advanced
+    Settings → Display, default ON. → `headshots`
 46. **✓ Items lists vocalists in STAGE order.** `enumerateSetupRoles` walks
     `vocalistsInStageOrder()` (driven by `state.assignments`), not the raw `state.vocalists`
     array — which is insertion/PCO-pull order and comes back alphabetical. Cards read

@@ -48,6 +48,18 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   `daybreak-production-ai` (`flags/bugFormat.js`, `POST /bug`).
 
 ### Setup items
+- ~~**[FIX] Vocal mic capsule was read-only outside the vocalist card.**~~ ✅ SHIPPED 2026-08-27
+  (overnight) → `micedit`. Reported: "their set up items 'set up' page allows changing everything
+  except the mic capsule ... its read only in both places." A mic picker now sits in the
+  per-person setup editor and on each ✓ Items vocalist card, honouring inventory capacity.
+- ~~**[FIX] Changing a mic left the OLD capsule on the checklist.**~~ ✅ SHIPPED 2026-08-27
+  (overnight) → `micstale`. `reconstructSetupBucket` swept the auto-added mic into `customItems`
+  (it isn't a catalog option), making it permanent — after switching to SE V7 the checklist read
+  `['SE V7','KMS105']`. A tech would have grabbed the wrong mic. Found because this session made
+  the mic easy to change.
+- ~~**[FIX] People with no setup items vanished from ✓ Items.**~~ ✅ SHIPPED 2026-08-27
+  (overnight) → `scvnoitems`. Two gates (per-person and per-section) dropped them, which also
+  removed the only ⚙ that could give them setup items. They now show "No setup needed".
 - ~~**[FEATURE] Editable setup items/questions per instrument.**~~ ✅ SHIPPED 2026-07-30 →
   `setupcatalog`, `setuptypes`. Overlay catalog (`state.config.setupCatalog`, read via
   `setupCatalogFor`): rename/add/remove/reorder options AND sections (radio↔check), reset-to-default,
@@ -78,12 +90,28 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   idle screen when nothing's live. Pure client-side, uses the service time we already have.
   _Deprioritized 2026-07-10 — Dillon deemed it unnecessary for now; brainstorm cancelled. Left
   here in case it comes back._
-- **[FEATURE] ~~Headshots on the display~~ — PARKED.** People photos so anyone can run a mic
-  check without asking who's who. Client-side is doable but photos bloat `localStorage` — weigh
-  the storage cost / cap it / downscale. Best angle if revisited: **pull photos from the PCO
-  People API on the plan pull** (zero manual work). Parked 2026-07-10 with the countdown above.
+- ~~**[FEATURE] Headshots on the display.**~~ ✅ SHIPPED 2026-08-27 (overnight) → `headshots`.
+  Was parked over localStorage cost; solved by storing **the PCO photo URL only, never image
+  bytes** — a plan pull captures `photo_thumbnail_url` into `state.peoplePhotos[normFullName]`
+  (measured: 2 people = 98 bytes). Avatars render on display vocalist cards + band rows; no photo
+  → initials; a dead URL falls back to initials via `onerror`. "Show headshots" toggle in
+  Advanced Settings → Display, default ON. Offline booth = initials, by design.
 - ~~**[POLISH] Export / share the display view.**~~ **Declined 2026-07-10** — Print Summary is the
   only print path needed (the display is the on-screen/TV view).
+
+### Display / green-room — OPEN
+- **[FIX] Stage person name clipped at the stage edge.** At narrower stage widths (i.e. when the
+  Service Order rail is showing), a person standing at stage-left/right with a long name is cut
+  off by `.dv-stage-svg-wrap`'s `overflow:hidden` — "Simon Mugarami" renders as "imon Mugarami"
+  on the green-room TV. Reproduced 2026-08-27; **three fix attempts were made and all reverted**
+  (see `tools/review/review-2026-08-27-stageassign.html`): a viewBox-space clamp is wrong in
+  principle (the card is sized in pixels, so its viewBox width changes with pane size); a pixel
+  clamp right after append measures a half-built box (the display settles asynchronously); a
+  ResizeObserver clamp worked at wide widths but still clipped at the narrow width that actually
+  triggers it. **This needs a design decision from Dillon**, because both real fixes change how
+  the stage looks: (a) let the people layer overflow the stage outline — names extend past the
+  edge, positions stay exact; or (b) shrink the drawn stage to reserve a name gutter. Cosmetic,
+  not data-affecting.
 
 ### Stage editor
 - ~~**[POLISH] Fixture label overlap.**~~ ✅ SHIPPED 2026-07-28 → `featurelabel`. Two fixtures placed
