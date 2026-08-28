@@ -11522,7 +11522,11 @@ function collectChecklistItems() {
   const vocItems = [], bandItems = [], vocPeople = [], bandPeople = [];
   order.forEach(nn => {
     const p = byPerson.get(nn);
-    if (!p.items.length) return;
+    // Keep people who have NO setup items yet: they are on the plan, so the tech still needs to
+    // see them, and their card carries the ⚙ that is the only way to give them setup items from
+    // this page. Their card renders the "No setup needed" state and contributes nothing to the
+    // progress counts. (Dropping them made them invisible AND unreachable.)
+    if (!p.items.length && !p.buckets.length) return;
     let roleLabel = p.roles.join(' · ');
     // Vocalists: badge by assignment slot ("Vocal N") and surface their IEM pack + assigned mic.
     // Band: surface the IEM pack from the instrument. IEM is a note, never a checkable item.
@@ -11549,10 +11553,12 @@ function collectChecklistItems() {
     p.items.forEach(gi => flatBucket.push({ personName: roleLabel + ' — ' + p.name, itemText: gi.itemText, key: gi.key }));
     (p.isVoc ? vocPeople : bandPeople).push({ name: p.name, roleLabel, stableKey: nn, items: p.items, iem, micText, buckets: p.buckets, isVoc: !!p.isVoc });
   });
-  if (vocItems.length > 0) {
+  // Gate on PEOPLE, not items: a section whose people have no setup items yet must still render
+  // (their cards show "No setup needed" and carry the ⚙ that adds items).
+  if (vocPeople.length > 0 || vocItems.length > 0) {
     sections.push({ title: 'VOCALISTS', key: 'vocalists', items: vocItems, people: vocPeople });
   }
-  if (bandItems.length > 0) {
+  if (bandPeople.length > 0 || bandItems.length > 0) {
     sections.push({ title: 'BAND', key: 'band', items: bandItems, people: bandPeople });
   }
 
