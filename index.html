@@ -1605,7 +1605,9 @@ body>*:not(.summary-overlay){display:none!important}
 .feat-inspect button.fi-del:hover { background:#c8554d; color:#fff; border-color:#c8554d; }
 
 .dv-first-run-tip {
-  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  /* Sits at the BOTTOM: at top:8px it covered the service title on the green-room TV until
+     someone dismissed it (found in the 2026-08-27 walkthrough). */
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
   background: var(--accent); color: #000; border-radius: 8px;
   padding: 6px 14px; font-size: 12px; display: flex; align-items: center; gap: 8px;
   z-index: 10; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4);
@@ -10677,7 +10679,13 @@ function reconstructSetupBucket(stableKey, typeKey) {
   }
   const selections = {};
   const customItems = [];
+  // The auto-added vocal mic is NOT a custom item — it is derived from v.micAssigned and
+  // re-added by syncAssignedMicItem on every enumeration. Sweeping it in here made the capsule a
+  // permanent "custom" line, so changing someone's mic left the OLD capsule on the checklist.
+  const isAutoMic = it => it.kind === 'mic' || it.autoAdded === true
+    || (b.micItemText && it.text === b.micItemText);
   (b.items || []).forEach(it => {
+    if (isAutoMic(it)) return;
     const m = textMap[it.text];
     if (m) {
       if (m.type === 'radio') { selections[m.groupId] = m.optId; }
