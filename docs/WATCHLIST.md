@@ -315,3 +315,10 @@ Behaviors that must keep working. **The executable version of this list is `test
       `.si-*` card view was removed 2026-07-18; `renderSetupChecklist` is now the only path.
       The `.si-*` CSS and shared helpers — `vocalSlotFor`, `syncAssignedMicItem`,
       `renderPersonSetupEditor`, `refreshSetupItemsUI` — remain in use.)
+- [ ] **54.** The per-person setup editor (`renderPersonSetupEditor`) carries an "Edit questions"
+      disclosure at its foot — the same `renderCatalogEditor` as Advanced Settings → Setup Items,
+      so a rig can be renamed or added from where it's used, not only three levels deep in
+      Settings. Edits are catalog-level (id-based), so they hit EVERY person: the note under the
+      summary says so, `rebuildBucketsForType` re-resolves every cached bucket of that type, and
+      the radios above redraw in place. Reset/delete-type redraws the whole person editor. It
+      must never write to that person's `customItems`. → `setupcatalogperson`

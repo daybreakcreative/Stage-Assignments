@@ -738,6 +738,7 @@ background-size:5% 10%}
 .cat-editor-foot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .cat-group-add-input{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
 .cat-reset{margin-left:auto}
+.sp-cat-edit-note{font-size:11px;color:var(--text-muted);margin:4px 0 2px}
 .cat-edit-summary{cursor:pointer;font-size:12px;color:var(--text-muted);margin-top:6px;list-style:none}
 .cat-edit-summary::-webkit-details-marker{display:none}
 .cat-edit-summary::before{content:'▸ ';color:var(--accent)}
@@ -10720,6 +10721,16 @@ function rebuildPersonItems(stableKey, typeKey) {
     return it;
   });
 }
+// A catalog rename/add changes the wording for everyone, but each person's checklist caches its
+// resolved lines in bucket.items. Re-resolve every bucket of this type so a reworded or newly
+// added option reaches the people who already have that instrument. Stable keys are
+// `name|role|typeKey`, so the type is the third segment.
+function rebuildBucketsForType(typeKey) {
+  if (!typeKey || typeKey === 'none') return;
+  Object.keys(state.setupItems || {}).forEach(k => {
+    if (String(k).split('|')[2] === typeKey) rebuildPersonItems(k, typeKey);
+  });
+}
 // Reconstruct selections for a migrated/legacy bucket that has items but no
 // selections. Maps each item's text back to a catalog option (radio → set
 // selections[groupId]=optId; check → push optId). Text that matches an option's
@@ -11382,12 +11393,13 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   const groupsWrap = document.createElement('div');
   groupsWrap.className = 'sp-groups';
   container.appendChild(groupsWrap);
-  renderSetupGroups(groupsWrap, typeKey, bucket.selections, next => {
+  const onGroupsChange = next => {
     bucket.selections = next;
     rebuildPersonItems(stableKey, typeKey);
     saveState();
     if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
-  });
+  };
+  renderSetupGroups(groupsWrap, typeKey, bucket.selections, onGroupsChange);
 
   // Every resolved line on this person's list, each removable — not just the custom ones.
   // An implied `addItems` line (e.g. "Amp & mic setup (stereo)" from the stereo rig) previously
@@ -11488,6 +11500,50 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   addRow.appendChild(inp);
   addRow.appendChild(addBtn);
   container.appendChild(addRow);
+
+  // Edit the shared question catalog from where the questions are actually used, instead of
+  // only in Advanced Settings → Setup Items. Same editor, same overlay: renaming is id-based,
+  // so anyone who already picked an option keeps their pick and just sees the new wording.
+  // Collapsed and labelled, because it changes the questions for EVERY person.
+  const personCat = setupCatalogFor(typeKey);
+  if (personCat) {
+    const disc = document.createElement('details');
+    disc.className = 'cat-edit-disclosure sp-cat-edit';
+    const sum = document.createElement('summary');
+    sum.className = 'cat-edit-summary';
+    sum.textContent = 'Edit questions';
+    const note = document.createElement('div');
+    note.className = 'sp-cat-edit-note';
+    note.textContent = 'Changes the ' + (personCat.label || typeKey) + ' questions for everyone, not just this person.';
+    const catMount = document.createElement('div');
+    catMount.className = 'cat-edit-mount';
+    disc.appendChild(sum);
+    disc.appendChild(note);
+    disc.appendChild(catMount);
+    container.appendChild(disc);
+    // Any edit inside the mount re-resolves this type everywhere, then redraws the radios above
+    // so the new wording shows immediately. The editor re-renders its own rows.
+    const syncAfterCatalogEdit = () => {
+      if (!groupsWrap.isConnected) return;
+      rebuildBucketsForType(typeKey);
+      saveState();
+      renderSetupGroups(groupsWrap, typeKey, bucket.selections, onGroupsChange);
+      renderCustoms();
+      if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+    };
+    catMount.addEventListener('input', syncAfterCatalogEdit);
+    catMount.addEventListener('click', syncAfterCatalogEdit);
+    disc.addEventListener('toggle', () => {
+      if (!disc.open || catMount.firstChild) return;
+      // Reset / delete-type tears the catalog out from under this editor — redraw the whole thing.
+      renderCatalogEditor(catMount, typeKey, () => {
+        rebuildBucketsForType(typeKey);
+        saveState();
+        renderPersonSetupEditor(container, stableKey, typeKey);
+        if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+      });
+    });
+  }
 }
 
 // CSS-attribute selector escape helper for keys with special chars
