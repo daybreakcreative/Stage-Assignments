@@ -1125,6 +1125,16 @@ body.setup-items-mode .container{display:none}
 .sp-opt{display:flex;align-items:center;gap:6px;font-size:13px;padding:2px 0;cursor:pointer}
 .sp-customs{margin-top:8px;display:flex;flex-direction:column;gap:4px}
 .sp-custom-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.sp-line-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0}
+.sp-line-text{flex:1;min-width:0}
+.sp-line-remove{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:0 4px;line-height:1}
+.sp-line-remove:hover{color:var(--text)}
+.sp-line-remove:focus-visible{outline:1px solid var(--accent);outline-offset:2px;border-radius:3px}
+.sp-restore-label{font-family:var(--ff-mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);margin:10px 0 4px}
+.sp-restore-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0;color:var(--text-faint)}
+.sp-restore-row .sp-line-text{text-decoration:line-through}
+.sp-line-restore{background:none;border:1px solid var(--border);border-radius:5px;color:var(--text-muted);cursor:pointer;font-size:10.5px;padding:2px 8px}
+.sp-line-restore:hover{color:var(--text);border-color:var(--accent)}
 .sp-custom-text{flex:1}
 .sp-custom-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px}
 .sp-custom-remove:hover{color:var(--text)}
@@ -2601,6 +2611,48 @@ function editSetupItemText(stableKey, typeKey, oldText, rawNewText) {
   }
   rebuildPersonItems(stableKey, tKey);
   return true;
+}
+
+// Remove ONE line from a person's setup list — including an implied `addItems` line that a radio
+// option drags in (e.g. EG "Stereo guitar rig" implies "Amp & mic setup (stereo)"). Reported
+// 2026-08-28: those lines had no remove control anywhere, so the only way to drop one was to
+// untick the whole rig, which also removed the siblings the player still needed.
+// A real custom item is deleted outright. Anything catalog-derived is SUPPRESSED by reusing the
+// existing `replaces` override with empty text: resolveSetupItems already skips any text listed
+// in a customItems `replaces`, and already refuses to render a customItem with empty text — so a
+// removal needs no new persisted field and no migration. Returns true if something changed.
+function removeSetupLine(stableKey, typeKey, text) {
+  const bucket = state.setupItems[stableKey];
+  const t = (text || '').trim();
+  if (!bucket || !t) return false;
+  const tKey = typeKey || ((stableKey || '').split('|')[2] || null);
+  bucket.customItems = bucket.customItems || [];
+  const own = bucket.customItems.findIndex(ci => ci && ci.text === t);
+  if (own !== -1) {
+    bucket.customItems.splice(own, 1);              // a real custom item (or a prior reword)
+  } else {
+    if (bucket.customItems.some(ci => ci && ci.replaces === t && !ci.text)) return false; // already gone
+    bucket.customItems.push({ id: newSetupItem('').id, text: '', replaces: t });
+  }
+  rebuildPersonItems(stableKey, tKey);
+  return true;
+}
+// Undo a suppression made by removeSetupLine.
+function restoreSetupLine(stableKey, typeKey, text) {
+  const bucket = state.setupItems[stableKey];
+  const t = (text || '').trim();
+  if (!bucket || !t || !Array.isArray(bucket.customItems)) return false;
+  const before = bucket.customItems.length;
+  bucket.customItems = bucket.customItems.filter(ci => !(ci && ci.replaces === t && !ci.text));
+  if (bucket.customItems.length === before) return false;
+  rebuildPersonItems(stableKey, typeKey || ((stableKey || '').split('|')[2] || null));
+  return true;
+}
+// The catalog lines this person has explicitly removed (for the editor's restore list).
+function removedSetupLines(stableKey) {
+  const bucket = state.setupItems[stableKey];
+  if (!bucket || !Array.isArray(bucket.customItems)) return [];
+  return bucket.customItems.filter(ci => ci && ci.replaces && !ci.text).map(ci => ci.replaces);
 }
 
 function detectPresetKey(inst) {
@@ -10678,7 +10730,12 @@ function reconstructSetupBucket(stableKey, typeKey) {
     });
   }
   const selections = {};
-  const customItems = [];
+  // Carry forward explicit per-person REMOVALS. They are `{text:'', replaces}` markers with no
+  // corresponding entry in b.items, so rebuilding customItems purely from items would silently
+  // resurrect a line the user removed.
+  const customItems = (b.customItems || []).filter(ci => ci && ci.replaces && !ci.text)
+    .map(ci => ({ id: ci.id, text: '', replaces: ci.replaces }));
+  const suppressed = new Set(customItems.map(ci => ci.replaces));
   // The auto-added vocal mic is NOT a custom item — it is derived from v.micAssigned and
   // re-added by syncAssignedMicItem on every enumeration. Sweeping it in here made the capsule a
   // permanent "custom" line, so changing someone's mic left the OLD capsule on the checklist.
@@ -10686,6 +10743,7 @@ function reconstructSetupBucket(stableKey, typeKey) {
     || (b.micItemText && it.text === b.micItemText);
   (b.items || []).forEach(it => {
     if (isAutoMic(it)) return;
+    if (suppressed.has(it.text)) return;   // explicitly removed for this person
     const m = textMap[it.text];
     if (m) {
       if (m.type === 'radio') { selections[m.groupId] = m.optId; }
@@ -11307,25 +11365,29 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
     if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
   });
 
-  // Custom items list (with remove)
+  // Every resolved line on this person's list, each removable — not just the custom ones.
+  // An implied `addItems` line (e.g. "Amp & mic setup (stereo)" from the stereo rig) previously
+  // had no remove control at all; removing one now suppresses just that line, leaving its
+  // siblings and the parent option alone.
   const customWrap = document.createElement('div');
   customWrap.className = 'sp-customs';
   const renderCustoms = () => {
     customWrap.innerHTML = '';
-    bucket.customItems.forEach((ci, idx) => {
+    const lines = resolveSetupItems(typeKey, bucket.selections, bucket.customItems);
+    lines.forEach(l => {
       const row = document.createElement('div');
-      row.className = 'sp-custom-row';
+      row.className = 'sp-line-row';
       const span = document.createElement('span');
-      span.className = 'sp-custom-text';
-      span.textContent = ci.text;
+      span.className = 'sp-line-text';
+      span.textContent = l.text;
       const rm = document.createElement('button');
       rm.type = 'button';
-      rm.className = 'sp-custom-remove';
-      rm.title = 'Remove item';
+      rm.className = 'sp-line-remove';
+      rm.title = 'Remove this item for this person';
+      rm.setAttribute('aria-label', 'Remove ' + l.text);
       rm.textContent = '✕';
       rm.addEventListener('click', () => {
-        bucket.customItems.splice(idx, 1);
-        rebuildPersonItems(stableKey, typeKey);
+        removeSetupLine(stableKey, typeKey, l.text);
         saveState();
         renderPersonSetupEditor(container, stableKey, typeKey);
         if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
@@ -11334,6 +11396,34 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
       row.appendChild(rm);
       customWrap.appendChild(row);
     });
+    const gone = removedSetupLines(stableKey);
+    if (gone.length) {
+      const lbl = document.createElement('div');
+      lbl.className = 'sp-restore-label';
+      lbl.textContent = 'Removed for this person';
+      customWrap.appendChild(lbl);
+      gone.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'sp-restore-row';
+        const span = document.createElement('span');
+        span.className = 'sp-line-text';
+        span.textContent = t;
+        const un = document.createElement('button');
+        un.type = 'button';
+        un.className = 'sp-line-restore';
+        un.title = 'Put this item back';
+        un.textContent = 'Restore';
+        un.addEventListener('click', () => {
+          restoreSetupLine(stableKey, typeKey, t);
+          saveState();
+          renderPersonSetupEditor(container, stableKey, typeKey);
+          if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+        });
+        row.appendChild(span);
+        row.appendChild(un);
+        customWrap.appendChild(row);
+      });
+    }
   };
   renderCustoms();
   container.appendChild(customWrap);

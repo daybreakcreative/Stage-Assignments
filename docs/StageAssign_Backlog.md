@@ -48,6 +48,13 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   `daybreak-production-ai` (`flags/bugFormat.js`, `POST /bug`).
 
 ### Setup items
+- ~~**[FIX] Implied setup lines couldn't be removed.**~~ ✅ SHIPPED 2026-08-28 → `itemremove`.
+  Reported: "Can't remove 'amp and mic setup for Jack Grubbs'". That line is an `addItems` entry
+  implied by the EG "Stereo guitar rig" radio option, and only *custom* items had an ✕ — so the
+  only way to drop it was to untick the whole rig, which also removed the DI box and XLRs Jack
+  needed. Every resolved line in the ⚙ editor now has an ✕, backed by the existing `replaces`
+  override (empty text = suppressed), with a Restore list. This closes the `addItems` gap
+  deliberately deferred in the editable-setup-catalog spec (§9 item 2).
 - ~~**[FIX] Vocal mic capsule was read-only outside the vocalist card.**~~ ✅ SHIPPED 2026-08-27
   (overnight) → `micedit`. Reported: "their set up items 'set up' page allows changing everything
   except the mic capsule ... its read only in both places." A mic picker now sits in the
