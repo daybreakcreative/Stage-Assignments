@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–52):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–53):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
-> recent items (23–52) are reproduced in full here, and every area maps to a test file.
+> recent items (23–53) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–52, detailed)
+## Recently shipped — must not regress (items 23–53, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -162,6 +162,15 @@ Behaviors that must keep working. **The executable version of this list is `test
     trailing dashed `.voc-empty` drop slot as the target. **Stage placement is unaffected** —
     it comes from `getVoxPositions(count)` + order, never the slot index.
     (`tests/vocalpos.js`; `dvempty.js` counts `.voc-card:not(.voc-empty)`.)
+53. **Stage person cards never spill outside the stage box.** Cards are centred on the person, so
+    someone at stage-left/right with a long name grew OUTWARD and was clipped by
+    `.dv-stage-svg-wrap`'s `overflow:hidden` ("Simon Mugarami" → "imon Mugarami" on the TV).
+    `stageLabelAnchor(x, span)` buckets each card from its x in the 0..800 viewBox — outer 22%
+    anchors left, outer 22% anchors right, middle stays centred — and CSS swaps the transform
+    (`translate(0,-50%)` / `translate(-100%,-50%)`). Chosen at render time from coordinates, so it
+    needs NO measurement and holds at every pane width; three earlier measurement-based attempts
+    all failed because the display settles asynchronously and the card is sized in px, not viewBox
+    units. Names are never truncated to achieve this. → `stageclip`
 52. **Auto-added lines are removable too, and stay removed.** Some lines are injected straight
     into `bucket.items` rather than coming from the catalog — the MD's "Boom mic stand"
     (`ensureBoom`) and the assigned vocal mic (`syncAssignedMicItem`). Two rules: the editor lists

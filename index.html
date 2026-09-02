@@ -1370,6 +1370,13 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-front-edge-lbl{font-family:var(--ff-mono),'Manrope',system-ui,sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;fill:var(--accent);opacity:.95}
 .s-stage-frame .dv-front-edge{stroke:#b08a3a!important;opacity:.85}
 .s-stage-frame .dv-front-edge-lbl{fill:#7a6838!important}
+/* Person cards are centred on the person, so someone at stage-left/right with a long name grew
+   OUTWARD past the stage and was clipped by .dv-stage-svg-wrap's overflow:hidden ("Simon
+   Mugarami" -> "imon Mugarami" on the TV). Cards near an edge anchor to that edge instead and
+   grow inward. The bucket is chosen from the person's x in the 0..800 viewBox at render time, so
+   this needs no measurement and is correct at every pane width. */
+.dv-sp[data-anchor="left"]{transform:translate(0,-50%)}
+.dv-sp[data-anchor="right"]{transform:translate(-100%,-50%)}
 .dv-sp{position:absolute;transform:translate(-50%,-50%);transform-origin:center center;background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;width:max-content;max-width:none;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
@@ -4932,6 +4939,16 @@ function resolveStageLabelLayout(marks, opts) {
     }));
 }
 
+// Which edge a stage person card should anchor to, from their x in the 0..800 viewBox.
+// Cards in the outer bands grow INWARD so a long name can't spill past the stage and get clipped.
+// The 22%/78% bands leave ~82px of room at the narrowest real stage width, comfortably more than
+// a typical card's ~62px half-width, so centred cards in the middle band still fit.
+function stageLabelAnchor(x, span) {
+  const w = span || 800;
+  if (x < w * 0.22) return 'left';
+  if (x > w * 0.78) return 'right';
+  return 'center';
+}
 // De-overlap fixture CAPTION labels (stairs/doors/monitors — the ones that hang BELOW their
 // fixture). Same idea as resolveStageLabelLayout, but simpler: these are single-line, centered
 // on their fixture's x, and only ever get pushed straight DOWN. Marker text (which sits INSIDE
@@ -10169,6 +10186,7 @@ function renderDisplayView() {
     const centerY = L.labelY + L.h / 2;
     const css = toPct({ x: m.x, y: centerY });
     el.style.left = css.left; el.style.top = css.top;
+    el.dataset.anchor = stageLabelAnchor(m.x);
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     wrap.appendChild(el);
   });

@@ -114,19 +114,17 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 - ~~**[POLISH] Export / share the display view.**~~ **Declined 2026-07-10** — Print Summary is the
   only print path needed (the display is the on-screen/TV view).
 
-### Display / green-room — OPEN
-- **[FIX] Stage person name clipped at the stage edge.** At narrower stage widths (i.e. when the
-  Service Order rail is showing), a person standing at stage-left/right with a long name is cut
-  off by `.dv-stage-svg-wrap`'s `overflow:hidden` — "Simon Mugarami" renders as "imon Mugarami"
-  on the green-room TV. Reproduced 2026-08-27; **three fix attempts were made and all reverted**
-  (see `tools/review/review-2026-08-27-stageassign.html`): a viewBox-space clamp is wrong in
-  principle (the card is sized in pixels, so its viewBox width changes with pane size); a pixel
-  clamp right after append measures a half-built box (the display settles asynchronously); a
-  ResizeObserver clamp worked at wide widths but still clipped at the narrow width that actually
-  triggers it. **This needs a design decision from Dillon**, because both real fixes change how
-  the stage looks: (a) let the people layer overflow the stage outline — names extend past the
-  edge, positions stay exact; or (b) shrink the drawn stage to reserve a name gutter. Cosmetic,
-  not data-affecting.
+### Display / green-room — resolved
+- ~~**[FIX] Stage person name clipped at the stage edge.**~~ ✅ SHIPPED 2026-08-28 → `stageclip`.
+  At narrower stage widths (Service Order rail showing), a person at stage-left/right with a long
+  name was cut off by `.dv-stage-svg-wrap`'s `overflow:hidden`. Three measurement-based attempts
+  failed overnight (viewBox estimate is wrong in principle — the card is sized in px; a pixel
+  clamp measures a half-built box — the display settles asynchronously; a ResizeObserver clamp
+  still missed at the narrow width). The fix avoids measurement entirely: `stageLabelAnchor()`
+  picks an anchor from the person's viewBox x and CSS swaps the transform so edge cards grow
+  INWARD. Verified with zero clipped cards at both the narrow (407px) and wide (638px) stage.
+  Neither of the two design options offered in the audit was needed — the stage outline is
+  unchanged and no name is truncated.
 
 ### Stage editor
 - ~~**[POLISH] Fixture label overlap.**~~ ✅ SHIPPED 2026-07-28 → `featurelabel`. Two fixtures placed
