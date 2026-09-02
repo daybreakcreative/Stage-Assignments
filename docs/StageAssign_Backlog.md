@@ -48,6 +48,14 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   `daybreak-production-ai` (`flags/bugFormat.js`, `POST /bug`).
 
 ### Setup items
+- ~~**[FIX] The MD's auto "Boom mic stand" couldn't be removed.**~~ ✅ SHIPPED 2026-08-28 →
+  `keysremove`. Reported as "a similar issue with keyboards" right after the Jack Grubbs fix, and
+  it was the same shape — two layers. `ensureBoom` writes the line straight into `bucket.items`,
+  so (1) it never appeared in the editor's removable list at all, and (2) it was re-added on every
+  `collectChecklistItems()` pass, so even an API-level removal came back. The editor now lists any
+  `autoAdded` line, and auto-adders honour `setupLineRemoved()`. The vocal mic is deliberately
+  excluded from the ✕ — its MIC dropdown is the right control. (The keys *implied* lines, e.g.
+  Dante → "Needs network — thunderbolt adapter", were already covered by the Jack fix.)
 - ~~**[FIX] Implied setup lines couldn't be removed.**~~ ✅ SHIPPED 2026-08-28 → `itemremove`.
   Reported: "Can't remove 'amp and mic setup for Jack Grubbs'". That line is an `addItems` entry
   implied by the EG "Stereo guitar rig" radio option, and only *custom* items had an ✕ — so the

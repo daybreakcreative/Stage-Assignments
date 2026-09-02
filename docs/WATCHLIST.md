@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–51):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–52):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
-> recent items (23–51) are reproduced in full here, and every area maps to a test file.
+> recent items (23–52) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–51, detailed)
+## Recently shipped — must not regress (items 23–52, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -162,6 +162,12 @@ Behaviors that must keep working. **The executable version of this list is `test
     trailing dashed `.voc-empty` drop slot as the target. **Stage placement is unaffected** —
     it comes from `getVoxPositions(count)` + order, never the slot index.
     (`tests/vocalpos.js`; `dvempty.js` counts `.voc-card:not(.voc-empty)`.)
+52. **Auto-added lines are removable too, and stay removed.** Some lines are injected straight
+    into `bucket.items` rather than coming from the catalog — the MD's "Boom mic stand"
+    (`ensureBoom`) and the assigned vocal mic (`syncAssignedMicItem`). Two rules: the editor lists
+    any `autoAdded` line so it HAS an ✕ (excluding `kind === 'mic'` — the MIC dropdown is that
+    line's control), and every auto-adder checks `setupLineRemoved(bucket, text)` before
+    re-adding, or it resurrects the line on the next enumeration. → `keysremove`
 51. **Any line on a person's setup list can be removed — including implied `addItems` lines.**
     A radio option can drag in extra lines (EG "Stereo guitar rig" implies "Amp & mic setup
     (stereo)", "Stereo DI box", "2 XLRs…"). Those had no remove control, so dropping one meant

@@ -121,7 +121,7 @@ this release** — single venue only.
 ## REGRESSION WATCHLIST
 
 The canonical, human-readable list of behaviors that must keep working is in
-**`docs/WATCHLIST.md`** (items 1–51). Read it before any non-trivial change. The
+**`docs/WATCHLIST.md`** (items 1–52). Read it before any non-trivial change. The
 executable version is `tests/` — run `npm test`.
 
 ---

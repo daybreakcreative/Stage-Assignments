@@ -2637,6 +2637,12 @@ function removeSetupLine(stableKey, typeKey, text) {
   rebuildPersonItems(stableKey, tKey);
   return true;
 }
+// True when this person has explicitly removed `text`. Auto-adders must honour this or they
+// resurrect the line on the next enumeration.
+function setupLineRemoved(bucket, text) {
+  return !!(bucket && Array.isArray(bucket.customItems)
+    && bucket.customItems.some(ci => ci && ci.replaces === text && !ci.text));
+}
 // Undo a suppression made by removeSetupLine.
 function restoreSetupLine(stableKey, typeKey, text) {
   const bucket = state.setupItems[stableKey];
@@ -11374,6 +11380,18 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   const renderCustoms = () => {
     customWrap.innerHTML = '';
     const lines = resolveSetupItems(typeKey, bucket.selections, bucket.customItems);
+    // Auto-added lines live directly on bucket.items rather than coming from the catalog, so they
+    // would otherwise never appear here and could not be removed at all (e.g. the MD's boom mic).
+    // The assigned vocal mic is deliberately excluded — the MIC dropdown above is its control.
+    {
+      const seen = new Set(lines.map(l => l.text));
+      (bucket.items || []).forEach(it => {
+        if (!it || !it.autoAdded || it.kind === 'mic' || !it.text) return;
+        if (seen.has(it.text)) return;
+        seen.add(it.text);
+        lines.push({ text: it.text });
+      });
+    }
     lines.forEach(l => {
       const row = document.createElement('div');
       row.className = 'sp-line-row';
@@ -11574,6 +11592,9 @@ function collectChecklistItems() {
   const linkedVocIds = new Set((state.instruments || []).filter(i => i && i.vocalistPlayer).map(i => i.vocalistPlayer));
   const ensureBoom = key => {
     const b = ensureSetupBucket(key);
+    // Honour an explicit per-person removal — otherwise this re-adds the boom on every pass and
+    // the line is impossible to get rid of (reported for a keys player who is also the MD).
+    if (setupLineRemoved(b, 'Boom mic stand')) return;
     if (!b.items.some(it => it.text === 'Boom mic stand')) {
       b.items.push({ id: 'si_boom_' + Math.random().toString(36).slice(2, 9), text: 'Boom mic stand', doneThisService: false, scopeOneTime: false, autoAdded: true });
     }
