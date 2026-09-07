@@ -92,23 +92,28 @@ window.addEventListener('load',()=>setTimeout(()=>{
 
  console.log('--- label metrics scale with the stage (cards are sized in px, not viewBox units) ---');
 
- check('metrics fall back to the historical constants before layout', ()=>{
-   const m=JSON.parse(ev('JSON.stringify(stageLabelMetrics(0))'));
-   if(m.charW!==8.5||m.lineH!==11||m.gap!==4) throw new Error('bad fallback: '+JSON.stringify(m));
+ // Card text now scales WITH the stage (see .dv-sp-name's cqw sizing), so a card is a constant
+ // fraction of the stage at any size and these metrics are deliberately scale-invariant. This
+ // replaced the earlier width-aware stageLabelMetrics(px), which broke wherever a CSS clamp
+ // stopped the font scaling.
+ check('label metrics are scale-invariant constants', ()=>{
+   const a=JSON.parse(ev('JSON.stringify(stageLabelMetrics())'));
+   const b=JSON.parse(ev('JSON.stringify(stageLabelMetrics())'));
+   if(JSON.stringify(a)!==JSON.stringify(b)) throw new Error('not stable');
+   if(!(a.charW>8 && a.lineH>a.charW*2)) throw new Error('implausible metrics: '+JSON.stringify(a));
  });
 
- check('a NARROWER stage means a card spans MORE viewBox units', ()=>{
-   const wide=JSON.parse(ev('JSON.stringify(stageLabelMetrics(1200))'));
-   const narrow=JSON.parse(ev('JSON.stringify(stageLabelMetrics(400))'));
-   if(!(narrow.charW>wide.charW)) throw new Error('charW did not grow as the stage shrank');
-   if(!(narrow.lineH>wide.lineH)) throw new Error('lineH did not grow as the stage shrank');
- });
-
- check('metrics are clamped so a freak width cannot explode the layout', ()=>{
-   const tiny=JSON.parse(ev('JSON.stringify(stageLabelMetrics(1))'));
-   if(tiny.charW>48||tiny.lineH>80) throw new Error('not clamped: '+JSON.stringify(tiny));
-   const huge=JSON.parse(ev('JSON.stringify(stageLabelMetrics(100000))'));
-   if(huge.charW<8.5||huge.lineH<11) throw new Error('below the floor: '+JSON.stringify(huge));
+ check('the resolver prefers MEASURED dimensions over the character estimate', ()=>{
+   // Same marks, but one carries measured units far larger than any character estimate.
+   const est=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(
+     [{x:200,y:200,name:'Al',role:'Drums'},{x:230,y:200,name:'Bo',role:'Bass'}],
+     {anchor:'center',charW:11.8,lineH:27.9,gap:5,dotR:0}).map(o=>Math.round(o.labelY)))`));
+   const meas=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(
+     [{x:200,y:200,name:'Al',role:'Drums',wUnits:300,hUnits:60},
+      {x:230,y:200,name:'Bo',role:'Bass',wUnits:300,hUnits:60}],
+     {anchor:'center',charW:11.8,lineH:27.9,gap:5,dotR:0}).map(o=>Math.round(o.labelY)))`));
+   const dEst=Math.abs(est[0]-est[1]), dMeas=Math.abs(meas[0]-meas[1]);
+   if(!(dMeas>dEst)) throw new Error('measured dimensions did not drive a larger separation: '+dEst+' vs '+dMeas);
  });
 
  console.log('--- the resolver honours each card ANCHOR ---');

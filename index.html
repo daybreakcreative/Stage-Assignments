@@ -1356,7 +1356,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-side{display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden;padding-left:12px}
 .dv-stage-box{background:linear-gradient(180deg,var(--bg-elev),var(--bg-inset));border:1px solid var(--border);border-radius:10px;padding:12px 16px 8px;position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 16px rgba(0,0,0,0.08);flex:1;display:flex;flex-direction:column;min-height:0}
 .dv-stage-tags{display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.18em;padding:0 4px;font-weight:500}
-.dv-stage-svg-wrap{position:relative;flex:1;min-height:0;margin:6px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dv-stage-svg-wrap{position:relative;flex:1;min-height:0;margin:6px 0;display:flex;align-items:center;justify-content:center;overflow:hidden;container-type:inline-size;container-name:dvstage}
 /* SVG and people layer occupy the same letterboxed rectangle inside the wrap */
 .dv-stage-svg-wrap > svg.dv-stage-svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;display:block}
 @supports not (aspect-ratio: 1) {
@@ -1382,12 +1382,25 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
 .dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
-.dv-sp-role{font-family:var(--ff-mono);font-size:calc(8.5px * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
+.dv-sp-role{font-family:var(--ff-mono);font-size:calc(clamp(6px, 1.412cqw, 20px) * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
 .dv-sp.is-wl .dv-sp-role{color:var(--accent)}
-.dv-sp-name{font-family:var(--ff-display);font-size:calc(13px * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
+.dv-sp-name{font-family:var(--ff-display);font-size:calc(clamp(8px, 2.159cqw, 30px) * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
 .dv-sp.empty .dv-sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
-.dv-sp-mic{font-family:var(--ff-mono);font-size:calc(9.5px * var(--dv-stage-text-scale, 1));color:var(--text-muted);margin-top:2px;font-weight:500}
-.dv-side-block{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex:0 1 auto;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.dv-sp-mic{font-family:var(--ff-mono);font-size:calc(clamp(6px, 1.578cqw, 22px) * var(--dv-stage-text-scale, 1));color:var(--text-muted);margin-top:2px;font-weight:500}
+.dv-side-block{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex:1 1 auto;display:flex;flex-direction:column;min-height:0;overflow:hidden;container-type:size;container-name:dvside}
+/* The side column is as tall as the stage, but BAND + HANDHELDS only needed ~300px of it, so
+   ~470px sat empty below them on the TV (reported 2026-09-02). The blocks now GROW to fill the
+   column and their rows scale with the space, the same container-query pattern the header and
+   vocalist blocks already use — a green-room screen is read from across the room, so the right
+   thing to do with spare height is make the names bigger, not leave a hole.
+   A block the user has explicitly dragged keeps its height: .has-explicit-height is declared
+   after this and re-pins flex. */
+.dv-side-block .dv-list{gap:clamp(2px,2cqh,10px);flex:1;justify-content:center}
+.dv-side-block .dv-list-item{font-size:clamp(12px,7cqh,26px);padding:clamp(2px,1.5cqh,8px) 0}
+.dv-side-block .dv-list-item .pos{font-size:clamp(8px,4cqh,15px)}
+.dv-side-block .dv-list-item .detail{font-size:clamp(9px,4.5cqh,17px)}
+.dv-side-block .dv-section-label{font-size:clamp(9px,4.5cqh,16px)}
+.dv-side-block .dv-avatar.sm{width:clamp(18px,9cqh,34px);height:clamp(18px,9cqh,34px);font-size:clamp(7px,3.5cqh,13px)}
 /* When the user has explicitly dragged the Band block, it gets a fixed height */
 #dvBandBlock.has-explicit-height{flex:0 0 var(--dv-band-h, auto);height:var(--dv-band-h)}
 #dvHostsBlock.has-explicit-height{flex:0 0 var(--dv-hosts-h, auto);height:var(--dv-hosts-h)}
@@ -4849,13 +4862,17 @@ function resolveStageLabelLayout(marks, opts) {
   // Build working boxes. Two label lines (role above name, or name above role — irrelevant to
   // collision; we treat the whole label as one stacked box of height 2*lineH).
   const items = marks.map((m, i) => {
-    const boxH = 2 * lineH + 2;
+    // Prefer MEASURED dimensions when the caller has them. Estimating a card's size from its
+    // character count has produced three separate overlap bugs, because the card is laid out by
+    // the browser (font metrics, padding, clamps) and never matches a formula.
+    const boxH = (typeof m.hUnits === 'number' && m.hUnits > 0) ? m.hUnits : (2 * lineH + 2);
+    const boxW = (typeof m.wUnits === 'number' && m.wUnits > 0) ? m.wUnits : measure(m.name);
     const top0 = anchor === 'center' ? (m.y - boxH / 2) : (m.y + dotR + 1);
     return {
       i, m,
       name: m.name || '', role: m.role || '',
       shortened: false,
-      w: measure(m.name), h: boxH,
+      w: boxW, h: boxH,
       side: 'below',
       labelX: m.x, labelY: top0,
       dy: top0 - m.y
@@ -4955,25 +4972,20 @@ function resolveStageLabelLayout(marks, opts) {
 // Cards in the outer bands grow INWARD so a long name can't spill past the stage and get clipped.
 // The 22%/78% bands leave ~82px of room at the narrowest real stage width, comfortably more than
 // a typical card's ~62px half-width, so centred cards in the middle band still fit.
-// The label resolver works in the 0..800 viewBox, but a person card is sized in PIXELS (fixed
-// font-size). So the narrower the stage box, the MORE viewBox units a card actually occupies, and
-// fixed estimates make the resolver think cards are far smaller than they are — so it separates
-// nothing. Measured 2026-09-02 at a 636px stage box: a card is 156×53 viewBox units while the
-// resolver assumed 119×24, which is why four pairs of names overlapped on the TV.
-// Convert the card's real pixel metrics into viewBox units instead.
-const DV_CARD_PX_PER_CHAR = 8.9;   // measured glyph advance incl. padding, 13px display face
-const DV_CARD_PX_PER_LINE = 21;    // measured: a 2-line card is 42px tall
-const DV_CARD_PX_GAP = 4;          // breathing room between two stacked cards
-function dvPxToUnits(px, stageBoxPx) { return px * 800 / stageBoxPx; }
-// Resolver options matched to what will actually render. Pre-layout (stageBoxPx 0) we fall back to
-// the historical constants; the ResizeObserver re-renders once real geometry exists.
-function stageLabelMetrics(stageBoxPx) {
-  if (!stageBoxPx || !isFinite(stageBoxPx) || stageBoxPx <= 0) return { charW: 8.5, lineH: 11, gap: 4 };
-  return {
-    charW: Math.min(48, Math.max(8.5, dvPxToUnits(DV_CARD_PX_PER_CHAR, stageBoxPx))),
-    lineH: Math.min(80, Math.max(11, dvPxToUnits(DV_CARD_PX_PER_LINE, stageBoxPx))),
-    gap:   Math.min(20, Math.max(4,  dvPxToUnits(DV_CARD_PX_GAP, stageBoxPx))),
-  };
+// Card metrics for the de-overlap resolver, in 0..800 viewBox units.
+//
+// The cards used to be a FIXED pixel size inside a stage that changes size, so a card's footprint
+// in viewBox units moved with the stage width — which is what let names overlap (the resolver
+// assumed a card was half its real size) and, at 1280x720, made overlap unavoidable: each card
+// was 90 of 380 units, so eight of them could not fit however they were arranged.
+// Stage card text now scales with the stage container (see .dv-sp-name's cqw sizing), so a card
+// is a CONSTANT fraction of the stage at every size and these numbers hold everywhere.
+// Calibrated against the 1920 layout (602px stage): ~8.9px per char, 21px per line, 4px gap.
+const DV_CARD_UNITS_PER_CHAR = 8.9 * 800 / 602;   // ~11.8
+const DV_CARD_UNITS_PER_LINE = 21  * 800 / 602;   // ~27.9
+const DV_CARD_UNITS_GAP      = 4   * 800 / 602;   // ~5.3
+function stageLabelMetrics() {
+  return { charW: DV_CARD_UNITS_PER_CHAR, lineH: DV_CARD_UNITS_PER_LINE, gap: DV_CARD_UNITS_GAP };
 }
 function stageLabelAnchor(x, span) {
   const w = span || 800;
@@ -10212,15 +10224,10 @@ function renderDisplayView() {
   // Measure the stage box so the resolver's width estimate matches what will actually render.
   // Pre-layout (first paint) this is 0 and stageLabelMetrics falls back; the ResizeObserver below
   // re-renders once real geometry exists.
-  // Measure the PEOPLE LAYER, not .dv-stage-box: the box carries `padding: 12px 16px`, so its
-  // width (636px) is ~6% wider than the coordinate space the 0..800 viewBox is mapped onto
-  // (602px). Using the box under-estimated every card and left one pair still overlapping.
-  const dvBoxEl = wrap || null;
-  const dvBoxPx = dvBoxEl ? dvBoxEl.getBoundingClientRect().width : 0;
   // Tag each mark with the anchor it will actually render with, so the resolver's collision math
   // matches the final geometry rather than assuming everything is centred.
   dvMarks.forEach(m => { m.anchor = stageLabelAnchor(m.x); });
-  const dvM = stageLabelMetrics(dvBoxPx);
+  const dvM = stageLabelMetrics();
   const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0 });
   dvMarks.forEach((m, k) => {
     const L = dvLayout2[k];
@@ -10234,18 +10241,45 @@ function renderDisplayView() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     wrap.appendChild(el);
   });
-  // The label layout depends on the stage box's real width, which is 0 on the first paint and
-  // changes whenever the side panels resize. Re-render once the width actually changes so the
-  // separation is computed against real geometry. Guarded on a changed width, so this cannot loop:
-  // re-rendering replaces the cards INSIDE the box and never resizes the box itself.
-  if (typeof ResizeObserver === 'function' && dvBoxEl && !dvBoxEl.__dvLabelRO) {
-    dvBoxEl.__dvLabelRO = new ResizeObserver(entries => {
-      const w = Math.round((entries[0] && entries[0].contentRect ? entries[0].contentRect.width : 0));
-      if (!w || w === dvBoxEl.__dvLabelW) return;
-      dvBoxEl.__dvLabelW = w;
+  // SECOND PASS. The browser has now laid the cards out, so MEASURE what they actually are and
+  // re-resolve. Estimating a card's size from its character count caused three separate overlap
+  // bugs this week — font metrics, padding and CSS clamps never match a formula. This runs once
+  // per render, only repositions cards that already exist, and never re-renders, so it can't loop.
+  {
+    const lb = wrap.getBoundingClientRect();
+    const els = Array.from(wrap.querySelectorAll('.dv-sp'));
+    // Only trust the measurements when they look like REAL layout. A card is always a fraction of
+    // the stage; if every card reports the stage's own size, this environment isn't laying out
+    // (jsdom stubs one rect for every element) and believing it would wreck the layout — it made
+    // the resolver think each card filled the whole stage and shorten every name.
+    const measurable = lb.width > 0 && lb.height > 0 && els.length > 0
+      && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < lb.width * 0.9; });
+    if (measurable) {
+      const uX = 800 / lb.width, uY = 380 / lb.height;
+      els.forEach((el, k) => {
+        const r = el.getBoundingClientRect();
+        if (dvMarks[k]) { dvMarks[k].wUnits = r.width * uX; dvMarks[k].hUnits = r.height * uY; }
+      });
+      const pass2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0 });
+      els.forEach((el, k) => {
+        const L = pass2[k]; if (!L) return;
+        el.style.top = toPct({ x: dvMarks[k].x, y: L.labelY + L.h / 2 }).top;
+        const nameEl = el.querySelector('.dv-sp-name');
+        if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
+      });
+    }
+  }
+  // The stage settles asynchronously and resizes with the panels, so redo this on a real width
+  // change. Guarded on a changed width; it only ever replaces cards INSIDE the stage, never
+  // resizes the stage itself, so it cannot feed back into its own observer.
+  if (typeof ResizeObserver === 'function' && wrap && !wrap.__dvLabelRO) {
+    wrap.__dvLabelRO = new ResizeObserver(entries => {
+      const w = Math.round(entries[0] && entries[0].contentRect ? entries[0].contentRect.width : 0);
+      if (!w || w === wrap.__dvLabelW) return;
+      wrap.__dvLabelW = w;
       if (state.viewMode === 'display') renderDisplayView();
     });
-    dvBoxEl.__dvLabelRO.observe(dvBoxEl);
+    wrap.__dvLabelRO.observe(wrap);
   }
 
   // Vocalist cards
