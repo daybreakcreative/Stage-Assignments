@@ -4862,10 +4862,21 @@ function resolveStageLabelLayout(marks, opts) {
     };
   });
 
+  // A card's horizontal extent depends on how it is ANCHORED, not just its centre: the display
+  // anchors cards near the stage edges so they grow inward (see stageLabelAnchor), which shifts
+  // them by half a width. Assuming everything is centred made this resolver miss real collisions
+  // — that is why names still overlapped on the TV after the edge-clipping fix. Marks without an
+  // anchor (the edit-view stage) keep the original centred behaviour.
+  function xRange(it) {
+    const a = it.m && it.m.anchor;
+    if (a === 'left')  return [it.labelX, it.labelX + it.w];
+    if (a === 'right') return [it.labelX - it.w, it.labelX];
+    return [it.labelX - it.w / 2, it.labelX + it.w / 2];
+  }
   // Two boxes overlap if their x-ranges and y-ranges both intersect (with the gap padding on y).
   function overlaps(a, b) {
-    const ax0 = a.labelX - a.w / 2, ax1 = a.labelX + a.w / 2;
-    const bx0 = b.labelX - b.w / 2, bx1 = b.labelX + b.w / 2;
+    const [ax0, ax1] = xRange(a);
+    const [bx0, bx1] = xRange(b);
     if (ax1 <= bx0 || bx1 <= ax0) return false;
     const ay0 = a.labelY, ay1 = a.labelY + a.h;
     const by0 = b.labelY, by1 = b.labelY + b.h;
@@ -4944,6 +4955,26 @@ function resolveStageLabelLayout(marks, opts) {
 // Cards in the outer bands grow INWARD so a long name can't spill past the stage and get clipped.
 // The 22%/78% bands leave ~82px of room at the narrowest real stage width, comfortably more than
 // a typical card's ~62px half-width, so centred cards in the middle band still fit.
+// The label resolver works in the 0..800 viewBox, but a person card is sized in PIXELS (fixed
+// font-size). So the narrower the stage box, the MORE viewBox units a card actually occupies, and
+// fixed estimates make the resolver think cards are far smaller than they are — so it separates
+// nothing. Measured 2026-09-02 at a 636px stage box: a card is 156×53 viewBox units while the
+// resolver assumed 119×24, which is why four pairs of names overlapped on the TV.
+// Convert the card's real pixel metrics into viewBox units instead.
+const DV_CARD_PX_PER_CHAR = 8.9;   // measured glyph advance incl. padding, 13px display face
+const DV_CARD_PX_PER_LINE = 21;    // measured: a 2-line card is 42px tall
+const DV_CARD_PX_GAP = 4;          // breathing room between two stacked cards
+function dvPxToUnits(px, stageBoxPx) { return px * 800 / stageBoxPx; }
+// Resolver options matched to what will actually render. Pre-layout (stageBoxPx 0) we fall back to
+// the historical constants; the ResizeObserver re-renders once real geometry exists.
+function stageLabelMetrics(stageBoxPx) {
+  if (!stageBoxPx || !isFinite(stageBoxPx) || stageBoxPx <= 0) return { charW: 8.5, lineH: 11, gap: 4 };
+  return {
+    charW: Math.min(48, Math.max(8.5, dvPxToUnits(DV_CARD_PX_PER_CHAR, stageBoxPx))),
+    lineH: Math.min(80, Math.max(11, dvPxToUnits(DV_CARD_PX_PER_LINE, stageBoxPx))),
+    gap:   Math.min(20, Math.max(4,  dvPxToUnits(DV_CARD_PX_GAP, stageBoxPx))),
+  };
+}
 function stageLabelAnchor(x, span) {
   const w = span || 800;
   if (x < w * 0.22) return 'left';
@@ -10178,7 +10209,19 @@ function renderDisplayView() {
       dvMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal' });
     }
   }
-  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0 });
+  // Measure the stage box so the resolver's width estimate matches what will actually render.
+  // Pre-layout (first paint) this is 0 and stageLabelMetrics falls back; the ResizeObserver below
+  // re-renders once real geometry exists.
+  // Measure the PEOPLE LAYER, not .dv-stage-box: the box carries `padding: 12px 16px`, so its
+  // width (636px) is ~6% wider than the coordinate space the 0..800 viewBox is mapped onto
+  // (602px). Using the box under-estimated every card and left one pair still overlapping.
+  const dvBoxEl = wrap || null;
+  const dvBoxPx = dvBoxEl ? dvBoxEl.getBoundingClientRect().width : 0;
+  // Tag each mark with the anchor it will actually render with, so the resolver's collision math
+  // matches the final geometry rather than assuming everything is centred.
+  dvMarks.forEach(m => { m.anchor = stageLabelAnchor(m.x); });
+  const dvM = stageLabelMetrics(dvBoxPx);
+  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0 });
   dvMarks.forEach((m, k) => {
     const L = dvLayout2[k];
     const el = document.createElement('div');
@@ -10187,10 +10230,23 @@ function renderDisplayView() {
     const centerY = L.labelY + L.h / 2;
     const css = toPct({ x: m.x, y: centerY });
     el.style.left = css.left; el.style.top = css.top;
-    el.dataset.anchor = stageLabelAnchor(m.x);
+    el.dataset.anchor = m.anchor || stageLabelAnchor(m.x);
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     wrap.appendChild(el);
   });
+  // The label layout depends on the stage box's real width, which is 0 on the first paint and
+  // changes whenever the side panels resize. Re-render once the width actually changes so the
+  // separation is computed against real geometry. Guarded on a changed width, so this cannot loop:
+  // re-rendering replaces the cards INSIDE the box and never resizes the box itself.
+  if (typeof ResizeObserver === 'function' && dvBoxEl && !dvBoxEl.__dvLabelRO) {
+    dvBoxEl.__dvLabelRO = new ResizeObserver(entries => {
+      const w = Math.round((entries[0] && entries[0].contentRect ? entries[0].contentRect.width : 0));
+      if (!w || w === dvBoxEl.__dvLabelW) return;
+      dvBoxEl.__dvLabelW = w;
+      if (state.viewMode === 'display') renderDisplayView();
+    });
+    dvBoxEl.__dvLabelRO.observe(dvBoxEl);
+  }
 
   // Vocalist cards
   const vocGrid = document.getElementById('dvVocGrid');

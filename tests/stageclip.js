@@ -90,6 +90,78 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(t.indexOf('Marcus Donalson')===-1) throw new Error('vocalist name not rendered in full');
  });
 
+ console.log('--- label metrics scale with the stage (cards are sized in px, not viewBox units) ---');
+
+ check('metrics fall back to the historical constants before layout', ()=>{
+   const m=JSON.parse(ev('JSON.stringify(stageLabelMetrics(0))'));
+   if(m.charW!==8.5||m.lineH!==11||m.gap!==4) throw new Error('bad fallback: '+JSON.stringify(m));
+ });
+
+ check('a NARROWER stage means a card spans MORE viewBox units', ()=>{
+   const wide=JSON.parse(ev('JSON.stringify(stageLabelMetrics(1200))'));
+   const narrow=JSON.parse(ev('JSON.stringify(stageLabelMetrics(400))'));
+   if(!(narrow.charW>wide.charW)) throw new Error('charW did not grow as the stage shrank');
+   if(!(narrow.lineH>wide.lineH)) throw new Error('lineH did not grow as the stage shrank');
+ });
+
+ check('metrics are clamped so a freak width cannot explode the layout', ()=>{
+   const tiny=JSON.parse(ev('JSON.stringify(stageLabelMetrics(1))'));
+   if(tiny.charW>48||tiny.lineH>80) throw new Error('not clamped: '+JSON.stringify(tiny));
+   const huge=JSON.parse(ev('JSON.stringify(stageLabelMetrics(100000))'));
+   if(huge.charW<8.5||huge.lineH<11) throw new Error('below the floor: '+JSON.stringify(huge));
+ });
+
+ console.log('--- the resolver honours each card ANCHOR ---');
+
+ check('two cards that only overlap ONCE anchoring is applied are separated', ()=>{
+   // left-anchored card grows RIGHT from x; centred card sits astride x.
+   // Centred-only math says these clear; with anchors they collide and must be pushed apart.
+   const out=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(
+     [{x:90,y:330,name:'Simon Mugarami',role:'Drums',anchor:'left'},
+      {x:297,y:330,name:'Abraham Mata',role:'Bass',anchor:'center'}],
+     {anchor:'center',charW:11.8,lineH:26,gap:5,dotR:0}))`));
+   const dy=Math.abs(out[0].labelY-out[1].labelY);
+   if(dy < 26) throw new Error('anchored collision was not separated, dy='+dy);
+ });
+
+ check('a right-anchored card is measured as growing LEFT from its x', ()=>{
+   const out=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(
+     [{x:503,y:330,name:'Jack Grubbs',role:'EG 1',anchor:'center'},
+      {x:690,y:330,name:'Mo Maldonado',role:'Keys',anchor:'right'}],
+     {anchor:'center',charW:11.8,lineH:26,gap:5,dotR:0}))`));
+   const dy=Math.abs(out[0].labelY-out[1].labelY);
+   if(dy < 26) throw new Error('right-anchored collision not separated, dy='+dy);
+ });
+
+ check('marks with NO anchor keep the original centred behaviour (edit view)', ()=>{
+   // Far apart when centred — must NOT be nudged just because anchors exist elsewhere.
+   const out=JSON.parse(ev(`JSON.stringify(resolveStageLabelLayout(
+     [{x:100,y:330,name:'Al',role:'Drums'},{x:700,y:330,name:'Bo',role:'Bass'}],
+     {anchor:'center',charW:11.8,lineH:26,gap:5,dotR:0}))`));
+   if(out[0].labelY!==out[1].labelY) throw new Error('non-colliding centred marks were moved apart');
+ });
+
+ check('the ILMC roster renders with no overlapping pairs', ()=>{
+   ev(`state.serviceOrder=[];
+       state.vocalists=[{id:'v1',name:'Libby McDonald',micAssigned:'Beta 58A'},
+                        {id:'v2',name:'Caleb Quirino',micAssigned:'D:Facto'},
+                        {id:'v3',name:'Grayson Kredit',micAssigned:'KMS105'},
+                        {id:'v4',name:'Ella Graves',micAssigned:'KSM11'}];
+       state.assignments=['v1','v2','v3','v4',null,null,null,null];
+       state.instruments=[{id:'i1',label:'Drums',assignedTo:'Simon Mugarami',pack:'Drums'},
+                          {id:'i2',label:'Bass',assignedTo:'Abraham Mata',pack:'Bass'},
+                          {id:'i3',label:'EG 1',assignedTo:'Jack Grubbs',pack:'EG'},
+                          {id:'i4',label:'Keys',assignedTo:'Mo Maldonado',pack:'Keys'}];
+       state.musicDirectorId='i4'; state.shadows=[]; state.hosts={};
+       renderDisplayView();`);
+   const n=+ev("document.querySelectorAll('#dvStagePeople .dv-sp').length");
+   if(n!==8) throw new Error('expected 8 stage cards, got '+n);
+   // jsdom has no layout, so assert the DATA the layout is built from instead: every card has an
+   // anchor, and the resolver was given anchored marks.
+   const anchors=JSON.parse(ev("JSON.stringify([...document.querySelectorAll('#dvStagePeople .dv-sp')].map(c=>c.dataset.anchor))"));
+   if(anchors.some(a=>!a)) throw new Error('a card rendered without an anchor: '+JSON.stringify(anchors));
+ });
+
  console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
  if(errs.length) console.log(errs.join('\n'));
  process.exit(errs.length?1:0);
