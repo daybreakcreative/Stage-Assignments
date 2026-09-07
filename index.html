@@ -12485,19 +12485,59 @@ function sanitizedConfigJSON() {
   if (clone && clone.pcoConfig) { delete clone.pcoConfig.clientId; delete clone.pcoConfig.clientSecret; }
   return JSON.stringify(clone, null, 2);
 }
+// Caps mirrored from the KHARIS route (flags/bugLimits.js). Checked HERE so an oversized
+// screenshot is refused instantly with a useful message, instead of being uploaded and bounced.
+const BUG_ATTACH_MAX_BYTES = 3000000;      // per attachment, decoded
+const BUG_ATTACH_TOTAL_BYTES = 5500000;    // all attachments, decoded
+const BUG_MAX_ATTACHMENTS = 4;
+const fmtMB = b => (b / 1000000).toFixed(1) + ' MB';
+// Decoded size of a data: URL without allocating a Buffer.
+function dataUrlBytes(dataUrl) {
+  const b64 = String(dataUrl || '').split(',')[1] || '';
+  const pad = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  return Math.floor((b64.length * 3) / 4) - pad;
+}
 async function sendBugReport(r) {
   const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
   const dateStr = (state.service && state.service.date) || '';
   const url = (state.config && state.config.bugIntakeUrl) || 'https://daybreak.up.railway.app/bug';
   const atts = (r.attachments || []).map(a => ({ dataUrl: a.dataUrl, name: a.name, type: a.type }));
-  const payload = { description: r.desc, build, serviceDate: dateStr, config: sanitizedConfigJSON(), attachments: atts };
-  try {
-    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return { ok: true };
-  } catch (e) {
-    return { ok: false };
+
+  // Refuse locally rather than spend a slow upload discovering it. Name the offending file —
+  // "too large" without saying WHICH one leaves you guessing between two screenshots.
+  if (atts.length > BUG_MAX_ATTACHMENTS) {
+    return { ok: false, error: `Too many attachments — max ${BUG_MAX_ATTACHMENTS}.` };
   }
+  let total = 0;
+  for (const a of atts) {
+    const n = dataUrlBytes(a.dataUrl);
+    total += n;
+    if (n > BUG_ATTACH_MAX_BYTES) {
+      return { ok: false, error: `“${a.name || 'That file'}” is ${fmtMB(n)} — too large. Max ${fmtMB(BUG_ATTACH_MAX_BYTES)} per file. Try a window screenshot instead of a full screen, or drop it and describe what it showed.` };
+    }
+  }
+  if (total > BUG_ATTACH_TOTAL_BYTES) {
+    return { ok: false, error: `Attachments total ${fmtMB(total)} — too large. Max ${fmtMB(BUG_ATTACH_TOTAL_BYTES)} altogether. Remove one and send again.` };
+  }
+
+  const payload = { description: r.desc, build, serviceDate: dateStr, config: sanitizedConfigJSON(), attachments: atts };
+  let res;
+  try {
+    res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  } catch (e) {
+    // Only a genuine transport failure lands here — this is the one case where "couldn't reach"
+    // is the truth, and the one case where retrying is the right advice.
+    return { ok: false, error: 'Couldn’t reach KHARIS — check your connection and try again.' };
+  }
+  if (res.ok) return { ok: true };
+  // The server explains itself (too large / rate limited / refused). Say what it said: telling
+  // someone to "try again" on a 413 sends them round a loop that can never succeed.
+  let msg = '';
+  try { const body = await res.json(); msg = (body && body.error) || ''; } catch (_) {}
+  if (!msg) msg = res.status === 413 ? 'That report is too large to send.'
+    : res.status === 429 ? 'Too many reports just now — give it a minute.'
+    : `KHARIS refused the report (error ${res.status}).`;
+  return { ok: false, error: msg };
 }
 function openBugReportModal() {
   const existingBrf = document.getElementById('brfOverlay'); if (existingBrf) existingBrf.remove();
@@ -12586,7 +12626,7 @@ function openBugReportModal() {
       sheet.querySelector('#brf_home').addEventListener('click', () => { close(); if (typeof closeSettings === 'function') closeSettings(); });
     } else {
       sendBtn.disabled = false; sendBtn.textContent = 'Submit';
-      showErr('Couldn’t reach KHARIS — try again.');
+      showErr((res && res.error) || 'Couldn’t reach KHARIS — try again.');
     }
   });
   document.body.appendChild(overlay);
