@@ -115,6 +115,15 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   only print path needed (the display is the on-screen/TV view).
 
 ### Display / green-room — resolved
+- ~~**[FIX] Stage names overlapped; dead space beside BAND/HANDHELDS; layout didn't stretch.**~~
+  ✅ SHIPPED 2026-09-02 → `stageclip`, `bugerrors`. From Dillon's ILMC screenshots. Three fixes:
+  (1) names overlapped because card size was ESTIMATED from character count while the browser
+  lays cards out with font metrics/padding/clamps — renderDisplayView now MEASURES and
+  re-resolves; (2) the side column left ~470px empty (`.dv-side-block` was `flex:0 1 auto`) —
+  blocks now fill and their text scales, 467px → 12px dead; (3) the bug reporter said
+  "Couldn't reach KHARIS" for a 413, so an oversized screenshot looked like an outage.
+  Verified 0 overlaps / 0 clipped at 1600, 1920 and 2560. **Known limit:** 1280×720 keeps 2
+  overlaps — the stage is 373×177px there and eight two-line cards need ~208px stacked.
 - ~~**[FIX] Stage person name clipped at the stage edge.**~~ ✅ SHIPPED 2026-08-28 → `stageclip`.
   At narrower stage widths (Service Order rail showing), a person at stage-left/right with a long
   name was cut off by `.dv-stage-svg-wrap`'s `overflow:hidden`. Three measurement-based attempts

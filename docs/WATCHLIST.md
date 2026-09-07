@@ -3,14 +3,14 @@
 Behaviors that must keep working. **The executable version of this list is `tests/`
 — run `npm test` after every change.** This file is the human-readable companion.
 
-> **Canonical numbered list (items 1–53):** the full, original numbered watchlist also
+> **Canonical numbered list (items 1–56):** the full, original numbered watchlist also
 > lives in Dillon's Claude project instructions/memory. If you want this file to be the
 > single source of truth, paste items 1–16 verbatim under the matching areas below. The
-> recent items (23–53) are reproduced in full here, and every area maps to a test file.
+> recent items (23–56) are reproduced in full here, and every area maps to a test file.
 
 ---
 
-## Recently shipped — must not regress (items 23–53, detailed)
+## Recently shipped — must not regress (items 23–56, detailed)
 
 23. **Reset to rectangle** in the outline editor produces a TRUE flat rectangle
     (`rectangleStagePoints()`), not the curvature-derived peaked shape. → `smoke2`,
@@ -162,6 +162,26 @@ Behaviors that must keep working. **The executable version of this list is `test
     trailing dashed `.voc-empty` drop slot as the target. **Stage placement is unaffected** —
     it comes from `getVoxPositions(count)` + order, never the slot index.
     (`tests/vocalpos.js`; `dvempty.js` counts `.voc-card:not(.voc-empty)`.)
+54. **Stage card geometry is MEASURED, never estimated.** A card is laid out by the browser
+    (font metrics, padding, CSS clamps) inside the 0..800 viewBox, so no character-count formula
+    matches it — estimating caused three separate bugs in one week (clipping, then overlap, then
+    the clamp case). `renderDisplayView` does a second pass that measures the laid-out cards and
+    re-resolves with real `wUnits`/`hUnits`; `resolveStageLabelLayout` prefers those over its
+    estimate. The pass refuses DEGENERATE geometry (jsdom returns one stubbed rect for every
+    element) by requiring at least one card measurably smaller than the stage — without that it
+    believed each card filled the stage and shortened every name. Card text also scales with the
+    stage container, so a card is a constant fraction of it at any size. Known limit: at 1280×720
+    the stage is 373×177px and eight two-line cards cannot fit; it degrades by shortening names.
+    → `stageclip`, and `dvbatchb`/`labelresolve` guard the degenerate case
+55. **The side column fills its height.** `.dv-side-block` grows (`flex:1 1 auto`) and its rows
+    scale with the block via container queries, with each list centred — BAND/HANDHELDS used to
+    leave ~470px empty below them on the TV. A block the user has dragged keeps its height
+    (`.has-explicit-height` is declared after and re-pins flex).
+56. **A rejected bug report says WHY.** `sendBugReport` mirrors the KHARIS caps (3MB per
+    attachment, 5.5MB total, 4 files) and refuses oversize BEFORE uploading, naming the file and
+    its size; a non-ok response surfaces the server's own message; "Couldn't reach KHARIS" is
+    reserved for an actual transport failure. Previously 413/429/403/offline all produced one
+    message telling the user to retry something that could never succeed. → `bugerrors`
 53. **Stage person cards never spill outside the stage box.** Cards are centred on the person, so
     someone at stage-left/right with a long name grew OUTWARD and was clipped by
     `.dv-stage-svg-wrap`'s `overflow:hidden` ("Simon Mugarami" → "imon Mugarami" on the TV).
