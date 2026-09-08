@@ -342,3 +342,20 @@ Behaviors that must keep working. **The executable version of this list is `test
       summary says so, `rebuildBucketsForType` re-resolves every cached bucket of that type, and
       the radios above redraw in place. Reset/delete-type redraws the whole person editor. It
       must never write to that person's `customItems`. → `setupcatalogperson`
+- [ ] **57.** Stage name cards must never overlap, at any window size, and must keep FULL names.
+      Three rules working together, in `resolveStageLabelLayout` / `stageLayoutOverlapCount` /
+      `renderDisplayView`'s second pass:
+      (a) A card cannot shrink past its CSS floors (`min-width:72px`, the `clamp()` font floors),
+      so shortening a name to its first word does NOT always narrow the box. Measured callers pass
+      the observed floor as `opts.minW`, and the resolver only drops a surname when that actually
+      buys horizontal room. Estimating a shortened card's width from character count is what made
+      it declare 1280×720 clean while two pairs of names printed on top of each other.
+      (b) Before measuring, the second pass restores every card's full name. Measuring a card that
+      reads "Simon" while about to render "Simon Mugarami" solves the layout for a string that is
+      never displayed.
+      (c) If overlaps survive at full size the geometry is genuinely unsolvable — the display adds
+      `is-compact` to `#dvStagePeople` (drops the role line and the min-width, ~halving the card)
+      and resolves once more. At most two passes; neither re-renders, so it cannot loop. Compact
+      must NOT engage at 1920×1080 or 1600×900 — those keep their role lines.
+      Verified 0 overlaps / 0 clipping / 0 truncated names at 1920×1080, 1600×900, 1440×900,
+      1280×720 and 1152×720. → `stagecompact`, `stageclip`

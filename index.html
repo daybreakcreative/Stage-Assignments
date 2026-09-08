@@ -1382,6 +1382,13 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
 .dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
+/* Compact stage cards. renderDisplayView adds this ONLY when the resolver cannot clear the label
+   overlaps at full size (see stageLayoutOverlapCount) -- i.e. the cards have hit their CSS floors
+   and the stage is too small for them. Dropping the role line and the min-width roughly halves a
+   card, which is what lets eight people fit a 1280x720 stage. Full names are kept: a readable full
+   name on a smaller card beats a truncated one that still collides. */
+#dvStagePeople.is-compact .dv-sp{padding:2px 6px;min-width:0}
+#dvStagePeople.is-compact .dv-sp-role{display:none}
 .dv-sp-role{font-family:var(--ff-mono);font-size:calc(clamp(6px, 1.412cqw, 20px) * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
 .dv-sp.is-wl .dv-sp-role{color:var(--accent)}
 .dv-sp-name{font-family:var(--ff-display);font-size:calc(clamp(8px, 2.159cqw, 30px) * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
@@ -4856,6 +4863,13 @@ function resolveStageLabelLayout(marks, opts) {
   // anchor 'below' (default): label box hangs just under the dot (SVG text renderers).
   // anchor 'center': label box is centered on the dot (HTML .dv-sp cards centered on their point).
   const anchor = opts.anchor || 'below';
+  // The narrowest a card can actually get, in viewBox units. A .dv-sp has min-width:72px and
+  // clamp() floors on its fonts, so on a small screen it STOPS shrinking -- shortening a name
+  // then changes the text without changing the box. Callers that measured their cards pass the
+  // observed floor here; without it the resolver would go on estimating a shortened card's width
+  // from its character count, which is what made it declare the 1280x720 layout clean while two
+  // pairs of names printed on top of each other.
+  const minW = opts.minW > 0 ? opts.minW : 0;
   const firstWord = (s) => { const p = String(s || '').trim().split(/\s+/); return p[0] || String(s || ''); };
   const measure = (txt) => Math.max(28, String(txt || '').length * charW);
 
@@ -4941,9 +4955,14 @@ function resolveStageLabelLayout(marks, opts) {
     // the freed horizontal room and try to reposition once more from the anchor.
     if (collidesAny()) {
       const fn = firstWord(it.name);
-      if (fn && fn.length < it.name.length) {
+      // Only drop the surname if doing so actually buys horizontal room. Against the min-width
+      // floor it buys none, so the display keeps the full name and lets the caller shrink the
+      // cards instead -- a readable full name on a smaller card beats a truncated one that still
+      // collides.
+      const shortW = Math.max(measure(fn), minW);
+      if (fn && fn.length < it.name.length && shortW < it.w) {
         it.shortened = true;
-        it.w = measure(fn);
+        it.w = shortW;
         it.labelY = (anchor === 'center' ? (it.m.y - it.h / 2) : (it.m.y + dotR + 1));
         it.side = 'below';
         it.dy = it.labelY - it.m.y;
@@ -4964,8 +4983,37 @@ function resolveStageLabelLayout(marks, opts) {
       fullName: it.name,
       labelX: it.labelX, labelY: it.labelY,
       dy: it.dy, side: it.side, shortened: it.shortened,
+      anchor: (it.m && it.m.anchor) || null,
       w: it.w, h: it.h
     }));
+}
+
+// How many pairs of resolved label boxes STILL overlap. The resolver de-overlaps whenever the
+// geometry allows it, but it cannot invent room: a .dv-sp card has CSS floors (min-width, and the
+// clamp() lower bounds on its two font sizes), so on a small screen it stops shrinking with the
+// stage. At 1280x720 the stage box is ~373x177 CSS px and each card measures ~70 of the 380 stage
+// units tall -- eight of those do not fit under ANY arrangement. That is not a bug in the resolver;
+// it is a signal that the cards must get smaller, which is what the display does with compact mode.
+// Uses the same anchor-aware x-range rule as the resolver, because an edge-anchored card sits to
+// one side of its point rather than centred on it. Pure, so it is unit-testable.
+function stageLayoutOverlapCount(layout) {
+  const xr = (it) => {
+    if (it.anchor === 'left')  return [it.labelX, it.labelX + it.w];
+    if (it.anchor === 'right') return [it.labelX - it.w, it.labelX];
+    return [it.labelX - it.w / 2, it.labelX + it.w / 2];
+  };
+  let n = 0;
+  for (let i = 0; i < layout.length; i++) {
+    for (let j = i + 1; j < layout.length; j++) {
+      const [ax0, ax1] = xr(layout[i]), [bx0, bx1] = xr(layout[j]);
+      if (ax1 <= bx0 || bx1 <= ax0) continue;
+      const ay0 = layout[i].labelY, ay1 = ay0 + layout[i].h;
+      const by0 = layout[j].labelY, by1 = by0 + layout[j].h;
+      if (ay1 <= by0 || by1 <= ay0) continue;
+      n++;
+    }
+  }
+  return n;
 }
 
 // Which edge a stage person card should anchor to, from their x in the 0..800 viewBox.
@@ -10255,18 +10303,43 @@ function renderDisplayView() {
     const measurable = lb.width > 0 && lb.height > 0 && els.length > 0
       && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < lb.width * 0.9; });
     if (measurable) {
-      const uX = 800 / lb.width, uY = 380 / lb.height;
-      els.forEach((el, k) => {
-        const r = el.getBoundingClientRect();
-        if (dvMarks[k]) { dvMarks[k].wUnits = r.width * uX; dvMarks[k].hUnits = r.height * uY; }
-      });
-      const pass2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0 });
-      els.forEach((el, k) => {
-        const L = pass2[k]; if (!L) return;
-        el.style.top = toPct({ x: dvMarks[k].x, y: L.labelY + L.h / 2 }).top;
-        const nameEl = el.querySelector('.dv-sp-name');
-        if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
-      });
+      // Measure, resolve, apply -- and report how many overlaps SURVIVED. The narrowest card on
+      // screen is the real min-width floor; handing it to the resolver stops it believing that
+      // shortening a name shrinks a card that has already bottomed out.
+      const applyPass = () => {
+        const lb2 = wrap.getBoundingClientRect();
+        if (!(lb2.width > 0 && lb2.height > 0)) return 0;
+        const uX = 800 / lb2.width, uY = 380 / lb2.height;
+        // Restore the FULL name on every card before measuring. An earlier pass may have shortened
+        // one, and measuring a card that reads "Simon" while the pass is about to render "Simon
+        // Mugarami" solves the layout for a string that never appears -- that mismatch is exactly
+        // why names still overlapped after the cards were made compact.
+        els.forEach((el, k) => {
+          const nameEl = el.querySelector('.dv-sp-name');
+          const full = dvMarks[k] && dvMarks[k].name;
+          if (nameEl && full && nameEl.textContent !== full) nameEl.textContent = full;
+        });
+        let minPx = Infinity;
+        els.forEach((el, k) => {
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.width < minPx) minPx = r.width;
+          if (dvMarks[k]) { dvMarks[k].wUnits = r.width * uX; dvMarks[k].hUnits = r.height * uY; }
+        });
+        const out = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH,
+          gap: dvM.gap, dotR: 0, minW: minPx === Infinity ? 0 : minPx * uX });
+        els.forEach((el, k) => {
+          const L = out[k]; if (!L) return;
+          el.style.top = toPct({ x: dvMarks[k].x, y: L.labelY + L.h / 2 }).top;
+          const nameEl = el.querySelector('.dv-sp-name');
+          if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
+        });
+        return stageLayoutOverlapCount(out);
+      };
+      // Full-size first, so a roomy stage keeps the role lines. If overlaps survive, the cards have
+      // hit their CSS floors and no arrangement works at this size -- go compact and resolve again.
+      // At most two passes, and neither re-renders, so this cannot loop.
+      wrap.classList.remove('is-compact');
+      if (applyPass() > 0) { wrap.classList.add('is-compact'); applyPass(); }
     }
   }
   // The stage settles asynchronously and resizes with the panels, so redo this on a real width
