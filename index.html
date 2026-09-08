@@ -731,7 +731,23 @@ background-size:5% 10%}
 .cat-group-name{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px;font-weight:600}
 .cat-group-type,.cat-group-add-type{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 6px;font-size:11px}
 .cat-opts{display:flex;flex-direction:column;gap:4px;padding-left:6px}
-.cat-opt-row,.cat-opt-add-row{display:flex;gap:6px;align-items:center}
+.cat-opt-row{display:block}
+.cat-opt-main,.cat-opt-add-row{display:flex;gap:6px;align-items:center}
+/* The extra lines an option drags in with it. Indented under their option so it reads as
+   "choosing this also adds these", which is exactly what it does. */
+.cat-imp{margin:4px 0 2px 14px;padding-left:8px;border-left:2px solid var(--border)}
+.cat-imp-head{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:3px}
+.cat-imp-row{display:flex;gap:5px;align-items:center;margin-bottom:3px}
+.cat-imp-input,.cat-imp-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);padding:3px 6px;font-size:11px}
+.cat-imp-input:focus{color:var(--text)}
+/* An option with no implied lines still needs a way to gain its first one, but twelve full-width
+   "Also add a line" boxes read as clutter. Recess it to a short faint field and let it come
+   forward on hover or keyboard focus. It stays in the DOM and stays reachable by tab. */
+.cat-imp.is-empty{border-left-color:transparent}
+.cat-imp.is-empty .cat-imp-add-input{max-width:130px;opacity:.4;transition:opacity .12s,max-width .12s}
+.cat-imp.is-empty .cat-btn{opacity:.4;transition:opacity .12s}
+.cat-opt-row:hover .cat-imp.is-empty .cat-imp-add-input,.cat-imp.is-empty:focus-within .cat-imp-add-input{max-width:100%;opacity:1}
+.cat-opt-row:hover .cat-imp.is-empty .cat-btn,.cat-imp.is-empty:focus-within .cat-btn{opacity:1}
 .cat-opt-input,.cat-opt-add-input{flex:1;background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 7px;font-size:12px}
 .cat-btn{background:var(--bg-elev);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);padding:3px 7px;font-size:11px;cursor:pointer}
 .cat-btn:hover{color:var(--text);border-color:var(--accent)}
@@ -2541,9 +2557,61 @@ function catalogMaterialize(key) {
 }
 function _catGroup(key, groupId) { const c = catalogMaterialize(key); return c.groups.find(g => g.id === groupId) || null; }
 function _newCatId(p) { return p + Math.random().toString(36).slice(2, 8); }
+function _catOption(key, groupId, optId) {
+  const g = _catGroup(key, groupId); if (!g) return null;
+  return g.options.find(x => x.id === optId) || null;
+}
+// Re-point every per-person override that was keyed to a catalog line whose TEXT just changed.
+// A reword and a removal are both stored as `replaces: <the original catalog text>`, and
+// resolveSetupItems suppresses the original BY TEXT -- so renaming the catalog line without this
+// silently detaches the override: a line the player removed comes back under its new name, and a
+// line they reworded renders twice. Scoped to the buckets of this setup type (the third segment of
+// the stable key), so two types that happen to share a line's wording stay independent.
+function migrateSetupTextKey(key, oldText, newText) {
+  const o = String(oldText || ''), n = String(newText || '');
+  if (!o || !n || o === n) return;
+  const buckets = state.setupItems || {};
+  Object.keys(buckets).forEach(sk => {
+    if (sk.split('|')[2] !== key) return;
+    const b = buckets[sk];
+    if (!b || !Array.isArray(b.customItems)) return;
+    b.customItems.forEach(ci => { if (ci && ci.replaces === o) ci.replaces = n; });
+  });
+}
 function catalogRenameOption(key, groupId, optId, text) {
-  const g = _catGroup(key, groupId); if (!g) return;
-  const o = g.options.find(x => x.id === optId); if (o) { o.text = text; saveState(); }
+  const o = _catOption(key, groupId, optId); if (!o) return;
+  migrateSetupTextKey(key, o.text, text);
+  o.text = text; saveState();
+}
+// ── The extra checklist lines an option implies (`addItems`) ──────────────────────────────────
+// e.g. EG "Stereo guitar rig" implies a DI box, an amp & mic setup and two XLRs. These were
+// editable nowhere: a church whose stereo rig needs a different box had to remove the line on
+// every player individually.
+function catalogSetAddItem(key, groupId, optId, index, text) {
+  const o = _catOption(key, groupId, optId); if (!o || !Array.isArray(o.addItems)) return;
+  const t = String(text || '').trim();
+  if (index < 0 || index >= o.addItems.length || !t || t === o.addItems[index]) return;
+  migrateSetupTextKey(key, o.addItems[index], t);
+  o.addItems[index] = t; saveState();
+}
+function catalogAddAddItem(key, groupId, optId, text) {
+  const o = _catOption(key, groupId, optId); if (!o) return;
+  const t = String(text || '').trim(); if (!t) return;
+  if (!Array.isArray(o.addItems)) o.addItems = [];
+  o.addItems.push(t); saveState();
+}
+function catalogRemoveAddItem(key, groupId, optId, index) {
+  const o = _catOption(key, groupId, optId); if (!o || !Array.isArray(o.addItems)) return;
+  if (index < 0 || index >= o.addItems.length) return;
+  o.addItems.splice(index, 1);
+  if (!o.addItems.length) delete o.addItems;
+  saveState();
+}
+function catalogMoveAddItem(key, groupId, optId, index, dir) {
+  const o = _catOption(key, groupId, optId); if (!o || !Array.isArray(o.addItems)) return;
+  const j = index + dir;
+  if (index < 0 || index >= o.addItems.length || j < 0 || j >= o.addItems.length) return;
+  const [it] = o.addItems.splice(index, 1); o.addItems.splice(j, 0, it); saveState();
 }
 function catalogAddOption(key, groupId, text) {
   const g = _catGroup(key, groupId); if (!g) return null;
@@ -7355,10 +7423,26 @@ function renderCatalogEditor(container, key, onDone) {
       <div class="cat-opts">
         ${g.options.map(o => `
           <div class="cat-opt-row" data-oid="${esc(o.id)}">
-            <input class="cat-opt-input" value="${esc(o.text)}" />
-            <button class="cat-btn cat-o-up" type="button" title="Move up">↑</button>
-            <button class="cat-btn cat-o-dn" type="button" title="Move down">↓</button>
-            <button class="cat-btn cat-o-del" type="button" title="Remove option">✕</button>
+            <div class="cat-opt-main">
+              <input class="cat-opt-input" value="${esc(o.text)}" />
+              <button class="cat-btn cat-o-up" type="button" title="Move up">↑</button>
+              <button class="cat-btn cat-o-dn" type="button" title="Move down">↓</button>
+              <button class="cat-btn cat-o-del" type="button" title="Remove option">✕</button>
+            </div>
+            <div class="cat-imp${(o.addItems || []).length ? '' : ' is-empty'}">
+              ${(o.addItems || []).length ? `<div class="cat-imp-head">Also adds</div>` : ''}
+              ${(o.addItems || []).map((t, ii) => `
+                <div class="cat-imp-row" data-ii="${ii}">
+                  <input class="cat-imp-input" value="${esc(t)}" />
+                  <button class="cat-btn cat-i-up" type="button" title="Move up">↑</button>
+                  <button class="cat-btn cat-i-dn" type="button" title="Move down">↓</button>
+                  <button class="cat-btn cat-i-del" type="button" title="Remove this line">✕</button>
+                </div>`).join('')}
+              <div class="cat-imp-row">
+                <input class="cat-imp-add-input" placeholder="Also add a line…" />
+                <button class="cat-btn cat-i-add" type="button">+</button>
+              </div>
+            </div>
           </div>`).join('')}
         <div class="cat-opt-add-row">
           <input class="cat-opt-add-input" placeholder="Add an option…" />
@@ -7389,6 +7473,19 @@ function renderCatalogEditor(container, key, onDone) {
       oEl.querySelector('.cat-o-up').addEventListener('click', () => { catalogMoveOption(key, gid, oid, -1); rerender(); });
       oEl.querySelector('.cat-o-dn').addEventListener('click', () => { catalogMoveOption(key, gid, oid, 1); rerender(); });
       oEl.querySelector('.cat-o-del').addEventListener('click', () => { catalogRemoveOption(key, gid, oid); rerender(); });
+      // The lines this option drags in with it. Editing one migrates every per-person override
+      // keyed to its old text (see migrateSetupTextKey), so a line someone removed stays removed.
+      oEl.querySelectorAll('.cat-imp-row[data-ii]').forEach(iEl => {
+        const ii = parseInt(iEl.dataset.ii, 10);
+        iEl.querySelector('.cat-imp-input').addEventListener('input', e => { catalogSetAddItem(key, gid, oid, ii, e.target.value); });
+        iEl.querySelector('.cat-i-up').addEventListener('click', () => { catalogMoveAddItem(key, gid, oid, ii, -1); rerender(); });
+        iEl.querySelector('.cat-i-dn').addEventListener('click', () => { catalogMoveAddItem(key, gid, oid, ii, 1); rerender(); });
+        iEl.querySelector('.cat-i-del').addEventListener('click', () => { catalogRemoveAddItem(key, gid, oid, ii); rerender(); });
+      });
+      const impInp = oEl.querySelector('.cat-imp-add-input');
+      const addImp = () => { const t = impInp.value.trim(); if (!t) return; catalogAddAddItem(key, gid, oid, t); rerender(); };
+      oEl.querySelector('.cat-i-add').addEventListener('click', addImp);
+      impInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addImp(); } });
     });
     const addInp = gEl.querySelector('.cat-opt-add-input');
     const addOpt = () => { const t = addInp.value.trim(); if (!t) return; catalogAddOption(key, gid, t); rerender(); };

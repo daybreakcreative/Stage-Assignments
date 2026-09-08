@@ -359,3 +359,18 @@ Behaviors that must keep working. **The executable version of this list is `test
       must NOT engage at 1920×1080 or 1600×900 — those keep their role lines.
       Verified 0 overlaps / 0 clipping / 0 truncated names at 1920×1080, 1600×900, 1440×900,
       1280×720 and 1152×720. → `stagecompact`, `stageclip`
+- [ ] **58.** The extra lines an option implies (`addItems`) are editable in the catalog editor,
+      wherever it appears (Advanced Settings → Setup Items, and the per-person "Edit questions"
+      disclosure). Each option row carries an "Also adds" block: rename, reorder, remove, and add.
+      An option with none still offers the add control — recessed to a short faint field that
+      comes forward on hover/focus, so twelve empty boxes don't clutter the list. It stays in the
+      DOM and stays tab-reachable; don't "clean up" by rendering it only when non-empty.
+      → `catalogimplied`
+- [ ] **59.** Renaming ANY catalog line must carry per-person overrides with it. A reword and a
+      removal are both stored as `replaces: <original catalog text>`, and `resolveSetupItems`
+      suppresses the original BY TEXT — so a rename without migration silently detaches the
+      override: a line the player REMOVED comes back under its new name, and a line they REWORDED
+      renders twice. `migrateSetupTextKey(key, old, new)` re-points them, scoped to the buckets of
+      that setup type (third segment of the stable key) so two types sharing a wording stay
+      independent. Called by `catalogRenameOption` AND `catalogSetAddItem`. Any future mutator that
+      changes a catalog line's text must call it too. → `catalogimplied`
