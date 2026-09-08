@@ -247,6 +247,12 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .wl-star{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;min-width:30px;height:24px;padding:0 7px;border-radius:12px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.06em;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .wl-star:hover{color:var(--wl);border-color:var(--wl)}
 .wl-star.active{background:rgba(232,184,87,.18);border-color:var(--wl);color:var(--wl);box-shadow:0 0 8px rgba(232,184,87,.3)}
+/* "Always VOCAL 3." Sits beside WL in the card's position bar and reads as a quiet state, not a
+   second call to action — dimmer than WL until it's on, since most people are never pinned. */
+.voc-pin{background:transparent;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;min-width:30px;height:24px;padding:0 7px;border-radius:12px;font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.06em;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;opacity:.55}
+.voc-card:hover .voc-pin{opacity:1}
+.voc-pin:hover{color:var(--accent);border-color:var(--accent)}
+.voc-pin.active{opacity:1;background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .ag-badge{font-family:var(--ff-mono);font-size:9.5px;color:var(--success);background:rgba(122,149,104,.15);border:1px solid rgba(122,149,104,.5);padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.1em;font-weight:500}
 .mic-pick{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:10px;border-top:1px dashed var(--border);flex-wrap:wrap}
 .mic-pick label{font-family:var(--ff-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-faint);font-weight:600}
@@ -2361,6 +2367,10 @@ const DEFAULT_STATE = {
   // value = { askedAt: ISO, mic?: 'KMS105', setupNotes?: '...', wireless?: bool }
   musicianPreferences: {},
   peoplePhotos: {},             // normFullName -> PCO photo URL (URL only, never image bytes)
+  // "Grayson is always VOCAL 3." normFullName -> 0-based slot. Keyed by NAME, not vocalist id:
+  // ids are minted per service, so an id-keyed pin would evaporate on the next Planning Center
+  // pull -- which is the exact case this exists for.
+  vocalPins: {},
   // Preferred / "goes by" display names. Keyed by normFullName(officialPcoName) → preferred display string.
   // Applied at every PCO name-entry choke point so future pulls auto-rename (e.g. 'catherine smith' → 'Cat').
   nameAliases: {},
@@ -3531,7 +3541,65 @@ function computePositions(vocs) {
   // vocalists first, so the people you can actually see always read VOCAL 1..N / PAC 1..N.
   // Relative order within each group is preserved, so the centered fan-out (and therefore where
   // people physically stand — driven by count + order, not slot index) is unchanged.
-  return compactAssignments(full, vocs);
+  return applyVocalPins(compactAssignments(full, vocs), vocs);
+}
+// ── Vocal position pins ───────────────────────────────────────────────────────────────────────
+// Positions are re-derived from scratch on every add, remove and PCO pull, so a person's slot used
+// to be whatever that week's fan-out gave them -- you could drag someone into place and lose it on
+// the next pull. A pin remembers it, by normalised name so it survives new ids.
+function vocalPinFor(name) {
+  const k = normFullName(name); if (!k) return null;
+  const pins = (state.config && state.config.vocalPins) || {};
+  const p = pins[k];
+  return (typeof p === 'number' && p >= 0) ? p : null;
+}
+function setVocalPin(name, idx) {
+  const k = normFullName(name); if (!k) return;
+  if (!state.config.vocalPins) state.config.vocalPins = {};
+  state.config.vocalPins[k] = Math.max(0, idx | 0);
+  saveState();
+}
+function clearVocalPin(name) {
+  const k = normFullName(name); if (!k) return;
+  if (state.config.vocalPins) delete state.config.vocalPins[k];
+  saveState();
+}
+// Seat pinned vocalists at their slots, then fill the rest around them in their existing order.
+// GAP-FREE ALWAYS WINS -- Dillon chose that when the numbering bug was fixed -- so a pin past the
+// end of the roster clamps to the last slot rather than punching a hole, and two people pinned to
+// the same slot are seated at the nearest free one instead of one of them vanishing. Ties go to
+// whichever pin was declared first (object key order). Pure apart from reading the pins.
+function applyVocalPins(arr, vocs) {
+  const src = Array.isArray(arr) ? arr : [];
+  const pins = (state.config && state.config.vocalPins) || {};
+  const keys = Object.keys(pins);
+  const ids = src.filter(Boolean);
+  const n = ids.length;
+  if (!n || !keys.length) return src;
+  const decl = {}; keys.forEach((k, i) => { decl[k] = i; });
+  const keyOf = id => { const v = (vocs || []).find(x => x && x.id === id); return v ? normFullName(v.name) : ''; };
+  const pinned = [];
+  ids.forEach(id => {
+    const k = keyOf(id); if (!k) return;
+    const p = pins[k];
+    if (typeof p === 'number' && p >= 0) pinned.push({ id, want: Math.min(p, n - 1), d: decl[k] });
+  });
+  if (!pinned.length) return src;
+  pinned.sort((a, b) => (a.want - b.want) || (a.d - b.d));
+  const out = new Array(n).fill(null);
+  const taken = new Set();
+  pinned.forEach(p => {
+    let i = p.want;
+    while (i < n && out[i] !== null) i++;
+    if (i >= n) { i = p.want; while (i >= 0 && out[i] !== null) i--; }
+    if (i >= 0 && i < n) { out[i] = p.id; taken.add(p.id); }
+  });
+  const rest = ids.filter(id => !taken.has(id));
+  let r = 0;
+  for (let i = 0; i < n; i++) if (out[i] === null) out[i] = rest[r++];
+  const full = new Array(src.length).fill(null);
+  out.forEach((id, i) => { full[i] = id; });
+  return full;
 }
 // Pack filled slots to the front of the array, preserving relative order, padding with null.
 // When `vocs` is supplied, NAMED vocalists sort ahead of unnamed placeholders (stable).
@@ -3582,6 +3650,14 @@ function vocalDropOnSlot(vid, toIdx) {
   }
   // Preserve the drop order the user just expressed — pack without the named-first reshuffle.
   state.assignments = compactAssignments(state.assignments);
+  // A drag by someone who is PINNED is a re-pin. Without this the next recompute would yank them
+  // straight back to the old slot and the drag would look broken. Dragging an UNPINNED vocalist
+  // must not quietly create a pin — that would make every drag permanent by surprise.
+  const dv = (state.vocalists || []).find(x => x && x.id === vid);
+  if (dv && vocalPinFor(dv.name) !== null) {
+    const nowIdx = state.assignments.findIndex(a => a === vid);
+    if (nowIdx !== -1) setVocalPin(dv.name, nowIdx);
+  }
   return true;
 }
 function assignMicsToVocalists(seedRemembered = false) {
@@ -3858,6 +3934,7 @@ function renderVocalists() {
       <div class="voc-pos-bar">
         <span class="voc-pos">${esc(positionLabel)}</span>
         <button class="wl-star${v.isWL?' active':''}" data-id="${v.id}" data-action="toggleWL" title="Worship Leader" aria-label="Worship Leader" aria-pressed="${v.isWL}">WL</button>
+        <button class="voc-pin${vocalPinFor(v.name)!==null?' active':''}" data-id="${v.id}" data-action="togglePin" title="${vocalPinFor(v.name)!==null?`Always ${esc(positionLabel)} — click to unpin`:`Keep this person on ${esc(positionLabel)} every week`}" aria-label="Pin to this position" aria-pressed="${vocalPinFor(v.name)!==null}">PIN</button>
         <button class="x-btn" data-id="${v.id}" data-action="remove" title="Remove">✕</button>
       </div>
       <div class="voc-body" draggable="true" title="Drag to swap with another vocal">
@@ -4014,6 +4091,19 @@ function renderVocalists() {
   });
   grid.querySelectorAll('[data-action="remove"]').forEach(b => b.addEventListener('click', () => removeVocalist(b.dataset.id)));
   grid.querySelectorAll('[data-action="toggleWL"]').forEach(b => b.addEventListener('click', () => toggleVocField(b.dataset.id, 'isWL')));
+  grid.querySelectorAll('[data-action="togglePin"]').forEach(b => b.addEventListener('click', () => {
+    const v = state.vocalists.find(x => x && x.id === b.dataset.id); if (!v) return;
+    const nm = (v.name || '').trim();
+    if (!nm) { toast('Give this vocalist a name first, then pin them.'); return; }
+    if (vocalPinFor(nm) !== null) { clearVocalPin(nm); toast(`${nm} is no longer pinned.`); }
+    else {
+      const idx = state.assignments.findIndex(a => a === v.id);
+      if (idx === -1) return;
+      setVocalPin(nm, idx);
+      toast(`${nm} will stay on VOCAL ${idx + 1}.`);
+    }
+    renderAll();
+  }));
   grid.querySelectorAll('.x-btn[data-shadow-id]').forEach(b => b.addEventListener('click', () => removeShadow(b.dataset.shadowId)));
   grid.querySelectorAll('.shadow-pack-sel').forEach(sel => sel.addEventListener('change', e => updateShadowPack(e.target.dataset.shadowId, e.target.value)));
   grid.querySelectorAll('.shadow-setup-sel').forEach(sel => sel.addEventListener('change', e => updateShadowSetup(e.target.dataset.shadowId, e.target.value)));

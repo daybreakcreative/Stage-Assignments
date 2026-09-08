@@ -238,3 +238,10 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
 ## Standing idea
 Nothing else queued. When PCO is connected the 3-min refresh keeps a green-room display current;
 the open display features above (countdown/idle/headshots) are the natural next layer.
+
+## Shipped 2026-09-08
+- **Stage name overlap at 1280×720** — was documented as a physical constraint; it was three
+  compounding defects in the label resolver (see WATCHLIST 57). Now 0 overlaps at every size tested.
+- **Editing the lines an option implies** (`addItems`) — WATCHLIST 58. Plus the text-key migration
+  that keeps per-person rewords and removals attached through a catalog rename (WATCHLIST 59).
+- **Vocal position pins** — "always VOCAL 3", survives PCO pulls, gap-free (WATCHLIST 60).

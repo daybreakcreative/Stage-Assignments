@@ -374,3 +374,17 @@ Behaviors that must keep working. **The executable version of this list is `test
       that setup type (third segment of the stable key) so two types sharing a wording stay
       independent. Called by `catalogRenameOption` AND `catalogSetAddItem`. Any future mutator that
       changes a catalog line's text must call it too. → `catalogimplied`
+- [ ] **60.** Vocal position pins — "Grayson is always VOCAL 3". A PIN button sits beside WL in each
+      vocalist card's position bar and pins that person to their CURRENT slot; click again to
+      unpin. Rules that must hold:
+      • Pins are keyed by `normFullName`, **never by vocalist id** — ids are minted per service, so
+        an id-keyed pin would evaporate on the next PCO pull, the exact case this exists for.
+      • **Gap-free always wins.** A pin past the end of the roster clamps to the last slot rather
+        than punching a hole (pin VOCAL 5, four people → they go last). Two people pinned to the
+        same slot are seated at the nearest free one; nobody is dropped or duplicated. Ties go to
+        whichever pin was declared first.
+      • A pin for someone not on this week's team is ignored, and an unpinned roster is byte-for-byte
+        unchanged — `applyVocalPins` returns the input array untouched when no pins apply.
+      • Dragging a PINNED vocalist RE-PINS them to the new slot (otherwise the next recompute yanks
+        them back and the drag looks broken). Dragging an unpinned one must NOT create a pin.
+      → `vocalpin`
