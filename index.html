@@ -12847,6 +12847,48 @@ function dataUrlBytes(dataUrl) {
   const pad = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
   return Math.floor((b64.length * 3) / 4) - pad;
 }
+// Per-file shrink target: 4 of these always fit the total cap together, so attaching the max
+// number of screenshots can never bounce on the total.
+const BUG_ATTACH_TARGET_BYTES = Math.floor(BUG_ATTACH_TOTAL_BYTES / BUG_MAX_ATTACHMENTS);
+// Booth screenshots run 4-6MB as PNGs — over the per-file cap, and two blow the total, which is
+// why reports maxed out at "1 maybe 2 images" (bug_94ec5a97). The caps can't move: /bug is
+// unauthenticated and 5.5MB decoded is already ~7.3MB as base64 against the route's 8MB body
+// limit. As bug evidence a screenshot only needs to be readable, so anything over the target is
+// redrawn smaller and re-encoded as JPEG. Rungs step down until one fits; if none do, the
+// smallest attempt still wins. Returns { dataUrl, type } or null (caller keeps the original).
+async function shrinkImageForBugReport(dataUrl) {
+  const RUNGS = [
+    { maxDim: 2400, q: 0.85 },
+    { maxDim: 2000, q: 0.80 },
+    { maxDim: 1600, q: 0.74 },
+    { maxDim: 1280, q: 0.66 },
+  ];
+  const img = new Image();
+  const loaded = await new Promise(resolve => {
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = dataUrl;
+  });
+  if (!loaded || !img.naturalWidth || !img.naturalHeight) return null;
+  let best = null;
+  for (const r of RUNGS) {
+    const scale = Math.min(1, r.maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#fff'; // JPEG has no alpha — a transparent PNG lands on white, not black
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    let out = '';
+    try { out = canvas.toDataURL('image/jpeg', r.q); } catch (_) { return null; }
+    if (!/^data:image\/jpeg/.test(out)) return null; // encoder unavailable
+    if (!best || dataUrlBytes(out) < dataUrlBytes(best)) best = out;
+    if (dataUrlBytes(out) <= BUG_ATTACH_TARGET_BYTES) break;
+  }
+  return best ? { dataUrl: best, type: 'image/jpeg' } : null;
+}
 async function sendBugReport(r) {
   const build = ((document.getElementById('buildStamp') || {}).textContent || '').trim();
   const dateStr = (state.service && state.service.date) || '';
@@ -12915,8 +12957,8 @@ function openBugReportModal() {
   sheet.querySelector('.setup-review-x').addEventListener('click', close);
   sheet.querySelector('#brf_cancel').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-  const MAX_TOTAL = 8 * 1024 * 1024; // ~8MB soft cap (server hard cap 10MB)
-  const totalBytes = () => attachments.reduce((n, a) => n + Math.floor(((a.dataUrl || '').length) * 0.75), 0);
+  const totalBytes = () => attachments.reduce((n, a) => n + dataUrlBytes(a.dataUrl), 0);
+  let brfBusy = 0, brfDropIdle = ''; // files still reading/shrinking; the drop zone says so while > 0
   function renderBugAttachments() {
     const list = sheet.querySelector('#brf_list'); if (!list) return;
     list.innerHTML = attachments.map((a, i) => {
@@ -12932,18 +12974,43 @@ function openBugReportModal() {
   }
   function addBugFiles(fileList) {
     const files = Array.prototype.slice.call(fileList || []);
-    let remaining = files.length;
-    if (!remaining) return;
+    if (!files.length) return;
+    const dropEl = sheet.querySelector('#brf_drop');
+    if (dropEl && brfBusy === 0) brfDropIdle = dropEl.textContent;
+    brfBusy += files.length;
+    if (dropEl) dropEl.textContent = 'Adding…';
+    const settle = () => { if (--brfBusy === 0 && dropEl) dropEl.textContent = brfDropIdle; renderBugAttachments(); };
     files.forEach(f => {
       const reader = new FileReader();
-      reader.onload = ev2 => {
-        const dataUrl = ev2.target.result;
-        const approxBytes = Math.floor(((dataUrl || '').length) * 0.75);
-        if (totalBytes() + approxBytes > MAX_TOTAL) { toast('That attachment is too large to send', 'warn'); }
-        else attachments.push({ dataUrl, name: f.name || 'attachment', type: f.type || 'application/octet-stream' });
-        if (--remaining === 0) renderBugAttachments();
+      reader.onload = async ev2 => {
+        let dataUrl = ev2.target.result;
+        let name = f.name || 'attachment';
+        let type = f.type || 'application/octet-stream';
+        let bytes = dataUrlBytes(dataUrl);
+        // A big image isn't refused — it's redrawn smaller first. Only what still can't fit
+        // after that (or was never an image) hits the caps below.
+        if (/^data:image\//.test(String(dataUrl)) && bytes > BUG_ATTACH_TARGET_BYTES) {
+          try {
+            const small = await shrinkImageForBugReport(dataUrl);
+            if (small && dataUrlBytes(small.dataUrl) < bytes) {
+              dataUrl = small.dataUrl; type = small.type;
+              name = name.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+              bytes = dataUrlBytes(dataUrl);
+            }
+          } catch (_) {}
+        }
+        if (attachments.length >= BUG_MAX_ATTACHMENTS) {
+          toast(`Max ${BUG_MAX_ATTACHMENTS} attachments — remove one first`, 'warn');
+        } else if (bytes > BUG_ATTACH_MAX_BYTES) {
+          toast(`“${name}” is ${fmtMB(bytes)} — max ${fmtMB(BUG_ATTACH_MAX_BYTES)} per file`, 'warn');
+        } else if (totalBytes() + bytes > BUG_ATTACH_TOTAL_BYTES) {
+          toast(`Attachments would top ${fmtMB(BUG_ATTACH_TOTAL_BYTES)} together — remove one first`, 'warn');
+        } else {
+          attachments.push({ dataUrl, name, type });
+        }
+        settle();
       };
-      reader.onerror = () => { if (--remaining === 0) renderBugAttachments(); };
+      reader.onerror = () => settle();
       reader.readAsDataURL(f);
     });
   }

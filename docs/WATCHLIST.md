@@ -388,3 +388,20 @@ Behaviors that must keep working. **The executable version of this list is `test
       • Dragging a PINNED vocalist RE-PINS them to the new slot (otherwise the next recompute yanks
         them back and the drag looks broken). Dragging an unpinned one must NOT create a pin.
       → `vocalpin`
+- [ ] **61.** Oversize screenshots SHRINK at attach time instead of bouncing off the caps
+      (bug_94ec5a97: booth screenshots run 4-6MB; the caps — 3MB/file, 5.5MB total, 4 files — are
+      deliberate and cannot move: `/bug` is unauthenticated, and 5.5MB decoded is already ~7.3MB as
+      base64 against the route's 8MB body limit). Rules that must hold:
+      • An image over `BUG_ATTACH_TARGET_BYTES` (total÷4, so four shrunk shots ALWAYS fit together)
+        is redrawn smaller by `shrinkImageForBugReport` — JPEG on a white ground, rungs 2400/q.85
+        down to 1280/q.66, first fit wins, smallest attempt if none fit — and renamed `.jpg`.
+        Verified live: a 3.94MB 5120×2880 PNG → 1.11MB 2400×1350 JPEG in ~0.4s; four of them attach
+        at 4.44MB total.
+      • A small image is attached untouched, full quality, original name.
+      • A file that still can't fit (or was never an image) is refused AT ATTACH TIME with a toast
+        naming the file and both sizes; the count cap (4) and the total cap are enforced there too,
+        so nothing waits until Submit to find out.
+      • `sendBugReport`'s mirror of the server caps stays as the last line of defence (see 56).
+      • Canvas can't run under jsdom — the test stubs `shrinkImageForBugReport` and asserts the
+        routing (what shrinks, what doesn't, what's refused, what's SENT); the pixel path is
+        browser-verified. → `bugattach`
