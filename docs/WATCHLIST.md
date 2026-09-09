@@ -405,3 +405,31 @@ Behaviors that must keep working. **The executable version of this list is `test
       • Canvas can't run under jsdom — the test stubs `shrinkImageForBugReport` and asserts the
         routing (what shrinks, what doesn't, what's refused, what's SENT); the pixel path is
         browser-verified. → `bugattach`
+- [ ] **62.** The display's stage plot must tell the TRUTH about where people stand
+      (bug_2c4039c6: "not translating from stage display layout, to edit mode, to display mode").
+      `resolveStageLabelLayout` is a LABEL resolver — it takes `dotR` and returns `dy`, "the
+      vertical nudge relative to the dot" — but the display had no dot and positioned each person's
+      CARD at the nudged `labelY`, so collision avoidance silently relocated people. On a DEFAULT
+      state (nothing custom, nothing dragged) the downstage Keys/MD player rendered 293 of 380
+      units upstage, because a card pushed past the bottom flips ABOVE its point and then climbs.
+      Edit mode was faithful to the unit — hence "not translating". Rules that must hold:
+      • `maxDy` caps how far a label may travel from its own point; the display passes
+        `DV_LABEL_MAX_DY` (90 units ≈ 24% of stage depth). Measured after: worst drift 293 → 71.
+      • `syncStageTruthMarkers` puts a dot on the person's real spot and a hairline tie to the card
+        whenever the card ended up more than `DV_TRUTH_TOL` (5 units) away. Nothing renders at all
+        when a card sits on its person, so the plot stays calm. Only Y is ever nudged (X is always
+        faithful), so the tie is a plain vertical rule at the person's x.
+      • It runs after EVERY pass — first pass, and both `applyPass()` runs of the measure-and-
+        re-resolve pass — and rebuilds its own nodes, so a card returning to its person loses its
+        dot. `fillSummaryStage` shares the same cards and gets the same treatment.
+      • The resolver must still separate colliding names (53–56): capping is not "stop resolving".
+        When the cap can't clear an overlap, the existing compact-card retry takes over.
+      → `dvtruepos`
+- [ ] **63.** The side column sits AGAINST the service-order rail, not 36px short of it
+      (bug_2c4039c6: "the band IEM widget is not pressed all the way to the right"). `.dv-main`'s
+      28px inset exists to hold content off the SCREEN edge; with the rail beside it that edge is
+      not a screen edge, and the inset stacked with the 8px divider and the rail's own 22px.
+      `.dv-layout.has-rail > .dv-main{padding-right:0}` drops it on that side ONLY, and the divider
+      keeps its full 8px so it stays grabbable. Browser-measured at 1920×1080: gap 36px → 8px.
+      `has-rail` must stay off when the rail is below the stage, hidden, or the run sheet is empty —
+      the screen-edge inset is correct in those cases. → `dvgutter`

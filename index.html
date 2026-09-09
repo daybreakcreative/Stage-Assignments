@@ -1237,6 +1237,12 @@ body.display-mode{overflow:hidden}
 .dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
 .dv-layout.has-rail{grid-template-columns:var(--dv-main-frac, 1fr) 8px var(--dv-rail-frac, minmax(320px, 33%))}
 .dv-main{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;padding:18px 28px}
+/* dv-main's 28px inset exists to hold content off the SCREEN edge. With the run-sheet rail beside
+   it that edge isn't a screen edge, and the inset stacked with the 8px divider and the rail's own
+   22px to leave the BAND/HANDHELDS column floating 36px short of the service order (bug_2c4039c6:
+   "the band IEM widget is not pressed all the way to the right next to the service order"). Drop it
+   on that side only — the divider stays its full 8px, so it is still grabbable. */
+.dv-layout.has-rail > .dv-main{padding-right:0}
 .dv-rail{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;padding:18px 22px;border-left:1px solid var(--border);background:var(--bg-elev);position:relative}
 .dv-rail-bottom{grid-area:unset!important;border-left:none!important;border-top:1px solid var(--border);width:100%;overflow:auto}
 /* Section dividers — invisible grab strips that highlight on hover/drag */
@@ -1404,6 +1410,12 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
 .dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
+/* Truth markers. When the label resolver has to nudge a card off the person it names, a dot marks
+   where that person ACTUALLY stands and a hairline ties the two together -- otherwise the card is
+   the only marker on the stage and the nudge silently moves the person (bug_2c4039c6). Deliberately
+   quiet: nothing appears at all until a card has been displaced. */
+.dv-sp-dot{position:absolute;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.75;z-index:1;pointer-events:none}
+.dv-sp-tie{position:absolute;transform:translateX(-50%);width:1px;background:var(--accent);opacity:.32;z-index:0;pointer-events:none}
 /* Compact stage cards. renderDisplayView adds this ONLY when the resolver cannot clear the label
    overlaps at full size (see stageLayoutOverlapCount) -- i.e. the cards have hit their CSS floors
    and the stage is too small for them. Dropping the role line and the min-width roughly halves a
@@ -5028,6 +5040,14 @@ function resolveStageLabelLayout(marks, opts) {
   // from its character count, which is what made it declare the 1280x720 layout clean while two
   // pairs of names printed on top of each other.
   const minW = opts.minW > 0 ? opts.minW : 0;
+  // How far a label may travel from its own point, in viewBox units. 0/absent = unlimited (the
+  // historical behaviour, still right for SVG surfaces that draw a dot).
+  //
+  // On the DISPLAY the card IS the person marker, so an unbounded nudge silently relocates people:
+  // a card pushed past the bottom flips above its point and then climbs, which drew the downstage
+  // Keys player 293 of 380 units upstage (bug_2c4039c6). Capping keeps a label near its person;
+  // when the cap can't clear the overlap the caller's compact-card retry takes over.
+  const maxDy = opts.maxDy > 0 ? opts.maxDy : 0;
   const firstWord = (s) => { const p = String(s || '').trim().split(/\s+/); return p[0] || String(s || ''); };
   const measure = (txt) => Math.max(28, String(txt || '').length * charW);
 
@@ -5047,6 +5067,7 @@ function resolveStageLabelLayout(marks, opts) {
       w: boxW, h: boxH,
       side: 'below',
       labelX: m.x, labelY: top0,
+      top0,                      // the un-nudged top; maxDy is measured from here
       dy: top0 - m.y
     };
   });
@@ -5080,13 +5101,19 @@ function resolveStageLabelLayout(marks, opts) {
     // Resolve collisions by REPOSITIONING first so every label keeps its full name whenever
     // there's room. Truncating the name (below) is a last resort, not the opening move.
     const resolveByMoving = () => {
+      // Keep a label within maxDy of its own point (see maxDy above). Returns true if the value
+      // had to be clamped, which means moving further is pointless — stop rather than spin.
+      const clamp = (v) => maxDy > 0 ? Math.min(it.top0 + maxDy, Math.max(it.top0 - maxDy, v)) : v;
       // 1) push the label DOWN below the colliding boxes, in small steps.
       let guard = 0;
       while (collidesAny() && guard < 40) {
         // find the lowest bottom among current collisions and drop just beneath it
         let lowest = it.labelY;
         placed.forEach(p => { if (overlaps(it, p)) lowest = Math.max(lowest, p.labelY + p.h + gap); });
-        it.labelY = Math.max(it.labelY + lineH * 0.5, lowest);
+        const want = Math.max(it.labelY + lineH * 0.5, lowest);
+        const next = clamp(want);
+        if (next === it.labelY) break;   // at the cap — no further down-move is available
+        it.labelY = next;
         it.dy = it.labelY - it.m.y;
         it.side = 'below';
         guard++;
@@ -5100,12 +5127,16 @@ function resolveStageLabelLayout(marks, opts) {
         while (collidesAny() && g2 < 40) {
           let highest = it.labelY;
           placed.forEach(p => { if (overlaps(it, p)) highest = Math.min(highest, p.labelY - it.h - gap); });
-          it.labelY = Math.min(it.labelY - lineH * 0.5, highest);
+          const next = clamp(Math.min(it.labelY - lineH * 0.5, highest));
+          if (next === it.labelY) break; // at the cap — climbing further only moves the person
+          it.labelY = next;
           it.dy = it.labelY - it.m.y;
           g2++;
         }
         if (it.labelY < minY) it.labelY = minY;
       }
+      it.labelY = clamp(it.labelY);
+      it.dy = it.labelY - it.m.y;
     };
     resolveByMoving();
     // Last resort: repositioning alone couldn't clear the overlap (a genuinely packed cluster).
@@ -5190,6 +5221,44 @@ function stageLayoutOverlapCount(layout) {
 const DV_CARD_UNITS_PER_CHAR = 8.9 * 800 / 602;   // ~11.8
 const DV_CARD_UNITS_PER_LINE = 21  * 800 / 602;   // ~27.9
 const DV_CARD_UNITS_GAP      = 4   * 800 / 602;   // ~5.3
+// Furthest a display card may sit from the person it names, in viewBox units (~24% of the 380-unit
+// stage depth). Far enough to clear a crowded row, near enough that the tie is followable by eye.
+const DV_LABEL_MAX_DY = 90;
+// A card sitting within this many units of its person reads as being ON them — no dot needed.
+const DV_TRUTH_TOL = 5;
+
+// The stage plot must say where people actually stand. A card may be nudged off its person to keep
+// names readable (resolveStageLabelLayout, watchlist 53-56) — but the card IS the only marker in
+// the display, so an unmarked nudge silently relocates that person on the TV (bug_2c4039c6).
+//
+// So: for every card that ended up away from its person, drop a small dot on the true spot and a
+// hairline tie between the two. Only the vertical axis is ever nudged (x is always faithful), so
+// the tie is a plain vertical rule at the person's x. Idempotent — it rebuilds its own nodes and
+// removes them again once a card returns to its person, so it is safe to call after every pass.
+function syncStageTruthMarkers(wrap, marks) {
+  if (!wrap) return;
+  wrap.querySelectorAll('.dv-sp-dot, .dv-sp-tie').forEach(n => n.remove());
+  const cards = Array.from(wrap.querySelectorAll('.dv-sp'));
+  (marks || []).forEach((m, k) => {
+    const el = cards[k];
+    if (!el || typeof m.y !== 'number') return;
+    const cardY = (parseFloat(el.style.top) / 100) * 380;
+    if (!isFinite(cardY) || Math.abs(cardY - m.y) <= DV_TRUTH_TOL) return;
+    const pct = (v, span) => (v / span) * 100 + '%';
+    const dot = document.createElement('div');
+    dot.className = 'dv-sp-dot';
+    dot.style.left = pct(m.x, 800);
+    dot.style.top = pct(m.y, 380);
+    const tie = document.createElement('div');
+    tie.className = 'dv-sp-tie';
+    tie.style.left = pct(m.x, 800);
+    tie.style.top = pct(Math.min(m.y, cardY), 380);
+    tie.style.height = pct(Math.abs(cardY - m.y), 380);
+    // Tie first so the dot and the cards paint over it.
+    wrap.insertBefore(tie, wrap.firstChild);
+    wrap.insertBefore(dot, tie.nextSibling);
+  });
+}
 function stageLabelMetrics() {
   return { charW: DV_CARD_UNITS_PER_CHAR, lineH: DV_CARD_UNITS_PER_LINE, gap: DV_CARD_UNITS_GAP };
 }
@@ -10155,7 +10224,7 @@ function fillSummaryStage() {
       sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal', isWL: !!v.isWL });
     }
   }
-  const sLayout = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0 });
+  const sLayout = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0, maxDy: DV_LABEL_MAX_DY });
   sMarks.forEach((m, k) => {
     const L = sLayout[k];
     const el = document.createElement('div');
@@ -10165,6 +10234,7 @@ function fillSummaryStage() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     people.appendChild(el);
   });
+  syncStageTruthMarkers(people, sMarks);
 }
 function copySummaryText() {
   const s = state.service;
@@ -10463,7 +10533,7 @@ function renderDisplayView() {
   // matches the final geometry rather than assuming everything is centred.
   dvMarks.forEach(m => { m.anchor = stageLabelAnchor(m.x); });
   const dvM = stageLabelMetrics();
-  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0 });
+  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0, maxDy: DV_LABEL_MAX_DY });
   dvMarks.forEach((m, k) => {
     const L = dvLayout2[k];
     const el = document.createElement('div');
@@ -10476,6 +10546,7 @@ function renderDisplayView() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     wrap.appendChild(el);
   });
+  syncStageTruthMarkers(wrap, dvMarks);
   // SECOND PASS. The browser has now laid the cards out, so MEASURE what they actually are and
   // re-resolve. Estimating a card's size from its character count caused three separate overlap
   // bugs this week — font metrics, padding and CSS clamps never match a formula. This runs once
@@ -10513,13 +10584,14 @@ function renderDisplayView() {
           if (dvMarks[k]) { dvMarks[k].wUnits = r.width * uX; dvMarks[k].hUnits = r.height * uY; }
         });
         const out = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH,
-          gap: dvM.gap, dotR: 0, minW: minPx === Infinity ? 0 : minPx * uX });
+          gap: dvM.gap, dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: minPx === Infinity ? 0 : minPx * uX });
         els.forEach((el, k) => {
           const L = out[k]; if (!L) return;
           el.style.top = toPct({ x: dvMarks[k].x, y: L.labelY + L.h / 2 }).top;
           const nameEl = el.querySelector('.dv-sp-name');
           if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
         });
+        syncStageTruthMarkers(wrap, dvMarks);
         return stageLayoutOverlapCount(out);
       };
       // Full-size first, so a roomy stage keeps the role lines. If overlaps survive, the cards have
