@@ -12,8 +12,13 @@
 // dot and then climbs. Bass and AG drifted 71 and 61 units. Edit mode was faithful to the unit.
 //
 // The plot may still move a CARD to keep names readable (that is watchlist 53-56 and must keep
-// working) — but the person's real spot has to be marked, and a moved card has to be tied back to
-// it, or the TV is simply lying about the stage.
+// working) — but only within DV_LABEL_MAX_DY.
+//
+// The first fix also dropped a dot on each person's true spot with a hairline tie to their card.
+// Those markers were REMOVED 2026-09-14 on Dillon's call: on a full 14-card stage eleven cards
+// drift, so the plot wore eleven dots and eleven ties and read as a rash rather than a signal.
+// That makes the cap the only thing left keeping this display honest, so the checks below assert
+// it directly, and assert that no marker node comes back.
 const fs=require('fs');const{JSDOM,VirtualConsole}=require('jsdom');
 const html=fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push((e.detail&&e.detail.message)||e.message));
@@ -79,45 +84,28 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (bad.length) throw new Error(bad.map(b=>`${b.m.who}: x ${Math.round(xOf(b.el))} vs ${Math.round(b.m.x)}`).join('; '));
  });
 
- console.log('--- every person\'s real spot is marked ---');
- check('a card that sits on its person needs no marker; a MOVED card leaves a dot at the true spot', ()=>{
-   const missing = [];
-   marks.forEach((m, k) => {
-     const el = cards()[k];
-     if (!el) { missing.push(m.who + ': no card'); return; }
-     const drift = Math.abs(yOf(el) - m.y);
-     if (drift <= 5) return; // card is on the person — nothing else needed
-     // Card was displaced: SOMETHING must mark where this person actually stands.
-     const dot = Array.from(doc.querySelectorAll('#dvStagePeople .dv-sp-dot'))
-       .find(d => Math.abs(xOf(d) - m.x) <= 2 && Math.abs(yOf(d) - m.y) <= 2);
-     if (!dot) missing.push(`${m.who}: card adrift ${Math.round(drift)} units with no dot at its true spot`);
-   });
-   if (missing.length) throw new Error(missing.join('; '));
- });
-
- check('nobody is drawn more than a third of the stage from where they stand', ()=>{
-   // Even WITH a dot, a card thrown 293 units across the stage reads as the wrong person's name
-   // in the wrong place. The tie has to be short enough to follow by eye.
+ console.log('--- the card itself has to be honest (no markers to lean on) ---');
+ // THE honesty guard. The dot-and-tie markers were removed 2026-09-14 (on a full stage they put
+ // eleven dots on the plot), so the card is the only thing naming where a person stands. Nothing
+ // else now catches a card drawn away from its person — assert the real cap, not a loose third.
+ check('no card is drawn further from its person than DV_LABEL_MAX_DY', ()=>{
+   const cap = ev('DV_LABEL_MAX_DY');
+   if (!(cap > 0 && cap <= 100)) throw new Error('cap looks wrong: ' + cap);
    const wild = marks.map((m,k)=>({m, el:cards()[k]}))
-     .filter(({m,el}) => el && Math.abs(yOf(el) - m.y) > 380/3)
-     .map(({m,el}) => `${m.who}: ${Math.round(Math.abs(yOf(el)-m.y))} units`);
+     .filter(({m,el}) => el && Math.abs(yOf(el) - m.y) > cap + 1)
+     .map(({m,el}) => `${m.who}: ${Math.round(Math.abs(yOf(el)-m.y))} units (cap ${cap})`);
    if (wild.length) throw new Error(wild.join('; '));
  });
 
- check('a displaced card is tied back to its dot', ()=>{
-   const untied = [];
-   marks.forEach((m, k) => {
-     const el = cards()[k]; if (!el) return;
-     if (Math.abs(yOf(el) - m.y) <= 5) return;
-     const tie = Array.from(doc.querySelectorAll('#dvStagePeople .dv-sp-tie'))
-       .find(t => Math.abs(xOf(t) - m.x) <= 2);
-     if (!tie) untied.push(m.who);
-   });
-   if (untied.length) throw new Error('no connector for: ' + untied.join(', '));
+ check('the markers really are gone — no stray dots or ties are rendered', ()=>{
+   const n = doc.querySelectorAll('#dvStagePeople .dv-sp-dot, #dvStagePeople .dv-sp-tie').length;
+   if (n) throw new Error(n + ' marker node(s) still drawn');
  });
 
  console.log('--- a hand-placed layout still translates ---');
- check('hand-placed positions put the card (or its dot) where the user dropped it', ()=>{
+ check('hand-placed positions put the CARD where the user dropped it', ()=>{
+   // With no dot to fall back on, a hand-placed person has to be drawn where they were placed —
+   // within the cap. This is the "not translating from stage layout to display mode" complaint.
    ev(`
      state.config.customStageEnabled=true;
      state.config.customStagePositions={};
@@ -125,14 +113,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
      [200,300,400,500,600].forEach((x,n)=>{ state.config.customStagePositions['vocal_'+n]={x,y:110}; });
      renderDisplayView();
    `);
+   const cap = ev('DV_LABEL_MAX_DY');
    const m2 = truth();
    const bad = [];
    m2.forEach((m, k) => {
      const el = cards()[k]; if (!el) { bad.push(m.who + ': no card'); return; }
-     const onCard = Math.abs(yOf(el) - m.y) <= 5;
-     const hasDot = Array.from(doc.querySelectorAll('#dvStagePeople .dv-sp-dot'))
-       .some(d => Math.abs(xOf(d) - m.x) <= 2 && Math.abs(yOf(d) - m.y) <= 2);
-     if (!onCard && !hasDot) bad.push(`${m.who}: drawn at y ${Math.round(yOf(el))}, placed at ${Math.round(m.y)}`);
+     const drift = Math.abs(yOf(el) - m.y);
+     if (drift > cap + 1) bad.push(`${m.who}: drawn at y ${Math.round(yOf(el))}, placed at ${Math.round(m.y)} (drift ${Math.round(drift)} > cap ${cap})`);
    });
    if (bad.length) throw new Error(bad.join('; '));
  });

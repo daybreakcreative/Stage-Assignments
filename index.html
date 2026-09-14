@@ -1414,8 +1414,6 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    where that person ACTUALLY stands and a hairline ties the two together -- otherwise the card is
    the only marker on the stage and the nudge silently moves the person (bug_2c4039c6). Deliberately
    quiet: nothing appears at all until a card has been displaced. */
-.dv-sp-dot{position:absolute;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.75;z-index:1;pointer-events:none}
-.dv-sp-tie{position:absolute;transform:translateX(-50%);width:1px;background:var(--accent);opacity:.32;z-index:0;pointer-events:none}
 /* Compact stage cards. renderDisplayView adds this ONLY when the resolver cannot clear the label
    overlaps at full size (see stageLayoutOverlapCount) -- i.e. the cards have hit their CSS floors
    and the stage is too small for them. Dropping the role line and the min-width roughly halves a
@@ -5224,41 +5222,11 @@ const DV_CARD_UNITS_GAP      = 4   * 800 / 602;   // ~5.3
 // Furthest a display card may sit from the person it names, in viewBox units (~24% of the 380-unit
 // stage depth). Far enough to clear a crowded row, near enough that the tie is followable by eye.
 const DV_LABEL_MAX_DY = 90;
-// A card sitting within this many units of its person reads as being ON them — no dot needed.
-const DV_TRUTH_TOL = 5;
-
-// The stage plot must say where people actually stand. A card may be nudged off its person to keep
-// names readable (resolveStageLabelLayout, watchlist 53-56) — but the card IS the only marker in
-// the display, so an unmarked nudge silently relocates that person on the TV (bug_2c4039c6).
-//
-// So: for every card that ended up away from its person, drop a small dot on the true spot and a
-// hairline tie between the two. Only the vertical axis is ever nudged (x is always faithful), so
-// the tie is a plain vertical rule at the person's x. Idempotent — it rebuilds its own nodes and
-// removes them again once a card returns to its person, so it is safe to call after every pass.
-function syncStageTruthMarkers(wrap, marks) {
-  if (!wrap) return;
-  wrap.querySelectorAll('.dv-sp-dot, .dv-sp-tie').forEach(n => n.remove());
-  const cards = Array.from(wrap.querySelectorAll('.dv-sp'));
-  (marks || []).forEach((m, k) => {
-    const el = cards[k];
-    if (!el || typeof m.y !== 'number') return;
-    const cardY = (parseFloat(el.style.top) / 100) * 380;
-    if (!isFinite(cardY) || Math.abs(cardY - m.y) <= DV_TRUTH_TOL) return;
-    const pct = (v, span) => (v / span) * 100 + '%';
-    const dot = document.createElement('div');
-    dot.className = 'dv-sp-dot';
-    dot.style.left = pct(m.x, 800);
-    dot.style.top = pct(m.y, 380);
-    const tie = document.createElement('div');
-    tie.className = 'dv-sp-tie';
-    tie.style.left = pct(m.x, 800);
-    tie.style.top = pct(Math.min(m.y, cardY), 380);
-    tie.style.height = pct(Math.abs(cardY - m.y), 380);
-    // Tie first so the dot and the cards paint over it.
-    wrap.insertBefore(tie, wrap.firstChild);
-    wrap.insertBefore(dot, tie.nextSibling);
-  });
-}
+// NO TRUTH MARKERS. A dot on each person's true spot with a hairline tie back to their card was
+// tried (2026-09-09) and removed on Dillon's call (2026-09-14): on a full 14-card stage ELEVEN
+// cards drift, so the plot wore eleven dots and eleven tie lines and read as a rash, not a signal.
+// The card is therefore the ONLY marker again — which makes DV_LABEL_MAX_DY the one thing keeping
+// this display honest. Do not raise it, and never reintroduce drift without a cap.
 function stageLabelMetrics() {
   return { charW: DV_CARD_UNITS_PER_CHAR, lineH: DV_CARD_UNITS_PER_LINE, gap: DV_CARD_UNITS_GAP };
 }
@@ -10234,7 +10202,6 @@ function fillSummaryStage() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     people.appendChild(el);
   });
-  syncStageTruthMarkers(people, sMarks);
 }
 function copySummaryText() {
   const s = state.service;
@@ -10546,7 +10513,6 @@ function renderDisplayView() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     wrap.appendChild(el);
   });
-  syncStageTruthMarkers(wrap, dvMarks);
   // SECOND PASS. The browser has now laid the cards out, so MEASURE what they actually are and
   // re-resolve. Estimating a card's size from its character count caused three separate overlap
   // bugs this week — font metrics, padding and CSS clamps never match a formula. This runs once
@@ -10591,7 +10557,6 @@ function renderDisplayView() {
           const nameEl = el.querySelector('.dv-sp-name');
           if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
         });
-        syncStageTruthMarkers(wrap, dvMarks);
         return stageLayoutOverlapCount(out);
       };
       // Full-size first, so a roomy stage keeps the role lines. If overlaps survive, the cards have

@@ -448,3 +448,14 @@ Behaviors that must keep working. **The executable version of this list is `test
         **Bump it whenever the default columns change, or the new split won't reach existing users.**
       Verified: 1920×1080 rail 464px / stage 824px; 1280×720 rail 308px / stage 503px with 0
       overlaps, 0 clipping, and compact cards no longer needed at all. → `dvsplit`
+- [ ] **65.** NO truth markers on the stage plot. A dot on each person's real spot with a hairline
+      tie back to their drifted card was added 2026-09-09 and REMOVED 2026-09-14 on Dillon's call:
+      measured on a full 14-card stage, ELEVEN cards drift, so the plot wore eleven dots and eleven
+      tie lines and read as a rash rather than a signal. Do not reintroduce them.
+      The consequence, which is the thing to protect: **the card is once again the ONLY marker of
+      where a person stands**, so `DV_LABEL_MAX_DY` (90 units, ~24% of stage depth) is the single
+      guard keeping the display honest. Never raise it, and never reintroduce drift without a cap —
+      an uncapped nudge is what drew the Keys/MD player 293 of 380 units upstage (bug_2c4039c6).
+      `dvtruepos` asserts the cap directly and asserts no marker node returns.
+      ⚠ Known and NOT caused by this change: at 1280×720 with a full 14-person team, 2 names still
+      overlap after the compact-card retry. 1920×1080 is clean (0 overlaps, 0 dots). → `dvtruepos`
