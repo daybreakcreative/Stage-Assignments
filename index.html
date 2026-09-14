@@ -1235,7 +1235,7 @@ body.display-mode{overflow:hidden}
 #buildStamp{position:fixed;left:6px;bottom:5px;z-index:300;font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);opacity:.5;pointer-events:none;user-select:none}
 /* Display view layout — sizes driven by CSS variables so dividers can adjust them */
 .dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
-.dv-layout.has-rail{grid-template-columns:var(--dv-main-frac, 1fr) 8px var(--dv-rail-frac, minmax(320px, 33%))}
+.dv-layout.has-rail{grid-template-columns:var(--dv-main-frac, 1fr) 8px var(--dv-rail-frac, minmax(300px, 24%))}
 .dv-main{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;padding:18px 28px}
 /* dv-main's 28px inset exists to hold content off the SCREEN edge. With the run-sheet rail beside
    it that edge isn't a screen edge, and the inset stacked with the 8px divider and the rail's own
@@ -13465,8 +13465,23 @@ function savePostPullStep() {
 //   side:   horizontal drag adjusting the split between Stage and Side panel
 //   rail:   horizontal drag adjusting the split between Main and Run Sheet rail
 const DV_DIVIDER_KEY = 'stageAssign.v3.displayDividers';
+// Column-split version. A drag writes the WHOLE blob back — every frac, not just the one being
+// dragged — so one drag of any divider froze the then-current defaults into localStorage for good,
+// and changing the defaults below would never reach anyone who had touched a divider. Bumping this
+// drops the stored fracs ONCE (heights are kept; those are genuinely per-device choices) so a new
+// split actually lands. Bump it only when the default columns change.
+const DV_DIVIDER_VERSION = 2;
 // Defaults: null means "use the CSS default"
-const DV_DIVIDER_DEFAULTS = { headerH: null, vocalsH: null, bandH: null, hostsH: null, bandRosterSig: null, hostsRosterSig: null, stageFrac: 1.15, sideFrac: 1.0, mainFrac: 1.0, railFrac: 0.5 };
+//
+// v2 (bug_2c4039c6: "the service order has a bunch of un used space on the far right"): the rail
+// was 33% of the screen holding 303px of content in 1004px — 70% empty — while the stage, the
+// whole point of the display, got 32%. The room goes to the stage: rail 33% → ~24%, and the
+// stage's share of what's left rises from 53% to 59%. Measured at 1920×1080: stage 617 → 835px,
+// rail 637 → 465px. A bigger stage also means fewer cards colliding, so fewer get nudged off
+// their person in the first place (see watchlist 62).
+const DV_DIVIDER_DEFAULTS = { headerH: null, vocalsH: null, bandH: null, hostsH: null, bandRosterSig: null, hostsRosterSig: null, stageFrac: 1.45, sideFrac: 1.0, mainFrac: 1.0, railFrac: 0.32 };
+// The four keys that make up the column split — dropped together on a version bump.
+const DV_FRAC_KEYS = ['stageFrac', 'sideFrac', 'mainFrac', 'railFrac'];
 
 // Compute a signature of band + hosts roster.
 // Used to invalidate bandH so a roster change auto-resizes the Band block to fit.
@@ -13485,12 +13500,20 @@ function loadDvDividers() {
     const raw = localStorage.getItem(DV_DIVIDER_KEY);
     if (!raw) return { ...DV_DIVIDER_DEFAULTS };
     const parsed = JSON.parse(raw);
+    // Stored blob predates the current column split: forget the fracs so the new defaults apply,
+    // and keep the heights, which are a separate, deliberate per-device choice.
+    if (!parsed || parsed.v !== DV_DIVIDER_VERSION) {
+      const kept = { ...(parsed || {}) };
+      DV_FRAC_KEYS.forEach(k => { delete kept[k]; });
+      return { ...DV_DIVIDER_DEFAULTS, ...kept, v: DV_DIVIDER_VERSION };
+    }
     return { ...DV_DIVIDER_DEFAULTS, ...parsed };
   } catch(e) { return { ...DV_DIVIDER_DEFAULTS }; }
 }
 
 function saveDvDividers(d) {
-  try { localStorage.setItem(DV_DIVIDER_KEY, JSON.stringify(d)); }
+  // Stamp the version, or the next load would strip the very fracs this drag just set.
+  try { localStorage.setItem(DV_DIVIDER_KEY, JSON.stringify({ ...d, v: DV_DIVIDER_VERSION })); }
   catch(e) { console.warn('Could not save divider sizes:', e); }
 }
 

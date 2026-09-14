@@ -433,3 +433,18 @@ Behaviors that must keep working. **The executable version of this list is `test
       keeps its full 8px so it stays grabbable. Browser-measured at 1920×1080: gap 36px → 8px.
       `has-rail` must stay off when the rail is below the stage, hidden, or the run sheet is empty —
       the screen-edge inset is correct in those cases. → `dvgutter`
+- [ ] **64.** The run-sheet rail must not eat a third of the display. Reported twice (2026-09-06 and
+      again as `bug_2c4039c6`): "the service order has a bunch of un used space on the far right".
+      Measured at 1920×1080 the rail was 637px — 33% of the screen — holding 303px of content in
+      1004px, while the stage got 34%. Dillon's call: shrink the rail, give the room to the stage.
+      Rail 33% → 24%, stage 651 → 824px (+27%). Two pieces must stay in step or the split breaks:
+      • `DV_DIVIDER_DEFAULTS` (`railFrac: 0.32`, `stageFrac: 1.45`) AND the CSS fallback track on
+        `.dv-layout.has-rail` (`minmax(300px, 24%)`) — the CSS applies before the vars are set, so
+        if they disagree the layout jumps on load.
+      • **`DV_DIVIDER_VERSION`.** A divider drag writes the WHOLE blob back — every frac, not just
+        the dragged one — so one drag froze the then-current defaults into localStorage forever, and
+        changing the defaults would never have reached anyone who had touched a divider. Bumping the
+        version drops the stored fracs ONCE while KEEPING the heights (a real per-device choice).
+        **Bump it whenever the default columns change, or the new split won't reach existing users.**
+      Verified: 1920×1080 rail 464px / stage 824px; 1280×720 rail 308px / stage 503px with 0
+      overlaps, 0 clipping, and compact cards no longer needed at all. → `dvsplit`
