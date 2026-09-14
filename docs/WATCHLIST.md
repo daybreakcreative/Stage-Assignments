@@ -459,3 +459,27 @@ Behaviors that must keep working. **The executable version of this list is `test
       `dvtruepos` asserts the cap directly and asserts no marker node returns.
       ⚠ Known and NOT caused by this change: at 1280×720 with a full 14-person team, 2 names still
       overlap after the compact-card retry. 1920×1080 is clean (0 overlaps, 0 dots). → `dvtruepos`
+- [ ] **66.** The stage plot must keep its 800:380 aspect, and the card layer must sit on the
+      rectangle the SVG actually draws. Two coupled defects, found 2026-09-14 chasing two overlaps
+      at 1280×720 with a full team (8 vocalists + 6-piece band, 14 cards):
+      • The SVG letterboxes ITSELF (`preserveAspectRatio="xMidYMid meet"`). `#dvStagePeople` is
+        plain HTML positioned in percentages and had `width:100%` + `max-height:100%`, which
+        SQUASHES rather than letterboxes. The wrap was 503×131, so the outline drew 276px wide
+        while the card layer spanned 503 — **9 of 14 cards were rendered outside the stage**.
+        `fitStagePeopleLayer` now sizes the layer to `stagePlotBox()`, the same rectangle.
+      • Letterboxing ALONE makes overlaps far worse (measured 2 → 17), because the layer drops to
+        275×131. The room has to come from somewhere: the vocalist block was taking 328px of a
+        720px screen — 46% — leaving the plot 131px, and 14 cards at 20px do not fit in 131px.
+        `stageHeightDeficit` / `cappedVocalsHeight` give the plot back the height its own WIDTH
+        implies, using the existing `has-explicit-height` cqh machinery so vocal cards SCALE rather
+        than clip. Floor: `DV_VOCALS_MIN_H` (150px).
+      ⚠ **The cap must be released and recomputed from natural height every render** (marker class
+      `dv-vocals-autofit`). Subtracting from an already-capped height is sticky — cap it once on a
+      small screen and the vocal cards stay shrunken after a resize back to the booth TV. It must
+      also NEVER touch a height the user set by dragging the divider.
+      Verified 0 overlaps and 0 cards outside the outline at 1920×1080, 1600×900, 1440×900,
+      1366×768, 1280×720 and 1152×720, and a 1920→1280→1920 round trip returns to natural height.
+      1920×1080 is a no-op (`autofit:false`). → `dvstagefit`
+      ⚠ **Still open, pre-existing:** the BAND block clips at 1280×720 — 6 players, only 4 fully
+      visible (this change improved it from 2). The side column splits height evenly instead of by
+      content need.

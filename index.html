@@ -5222,6 +5222,53 @@ const DV_CARD_UNITS_GAP      = 4   * 800 / 602;   // ~5.3
 // Furthest a display card may sit from the person it names, in viewBox units (~24% of the 380-unit
 // stage depth). Far enough to clear a crowded row, near enough that the tie is followable by eye.
 const DV_LABEL_MAX_DY = 90;
+// ── Keeping the stage plot honest about its own shape ─────────────────────────────────────────
+// The plot is an SVG with viewBox 0 0 800 380 and preserveAspectRatio="xMidYMid meet", so the SVG
+// letterboxes ITSELF inside whatever box it is given. The people layer over it is plain HTML
+// positioned in percentages and has no such mechanism — so unless it is sized to the SAME
+// rectangle, cards drift off the drawn outline. At 1280x720 with a full team the wrap was 503x131:
+// the outline drew 276px wide while the card layer spanned 503, and NINE of fourteen cards were
+// rendered outside the stage (bug found 2026-09-14 while chasing two overlaps).
+const DV_STAGE_ASPECT = 800 / 380;
+// The vocalist block may not shrink past this, however starved the stage is. Below it the cards
+// stop being readable from the back of a room, which is the whole point of the display.
+const DV_VOCALS_MIN_H = 150;
+
+// The rectangle the SVG actually draws into, for a wrap of w x h. Pure.
+function stagePlotBox(w, h) {
+  if (!(w > 0 && h > 0)) return { w: 0, h: 0 };
+  const s = Math.min(w / 800, h / 380);
+  return { w: 800 * s, h: 380 * s };
+}
+// How many pixels of height the plot is short of the aspect its own WIDTH implies. 0 when the plot
+// is already square-on or taller — so this is a no-op at 1920x1080, where the wrap is already
+// 602x286 (exactly 2.105). Pure.
+function stageHeightDeficit(w, h) {
+  if (!(w > 0 && h > 0)) return 0;
+  const want = w / DV_STAGE_ASPECT;
+  return Math.max(0, want - h);
+}
+// What the vocalist block should come down to so the plot can have that room back. Never below the
+// floor, never grown. Pure.
+function cappedVocalsHeight(currentH, deficit) {
+  if (!(currentH > 0) || !(deficit > 0)) return currentH;
+  return Math.max(DV_VOCALS_MIN_H, Math.round(currentH - deficit));
+}
+// Size the people layer onto the SVG's letterboxed rectangle. Both are absolutely positioned and
+// centred in the wrap, so setting width/height is enough to make them coincide.
+function fitStagePeopleLayer(wrapEl, layerEl) {
+  if (!wrapEl || !layerEl) return false;
+  const r = wrapEl.getBoundingClientRect();
+  const box = stagePlotBox(r.width, r.height);
+  if (!(box.w > 0 && box.h > 0)) return false;
+  layerEl.style.width = box.w + 'px';
+  layerEl.style.height = box.h + 'px';
+  layerEl.style.maxWidth = 'none';
+  layerEl.style.maxHeight = 'none';
+  layerEl.style.aspectRatio = 'auto';
+  return true;
+}
+
 // NO TRUTH MARKERS. A dot on each person's true spot with a hairline tie back to their card was
 // tried (2026-09-09) and removed on Dillon's call (2026-09-14): on a full 14-card stage ELEVEN
 // cards drift, so the plot wore eleven dots and eleven tie lines and read as a rash, not a signal.
@@ -10498,6 +10545,39 @@ function renderDisplayView() {
   // re-renders once real geometry exists.
   // Tag each mark with the anchor it will actually render with, so the resolver's collision math
   // matches the final geometry rather than assuming everything is centred.
+  // Give the plot back the height its own width implies, then put the card layer exactly on the
+  // rectangle the SVG draws. Order matters: reclaiming height changes the wrap, so fit AFTER.
+  // Skipped entirely when the user has dragged the vocalist divider themselves — that is their
+  // call, not ours — and a no-op at 1920x1080, where the wrap is already at the viewBox aspect.
+  {
+    const svgWrap = wrap.closest('.dv-stage-svg-wrap');
+    const vocBlock = document.getElementById('dvVocalistsBlock');
+    const dividers = (typeof loadDvDividers === 'function') ? loadDvDividers() : {};
+    const userSetVocals = dividers && dividers.vocalsH != null && dividers.vocalsH > 0;
+    if (svgWrap && vocBlock && !userSetVocals) {
+      // Release OUR OWN cap first and recompute from the block's natural height. Subtracting from
+      // an already-capped height is sticky: cap it once on a small screen and the vocalist cards
+      // stay shrunken forever, including after a resize back up to the booth TV. The marker class
+      // is what keeps us from ever touching a height the user set by dragging the divider.
+      if (vocBlock.classList.contains('dv-vocals-autofit')) {
+        vocBlock.classList.remove('dv-vocals-autofit', 'has-explicit-height');
+        vocBlock.style.removeProperty('--dv-vocals-h');
+      }
+      const wr = svgWrap.getBoundingClientRect();
+      const deficit = stageHeightDeficit(wr.width, wr.height);
+      if (deficit > 1) {
+        const vh = vocBlock.getBoundingClientRect().height;
+        const capped = cappedVocalsHeight(vh, deficit);
+        if (capped > 0 && Math.abs(capped - vh) > 1) {
+          // has-explicit-height turns the block into a sized container, so the cards scale down
+          // through their existing cqh rules instead of being clipped.
+          vocBlock.classList.add('has-explicit-height', 'dv-vocals-autofit');
+          vocBlock.style.setProperty('--dv-vocals-h', capped + 'px');
+        }
+      }
+    }
+    if (svgWrap) fitStagePeopleLayer(svgWrap, wrap);
+  }
   dvMarks.forEach(m => { m.anchor = stageLabelAnchor(m.x); });
   const dvM = stageLabelMetrics();
   const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0, maxDy: DV_LABEL_MAX_DY });
@@ -10518,6 +10598,8 @@ function renderDisplayView() {
   // bugs this week — font metrics, padding and CSS clamps never match a formula. This runs once
   // per render, only repositions cards that already exist, and never re-renders, so it can't loop.
   {
+    const svgWrap2 = wrap.closest('.dv-stage-svg-wrap');
+    if (svgWrap2) fitStagePeopleLayer(svgWrap2, wrap);
     const lb = wrap.getBoundingClientRect();
     const els = Array.from(wrap.querySelectorAll('.dv-sp'));
     // Only trust the measurements when they look like REAL layout. A card is always a fraction of
