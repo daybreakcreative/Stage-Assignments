@@ -1440,6 +1440,13 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 .dv-side-block .dv-list-item .detail{font-size:calc(clamp(9px,4.5cqh,17px) * var(--dv-side-scale,1))}
 .dv-side-block .dv-section-label{font-size:clamp(9px,4.5cqh,16px)}
 .dv-side-block .dv-avatar.sm{width:calc(clamp(18px,9cqh,34px) * var(--dv-side-scale,1));height:calc(clamp(18px,9cqh,34px) * var(--dv-side-scale,1));font-size:calc(clamp(7px,3.5cqh,13px) * var(--dv-side-scale,1))}
+/* Dense tier. Added by fitSideBlocks ONLY when a list still clips after the scale backstop has
+   bottomed out — i.e. a very large roster. The avatar is decoration and sets a hard floor under the
+   row height (42px at 12px type, which is what made two-column flow silently spill into four
+   columns); the NAME is the information. Dropping it showed 10 of 10 players instead of 8. */
+.dv-side-block.is-dense .dv-avatar{display:none}
+.dv-side-block.is-dense .dv-list-item{padding:1px 0}
+.dv-side-block.is-dense .dv-list{gap:calc(2px * var(--dv-side-scale,1))}
 /* When the user has explicitly dragged the Band block, it gets a fixed height */
 #dvBandBlock.has-explicit-height{flex:0 0 var(--dv-band-h, auto);height:var(--dv-band-h)}
 #dvHostsBlock.has-explicit-height{flex:0 0 var(--dv-hosts-h, auto);height:var(--dv-hosts-h)}
@@ -5250,6 +5257,7 @@ function fitSideBlocks() {
   // already-shrunk state is sticky, and a block stays small after a resize back up.
   blocks.forEach(b => {
     b.style.removeProperty('--dv-side-scale');
+    b.classList.remove('is-dense');
     if (b.dataset.dvAutofit === '1') { b.style.flexGrow = ''; delete b.dataset.dvAutofit; }
   });
   blocks.forEach(b => {
@@ -5262,15 +5270,26 @@ function fitSideBlocks() {
     b.dataset.dvAutofit = '1';
   });
   // Backstop. A dragged block gets this too — the user can size one smaller than its contents.
-  blocks.forEach(b => {
+  const shrinkToFit = (b) => {
     const list = b.querySelector('.dv-list');
-    if (!list || !list.children.length) return;
+    if (!list || !list.children.length) return false;
     let s = 1, guard = 0;
     while (list.scrollHeight > list.clientHeight + 1 && s > DV_SIDE_MIN_SCALE && guard++ < 12) {
       s = Math.round((s - 0.05) * 100) / 100;
       b.style.setProperty('--dv-side-scale', String(s));
       void b.offsetHeight;   // force reflow so the next scrollHeight read is real
     }
+    return list.scrollHeight > list.clientHeight + 1;   // true = STILL clipping
+  };
+  blocks.forEach(b => {
+    if (!shrinkToFit(b)) return;
+    // Still clipping at the smallest type we allow: a roster this big cannot be shown with the
+    // avatars. Drop them — they are decoration and they set a hard floor under the row height —
+    // and try again from full size. Hiding a player is the one outcome that is never acceptable.
+    b.classList.add('is-dense');
+    b.style.removeProperty('--dv-side-scale');
+    void b.offsetHeight;
+    shrinkToFit(b);
   });
 }
 
@@ -5296,9 +5315,14 @@ function stagePlotBox(w, h) {
 // is already square-on or taller — so this is a no-op at 1920x1080, where the wrap is already
 // 602x286 (exactly 2.105). Pure.
 function stageHeightDeficit(w, h) {
-  if (!(w > 0 && h > 0)) return 0;
-  const want = w / DV_STAGE_ASPECT;
-  return Math.max(0, want - h);
+  // Width is what the wanted height is derived FROM, so without it there is nothing to say.
+  if (!(w > 0)) return 0;
+  // A plot with no height at all is not "fine, owed nothing" — it is maximally starved. Guarding
+  // `h > 0` here meant the one case that most needs correcting was the one case that could never
+  // self-correct: with 12 vocalists at 1280x720 the vocalist block takes 537 of 720px, the wrap
+  // collapses to 0px, the deficit read 0, and the whole stage AND side column disappeared.
+  const have = (h > 0) ? h : 0;
+  return Math.max(0, w / DV_STAGE_ASPECT - have);
 }
 // What the vocalist block should come down to so the plot can have that room back. Never below the
 // floor, never grown. Pure.

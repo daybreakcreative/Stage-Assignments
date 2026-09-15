@@ -72,9 +72,21 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(Math.round(d)!==108) throw new Error('expected 108, got '+d);
  });
 
- check('a degenerate wrap is owed nothing', ()=>{
+ // Reversed 2026-09-14 after the roster sweep. The original assertion here — that a zero-height
+ // wrap is "degenerate, owed nothing" — is what let the whole display vanish with 12 vocalists at
+ // 1280x720: the vocalist block took 537 of 720px, the wrap collapsed to 0px, the deficit read 0,
+ // so the cap never fired and nothing could recover. A plot with no height is owed EVERYTHING.
+ check('a plot crushed to nothing is owed its full height, not treated as fine', ()=>{
+   const d=ev('stageHeightDeficit(503,0)');
+   if(Math.round(d)!==239) throw new Error('503x0 should be owed the full 239, got '+d);
+   const n=ev('stageHeightDeficit(503,-1)');
+   if(Math.round(n)!==239) throw new Error('a negative height is not better than zero, got '+n);
+ });
+
+ check('with no width there is nothing to infer, so nothing is owed', ()=>{
    if(ev('stageHeightDeficit(0,0)')!==0) throw new Error('0x0');
-   if(ev('stageHeightDeficit(503,-1)')!==0) throw new Error('negative height');
+   if(ev('stageHeightDeficit(0,131)')!==0) throw new Error('no width');
+   if(ev('stageHeightDeficit(-5,-5)')!==0) throw new Error('negative width');
  });
 
  console.log('--- what the vocalist block gives up ---');

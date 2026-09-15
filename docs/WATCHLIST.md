@@ -508,3 +508,21 @@ Behaviors that must keep working. **The executable version of this list is `test
       1152×720, and a 1920→1152→1920 round trip returns to its original scale.
       Tradeoff accepted: hosts type 17px → 14px at 1920, in exchange for the band being complete
       and larger (17px clipped → 20px whole). → `dvsidefit`
+- [ ] **68.** The display must survive rosters that aren't the usual shape. Swept 10 rosters ×
+      2 sizes on 2026-09-14 (solo leader / small band / typical / full team / oversized / no band /
+      no vocalists / no hosts / shadows / no run sheet). Two real defects came out:
+      • **`stageHeightDeficit` treated a zero-height plot as "owed nothing".** With 12 vocalists at
+        1280×720 the vocalist block takes 537 of 720px and the stage wrap collapses to 0px — so the
+        deficit read 0, the cap never fired, and the **entire stage and side column disappeared**
+        (blocks 26px, wrap 0px). The NaN guard made the worst case the one case that could never
+        self-correct. **A plot with width but no height is owed EVERYTHING; bail only on width.**
+        `dvstagefit` now asserts `stageHeightDeficit(503,0) === 239`.
+      • **Dense tier for very long side lists.** When a list still clips after the scale backstop
+        bottoms out, `.dv-side-block.is-dense` drops the avatar and tightens the row. The avatar
+        sets a hard 42px floor under row height — which is also why two-column flow fails there
+        (`column-count:2` silently becomes FOUR columns and hides MORE: 6/10 vs 8/10). Dense shows
+        10/10. Like every other pass here, it must be CLEARED on reset or it is sticky.
+      Status: **1920×1080 all ten rosters clean, including 22 people.** 1280×720 nine of ten;
+      the 22-person roster degrades (7 overlaps, band 8/10 at 7px) but no longer vanishes.
+      ⚠ Accepted limit, not a bug to re-report: 22 people on a 1280×720 screen genuinely does not
+      fit — 22 cards in a 422×201 plot. → `dvstagefit`, `dvsidefit`
