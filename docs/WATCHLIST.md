@@ -526,3 +526,18 @@ Behaviors that must keep working. **The executable version of this list is `test
       the 22-person roster degrades (7 overlaps, band 8/10 at 7px) but no longer vanishes.
       ⚠ Accepted limit, not a bug to re-report: 22 people on a 1280×720 screen genuinely does not
       fit — 22 cards in a 422×201 plot. → `dvstagefit`, `dvsidefit`
+- [ ] **69.** The PRINTED stage (`fillSummaryStage`) must place people by MEASUREMENT, like the
+      display does. Two defects, found 2026-09-14:
+      • **`showSummary()` filled the overlay before showing it.** A `display:none` overlay has no
+        layout, so every rect read 0, the `measurable` guard correctly refused to trust it, and the
+        entire measure-and-re-resolve pass silently no-opped. **Show first, then fill.** Any future
+        pass that measures must not be called against a hidden container.
+      • The printed cards are fixed-size with `max-width:130px`, so long names WRAP and cards get
+        tall — the `charW: 8.5` estimate was never close, and a full team printed with 2 names on
+        top of each other. It now measures the laid-out cards, re-resolves with the observed
+        minimum width (so shortening can't claim to shrink a card that has bottomed out), and has a
+        compact tier (`#s_stagePeople.is-compact`, role line dropped) as the backstop.
+      Verified 0 overlaps / 0 outside the outline / 0 shortened names on typical, full-team,
+      22-person, solo and no-vocalist rosters. The compact tier has not needed to fire yet.
+      → covered by the browser check; jsdom cannot measure, so there is no unit test for the
+      placement itself — `dvtruepos`/`stagecompact` guard the shared resolver it depends on.

@@ -987,6 +987,11 @@ background-size:5% 10%}
 .s-stage-frame .dv-sp{background:#26200f;border:1.5px solid #26200f;color:#fff;min-width:52px;max-width:130px;padding:3px 7px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
 .s-stage-frame .dv-sp-role{color:#c9b58e;font-size:7px}
 .s-stage-frame .dv-sp-name{color:#fff;font-size:10px}
+/* Compact tier for the PRINTED stage, mirroring the display's. Added only when names still collide
+   after the measured re-resolve — the role line is roughly half a card's height, and a readable
+   full name on a smaller card beats a correct-looking one printed on top of its neighbour. */
+.s-stage-frame #s_stagePeople.is-compact .dv-sp{padding:1px 5px;min-width:0;max-width:150px}
+.s-stage-frame #s_stagePeople.is-compact .dv-sp-role{display:none}
 .s-stage-frame .dv-sp.is-wl{background:#6b4e0c;border-color:#6b4e0c}
 .s-stage-frame .dv-sp.is-wl .dv-sp-role{color:#ffdf9e}
 .s-stage-frame .stage-feature{color:#a8966a}
@@ -10160,7 +10165,15 @@ function renderPCOSettings() {
 }
 
 /* ===================== SUMMARY ===================== */
-function showSummary() { fillSummary(); document.getElementById('summaryOverlay').classList.add('show'); }
+// Show FIRST, then fill. fillSummaryStage measures the laid-out cards to place them without
+// overlap, and a hidden overlay has no layout — every rect reads 0, the measurement guard correctly
+// refuses to trust that, and the whole pass silently no-ops. Filling a visible overlay is
+// synchronous, so nothing flashes.
+function showSummary() {
+  const ov = document.getElementById('summaryOverlay');
+  if (ov) ov.classList.add('show');
+  fillSummary();
+}
 function hideSummary() { document.getElementById('summaryOverlay').classList.remove('show'); }
 function fillSummary() {
   const s = state.service;
@@ -10325,6 +10338,56 @@ function fillSummaryStage() {
     el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
     people.appendChild(el);
   });
+  // SECOND PASS — the same one the display does, and for the same reason. The resolve above sizes
+  // cards from a character-count estimate (charW 8.5), which has never matched a real card: the
+  // browser lays them out with its own font metrics, padding and clamps. On a full team that left
+  // two names overlapping on the PRINTED page. Measure what the cards actually are, hand the
+  // resolver the observed minimum width so it can't believe that shortening a name shrinks a card
+  // that has already bottomed out, and re-place. Runs once, never re-renders, so it cannot loop.
+  {
+    const fr = people.getBoundingClientRect();
+    const els = Array.from(people.querySelectorAll('.dv-sp'));
+    // Only trust measurements that look like real layout — jsdom hands back one stubbed rect for
+    // every element, and believing it would shorten every name (see watchlist 57).
+    const measurable = fr.width > 0 && fr.height > 0 && els.length > 0
+      && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < fr.width * 0.9; });
+    if (measurable) {
+      const uX = 800 / fr.width, uY = 380 / fr.height;
+      let minPx = Infinity;
+      els.forEach((el, k) => {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.width < minPx) minPx = r.width;
+        if (sMarks[k]) { sMarks[k].wUnits = r.width * uX; sMarks[k].hUnits = r.height * uY; }
+        if (sMarks[k]) sMarks[k].anchor = sMarks[k].anchor || 'center';
+      });
+      const pass2 = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4,
+        dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: minPx === Infinity ? 0 : minPx * uX });
+      const place = (layout) => {
+        els.forEach((el, k) => {
+          const L2 = layout[k]; if (!L2 || !sMarks[k]) return;
+          el.style.top = toPct({ x: sMarks[k].x, y: L2.labelY + L2.h / 2 }).top;
+          const nameEl = el.querySelector('.dv-sp-name');
+          if (nameEl && L2.name && nameEl.textContent !== L2.name) nameEl.textContent = L2.name;
+        });
+      };
+      place(pass2);
+      // Still colliding? The cards are as small as this stylesheet makes them, so shrink them:
+      // drop the role line (about half a card's height) and resolve once more. Same three-tier
+      // shape as the display — measure, re-resolve, then compact if the geometry is impossible.
+      people.classList.remove('is-compact');
+      if (stageLayoutOverlapCount(pass2) > 0) {
+        people.classList.add('is-compact');
+        let mp = Infinity;
+        els.forEach((el, k) => {
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.width < mp) mp = r.width;
+          if (sMarks[k]) { sMarks[k].wUnits = r.width * uX; sMarks[k].hUnits = r.height * uY; }
+        });
+        place(resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4,
+          dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: mp === Infinity ? 0 : mp * uX }));
+      }
+    }
+  }
 }
 function copySummaryText() {
   const s = state.service;
