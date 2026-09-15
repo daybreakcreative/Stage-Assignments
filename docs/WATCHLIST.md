@@ -541,3 +541,21 @@ Behaviors that must keep working. **The executable version of this list is `test
       22-person, solo and no-vocalist rosters. The compact tier has not needed to fire yet.
       → covered by the browser check; jsdom cannot measure, so there is no unit test for the
       placement itself — `dvtruepos`/`stagecompact` guard the shared resolver it depends on.
+- [ ] **70.** No top-bar control may ever be off-screen. The topbar is a grid whose last column holds
+      eight buttons measuring **819px**, giving the bar a natural width of **~1426px at any
+      viewport** — and `body` is `overflow-x:hidden`, so with the reflow starting at 1024px the band
+      from 1025 to ~1426 **clipped silently**: "✓ Items" lost its right edge and "▶ Display", the
+      primary action, sat **entirely off-screen and unreachable**. Verified broken at 1100, 1280 and
+      1366 (the most common laptop sizes); fine at 1440+ and ≤1024. Found 2026-09-15.
+      Three things hold this together — `mobile.js` asserts all three:
+      • The reflow breakpoint is **1439px**, chosen to sit above the bar's natural 1426px.
+        ⚠ **Add a ninth top-bar button and this breaks again silently — re-measure `.actions` and
+        raise the number.**
+      • **`flex-shrink:0` on the BASE `.topbar` rule.** `body` is `display:flex;flex-direction:column`,
+        so without it the bar is compressed rather than grown: its box ended at y=64 while the
+        wrapped button row sat at y=83, painting over the workspace. `height:auto` alone does not
+        save a flex child that is being shrunk.
+      • **Two bands, not one.** 1025–1439 wraps only the actions (2 rows, 86px). ≤1024 additionally
+        gives the service name its own row and hides the brand subtitle (3 rows, 122px). Applying
+        the full ≤1024 reflow across the whole band cost 122px of a 720px screen.
+      Display mode is unaffected (it is full-viewport and has its own header). → `mobile`

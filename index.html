@@ -48,7 +48,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(74,144,194,.04) 0%,transparent 50%),var(--bg);background-attachment:fixed;color:var(--text);font-family:var(--ff-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.005em;display:flex;flex-direction:column;height:100vh;height:100dvh}
-.topbar{height:54px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent),var(--bg);padding:0 20px;display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:16px;position:relative;z-index:20}
+.topbar{height:54px;flex-shrink:0;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent),var(--bg);padding:0 20px;display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:16px;position:relative;z-index:20}
 .brand{display:flex;align-items:baseline;gap:10px}
 .brand .mark{font-family:var(--ff-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
 .brand .mark em{color:var(--accent);font-style:normal;font-weight:800}
@@ -117,14 +117,30 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 /* --- Mobile / tablet: the top bar wraps into rows instead of overflowing.
    Works because the body is now a flex column, so the workspace below reflows to whatever
    height the bar takes. --- */
-@media (max-width:1024px){
-  .topbar{height:auto;min-height:54px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 14px}
+/* Topbar reflow. The bar is a grid whose last column holds eight buttons measuring 819px, giving
+   it a natural width of ~1426px at ANY viewport — and body is overflow-x:hidden, so between
+   1025px and 1426px it simply CLIPPED: '✓ Items' lost its right edge and '▶ Display', the
+   primary action, sat entirely off-screen and unreachable on a 1366x768 laptop (found
+   2026-09-15; verified broken at 1100, 1280, 1366 and fine at 1440+). The breakpoint is 1439
+   because that is where the single row stops fitting. ⚠ ADD A NINTH TOPBAR BUTTON AND THIS
+   BREAKS AGAIN SILENTLY — re-measure .actions and raise the number. */
+@media (max-width:1439px){
+  /* flex-shrink:0 is load-bearing here: body is a flex COLUMN, so without it the bar is
+     compressed instead of growing when its buttons wrap, and the wrapped row paints straight over
+     the workspace (the buttons sat at y=83 while the bar's own box ended at y=64). */
+  .topbar{height:auto;min-height:54px;flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 14px}
   .brand{flex:0 0 auto}
-  .brand .sub{display:none}                                   /* reclaim width */
   .venue-switch{flex:0 0 auto;margin-left:auto}               /* sits at the right of row 1 */
+  .actions{flex:1 1 100%;flex-wrap:wrap;gap:6px}              /* full-width, buttons wrap */
+}
+/* Below 1024 the service name ALSO needs its own row and the brand subtitle has to go. Above it
+   there is room to keep brand + date + service name inline, so the bar is two rows (~94px) rather
+   than three (~122px) — worth the extra rule on a 720px-tall laptop, where the topbar was eating
+   17% of the screen. */
+@media (max-width:1024px){
+  .brand .sub{display:none}                                   /* reclaim width */
   .service-meta{flex:1 1 100%;margin:0;justify-content:flex-start}  /* full-width row */
   .service-meta #serviceName{min-width:0 !important;flex:1 1 auto;width:auto}  /* beat the inline 240px */
-  .actions{flex:1 1 100%;flex-wrap:wrap;gap:6px}              /* full-width, buttons wrap */
 }
 @media (max-width:520px){
   .actions .btn{padding:6px 9px;font-size:11.5px}
