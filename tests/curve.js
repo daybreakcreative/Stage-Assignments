@@ -90,7 +90,12 @@ window.addEventListener('load',()=>setTimeout(()=>{
  // vocalists off-screen. The stored control point must be clamped to 0..800 / 0..380.
  check('edge control point is clamped to the viewBox (0..800 / 0..380)', ()=>{
    ev('state.config.customStagePoints=[{x:100,y:200},{x:700,y:200},{x:700,y:340},{x:100,y:340}]');
-   ev('openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, onSave:(p)=>{ window.__savedPts3=p; } })');
+   // The stub must do what the REAL caller does — assign the points back to the config — or the
+   // save→reload check below is meaningless: saveState() would persist the OLD points and the
+   // assertion fails for a reason that exists only in this harness. (That is exactly what made
+   // curve.js a standing "known false-fail" until 2026-09-14.) Real caller, index.html:
+   //   onSave: (pts, fronts) => { c.customStagePoints = pts; applyFrontEdges(c, fronts); saveState(); refresh(); }
+   ev('openPolygonStageEditor({ getInitial:()=>state.config.customStagePoints, onSave:(p)=>{ window.__savedPts3=p; state.config.customStagePoints=p; } })');
    const svg=doc.getElementById('saPolySvg');
    const edge0=svg.querySelector('[data-edge="0"]'); // midpoint of top edge ~ (400,200)
    pdown(edge0,400,200);

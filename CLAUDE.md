@@ -42,9 +42,13 @@ npm test          # runs tests/run-all.js → every *.js test against index.html
 false-fail. Any `FAIL` is a real regression — fix it before shipping.
 
 ### Known false-fails (NOT bugs)
-- **curve.js** → 1 issue ("control point not persisted to localStorage"). The test
-  harness stubs `onSave`, which never writes localStorage, so the reload assertion
-  can't see the value. The feature works in the browser.
+**None.** The list is empty on purpose — **any FAIL is a real regression.**
+curve.js was the last standing false-fail and was fixed 2026-09-14: its harness
+stubbed `onSave` without writing the points back to the config the way the real
+caller does (`c.customStagePoints = pts; saveState()`), so the save→reload assertion
+could never pass. A permanently-red line trains you to skim the summary, which is
+how a real failure hides — if one appears here again, fix the test or the code, don't
+add it to an allowlist.
 - General jsdom quirk: `document.getElementById(...)` can return `null` for an
   element that is still in the DOM *after* `appendChild`/`insertBefore` moves
   (jsdom id-cache bug). This is why `renderDisplayView` guards element access. It is

@@ -11,13 +11,15 @@
  * "=== RESULT: N ISSUE(S) ===". We parse that.
  *
  * KNOWN FALSE-FAILS (not real bugs — see CLAUDE.md):
- *   - curve.js  → 1 issue: the onSave stub never writes localStorage in the harness.
+ *   (none — curve.js was the last one. Its harness stub didn't write the points back to the
+ *    config the way the real caller does, so the save→reload check could never pass. Fixed
+ *    2026-09-14; the stub now mirrors index.html's onSave. A FAIL here is now always real.)
  */
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const KNOWN_FALSE_FAILS = { 'curve.js': 1 };
+const KNOWN_FALSE_FAILS = {};   // empty on purpose — see the note above; every FAIL is real
 
 const dir = __dirname;
 const files = fs.readdirSync(dir)
