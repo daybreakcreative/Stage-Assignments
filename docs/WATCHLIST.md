@@ -483,3 +483,28 @@ Behaviors that must keep working. **The executable version of this list is `test
       ⚠ **Still open, pre-existing:** the BAND block clips at 1280×720 — 6 players, only 4 fully
       visible (this change improved it from 2). The side column splits height evenly instead of by
       content need.
+- [ ] **67.** The side column (BAND / HANDHELDS) shares its height by CONTENT, and nothing clips.
+      It used to split dead even — 159/159 at 1280×720 — so a 6-player band showed 4 of 6 while
+      HANDHELDS sat half empty, with 338px of column against ~276px of need. Found 2026-09-14 to be
+      true at **1920×1080 too**: the band clipped at 4 of 6 there as well, unnoticed.
+      ⚠ **THE TRAP:** `.dv-side-block` is `container-type:size` and its rows are sized in `cqh` —
+      the block's OWN height. Give a block more room and its rows grow in step. Measured: BAND at
+      225px instead of 159px STILL showed 4 of 6. **Growing a block cannot, by itself, stop it
+      clipping.** So there are two mechanisms and the second is not optional:
+      • `sideBlockGrow(rows)` = rows + `DV_SIDE_GROW_BIAS`. The bias exists because raw
+        row-proportion starves the small block — a short block gets small type however little it
+        holds. Measured at 1920 (band/hosts type): bias 2 → 22/12px, bias 6 → 20/14px,
+        bias 10 → 19/15px. 6 is the balance point.
+      • `fitSideBlocks()`'s scale backstop: shrink `--dv-side-scale` in 0.05 steps, floor
+        `DV_SIDE_MIN_SCALE` (0.6), until the list stops clipping. **Every row dimension — font,
+        padding, gap, AND the avatar — must be multiplied by that variable**, or the avatar's own
+        floor holds the row height open and shrinking the text achieves nothing (that is exactly
+        what happened: scale 0.6, 7px text, still 4 of 6). `dvsidefit` asserts all five.
+      ⚠ Like the vocalist cap, it must **clear its own previous scale and grow before re-measuring**
+      (marker `data-dv-autofit`), or a block stays shrunken after a resize back up. It must never
+      restate a height the user dragged (`has-explicit-height`), though the backstop still applies
+      to those — a user can size a block smaller than its contents.
+      Verified 6/6 and 2/2 with nothing clipped at 1920×1080, 1600×900, 1366×768, 1280×720 and
+      1152×720, and a 1920→1152→1920 round trip returns to its original scale.
+      Tradeoff accepted: hosts type 17px → 14px at 1920, in exchange for the band being complete
+      and larger (17px clipped → 20px whole). → `dvsidefit`

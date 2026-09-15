@@ -1434,12 +1434,12 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    thing to do with spare height is make the names bigger, not leave a hole.
    A block the user has explicitly dragged keeps its height: .has-explicit-height is declared
    after this and re-pins flex. */
-.dv-side-block .dv-list{gap:clamp(2px,2cqh,10px);flex:1;justify-content:center}
-.dv-side-block .dv-list-item{font-size:clamp(12px,7cqh,26px);padding:clamp(2px,1.5cqh,8px) 0}
-.dv-side-block .dv-list-item .pos{font-size:clamp(8px,4cqh,15px)}
-.dv-side-block .dv-list-item .detail{font-size:clamp(9px,4.5cqh,17px)}
+.dv-side-block .dv-list{gap:calc(clamp(2px,2cqh,10px) * var(--dv-side-scale,1));flex:1;justify-content:center}
+.dv-side-block .dv-list-item{font-size:calc(clamp(12px,7cqh,26px) * var(--dv-side-scale,1));padding:calc(clamp(2px,1.5cqh,8px) * var(--dv-side-scale,1)) 0}
+.dv-side-block .dv-list-item .pos{font-size:calc(clamp(8px,4cqh,15px) * var(--dv-side-scale,1))}
+.dv-side-block .dv-list-item .detail{font-size:calc(clamp(9px,4.5cqh,17px) * var(--dv-side-scale,1))}
 .dv-side-block .dv-section-label{font-size:clamp(9px,4.5cqh,16px)}
-.dv-side-block .dv-avatar.sm{width:clamp(18px,9cqh,34px);height:clamp(18px,9cqh,34px);font-size:clamp(7px,3.5cqh,13px)}
+.dv-side-block .dv-avatar.sm{width:calc(clamp(18px,9cqh,34px) * var(--dv-side-scale,1));height:calc(clamp(18px,9cqh,34px) * var(--dv-side-scale,1));font-size:calc(clamp(7px,3.5cqh,13px) * var(--dv-side-scale,1))}
 /* When the user has explicitly dragged the Band block, it gets a fixed height */
 #dvBandBlock.has-explicit-height{flex:0 0 var(--dv-band-h, auto);height:var(--dv-band-h)}
 #dvHostsBlock.has-explicit-height{flex:0 0 var(--dv-hosts-h, auto);height:var(--dv-hosts-h)}
@@ -5222,6 +5222,58 @@ const DV_CARD_UNITS_GAP      = 4   * 800 / 602;   // ~5.3
 // Furthest a display card may sit from the person it names, in viewBox units (~24% of the 380-unit
 // stage depth). Far enough to clear a crowded row, near enough that the tie is followable by eye.
 const DV_LABEL_MAX_DY = 90;
+// ── Sharing out the side column (BAND / HANDHELDS) ────────────────────────────────────────────
+// These blocks used to split the column dead even, so a 6-player band clipped at 1280x720 (4 of 6
+// visible) while HANDHELDS sat beside it half empty — with 338px of column against ~276px of need.
+//
+// THE TRAP: .dv-side-block is container-type:size and its rows are sized in cqh, the block's OWN
+// height. Give a block more room and its rows grow in step. Measured: BAND at 225px instead of
+// 159px STILL showed 4 of 6. Growing a block cannot by itself stop it clipping, so there are two
+// mechanisms here and the second is not optional.
+// Softens the row-proportional split. Raw proportion (6 rows vs 2) starves the small block: it
+// dropped HANDHELDS to 9px text, because a block's rows are sized from the BLOCK's own height, so a
+// short block gets small type no matter how little it holds. Measured at 1920x1080 with 6 band +
+// 2 hosts — band/hosts type: bias 2 → 22/12px, bias 6 → 20/14px, bias 10 → 19/15px. 6 is the
+// balance point. (Before any of this the band showed 17px and CLIPPED at 4 of 6.)
+const DV_SIDE_GROW_BIAS = 6;
+const DV_SIDE_MIN_SCALE = 0.6;  // never shrink rows past this — it is a TV, read from the back
+// How much of the column a block asks for, from how many rows it holds.
+function sideBlockGrow(rows) {
+  const n = (typeof rows === 'number' && rows > 0) ? rows : 0;
+  return n + DV_SIDE_GROW_BIAS;
+}
+// Share the column out by content, then shrink only what still does not fit.
+function fitSideBlocks() {
+  const blocks = Array.from(document.querySelectorAll('.dv-side .dv-side-block'));
+  if (!blocks.length) return;
+  // Undo our own previous work first. Same lesson as the vocalist cap: adjusting from an
+  // already-shrunk state is sticky, and a block stays small after a resize back up.
+  blocks.forEach(b => {
+    b.style.removeProperty('--dv-side-scale');
+    if (b.dataset.dvAutofit === '1') { b.style.flexGrow = ''; delete b.dataset.dvAutofit; }
+  });
+  blocks.forEach(b => {
+    // A height the user set by dragging the divider is theirs; don't restate it as a grow factor.
+    if (b.classList.contains('has-explicit-height')) return;
+    const list = b.querySelector('.dv-list');
+    const rows = list ? list.children.length : 0;
+    if (!rows) return;
+    b.style.flexGrow = String(sideBlockGrow(rows));
+    b.dataset.dvAutofit = '1';
+  });
+  // Backstop. A dragged block gets this too — the user can size one smaller than its contents.
+  blocks.forEach(b => {
+    const list = b.querySelector('.dv-list');
+    if (!list || !list.children.length) return;
+    let s = 1, guard = 0;
+    while (list.scrollHeight > list.clientHeight + 1 && s > DV_SIDE_MIN_SCALE && guard++ < 12) {
+      s = Math.round((s - 0.05) * 100) / 100;
+      b.style.setProperty('--dv-side-scale', String(s));
+      void b.offsetHeight;   // force reflow so the next scrollHeight read is real
+    }
+  });
+}
+
 // ── Keeping the stage plot honest about its own shape ─────────────────────────────────────────
 // The plot is an SVG with viewBox 0 0 800 380 and preserveAspectRatio="xMidYMid meet", so the SVG
 // letterboxes ITSELF inside whatever box it is given. The people layer over it is plain HTML
@@ -10787,6 +10839,10 @@ function renderDisplayView() {
       dvShadowsList.appendChild(li);
     });
   }
+
+  // Share the side column out by what each block actually holds, now that BAND and HANDHELDS are
+  // populated, then shrink only what still doesn't fit. Both blocks exist by this point.
+  fitSideBlocks();
 
   // Service order in display view
   const rsList = document.getElementById('dvRunSheetList');
