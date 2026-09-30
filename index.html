@@ -5314,6 +5314,90 @@ function fitSideBlocks() {
   });
 }
 
+// ── ONE placement pipeline for every stage plot ───────────────────────────────────────────────
+// The display, the edit view, Edit Layout and the printed page all draw the SAME stage. They used
+// to each do it their own way, and the three screenshots Dillon sent on 2026-09-30 were three
+// different pictures of one service: card-to-stage ratio 17.8% / 9.8% / 3.2%, full names in one and
+// hard-coded first names in the others, de-overlap in two of them and none at all in the edit view.
+// Copying a reference keeps looking wrong in ways nobody can name, so this is the ONLY placement
+// code. Callers create their own cards (classes, drag wiring, empty placeholders differ for real
+// reasons) and then hand them here, in the SAME ORDER as `marks`.
+//
+//   layer  — the absolutely-positioned people layer
+//   marks  — [{x, y, name, role, …}] in 0..800 × 0..380
+//   opts   — { wrapSel, cardSel, nameSel, metrics:{charW,lineH,gap}, maxDy, compact }
+function placeStageCards(layer, marks, opts) {
+  if (!layer || !Array.isArray(marks) || !marks.length) return;
+  opts = opts || {};
+  const cardSel = opts.cardSel || '.dv-sp';
+  const nameSel = opts.nameSel || '.dv-sp-name';
+  const m = opts.metrics || stageLabelMetrics();
+  const maxDy = opts.maxDy > 0 ? opts.maxDy : DV_LABEL_MAX_DY;
+  const toPct = (pt) => ({ left: (pt.x / 800) * 100 + '%', top: (pt.y / 380) * 100 + '%' });
+  const svgWrap = opts.wrapSel ? layer.closest(opts.wrapSel) : null;
+
+  // Every card grows INWARD near the stage edges, or a long name spills off the plot.
+  marks.forEach(mk => { mk.anchor = stageLabelAnchor(mk.x); });
+  const els = Array.from(layer.querySelectorAll(cardSel));
+  els.forEach((el, k) => { if (marks[k]) el.dataset.anchor = marks[k].anchor; });
+
+  const baseOpts = () => ({ anchor: 'center', charW: m.charW, lineH: m.lineH, gap: m.gap, dotR: 0, maxDy });
+  const place = (layout) => {
+    els.forEach((el, k) => {
+      const L = layout[k]; if (!L || !marks[k]) return;
+      const css = toPct({ x: marks[k].x, y: L.labelY + L.h / 2 });
+      el.style.left = css.left; el.style.top = css.top;
+      const nameEl = el.querySelector(nameSel);
+      if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
+    });
+  };
+
+  if (svgWrap) fitStagePeopleLayer(svgWrap, layer);
+  place(resolveStageLabelLayout(marks, baseOpts()));
+
+  // SECOND PASS — measure what the browser actually laid out and re-resolve. Estimating a card's
+  // size from its character count caused three separate overlap bugs; font metrics, padding and CSS
+  // clamps never match a formula.
+  if (svgWrap) fitStagePeopleLayer(svgWrap, layer);
+  const lb = layer.getBoundingClientRect();
+  // Only trust measurements that look like REAL layout. jsdom stubs one rect for every element, and
+  // believing it makes the resolver think each card fills the whole stage and shorten every name.
+  const measurable = lb.width > 0 && lb.height > 0 && els.length > 0
+    && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < lb.width * 0.9; });
+  if (!measurable) return;
+
+  const applyPass = () => {
+    const lb2 = layer.getBoundingClientRect();
+    if (!(lb2.width > 0 && lb2.height > 0)) return 0;
+    const uX = 800 / lb2.width, uY = 380 / lb2.height;
+    // Restore the FULL name before measuring: measuring a card that reads "Simon" while the pass is
+    // about to render "Simon Mugarami" solves the layout for a string that never appears.
+    els.forEach((el, k) => {
+      const nameEl = el.querySelector(nameSel);
+      const full = marks[k] && marks[k].name;
+      if (nameEl && full && nameEl.textContent !== full) nameEl.textContent = full;
+    });
+    let minPx = Infinity;
+    els.forEach((el, k) => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.width < minPx) minPx = r.width;
+      if (marks[k]) { marks[k].wUnits = r.width * uX; marks[k].hUnits = r.height * uY; }
+    });
+    const out = resolveStageLabelLayout(marks,
+      Object.assign(baseOpts(), { minW: minPx === Infinity ? 0 : minPx * uX }));
+    place(out);
+    return stageLayoutOverlapCount(out);
+  };
+
+  // Full size first, so a roomy stage keeps its role lines. If overlaps survive, the cards have hit
+  // their CSS floors and no arrangement works at this size — go compact and resolve once more.
+  layer.classList.remove('is-compact');
+  if (applyPass() > 0 && opts.compact !== false) {
+    layer.classList.add('is-compact');
+    applyPass();
+  }
+}
+
 // ── Keeping the stage plot honest about its own shape ─────────────────────────────────────────
 // The plot is an SVG with viewBox 0 0 800 380 and preserveAspectRatio="xMidYMid meet", so the SVG
 // letterboxes ITSELF inside whatever box it is given. The people layer over it is plain HTML
@@ -10733,76 +10817,16 @@ function renderDisplayView() {
     }
     if (svgWrap) fitStagePeopleLayer(svgWrap, wrap);
   }
-  dvMarks.forEach(m => { m.anchor = stageLabelAnchor(m.x); });
-  const dvM = stageLabelMetrics();
-  const dvLayout2 = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH, gap: dvM.gap, dotR: 0, maxDy: DV_LABEL_MAX_DY });
-  dvMarks.forEach((m, k) => {
-    const L = dvLayout2[k];
+  dvMarks.forEach(m => {
     const el = document.createElement('div');
     el.className = 'dv-sp' + (m.kind === 'band' ? ' occupied' : '');
-    // labelY is the resolved box TOP; the card is centered, so its center = labelY + h/2.
-    const centerY = L.labelY + L.h / 2;
-    const css = toPct({ x: m.x, y: centerY });
-    el.style.left = css.left; el.style.top = css.top;
-    el.dataset.anchor = m.anchor || stageLabelAnchor(m.x);
-    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
+    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(m.name)}</div>`;
     wrap.appendChild(el);
   });
-  // SECOND PASS. The browser has now laid the cards out, so MEASURE what they actually are and
-  // re-resolve. Estimating a card's size from its character count caused three separate overlap
-  // bugs this week — font metrics, padding and CSS clamps never match a formula. This runs once
-  // per render, only repositions cards that already exist, and never re-renders, so it can't loop.
-  {
-    const svgWrap2 = wrap.closest('.dv-stage-svg-wrap');
-    if (svgWrap2) fitStagePeopleLayer(svgWrap2, wrap);
-    const lb = wrap.getBoundingClientRect();
-    const els = Array.from(wrap.querySelectorAll('.dv-sp'));
-    // Only trust the measurements when they look like REAL layout. A card is always a fraction of
-    // the stage; if every card reports the stage's own size, this environment isn't laying out
-    // (jsdom stubs one rect for every element) and believing it would wreck the layout — it made
-    // the resolver think each card filled the whole stage and shorten every name.
-    const measurable = lb.width > 0 && lb.height > 0 && els.length > 0
-      && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < lb.width * 0.9; });
-    if (measurable) {
-      // Measure, resolve, apply -- and report how many overlaps SURVIVED. The narrowest card on
-      // screen is the real min-width floor; handing it to the resolver stops it believing that
-      // shortening a name shrinks a card that has already bottomed out.
-      const applyPass = () => {
-        const lb2 = wrap.getBoundingClientRect();
-        if (!(lb2.width > 0 && lb2.height > 0)) return 0;
-        const uX = 800 / lb2.width, uY = 380 / lb2.height;
-        // Restore the FULL name on every card before measuring. An earlier pass may have shortened
-        // one, and measuring a card that reads "Simon" while the pass is about to render "Simon
-        // Mugarami" solves the layout for a string that never appears -- that mismatch is exactly
-        // why names still overlapped after the cards were made compact.
-        els.forEach((el, k) => {
-          const nameEl = el.querySelector('.dv-sp-name');
-          const full = dvMarks[k] && dvMarks[k].name;
-          if (nameEl && full && nameEl.textContent !== full) nameEl.textContent = full;
-        });
-        let minPx = Infinity;
-        els.forEach((el, k) => {
-          const r = el.getBoundingClientRect();
-          if (r.width > 0 && r.width < minPx) minPx = r.width;
-          if (dvMarks[k]) { dvMarks[k].wUnits = r.width * uX; dvMarks[k].hUnits = r.height * uY; }
-        });
-        const out = resolveStageLabelLayout(dvMarks, { anchor: 'center', charW: dvM.charW, lineH: dvM.lineH,
-          gap: dvM.gap, dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: minPx === Infinity ? 0 : minPx * uX });
-        els.forEach((el, k) => {
-          const L = out[k]; if (!L) return;
-          el.style.top = toPct({ x: dvMarks[k].x, y: L.labelY + L.h / 2 }).top;
-          const nameEl = el.querySelector('.dv-sp-name');
-          if (nameEl && L.name && nameEl.textContent !== L.name) nameEl.textContent = L.name;
-        });
-        return stageLayoutOverlapCount(out);
-      };
-      // Full-size first, so a roomy stage keeps the role lines. If overlaps survive, the cards have
-      // hit their CSS floors and no arrangement works at this size -- go compact and resolve again.
-      // At most two passes, and neither re-renders, so this cannot loop.
-      wrap.classList.remove('is-compact');
-      if (applyPass() > 0) { wrap.classList.add('is-compact'); applyPass(); }
-    }
-  }
+  placeStageCards(wrap, dvMarks, {
+    wrapSel: '.dv-stage-svg-wrap', cardSel: '.dv-sp', nameSel: '.dv-sp-name',
+    metrics: stageLabelMetrics(), maxDy: DV_LABEL_MAX_DY, compact: true
+  });
   // The stage settles asynchronously and resizes with the panels, so redo this on a real width
   // change. Guarded on a changed width; it only ever replaces cards INSIDE the stage, never
   // resizes the stage itself, so it cannot feed back into its own observer.
