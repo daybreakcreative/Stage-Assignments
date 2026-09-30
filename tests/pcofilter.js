@@ -33,18 +33,37 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(vals.sort().join(',')!==expected.sort().join(',')) throw new Error('got: '+vals.join(','));
  });
 
- check('favorites [st1,st3] narrows to just those', ()=>{
-   ev("state.pcoConfig.favoriteServiceTypeIds=['st1','st3']; populateServiceTypeSelect();");
+ // Changed 2026-09-30. Favorites used to REPLACE the list, so a one-off service type was unreachable
+ // from the bar without a trip into Settings. Now favorites sit first, in their own group, and
+ // everything else is still there below them.
+ check('favorites [st1,st3] come FIRST, and nothing is hidden', ()=>{
+   ev("state.pcoConfig.favoriteServiceTypeIds=['st1','st3']; state.pcoConfig.selectedServiceTypeId=''; populateServiceTypeSelect();");
    const vals=optionValues(doc.getElementById('pcoServiceTypeSelect'));
-   const expected=['st1','st3'];
-   if(vals.sort().join(',')!==expected.sort().join(',')) throw new Error('got: '+vals.join(','));
+   if(vals.slice().sort().join(',')!=='st1,st2,st3,st4') throw new Error('something is hidden: '+vals.join(','));
+   const firstTwo=vals.slice(0,2).sort().join(',');
+   if(firstTwo!=='st1,st3') throw new Error('favorites are not first: order is '+vals.join(','));
  });
 
- check('currently-selected id is always kept even if not a favorite', ()=>{
+ check('the favorites group is labelled so it reads as favorites, not a folder', ()=>{
+   ev("state.pcoConfig.favoriteServiceTypeIds=['st1','st3']; populateServiceTypeSelect();");
+   const groups=Array.from(doc.querySelectorAll('#pcoServiceTypeSelect optgroup')).map(g=>g.label);
+   if(!groups.length || !/favou?rite/i.test(groups[0])) throw new Error('first optgroup is "'+(groups[0]||'')+'", expected a Favorites group');
+   const favGroup=doc.querySelector('#pcoServiceTypeSelect optgroup');
+   const inFav=Array.from(favGroup.querySelectorAll('option')).map(o=>o.value).sort().join(',');
+   if(inFav!=='st1,st3') throw new Error('favorites group holds '+inFav);
+ });
+
+ check('a favorite is not listed twice (once on top, once in its folder)', ()=>{
+   ev("state.pcoConfig.favoriteServiceTypeIds=['st1','st3']; populateServiceTypeSelect();");
+   const vals=optionValues(doc.getElementById('pcoServiceTypeSelect'));
+   const dupes=vals.filter((v,i)=>vals.indexOf(v)!==i);
+   if(dupes.length) throw new Error('duplicated: '+dupes.join(','));
+ });
+
+ check('currently-selected id is kept and stays selected', ()=>{
    ev("state.pcoConfig.favoriteServiceTypeIds=['st1','st3']; state.pcoConfig.selectedServiceTypeId='st2'; populateServiceTypeSelect();");
-   const vals=optionValues(doc.getElementById('pcoServiceTypeSelect')).sort();
-   const expected=['st1','st2','st3'].sort();
-   if(vals.join(',')!==expected.join(',')) throw new Error('got: '+vals.join(','));
+   const vals=optionValues(doc.getElementById('pcoServiceTypeSelect'));
+   if(vals.indexOf('st2')===-1) throw new Error('selected id missing: '+vals.join(','));
    if(doc.getElementById('pcoServiceTypeSelect').value!=='st2') throw new Error('selection not kept, value='+doc.getElementById('pcoServiceTypeSelect').value);
  });
 

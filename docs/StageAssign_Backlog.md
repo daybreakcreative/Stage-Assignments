@@ -39,6 +39,8 @@ Tags: **[BIG]** = needs a decision · **[FIX]** = concrete bug · **[FEATURE]** 
   Settings → Planning Center) trims the pull dropdown to the service types a room actually
   uses; a live filter box on the PCO-bar dropdown narrows further; empty favorites = show
   everything; the currently-selected service type is always kept.
+  **2026-09-30:** favorites now sit FIRST in a "★ Favorites" group with everything else still
+  below — they used to replace the list, which made one-off service types unreachable from the bar.
 - ~~**[FEATURE] Cog on each person's ✓ Items card**~~ ✅ SHIPPED 2026-07-20 → `scvcog`. A ⚙ on each
   ✓ Items card opens that person's setup editor inline (a section per role); edits their bucket
   only. Church defaults stay in the Advanced Settings editor.

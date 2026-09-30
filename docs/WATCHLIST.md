@@ -136,10 +136,13 @@ Behaviors that must keep working. **The executable version of this list is `test
     On any failure it falls back to the old download + prefilled-GitHub-issue flow (also sanitized).
     KHARIS `POST /bug` uploads each attachment + config to Basecamp and posts one campfire line.
     (`sendBugReport`/`openBugReportModal`; `tests/bugreport.js`.)
-43. **PCO service-type dropdown honors `pcoConfig.favoriteServiceTypeIds`** (checkbox picker
-    in Advanced Settings → Planning Center, with search) + a live PCO-bar filter box; empty
-    favorites = show all; selected id always kept. (`populateServiceTypeSelect`;
-    `tests/pcofilter.js`.)
+43. **PCO service-type dropdown puts `pcoConfig.favoriteServiceTypeIds` FIRST, and hides
+    nothing.** Favorites (checkbox picker in Advanced Settings → Planning Center, with search)
+    sit at the top in a "★ Favorites" optgroup; every other service type stays below in its
+    PCO folder; the live PCO-bar filter box narrows both; a favorite is listed once, never also
+    in its folder; selected id always kept. Changed 2026-09-30 — favorites used to REPLACE the
+    list, so a one-off service type was unreachable from the bar without a trip into Settings.
+    (`populateServiceTypeSelect`; `tests/pcofilter.js`.)
 44. **Editable setup catalog.** `setupCatalogFor` reads the `state.config.setupCatalog`
     overlay first, else the built-in `SETUP_TEMPLATES` (coerced on load by
     `coerceSetupCatalogOverlay`). The "Edit questions" disclosure — in **both** Advanced

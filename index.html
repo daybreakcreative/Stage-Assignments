@@ -9143,8 +9143,12 @@ function populateServiceTypeSelect() {
   const selId = state.pcoConfig.selectedServiceTypeId || '';
   const q = (pcoStFilter || '').trim().toLowerCase();
   let list = pcoServiceTypes.slice();
-  if (favSet.size) list = list.filter(s => favSet.has(s.id) || s.id === selId);
+  // Favorites used to REPLACE the list, so a one-off service type was unreachable from the bar
+  // without a trip into Settings (Dillon, 2026-09-30). They now sit FIRST in their own group and
+  // everything else stays below in its usual folders. The search box narrows both.
   if (q) list = list.filter(s => (s.name || '').toLowerCase().includes(q) || s.id === selId);
+  const favs = favSet.size ? list.filter(s => favSet.has(s.id)).sort((a, b) => a.name.localeCompare(b.name)) : [];
+  if (favs.length) list = list.filter(s => !favSet.has(s.id));   // a favorite is listed once, on top
   // Group by folder name; alphabetize folders and items within
   const byFolder = {};
   list.forEach(s => {
@@ -9159,6 +9163,11 @@ function populateServiceTypeSelect() {
     return a.localeCompare(b);
   });
   let html = '<option value="">— Service Type —</option>';
+  if (favs.length) {
+    html += '<optgroup label="★ Favorites">';
+    favs.forEach(s => { html += `<option value="${esc(s.id)}">${esc(s.name)}</option>`; });
+    html += '</optgroup>';
+  }
   folderNames.forEach(folderName => {
     const items = byFolder[folderName].sort((a, b) => a.name.localeCompare(b.name));
     if (folderNames.length === 1 && folderName === '(Unfiled)') {
