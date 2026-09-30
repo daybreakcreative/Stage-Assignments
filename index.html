@@ -2784,21 +2784,44 @@ function editSetupItemText(stableKey, typeKey, oldText, rawNewText) {
 // existing `replaces` override with empty text: resolveSetupItems already skips any text listed
 // in a customItems `replaces`, and already refuses to render a customItem with empty text — so a
 // removal needs no new persisted field and no migration. Returns true if something changed.
+// Every bucket THIS WEEK's roster gives one person (a Keys player who is also the MD holds
+// band|keys AND md|md). The ✓ Items card merges them; a remove or restore has to reach all of
+// them, or the line stays on the card and reappears in the other editor section — "save someone's
+// preferences and things hold over" (Dillon, 2026-09-30, reproduced with his export). Scoped to
+// the SAME PERSON: a remove must never leak to somebody else who has the same line.
+function personBucketKeys(stableKey) {
+  const name = (stableKey || '').split('|')[0];
+  if (!name) return [stableKey];
+  const keys = new Set([stableKey]);
+  try {
+    enumerateSetupRoles().forEach(r => { if (r && r.stableKey && r.stableKey.split('|')[0] === name) keys.add(r.stableKey); });
+  } catch (e) { /* enumeration needs state; fall back to the one bucket */ }
+  return Array.from(keys);
+}
 function removeSetupLine(stableKey, typeKey, text) {
-  const bucket = state.setupItems[stableKey];
   const t = (text || '').trim();
-  if (!bucket || !t) return false;
-  const tKey = typeKey || ((stableKey || '').split('|')[2] || null);
-  bucket.customItems = bucket.customItems || [];
-  const own = bucket.customItems.findIndex(ci => ci && ci.text === t);
-  if (own !== -1) {
-    bucket.customItems.splice(own, 1);              // a real custom item (or a prior reword)
-  } else {
-    if (bucket.customItems.some(ci => ci && ci.replaces === t && !ci.text)) return false; // already gone
-    bucket.customItems.push({ id: newSetupItem('').id, text: '', replaces: t });
-  }
-  rebuildPersonItems(stableKey, tKey);
-  return true;
+  if (!state.setupItems[stableKey] || !t) return false;
+  let changed = false;
+  personBucketKeys(stableKey).forEach(k => {
+    const bucket = state.setupItems[k]; if (!bucket) return;
+    const tKey = (k === stableKey && typeKey) ? typeKey : ((k || '').split('|')[2] || null);
+    bucket.customItems = bucket.customItems || [];
+    const own = bucket.customItems.findIndex(ci => ci && ci.text === t);
+    if (own !== -1) {
+      bucket.customItems.splice(own, 1);              // a real custom item (or a prior reword)
+      changed = true;
+    } else {
+      // Only suppress where the line actually appears, so we don't litter untouched buckets.
+      const present = (bucket.items || []).some(it => it && it.text === t)
+        || resolveSetupItems(tKey, bucket.selections, bucket.customItems).some(it => it.text === t);
+      if (!present) return;
+      if (bucket.customItems.some(ci => ci && ci.replaces === t && !ci.text)) return; // already gone here
+      bucket.customItems.push({ id: newSetupItem('').id, text: '', replaces: t });
+      changed = true;
+    }
+    rebuildPersonItems(k, tKey);
+  });
+  return changed;
 }
 // True when this person has explicitly removed `text`. Auto-adders must honour this or they
 // resurrect the line on the next enumeration.
@@ -2808,14 +2831,19 @@ function setupLineRemoved(bucket, text) {
 }
 // Undo a suppression made by removeSetupLine.
 function restoreSetupLine(stableKey, typeKey, text) {
-  const bucket = state.setupItems[stableKey];
   const t = (text || '').trim();
-  if (!bucket || !t || !Array.isArray(bucket.customItems)) return false;
-  const before = bucket.customItems.length;
-  bucket.customItems = bucket.customItems.filter(ci => !(ci && ci.replaces === t && !ci.text));
-  if (bucket.customItems.length === before) return false;
-  rebuildPersonItems(stableKey, typeKey || ((stableKey || '').split('|')[2] || null));
-  return true;
+  if (!state.setupItems[stableKey] || !t) return false;
+  let changed = false;
+  personBucketKeys(stableKey).forEach(k => {
+    const bucket = state.setupItems[k];
+    if (!bucket || !Array.isArray(bucket.customItems)) return;
+    const before = bucket.customItems.length;
+    bucket.customItems = bucket.customItems.filter(ci => !(ci && ci.replaces === t && !ci.text));
+    if (bucket.customItems.length === before) return;
+    changed = true;
+    rebuildPersonItems(k, (k === stableKey && typeKey) ? typeKey : ((k || '').split('|')[2] || null));
+  });
+  return changed;
 }
 // The catalog lines this person has explicitly removed (for the editor's restore list).
 function removedSetupLines(stableKey) {
@@ -2848,6 +2876,8 @@ function detectPresetKey(inst) {
 }
 
 let state = loadState();
+
+repairSetupBuckets();   // one-time data repair for older saves; no-op on clean data (see the function)
 ensureVocalCapacity();
 let pcoTokens = loadPCOTokens();
 let pcoServiceTypes = [];
@@ -11338,6 +11368,24 @@ function setupTagKey(name, tag) {
 // ---- Stable per-person setup keys + seed-once / rebuild / legacy migration ----
 // Stable format: `${normFullName(name)}|${role}|${typeKey||'none'}`
 // role is one of band|vocalist|shadow; typeKey is a SETUP_TEMPLATES key (or 'none').
+// Some older build wrote the auto-added vocal mic (and boom stand) into customItems as well as
+// items. The ✓ Items card dedupes by text so it hid the problem; the per-person editor renders a
+// bucket's items AND its customItems and showed the line twice. Found in 7 buckets of Dillon's
+// 2026-09-30 export. Runs once per load; a no-op on clean data.
+function repairSetupBuckets() {
+  const all = state.setupItems || {};
+  let fixed = 0;
+  Object.keys(all).forEach(k => {
+    const b = all[k]; if (!b || !Array.isArray(b.customItems) || !Array.isArray(b.items)) return;
+    const autoTexts = new Set(b.items.filter(it => it && it.autoAdded && it.text).map(it => it.text));
+    if (!autoTexts.size) return;
+    const before = b.customItems.length;
+    // A customItem with the SAME text as an auto-added item and no `replaces` is the duplicate.
+    b.customItems = b.customItems.filter(ci => !(ci && ci.text && !ci.replaces && autoTexts.has(ci.text)));
+    if (b.customItems.length !== before) fixed++;
+  });
+  return fixed;
+}
 function stableSetupKey(name, role, typeKey) {
   return `${normFullName(name)}|${role}|${typeKey || 'none'}`;
 }
@@ -12300,6 +12348,10 @@ function collectChecklistItems() {
     const nm = v && (v.name || '').trim();
     if (!nm) return;
     const tk = detectPresetKey(inst);
+    // No preset type → no bucket. Minting name|band|none here is how the legacy |none debris in
+    // Dillon's export was born; a linked player with an unrecognised instrument has nothing to
+    // set up from the catalog anyway.
+    if (!tk) return;
     const key = stableSetupKey(nm, 'band', tk);
     seedPersonSetup(key, tk);
     reconstructSetupBucket(key, tk);

@@ -586,3 +586,27 @@ Behaviors that must keep working. **The executable version of this list is `test
       only because the font clamp tops out at 30px, the same ceiling the display has).
       Accepted difference: the edit view shows empty slots (an unassigned "EG 1"); the display and
       print hide them. → `stageparity`
+- [ ] **72.** A setup-line remove or restore reaches the person's WHOLE checklist, not one bucket.
+      Diagnosed 2026-09-30 from Dillon's real export (kept out of the repo): one person can hold
+      several this-week buckets (a Keys player who is also the MD has `band|keys` AND `md|md`);
+      the ✓ Items card merges them, but `removeSetupLine` recorded the suppression on the ONE bucket
+      the editor was drawing — so the line stayed on the card and reappeared in the other editor
+      section. "Save someone's preferences and things hold over." Reproduced with his data
+      (remove → card still 7 chips), fixed (→ 6).
+      • `personBucketKeys(stableKey)` = every bucket `enumerateSetupRoles()` gives that NAME this
+        week. `removeSetupLine`/`restoreSetupLine` apply to all of them — but only where the line
+        actually appears, so untouched buckets aren't littered, and NEVER to a different person
+        who happens to have the same line.
+      • `repairSetupBuckets()` runs once right after `state = loadState()`: an older build stored
+        the auto-added vocal mic/boom in `customItems` as well as `items` (7 buckets in his data);
+        the card dedupes by text so it hid, the per-person editor showed it twice. No-op on clean
+        data. ⚠ It must sit at TOP LEVEL after the load — my first hook landed inside
+        `addVocalist()` because the anchor text appeared there first. Verified on his export:
+        7 → 0 on load.
+      • The card collector no longer mints `name|band|none` for a linked singer-player with an
+        unrecognised instrument (no preset type → no bucket). That path is how the 7 inert
+        `|band|none` buckets in his data were born.
+      Still open (decisions with Dillon): merge instrument+MD into ONE card and ONE editor (the two
+      stacked sections still show a shared line twice, and re-render only the clicked section);
+      whether a rig CHOICE prints its own line; delete or keep the legacy `|none` buckets.
+      → `setupwhole`
