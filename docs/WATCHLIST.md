@@ -559,3 +559,27 @@ Behaviors that must keep working. **The executable version of this list is `test
         gives the service name its own row and hides the brand subtitle (3 rows, 122px). Applying
         the full ≤1024 reflow across the whole band cost 122px of a 720px screen.
       Display mode is unaffected (it is full-viewport and has its own header). → `mobile`
+- [ ] **71.** The display, the edit view, Edit Layout and the printed page draw the SAME stage and
+      must LOOK the same. Reported 2026-09-30 with three photos of one service that were three
+      different pictures. Measured then:
+      • card-to-stage width ratio **17.8%** (display) / **9.8%** (edit) / **3.2%** (Edit Layout —
+        cards were a FIXED 60×34px on an 1850px stage);
+      • names from `formatDisplayName` in display and print but a **hard-coded `firstName()`** in
+        both edit renderers ("Marcus" on screen, "Marcus Donalson" on the TV);
+      • de-overlap in display and print and **none at all** in the edit view — `renderStage` never
+        called the resolver.
+      They are now ONE function, `placeStageCards(layer, marks, opts)`: anchor → letterbox → resolve
+      → apply → re-measure → re-resolve against the observed min width → compact retry. Callers
+      build their own cards, because card class, drag wiring and empty placeholders are the only
+      real differences. `stageparity` pins it:
+      ⚠ **`resolveStageLabelLayout` may appear exactly 3× in the source** — its definition plus the
+      two calls inside `placeStageCards`. A 4th means someone has started a private copy again.
+      ⚠ `.sp` and `.dv-sp` must share the SAME `cqw` coefficients, both wraps must be
+      `container-type` query containers, neither card may carry a pixel `max-width` (it ellipsised
+      names instead of letting the resolver shorten them), and both need the `[data-anchor]`
+      transforms or edge people appear in a different spot than on the TV.
+      After: edit and display agree within 1–2 viewBox units at 1920×1080, ratio 17.6% vs 17.9%,
+      full names in both, 0 overlaps in both. Edit Layout 3.2% → 12.4% (it caps below the others
+      only because the font clamp tops out at 30px, the same ceiling the display has).
+      Accepted difference: the edit view shows empty slots (an unassigned "EG 1"); the display and
+      print hide them. → `stageparity`

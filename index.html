@@ -344,7 +344,7 @@ body.stage-editing .stage-edit-toolbar{margin-bottom:12px}
 .sem-people{position:absolute;top:0;left:0;width:100%;height:100%}
 .stage-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,161,71,.35),transparent)}
 .stage-tags{display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:8.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.18em;padding:0 4px}
-.stage-svg-wrap{position:relative;flex:1;min-height:0;margin:4px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage-svg-wrap{position:relative;flex:1;min-height:0;margin:4px 0;display:flex;align-items:center;justify-content:center;overflow:hidden;container-type:inline-size;container-name:sastage}
 /* SVG and people layer occupy the same letterboxed rectangle inside the wrap */
 .stage-svg-wrap > svg.stage-svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;display:block}
 @supports not (aspect-ratio: 1) {
@@ -360,21 +360,40 @@ body.stage-editing .stage-edit-toolbar{margin-bottom:12px}
 background-size:5% 10%}
 .stage-grid-overlay.show{opacity:1}
 .stage-svg{width:100%;height:100%;display:block}
-.sp{position:absolute;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 7px;min-width:60px;max-width:92px;cursor:grab;transition:all .2s;z-index:2;text-align:center}
+/* The edit stage draws the SAME plot as the display, so a card must be the same FRACTION of it.
+   These were fixed pixels (60x34 with an 11px name), which made the card 9.8% of the stage in the
+   edit view and 3.2% in Edit Layout against 17.8% on the display — one service, three pictures
+   (Dillon, 2026-09-30). The clamp coefficients below are .dv-sp's, unchanged, so the ratio matches
+   by construction rather than by being tuned to match. max-width is gone: a card sizes to its name
+   like the display's does, and the resolver shortens it when there genuinely isn't room. */
+.sp{position:absolute;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:calc(clamp(2px,0.63cqw,5px)) calc(clamp(4px,1.14cqw,9px));min-width:clamp(44px,9.1cqw,72px);width:max-content;max-width:none;cursor:grab;transition:border-color .2s,opacity .2s;z-index:2;text-align:center}
 .sp:active{cursor:grabbing}
+/* Edge anchoring, the same rule the display uses: a card in the outer bands grows INWARD so a long
+   name can't spill off the plot. placeStageCards sets data-anchor; without these the edit view
+   centres every card and the same person appears in a different spot than on the TV. */
+.sp[data-anchor="left"]{transform:translate(0,-50%)}
+.sp[data-anchor="right"]{transform:translate(-100%,-50%)}
 .sp:hover{transform:translate(-50%,-50%) scale(1.08);border-color:var(--accent);z-index:3}
+.sp[data-anchor="left"]:hover{transform:translate(0,-50%) scale(1.08);border-color:var(--accent);z-index:3}
+.sp[data-anchor="right"]:hover{transform:translate(-100%,-50%) scale(1.08);border-color:var(--accent);z-index:3}
+.sp[data-anchor="left"].empty:hover{transform:translate(0,-50%)}
+.sp[data-anchor="right"].empty:hover{transform:translate(-100%,-50%)}
 .sp.dragging{opacity:.35}
 .sp.drop-target{border-color:var(--accent);background:var(--accent-dim)}
 .sp.leader{background:linear-gradient(180deg,rgba(201,139,61,.12),var(--surface));border-color:rgba(201,139,61,.4)}
 .sp.is-wl{background:linear-gradient(180deg,rgba(232,184,87,.18),var(--surface));border-color:rgba(232,184,87,.6)}
 .sp.empty{opacity:.35;background:transparent;border-style:dashed;cursor:default}
 .sp.empty:hover{transform:translate(-50%,-50%)}
-.sp-role{font-family:var(--ff-mono);font-size:7.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:1px}
+/* Compact tier — placeStageCards adds this when names still collide at full size. Same rule the
+   display uses: the role line is about half a card's height. */
+#stagePeople.is-compact .sp,#semPeople.is-compact .sp{padding:1px 5px;min-width:0}
+#stagePeople.is-compact .sp-role,#semPeople.is-compact .sp-role{display:none}
+.sp-role{font-family:var(--ff-mono);font-size:clamp(6px,1.412cqw,20px);color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:1px}
 .sp.occupied .sp-role{color:var(--accent)}
 .sp.is-wl .sp-role{color:var(--wl)}
-.sp-name{font-family:var(--ff-display);font-size:11px;font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-name{font-family:var(--ff-display);font-size:clamp(8px,2.159cqw,30px);font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
 .sp.empty .sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
-.sp-mic{font-family:var(--ff-mono);font-size:8px;color:var(--text-muted);margin-top:1px}
+.sp-mic{font-family:var(--ff-mono);font-size:clamp(6px,1.578cqw,22px);color:var(--text-muted);margin-top:1px}
 .sp-x{position:absolute;top:-7px;right:-7px;background:var(--bg);color:var(--text-faint);border:1px solid var(--border);width:16px;height:16px;border-radius:50%;font-size:9px;line-height:1;cursor:pointer;opacity:0;transition:all .15s;z-index:4;display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--ff-mono)}
 .sp:hover .sp-x{opacity:1}
 .sp-x:hover{background:#a83838;color:#fff;border-color:#a83838;transform:scale(1.15)}
@@ -6683,6 +6702,10 @@ function renderStage() {
   wrap.innerHTML = '';
   const bandPositions = getBandStagePositions();
   const toPct = (pt) => ({ left: (pt.x/800)*100 + '%', top: (pt.y/380)*100 + '%' });
+  // Collected in the SAME ORDER the cards are appended, then handed to placeStageCards — the one
+  // placement pipeline the display and the printed page also use. Empty band slots are included on
+  // purpose: an unassigned "EG 1" still occupies space and must not be sat on.
+  const stMarks = [];
 
   // Helper: swap band positions in state.instruments by their ids
   function swapInstruments(idA, idB) {
@@ -6713,10 +6736,13 @@ function renderStage() {
     el.draggable = !isStageEditing();
     el.dataset.kind = 'band';
     el.dataset.instId = inst.id;
-    el.innerHTML = `<div class="sp-role">${esc(shortInstLabel(inst.label))}${isMD?' · MD':''}</div><div class="sp-name">${name?esc(firstName(name)):esc(inst.placeholder || inst.label)}</div>`;
+    const bandLabel = name ? formatDisplayName(name) : (inst.placeholder || inst.label);
+    el.innerHTML = `<div class="sp-role">${esc(shortInstLabel(inst.label))}${isMD?' · MD':''}</div><div class="sp-name">${esc(bandLabel)}</div>`;
     wireSpDrag(el);
     wireSlotForPositionDrag(el, customKeyForBand(inst.id));
     wrap.appendChild(el);
+    stMarks.push({ x: pos.x, y: pos.y, name: bandLabel,
+                   role: shortInstLabel(inst.label) + (isMD ? ' · MD' : ''), kind: 'band' });
   });
 
   // ----- VOCAL BOXES -----
@@ -6740,10 +6766,11 @@ function renderStage() {
       el.dataset.voxIdx = String(i);
       const tags = vocalistInstrumentTags(v.id);
       const tagSuffix = tags.length ? ` / ${tags.join(', ')}` : '';
+      const vocLabel = formatDisplayName(v.name) || '—';
       el.innerHTML = `
         <button class="sp-x" title="Remove from stage">✕</button>
         <div class="sp-role">VOCAL ${i+1}${tagSuffix}</div>
-        <div class="sp-name">${esc(firstName(v.name) || '—')}</div>
+        <div class="sp-name">${esc(vocLabel)}</div>
       `;
       el.querySelector('.sp-x').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -6753,8 +6780,17 @@ function renderStage() {
       wireSpDrag(el);
       wireSlotForPositionDrag(el, customKeyForVocal(i));
       wrap.appendChild(el);
+      stMarks.push({ x: pos.x, y: pos.y, name: vocLabel, role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal' });
     }
   }
+  // The SAME placement the display and the printed page use, with the same cap — so what you
+  // arrange here is what the TV shows. A card can be nudged off its person only when it would
+  // otherwise overlap a neighbour, and only within DV_LABEL_MAX_DY; a drop still lands where you
+  // dropped it, because the nudge is a function of the whole arrangement, not of the drag.
+  placeStageCards(wrap, stMarks, {
+    wrapSel: '.stage-svg-wrap', cardSel: '.sp', nameSel: '.sp-name',
+    metrics: stageLabelMetrics(), maxDy: DV_LABEL_MAX_DY, compact: true
+  });
 
   // IMPROVEMENT 2 — Stage empty hint
   const stageWrapEl = document.getElementById('stageWrap');
@@ -10428,66 +10464,19 @@ function fillSummaryStage() {
       sMarks.push({ x: pos.x, y: pos.y, name: formatDisplayName(v.name) || '—', role: `VOCAL ${i+1}${tagSuffix}`, kind: 'vocal', isWL: !!v.isWL });
     }
   }
-  const sLayout = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4, dotR: 0, maxDy: DV_LABEL_MAX_DY });
-  sMarks.forEach((m, k) => {
-    const L = sLayout[k];
+  sMarks.forEach((m) => {
     const el = document.createElement('div');
     el.className = 'dv-sp' + (m.kind === 'band' ? ' occupied' : (m.isWL ? ' is-wl' : ''));
-    const centerY = L.labelY + L.h / 2;
-    const css = toPct({ x: m.x, y: centerY }); el.style.left = css.left; el.style.top = css.top;
-    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(L.name)}</div>`;
+    el.innerHTML = `<div class="dv-sp-role">${esc(m.role)}</div><div class="dv-sp-name">${esc(m.name)}</div>`;
     people.appendChild(el);
   });
-  // SECOND PASS — the same one the display does, and for the same reason. The resolve above sizes
-  // cards from a character-count estimate (charW 8.5), which has never matched a real card: the
-  // browser lays them out with its own font metrics, padding and clamps. On a full team that left
-  // two names overlapping on the PRINTED page. Measure what the cards actually are, hand the
-  // resolver the observed minimum width so it can't believe that shortening a name shrinks a card
-  // that has already bottomed out, and re-place. Runs once, never re-renders, so it cannot loop.
-  {
-    const fr = people.getBoundingClientRect();
-    const els = Array.from(people.querySelectorAll('.dv-sp'));
-    // Only trust measurements that look like real layout — jsdom hands back one stubbed rect for
-    // every element, and believing it would shorten every name (see watchlist 57).
-    const measurable = fr.width > 0 && fr.height > 0 && els.length > 0
-      && els.some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.width < fr.width * 0.9; });
-    if (measurable) {
-      const uX = 800 / fr.width, uY = 380 / fr.height;
-      let minPx = Infinity;
-      els.forEach((el, k) => {
-        const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.width < minPx) minPx = r.width;
-        if (sMarks[k]) { sMarks[k].wUnits = r.width * uX; sMarks[k].hUnits = r.height * uY; }
-        if (sMarks[k]) sMarks[k].anchor = sMarks[k].anchor || 'center';
-      });
-      const pass2 = resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4,
-        dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: minPx === Infinity ? 0 : minPx * uX });
-      const place = (layout) => {
-        els.forEach((el, k) => {
-          const L2 = layout[k]; if (!L2 || !sMarks[k]) return;
-          el.style.top = toPct({ x: sMarks[k].x, y: L2.labelY + L2.h / 2 }).top;
-          const nameEl = el.querySelector('.dv-sp-name');
-          if (nameEl && L2.name && nameEl.textContent !== L2.name) nameEl.textContent = L2.name;
-        });
-      };
-      place(pass2);
-      // Still colliding? The cards are as small as this stylesheet makes them, so shrink them:
-      // drop the role line (about half a card's height) and resolve once more. Same three-tier
-      // shape as the display — measure, re-resolve, then compact if the geometry is impossible.
-      people.classList.remove('is-compact');
-      if (stageLayoutOverlapCount(pass2) > 0) {
-        people.classList.add('is-compact');
-        let mp = Infinity;
-        els.forEach((el, k) => {
-          const r = el.getBoundingClientRect();
-          if (r.width > 0 && r.width < mp) mp = r.width;
-          if (sMarks[k]) { sMarks[k].wUnits = r.width * uX; sMarks[k].hUnits = r.height * uY; }
-        });
-        place(resolveStageLabelLayout(sMarks, { anchor: 'center', charW: 8.5, lineH: 11, gap: 4,
-          dotR: 0, maxDy: DV_LABEL_MAX_DY, minW: mp === Infinity ? 0 : mp * uX }));
-      }
-    }
-  }
+  // The same placement the display and the edit view use. The printed cards are a different SIZE
+  // (fixed, for paper) but they are placed by the same rule, so the sheet you print matches the
+  // screen you arranged it on. Its own metrics: the print stylesheet's smaller type.
+  placeStageCards(people, sMarks, {
+    cardSel: '.dv-sp', nameSel: '.dv-sp-name',
+    metrics: { charW: 8.5, lineH: 11, gap: 4 }, maxDy: DV_LABEL_MAX_DY, compact: true
+  });
 }
 function copySummaryText() {
   const s = state.service;
