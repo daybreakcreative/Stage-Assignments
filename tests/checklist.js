@@ -104,7 +104,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    // (roleLabel "Keys · MD") carrying every item, instead of two separate cards.
    ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
    seedMdDefault();
-   ev(`if(!state.config.setupDefaults) state.config.setupDefaults={}; state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};`);
+   ev(`if(!state.config.setupDefaults) state.config.setupDefaults={}; state.config.setupDefaults.keys={selections:{source:'k_house',cabling:['k_di']},customOptions:[]};`);
    ev(`state.instruments=[{id:'inst_k2',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k2';`);
    const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
    const band=secs.find(s=>s.key==='band');
@@ -112,7 +112,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(daveGroups.length!==1) throw new Error('MD who plays Keys should be ONE merged card now, got '+daveGroups.length+': '+JSON.stringify(daveGroups));
    const dave=daveGroups[0];
    if(!/Keys/.test(dave.roleLabel)||!/MD/.test(dave.roleLabel)) throw new Error('merged roleLabel should mention Keys + MD: '+dave.roleLabel);
-   if(!dave.items.some(i=>/Keyboard — House Keyboard/.test(i.itemText))) throw new Error('keys item missing: '+JSON.stringify(dave.items));
+   // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text. Asserted via a CHECK option / implied lines / selections. Intent unchanged.
+   if(!dave.items.some(i=>/Stereo DI\/DIs/.test(i.itemText))) throw new Error('keys item missing: '+JSON.stringify(dave.items));
    if(!dave.items.some(i=>/House tracks computer/.test(i.itemText))) throw new Error('md item missing: '+JSON.stringify(dave.items));
  });
 
@@ -120,7 +121,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('renderSetupChecklist groups items into per-person cards (not one flat list)', ()=>{
    ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
    seedMdDefault();
-   ev(`state.config.setupDefaults.keys={selections:{source:'k_house'},customOptions:[]};`);
+   ev(`state.config.setupDefaults.keys={selections:{source:'k_house',cabling:['k_di']},customOptions:[]};`);
    ev(`state.config.setupDefaults.vocals={selections:{options:['v_stand']},customOptions:[]};`);
    ev(`state.vocalists=[{id:'vv',name:'Grace',isWL:false}];`);
    ev(`state.instruments=[{id:'inst_k3',label:'Keys',tag:'Keys',assignedTo:'Dave Lee'}]; state.musicDirectorId='inst_k3';`);
@@ -151,7 +152,11 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!cs[key]) throw new Error('check state not stored after click');
    // re-render and confirm the same key shows done (chips mark done with the `ck` class)
    ev(`renderSetupChecklist();`);
-   const again=window.document.querySelector('.si-chip[data-item-key="'+key.replace(/"/g,'\\"')+'"]');
+   // 2026-10-01: look the chip up by dataset equality, not a hand-built attribute selector — the
+   // first chip's text now contains a literal `"` (Stereo DI/DIs & 1/4" cables) and jsdom's selector
+   // engine mishandles \" inside a quoted attribute value. Diagnosed: state and chip are both
+   // correct after re-render; only this lookup failed.
+   const again=[...window.document.querySelectorAll('.si-chip[data-item-key]')].find(c=>c.dataset.itemKey===key);
    if(!again || !again.classList.contains('ck')) throw new Error('done state lost after re-render');
  });
 

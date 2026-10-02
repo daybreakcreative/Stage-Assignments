@@ -25,9 +25,11 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   check('resolve turns selections into ordered lines incl addItems + customs', ()=>{
     const sel = JSON.stringify({ rig:'eg_stereo', stand:'eg_single', extras:['eg_10'] });
     const lines = ev(`resolveSetupItems('eg', ${sel}, [{text:'Custom pedalboard power'}]).map(i=>i.text)`);
-    if (!lines.includes('Stereo guitar rig')) throw new Error('missing rig label: '+lines.join('|'));
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text — only the lines it implies. Assertion flipped.
+    if (lines.includes('Stereo guitar rig')) throw new Error('radio choice printed its own text: '+lines.join('|'));
     if (!lines.includes('Stereo DI box') || !lines.includes('2 XLRs for player EG rig')) throw new Error('missing addItems');
-    if (!lines.includes('Single guitar stand')) throw new Error('missing stand');
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text. Asserted via a CHECK option / implied lines / selections. Intent unchanged.
+    if (lines.includes('Single guitar stand')) throw new Error('radio stand choice printed its own text');
     if (lines[lines.length-1] !== 'Custom pedalboard power') throw new Error('custom not last');
   });
   check('empty selections resolve to just customs', ()=>{

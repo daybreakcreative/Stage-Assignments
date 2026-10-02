@@ -62,7 +62,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('band shadow (EG Shadow) choosing on-stage-playing gets a seeded setup bucket with items', ()=>{
    ev('state.setupItems={}');
    // Church has configured an EG default (as it would via the wizard) so seeding yields items.
-   ev('state.config.setupDefaults={eg:{selections:{rig:"eg_house"},customOptions:[]}}');
+   // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text. Asserted via a CHECK option / implied lines / selections. Intent unchanged.
+   ev('state.config.setupDefaults={eg:{selections:{rig:"eg_stereo"},customOptions:[]}}');
    ev('state.shadows=[{id:"s3",name:"Cody",pack:"EG Pack",setup:""}]');
    ev('state.shadowPreferences={}');
    ev('postPullState={steps:[{kind:"shadow",personName:"Cody",positionName:"EG Shadow",shadowKind:"band",shadowId:"s3",prefKey:"cody|shadow"}],idx:0}');

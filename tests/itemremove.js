@@ -47,7 +47,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(t.indexOf('Amp & mic setup (stereo)')!==-1) throw new Error('still present: '+JSON.stringify(t));
    if(t.indexOf('Stereo DI box')===-1) throw new Error('sibling DI box was wrongly removed: '+JSON.stringify(t));
    if(t.indexOf('2 XLRs for player EG rig')===-1) throw new Error('sibling XLRs wrongly removed: '+JSON.stringify(t));
-   if(t.indexOf('Stereo guitar rig')===-1) throw new Error('parent option wrongly removed: '+JSON.stringify(t));
+   // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text — only the lines it implies. Assertion flipped.
+   if(t.indexOf('Stereo guitar rig')!==-1) throw new Error('radio parent should not print: '+JSON.stringify(t));
  });
 
  check('the removal survives a rebuild (it is not just an items-array edit)', ()=>{

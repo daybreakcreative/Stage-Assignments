@@ -42,7 +42,8 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   check('baseline: rig line + its addItems + custom all resolve', ()=>{
     seed();
     const t = texts();
-    if (!t.includes('Stereo guitar rig')) throw new Error('no rig line: '+t.join('|'));
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text — only the lines it implies. Assertion flipped.
+    if (t.includes('Stereo guitar rig')) throw new Error('radio choice printed its own text: '+t.join('|'));
     if (!t.includes('Custom pedalboard power')) throw new Error('no custom: '+t.join('|'));
   });
 

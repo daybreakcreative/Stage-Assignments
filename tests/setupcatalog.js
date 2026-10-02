@@ -244,11 +244,12 @@ window.addEventListener('load', ()=>setTimeout(()=>{
 
   check('renaming an option preserves a rebuilt checklist (id-based resolve)', ()=>{
     freshEg();
-    const gid=ev("setupCatalogFor('eg').groups[0].id");
-    const oid=ev("setupCatalogFor('eg').groups[0].options[0].id");
-    const sel=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':'${oid}'},[]).map(x=>x.text))`));
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text, so this exercises a CHECK option / a radio that implies lines. Intent unchanged.
+    const gid=ev("setupCatalogFor('eg').groups.find(g=>g.type==='check').id");
+    const oid=ev("setupCatalogFor('eg').groups.find(g=>g.type==='check').options[0].id");
+    const sel=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':['${oid}']},[]).map(x=>x.text))`));
     ev(`catalogRenameOption('eg','${gid}','${oid}','Helix');`);
-    const sel2=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':'${oid}'},[]).map(x=>x.text))`));
+    const sel2=JSON.parse(ev(`JSON.stringify(resolveSetupItems('eg',{'${gid}':['${oid}']},[]).map(x=>x.text))`));
     if(!sel2.includes('Helix')) throw new Error('rebuilt items do not show renamed text: '+sel2.join(','));
     if(sel.length!==sel2.length) throw new Error('item count changed on rename');
   });

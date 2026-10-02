@@ -72,8 +72,9 @@ window.addEventListener('load',()=>setTimeout(()=>{
    seed();
    ev(`removeSetupLine(${K},'keys','Boom mic stand'); collectChecklistItems();`);
    const t=texts();
-   if(t.indexOf('Keyboard — House Keyboard')===-1) throw new Error('lost the source line: '+JSON.stringify(t));
-   if(t.indexOf('User computer via Dante')===-1) throw new Error('lost the Dante line: '+JSON.stringify(t));
+   // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text — only the lines it implies. Assertion flipped.
+   if(t.indexOf('Keyboard — House Keyboard')!==-1) throw new Error('radio source line should not print: '+JSON.stringify(t));
+   if(t.indexOf('User computer via Dante')!==-1) throw new Error('radio Dante choice should not print: '+JSON.stringify(t));
    if(t.indexOf('Needs network — thunderbolt adapter')===-1) throw new Error('lost the implied line: '+JSON.stringify(t));
  });
 

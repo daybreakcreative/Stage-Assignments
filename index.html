@@ -2744,7 +2744,11 @@ function resolveSetupItems(key, selections, customItems) {
       const chosenIds = g.type === 'radio' ? (sel ? [sel] : []) : (Array.isArray(sel) ? sel : []);
       g.options.forEach(o => {
         if (chosenIds.indexOf(o.id) === -1) return;
-        push(o.text);
+        // A RADIO choice ("User bringing keyboard", "House bass rig") describes a configuration,
+        // not a task — it prints only the lines it IMPLIES. A CHECK item ("Needs talkback mic")
+        // IS the task and prints itself. Dillon's export held 10 per-person removals, every one a
+        // radio text he was deleting by hand ("implied only", 2026-10-01).
+        if (g.type !== 'radio') push(o.text);
         (o.addItems || []).forEach(push);
       });
     });
@@ -2877,7 +2881,6 @@ function detectPresetKey(inst) {
 
 let state = loadState();
 
-repairSetupBuckets();   // one-time data repair for older saves; no-op on clean data (see the function)
 ensureVocalCapacity();
 let pcoTokens = loadPCOTokens();
 let pcoServiceTypes = [];
@@ -11375,6 +11378,12 @@ function setupTagKey(name, tag) {
 function repairSetupBuckets() {
   const all = state.setupItems || {};
   let fixed = 0;
+  // Legacy `<name>|band|none` buckets: minted by an old build for a linked player with no preset
+  // type, they hold MD lines under a nonsense key and never render. Dillon delegated the call on
+  // 2026-10-01; recommendation was delete — they produced a false lead the day before.
+  Object.keys(all).forEach(k => {
+    if (/\|band\|none$/.test(k)) { delete all[k]; fixed++; }
+  });
   Object.keys(all).forEach(k => {
     const b = all[k]; if (!b || !Array.isArray(b.customItems) || !Array.isArray(b.items)) return;
     const autoTexts = new Set(b.items.filter(it => it && it.autoAdded && it.text).map(it => it.text));
@@ -11514,9 +11523,17 @@ function migrateLegacySetupBuckets() {
     if (tail === 'vocal') { role = 'vocalist'; typeKey = 'vocals'; }
     else if (tail === 'shadow') { role = 'shadow'; typeKey = null; }
     else if (tail.startsWith('tag:')) { typeKey = detectPresetKey({ tag: tail.slice(4) }); }
-    else { const inst = (state.instruments || []).find(i => i.id === tail); typeKey = inst ? detectPresetKey(inst) : null; }
+    else {
+      const inst = (state.instruments || []).find(i => i.id === tail);
+      // The instrument this bucket was keyed by is gone from the roster. It has no stable home,
+      // and re-keying it with a null type minted `name|band|none` on EVERY boot — three times
+      // over in Dillon's export, re-created after each repair had swept them (2026-10-01).
+      if (!inst) { delete store[key]; return; }
+      typeKey = detectPresetKey(inst);
+    }
     const stable = stableSetupKey(name, role, typeKey);
     if (stable === key) return;
+    if (role === 'band' && !typeKey) { delete store[key]; return; }   // never write a |band|none key
     const dst = store[stable] || { selections:{}, customItems:[], items:[], seeded:true, needsReview:false };
     (store[key].items || []).forEach(it => {
       const existing = dst.items.find(x => (x.text||'').toLowerCase() === (it.text||'').toLowerCase());
@@ -11527,6 +11544,24 @@ function migrateLegacySetupBuckets() {
     store[stable] = dst;
     delete store[key];
   });
+}
+
+// Boot-time setup-items repair, in the ONE order that works: migrate legacy keys first (that
+// migration can create buckets), then repair what the migration left, then rebuild every
+// this-week bucket's cached `items` so a changed resolve rule reaches the card without anyone
+// opening an editor, then SAVE so a later load cannot resurrect what was swept.
+// Placement lesson, learned twice: "right after state = loadState()" is NOT "after boot" —
+// init() runs migrations later, and a repair that runs before them is undone by them.
+function bootRepairSetupItems() {
+  const before = JSON.stringify(state.setupItems || {});
+  migrateLegacySetupBuckets();
+  repairSetupBuckets();
+  try {
+    enumerateSetupRoles().forEach(r => { if (r && r.stableKey && state.setupItems[r.stableKey]) rebuildPersonItems(r.stableKey, r.typeKey); });
+  } catch (e) { console.warn('setup rebuild skipped:', e); }
+  const changed = JSON.stringify(state.setupItems || {}) !== before;
+  if (changed) saveState();
+  return changed;
 }
 
 // Ensure bucket exists for a key
@@ -15478,7 +15513,7 @@ function init() {
     el.textContent = `build ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   })();
   ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
-  migrateLegacySetupBuckets(); // one-time: fold OLD volatile setup buckets into stable per-person keys
+  bootRepairSetupItems();      // migrate legacy keys → repair → rebuild this week's caches → save
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
   renderVenueSwitcher();
   applyDisplaySectionScales();

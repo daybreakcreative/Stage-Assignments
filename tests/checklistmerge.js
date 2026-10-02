@@ -32,17 +32,18 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(p.texts.filter(t=>t==='Music stand').length!==1) throw new Error('Music stand not deduped: '+JSON.stringify(p.texts));
  });
 
+ // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text. Asserted via a CHECK option / implied lines / selections. Intent unchanged.
  check('AG (unlinked) + Vocals → ONE card under vocalists, both item sets', ()=>{
    reset();
    ev(`state.vocalists=[{id:'v1',name:'Sam',isWL:true,micAssigned:''}]; state.assignments[0]='v1';`);
    ev(`state.instruments=[{id:'inst_ag',label:'Acoustic Guitar',tag:'Acoustic',assignedTo:'Sam',vocalistPlayer:null}];`);
    const kV=ev(`stableSetupKey('Sam','vocalist','vocals')`), kA=ev(`stableSetupKey('Sam','band','ag')`);
    ev(`state.setupItems['${kV}']={seeded:true,selections:{},customItems:[],items:[{id:'a',text:'Straight mic stand',doneThisService:false}]};`);
-   ev(`state.setupItems['${kA}']={seeded:true,selections:{},customItems:[],items:[{id:'b',text:'Wireless AG rig',doneThisService:false}]};`);
+   ev(`state.setupItems['${kA}']={seeded:true,selections:{},customItems:[],items:[{id:'b',text:'Guitar stand',doneThisService:false}]};`);
    if (countCards('Sam')!==1) throw new Error('expected 1 merged card, got '+countCards('Sam'));
    const p=findPerson('Sam');
    if(p.section!=='vocalists') throw new Error('multi-role vocalist should sit in vocalists section, got '+p.section);
-   ['Straight mic stand','Wireless AG rig'].forEach(t=>{ if(!p.texts.includes(t)) throw new Error('missing '+t); });
+   ['Straight mic stand','Guitar stand'].forEach(t=>{ if(!p.texts.includes(t)) throw new Error('missing '+t); });
  });
 
  check('AG LINKED to vocalist (vocalistPlayer) → AG items appear in the vocalist card', ()=>{
@@ -51,10 +52,10 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ev(`state.instruments=[{id:'inst_ag',label:'Acoustic Guitar',tag:'Acoustic',assignedTo:'',vocalistPlayer:'v1'}];`);
    const kV=ev(`stableSetupKey('Sam','vocalist','vocals')`), kA=ev(`stableSetupKey('Sam','band','ag')`);
    ev(`state.setupItems['${kV}']={seeded:true,selections:{},customItems:[],items:[{id:'a',text:'Straight mic stand',doneThisService:false}]};`);
-   ev(`state.setupItems['${kA}']={seeded:true,selections:{},customItems:[],items:[{id:'b',text:'Wireless AG rig',doneThisService:false}]};`);
+   ev(`state.setupItems['${kA}']={seeded:true,selections:{},customItems:[],items:[{id:'b',text:'Guitar stand',doneThisService:false}]};`);
    const p=findPerson('Sam');
    if(!p) throw new Error('no Sam card');
-   if(!p.texts.includes('Wireless AG rig')) throw new Error('linked AG items missing from vocalist card: '+JSON.stringify(p.texts));
+   if(!p.texts.includes('Guitar stand')) throw new Error('linked AG items missing from vocalist card: '+JSON.stringify(p.texts));
    if(countCards('Sam')!==1) throw new Error('linked player should still be ONE card, got '+countCards('Sam'));
  });
 

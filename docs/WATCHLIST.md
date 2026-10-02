@@ -610,3 +610,24 @@ Behaviors that must keep working. **The executable version of this list is `test
       stacked sections still show a shared line twice, and re-render only the clicked section);
       whether a rig CHOICE prints its own line; delete or keep the legacy `|none` buckets.
       → `setupwhole`
+- [ ] **73.** Setup items: a RADIO choice prints only what it IMPLIES; the boot repair runs in ONE
+      order and persists. Dillon's answers of 2026-10-01 on bug_34d61961.
+      • `resolveSetupItems`: a radio option ("User bringing keyboard", "House bass rig") describes a
+        configuration, not a task — it emits only its `addItems`. A CHECK item IS the task and still
+        prints. His export held 10 per-person removals, every one a radio text deleted by hand.
+        ⚠ Known edge, flagged: `k_remove` ("Remove keyboard") is a check item and still prints.
+        10 tests asserted the old behaviour and were updated with dated notes — every one moved to
+        a check option or a radio that implies lines, intent unchanged (`setupsimplify`).
+      • **The `|band|none` debris had a LIVE source**: `migrateLegacySetupBuckets` (called from
+        `init()`) folds old `name|<instrumentId>` keys by looking the id up in THIS WEEK's
+        instruments; three ids from a past band no longer resolved → `typeKey=null` → re-keyed to
+        `|band|none` on EVERY boot, re-created after each repair had swept them. Caught with a Proxy
+        trap on the real boot after four source-reading theories were disproven. An orphaned legacy
+        bucket is now DELETED (Dillon delegated the call; it has no stable home).
+      • **`bootRepairSetupItems()` in `init()`: migrate → repair → rebuild this week's cached
+        `items` → `saveState()` if changed.** ⚠ Placement lesson, learned twice: "right after
+        `state = loadState()`" is NOT "after boot" — init runs migrations later and undoes an earlier
+        repair. The cache rebuild is what makes a changed resolve rule reach the ✓ Items card without
+        anyone opening an editor.
+      Verified on his export, clean bare reload: `|none` 7 → 0 live AND saved; Keys·MD card 7 → 6
+      chips with zero radio texts; Bass 5 → 3. → `setupsimplify`, `setupwhole`

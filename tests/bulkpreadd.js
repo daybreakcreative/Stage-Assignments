@@ -60,7 +60,8 @@ window.addEventListener('load',()=>setTimeout(()=>{
    card.querySelector('.bulk-pos [data-bulk-expand]').dispatchEvent(new window.Event('click',{bubbles:true}));
    card=doc.querySelector('#bulkPreaddModal .bulk-person'); // re-query: expand re-renders the list
    const ed=card.querySelector('.bulk-pos .bulk-editor'); if(!ed||!ed.children.length) throw new Error('no editor mounted');
-   const cb=card.querySelector('.bulk-pos .bulk-editor input'); if(!cb) throw new Error('no option in the band editor');
+   // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text. Asserted via a CHECK option / implied lines / selections. Intent unchanged.
+   const cb=card.querySelector('.bulk-pos .bulk-editor input[type=checkbox]'); if(!cb) throw new Error('no check option in the band editor');
    cb.checked=true; cb.dispatchEvent(new window.Event('change',{bubbles:true}));
    const key=ev(`stableSetupKey('Jo','band','bass')`);
    const n=ev(`(state.setupItems[${JSON.stringify(key)}]&&state.setupItems[${JSON.stringify(key)}].items||[]).length`);

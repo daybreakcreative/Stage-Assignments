@@ -92,8 +92,9 @@ window.addEventListener('load', () => setTimeout(() => {
     const radio = lab.querySelector('input[type=radio]');
     radio.checked = true;
     fire(radio, 'change');
-    const lines = ev(`JSON.stringify(resolveSetupItems('eg', state.setupItems[${JSON.stringify(KEY)}].selections, state.setupItems[${JSON.stringify(KEY)}].customItems).map(l=>l.text))`);
-    if (!JSON.parse(lines).includes('House Quad Cortex')) throw new Error('not on the checklist: ' + lines);
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text, so the rig is asserted on SELECTIONS and the catalog, not as a checklist line. Intent (editor writes; rename propagates id-stably) unchanged.
+    const chosen = ev(`setupCatalogFor('eg').groups.find(g=>g.id==='rig').options.find(o=>o.id===state.setupItems[${JSON.stringify(KEY)}].selections.rig).text`);
+    if (chosen !== 'House Quad Cortex') throw new Error('selection not written: rig → ' + chosen);
   });
 
   check('editing from a person does NOT touch that person\'s per-person overrides', () => {
@@ -111,16 +112,16 @@ window.addEventListener('load', () => setTimeout(() => {
     ev(`seedPersonSetup(${JSON.stringify(OTHER)},'eg');
         state.setupItems[${JSON.stringify(OTHER)}].selections={rig:'eg_house'};
         rebuildPersonItems(${JSON.stringify(OTHER)},'eg');`);
-    const before = JSON.parse(ev(`JSON.stringify(state.setupItems[${JSON.stringify(OTHER)}].items.map(i=>i.text))`));
-    if (!before.includes('House EG rig')) throw new Error('setup for the second player is wrong: ' + before.join('|'));
+    // 2026-10-01 (Dillon: "implied only"): a RADIO choice no longer prints its own text, so the rig is asserted on SELECTIONS and the catalog, not as a checklist line. Intent (editor writes; rename propagates id-stably) unchanged.
+    const seenBy = () => ev(`setupCatalogFor('eg').groups.find(g=>g.id==='rig').options.find(o=>o.id===state.setupItems[${JSON.stringify(OTHER)}].selections.rig).text`);
+    if (seenBy() !== 'House EG rig') throw new Error('setup for the second player is wrong: ' + seenBy());
     // rename it from the FIRST person's editor
     const inp = [...mount.querySelectorAll('.cat-opt-input')].find(i => i.value === 'House EG rig');
     if (!inp) throw new Error('rename input not found');
     inp.value = 'House Helix';
     fire(inp, 'input');
-    const after = JSON.parse(ev(`JSON.stringify(state.setupItems[${JSON.stringify(OTHER)}].items.map(i=>i.text))`));
-    if (after.includes('House EG rig')) throw new Error("other person's checklist kept the old wording: " + after.join('|'));
-    if (!after.includes('House Helix')) throw new Error("other person's checklist did not pick up the rename: " + after.join('|'));
+    if (seenBy() !== 'House Helix') throw new Error("other person's rig did not pick up the rename (id-stable): " + seenBy());
+    if (ev(`state.setupItems[${JSON.stringify(OTHER)}].selections.rig`) !== 'eg_house') throw new Error('rename changed the stored id — it must be id-stable');
   });
 
   check('reset from the per-person editor restores the built-in EG questions', () => {
