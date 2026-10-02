@@ -3,17 +3,17 @@
 Source: bug_34d61961 ("set up items is a big mess"), diagnosed 2026-09-30 from his export.
 Already live (6bb060f): whole-person remove/restore, doubled auto-mic repair, |none guard.
 
-## 1. Legacy |band|none sweep  — Dillon delegated; recommendation = DELETE
-- [ ] repairSetupBuckets(): drop any bucket keyed `<name>|band|none`. Return count. Test.
+## 1. Legacy |band|none sweep  — ✅ shipped db690fb (deleted at the source: migrateLegacySetupBuckets)
+- [x] repairSetupBuckets(): drop any bucket keyed `<name>|band|none`. Return count. Test.
 - Why delete: inert, hold MD lines under a nonsense key, produced a false lead on 09-30.
 
-## 2. Implied-only lines  — "implied only"
-- [ ] resolveSetupItems(): for a RADIO group, do NOT push o.text; push o.addItems only.
+## 2. Implied-only lines  — ✅ shipped db690fb
+- [x] resolveSetupItems(): for a RADIO group, do NOT push o.text; push o.addItems only.
       CHECK groups keep pushing o.text (+ addItems) — the item IS the task.
-- [ ] Edge, flagged to Dillon: `k_remove` ("Remove keyboard") is a check item → still prints.
-- [ ] Tests: radio choice emits only its addItems; check item still emits its text; a radio
+- [x] Edge, flagged to Dillon: `k_remove` ("Remove keyboard") is a check item → still prints.
+- [x] Tests: radio choice emits only its addItems; check item still emits its text; a radio
       choice with no addItems emits nothing; existing per-person `replaces` removals still apply.
-- [ ] Existing removal records for radio texts become dead weight (harmless) — leave them.
+- [x] Existing removal records for radio texts become dead weight (harmless) — leave them.
 
 ## 3. One checklist per person, every MD-assigned position  — "yes & do the same for every position"
 Collision: MD groups = rig, extras. Every instrument has `extras`; bass/ag/eg/strings have `rig`.
