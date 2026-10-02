@@ -5385,6 +5385,9 @@ const DV_LABEL_MAX_DY = 90;
 // balance point. (Before any of this the band showed 17px and CLIPPED at 4 of 6.)
 const DV_SIDE_GROW_BIAS = 6;
 const DV_SIDE_MIN_SCALE = 0.6;  // never shrink rows past this — it is a TV, read from the back
+// The run-sheet rail may shrink its text to this to avoid cutting the last item; past it, a
+// readable list that scrolls beats an unreadable one that fits.
+const DV_RS_MIN_SCALE = 0.8;
 // How much of the column a block asks for, from how many rows it holds.
 function sideBlockGrow(rows) {
   const n = (typeof rows === 'number' && rows > 0) ? rows : 0;
@@ -10665,12 +10668,51 @@ function goToDisplay() {
   }
   enterDisplayMode();
 }
+// The display view places its stage cards by MEASURING the plot, so any later change to the
+// plot's size — the window resizing, fullscreen arriving a frame after the Display click, a
+// divider drag or reset — leaves the people layer sized for a plot that no longer exists and
+// the cards drift off the outline (found 2026-10-01 in the sandbox: after a 1920→1280 resize
+// the layer was 790px wide over a 503px plot, and the Drums card sat 34px off-screen; a fresh
+// render at 1280 was perfect). Only the EDIT view ever re-rendered on resize. One debounced
+// refit, hooked to every geometry change, keeps the display honest.
+let _dvRefitTimer = null;
+// Belt and braces: whatever resizes the plot — an event we did not think of, a late-firing one,
+// the run-sheet rail collapsing, a font arriving — a ResizeObserver on the plot's wrap catches it.
+// Guarded against its own echo: a refit that lands on the same wrap size schedules nothing.
+let _dvStageObserver = null, _dvStageObservedSize = '';
+function observeDisplayStage() {
+  if (typeof ResizeObserver === 'undefined') return;
+  const wrap = document.querySelector('#displayView .dv-stage-svg-wrap');
+  if (!wrap) return;
+  const r = wrap.getBoundingClientRect();
+  _dvStageObservedSize = Math.round(r.width) + 'x' + Math.round(r.height);
+  if (_dvStageObserver) return;   // already watching this persistent element
+  _dvStageObserver = new ResizeObserver(() => {
+    const w = document.querySelector('#displayView .dv-stage-svg-wrap');
+    if (!w) return;
+    const b = w.getBoundingClientRect();
+    const size = Math.round(b.width) + 'x' + Math.round(b.height);
+    if (size === _dvStageObservedSize) return;
+    scheduleDisplayRefit();
+  });
+  _dvStageObserver.observe(wrap);
+}
+function scheduleDisplayRefit() {
+  if (!document.body.classList.contains('display-mode')) return;
+  clearTimeout(_dvRefitTimer);
+  _dvRefitTimer = setTimeout(() => {
+    _dvRefitTimer = null;
+    if (!document.body.classList.contains('display-mode')) return;
+    renderDisplayView();
+  }, 120);
+}
 function enterDisplayMode() {
   document.body.classList.add('display-mode');
   state.viewMode = 'display';
   saveState();
   renderDisplayView();
   applyDvDividers();
+  scheduleDisplayRefit();   // the dividers just changed the geometry the render measured
   // Auto-enter fullscreen. enterDisplayMode is called from the Display button click (a valid
   // user gesture), so the request is honored; if it's ever blocked, we ignore it.
   try {
@@ -10693,6 +10735,29 @@ function exitDisplayMode() {
       if (exit) exit.call(document);
     }
   } catch (e) { /* ignore */ }
+}
+// Shrink the run sheet's text so the LAST item is not cut off on a TV nobody scrolls (1920×1080
+// with a 15-item order: 1032px of list in a 1004px rail, last item half-hidden). Only acts when the
+// operator has left the per-device run-sheet scale at its default — a hand-set size is theirs.
+// Steps down to DV_RS_MIN_SCALE; if even the floor cannot fit the list, reverts to full size and
+// lets it scroll (readable beats squeezed). Marker `data-dv-autofit` says the rail was auto-sized.
+function fitDvRunSheet(list) {
+  if (!list) return 1;
+  list.style.removeProperty('--rs-scale');
+  delete list.dataset.dvAutofit;
+  const manual = loadDisplaySectionScales().runSheet;
+  if (Math.abs(manual - 1) > 0.001) return 1;
+  if (!(list.clientHeight > 0)) return 1;
+  const fits = () => list.scrollHeight <= list.clientHeight + 1;
+  if (fits()) return 1;
+  let s = 1;
+  while (!fits() && s > DV_RS_MIN_SCALE + 0.001) {
+    s = Math.round((s - 0.05) * 100) / 100;
+    list.style.setProperty('--rs-scale', String(s));
+  }
+  if (!fits()) { list.style.removeProperty('--rs-scale'); return 1; }
+  list.dataset.dvAutofit = String(s);
+  return s;
 }
 function renderDisplayView() {
   const s = state.service;
@@ -11111,10 +11176,12 @@ function renderDisplayView() {
       `;
       rsList.appendChild(el);
     });
+    fitDvRunSheet(rsList);
   }
 
   // Re-wire drag-resize dividers after DOM is rebuilt (guard in wireDvDivider prevents double-binding)
   wireAllDvDividers();
+  observeDisplayStage();   // remember the plot size this render measured; a different one refits
 
   // First-run tip banner
   const dvViewEl = document.getElementById('displayView');
@@ -13959,6 +14026,7 @@ function saveDvDividers(d) {
 function resetDvDividers() {
   try { localStorage.removeItem(DV_DIVIDER_KEY); } catch(e) {}
   applyDvDividers();
+  scheduleDisplayRefit();
   toast('Display layout reset to defaults', 'success');
 }
 
@@ -14203,6 +14271,7 @@ function wireDvDivider(div) {
     document.removeEventListener('touchmove', onMove);
     document.removeEventListener('touchend', endDrag);
     document.removeEventListener('touchcancel', endDrag);
+    scheduleDisplayRefit();   // the plot just changed size under the cards
   }
 
   div.addEventListener('mousedown', startDrag);
@@ -14225,6 +14294,7 @@ function wireDvDivider(div) {
     }
     saveDvDividers(d);
     applyDvDividers();
+    scheduleDisplayRefit();
     toast('Divider reset to default', 'success');
   });
 }
@@ -15738,7 +15808,11 @@ function init() {
       if (state.viewMode === 'display') exitDisplayMode();
     }
   });
-  window.addEventListener('resize', renderStage);
+  window.addEventListener('resize', () => { renderStage(); scheduleDisplayRefit(); });
+  // Fullscreen arrives a frame AFTER the Display click that rendered the view; the viewport it
+  // rendered for is not the one the TV shows. Same when leaving fullscreen with the display up.
+  document.addEventListener('fullscreenchange', scheduleDisplayRefit);
+  document.addEventListener('webkitfullscreenchange', scheduleDisplayRefit);
 
   // Brand-new visitors start with a completely empty team — no baked-in names.
   // The first-run wizard handles their initial setup.

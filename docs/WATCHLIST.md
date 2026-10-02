@@ -651,3 +651,19 @@ Behaviors that must keep working. **The executable version of this list is `test
     with `selections.md` {rig, extras} folded from the real `md|md`, 3 removals carried;
     `md|md` 3 → 2 (two past MDs, dormant, now survive boot); `|none` 0. → `setupmdfold`
 
+75. **The display refits itself after every geometry change; the run sheet shrinks before it cuts**
+    (2026-10-01 overnight QA on Dillon's export). The display view places stage cards by MEASURING
+    the plot, and nothing re-ran that measurement when the plot changed: after a 1920→1280 resize the
+    people layer was 790px wide over a 503px plot and the Drums card sat 34px off-screen, while a fresh
+    render at 1280 was perfect. Fullscreen arriving a frame after the Display click (the booth's normal
+    path), a divider drag, a divider double-click reset and "Reset display layout" all changed the plot
+    the same way; only the EDIT view ever re-rendered on resize. `scheduleDisplayRefit()` (debounced
+    120ms, display-mode only) is hooked to window resize, `fullscreenchange`, divider endDrag, both
+    resets and the end of `enterDisplayMode`; a guarded `ResizeObserver` on the plot wrap catches
+    anything else (echo-safe: same wrap size → no refit). ⚠ The in-app browser pane applies an
+    emulated viewport LAZILY (after the next screenshot), so a probe in the same batch reads stale —
+    verify on the following turn. • `fitDvRunSheet()`: a 15-item order at 1920×1080 was 1032px of
+    list in a 1004px rail (last item half-hidden); the text now steps down to `DV_RS_MIN_SCALE` 0.8
+    while the operator's per-device scale is at its default, and reverts to full size + scroll if the
+    floor still cannot fit (readable beats squeezed). `data-dv-autofit` marks it. → `dvrefit`
+
