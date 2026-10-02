@@ -12224,6 +12224,7 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   renderSetupGroups(groupsWrap, typeKey, bucket.selections, onGroupsChange);
   // The MD's instrument bucket carries the MD questions too — same editor, same line list, same
   // add row, same removals. One section set per person (2026-10-01).
+  let mdGroups = null, onMdGroupsChange = null;
   if (isMdFolded(stableKey)) {
     ensureMdFold(stableKey);
     const mdBlock = document.createElement('div');
@@ -12231,18 +12232,19 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
     const mdLabel = document.createElement('div');
     mdLabel.className = 'sp-md-label';
     mdLabel.textContent = 'As Music Director';
-    const mdGroups = document.createElement('div');
+    mdGroups = document.createElement('div');
     mdGroups.className = 'sp-groups';
     mdBlock.appendChild(mdLabel);
     mdBlock.appendChild(mdGroups);
     container.appendChild(mdBlock);
-    renderSetupGroups(mdGroups, 'md', bucket.selections.md || {}, next => {
+    onMdGroupsChange = next => {
       bucket.selections.md = next;
       rebuildPersonItems(stableKey, typeKey);
       saveState();
       renderCustoms();
       if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
-    });
+    };
+    renderSetupGroups(mdGroups, 'md', bucket.selections.md || {}, onMdGroupsChange);
   }
 
   // Every resolved line on this person's list, each removable — not just the custom ones.
@@ -12349,16 +12351,21 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   // only in Advanced Settings → Setup Items. Same editor, same overlay: renaming is id-based,
   // so anyone who already picked an option keeps their pick and just sees the new wording.
   // Collapsed and labelled, because it changes the questions for EVERY person.
-  const personCat = setupCatalogFor(typeKey);
+  // One disclosure per catalog this editor shows: the instrument's, and — on the MD's folded
+  // bucket — the MD catalog too, so the MD questions keep an edit-from-here path (lost for one
+  // night in 161323f when the separate MD section went away).
+  const addQuestionsDisclosure = (catKey, summaryText, groupsEl, getSelections, onChg) => {
+  const personCat = setupCatalogFor(catKey);
   if (personCat) {
     const disc = document.createElement('details');
     disc.className = 'cat-edit-disclosure sp-cat-edit';
+    disc.dataset.catKey = catKey;
     const sum = document.createElement('summary');
     sum.className = 'cat-edit-summary';
-    sum.textContent = 'Edit questions';
+    sum.textContent = summaryText;
     const note = document.createElement('div');
     note.className = 'sp-cat-edit-note';
-    note.textContent = 'Changes the ' + (personCat.label || typeKey) + ' questions for everyone, not just this person.';
+    note.textContent = 'Changes the ' + (personCat.label || catKey) + ' questions for everyone, not just this person.';
     const catMount = document.createElement('div');
     catMount.className = 'cat-edit-mount';
     disc.appendChild(sum);
@@ -12368,10 +12375,10 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
     // Any edit inside the mount re-resolves this type everywhere, then redraws the radios above
     // so the new wording shows immediately. The editor re-renders its own rows.
     const syncAfterCatalogEdit = () => {
-      if (!groupsWrap.isConnected) return;
-      rebuildBucketsForType(typeKey);
+      if (!groupsEl.isConnected) return;
+      rebuildBucketsForType(catKey);
       saveState();
-      renderSetupGroups(groupsWrap, typeKey, bucket.selections, onGroupsChange);
+      renderSetupGroups(groupsEl, catKey, getSelections(), onChg);
       renderCustoms();
       if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
     };
@@ -12380,14 +12387,17 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
     disc.addEventListener('toggle', () => {
       if (!disc.open || catMount.firstChild) return;
       // Reset / delete-type tears the catalog out from under this editor — redraw the whole thing.
-      renderCatalogEditor(catMount, typeKey, () => {
-        rebuildBucketsForType(typeKey);
+      renderCatalogEditor(catMount, catKey, () => {
+        rebuildBucketsForType(catKey);
         saveState();
         renderPersonSetupEditor(container, stableKey, typeKey);
         if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
       });
     });
   }
+  };
+  addQuestionsDisclosure(typeKey, 'Edit questions', groupsWrap, () => bucket.selections, onGroupsChange);
+  if (mdGroups) addQuestionsDisclosure('md', 'Edit Music Director questions', mdGroups, () => bucket.selections.md || {}, onMdGroupsChange);
 }
 
 // CSS-attribute selector escape helper for keys with special chars

@@ -152,6 +152,29 @@ window.addEventListener('load',()=>setTimeout(()=>{
    host.remove();
  });
 
+ console.log('--- the MD questions stay editable from the folded editor ---');
+ check('folded editor: TWO "Edit questions" disclosures (instrument + Music Director); the MD one mounts the md catalog editor', ()=>{
+   reset(); ev(`state.musicDirectorId='i_keys'; enumerateSetupRoles();`);
+   const host=doc.createElement('div'); doc.body.appendChild(host); window.__host=host;
+   ev(`renderPersonSetupEditor(__host, ${JSON.stringify(KK())}, 'keys')`);
+   const discs=[...host.querySelectorAll('.sp-cat-edit')];
+   if(discs.length!==2) throw new Error('disclosures: '+discs.length);
+   const md=discs.find(d=>d.dataset.catKey==='md');
+   if(!md||!/Music Director/.test(md.querySelector('summary').textContent)) throw new Error('no MD disclosure');
+   md.open=true; md.dispatchEvent(new window.Event('toggle'));
+   if(!md.querySelector('.cat-edit-mount').firstChild) throw new Error('MD catalog editor did not mount');
+   const vals=[...md.querySelectorAll('.cat-opt-input')].map(i=>i.value);
+   if(!vals.some(v=>/House tracks computer/.test(v))) throw new Error('mounted editor is not the md catalog: '+JSON.stringify(vals));
+   host.remove();
+ });
+ check('non-MD editor: ONE disclosure', ()=>{
+   reset(); ev(`enumerateSetupRoles();`);
+   const host=doc.createElement('div'); doc.body.appendChild(host); window.__host=host;
+   ev(`renderPersonSetupEditor(__host, ${JSON.stringify(KK())}, 'keys')`);
+   if(host.querySelectorAll('.sp-cat-edit').length!==1) throw new Error('disclosures: '+host.querySelectorAll('.sp-cat-edit').length);
+   host.remove();
+ });
+
  console.log('--- untouched shapes ---');
  // Found 2026-10-01 by probe: `md` was missing from the migration's stable-role list, so every
  // name|md|md bucket was re-keyed to |band|none (pre-db690fb) or deleted (db690fb) on each boot.

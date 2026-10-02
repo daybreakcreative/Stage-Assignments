@@ -606,9 +606,8 @@ Behaviors that must keep working. **The executable version of this list is `test
       • The card collector no longer mints `name|band|none` for a linked singer-player with an
         unrecognised instrument (no preset type → no bucket). That path is how the 7 inert
         `|band|none` buckets in his data were born.
-      Still open (decisions with Dillon): merge instrument+MD into ONE card and ONE editor (the two
-      stacked sections still show a shared line twice, and re-render only the clicked section);
-      whether a rig CHOICE prints its own line; delete or keep the legacy `|none` buckets.
+      All three decisions landed 2026-10-01: one card + one editor (#74, `161323f`); a rig choice
+      prints only what it implies (#73, `db690fb`); legacy `|none` buckets deleted (#73).
       → `setupwhole`
 - [ ] **73.** Setup items: a RADIO choice prints only what it IMPLIES; the boot repair runs in ONE
       order and persists. Dillon's answers of 2026-10-01 on bug_34d61961.
