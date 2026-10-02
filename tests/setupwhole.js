@@ -1,5 +1,6 @@
 // Diagnosed 2026-09-30 from Dillon's real export. One person can hold several setup buckets
-// (a Keys player who is also the MD has band|keys AND md|md), the ✓ Items card merges them, but a
+// (a Keys player who is also the MD HAD band|keys AND md|md — since 2026-10-01 the MD folds into the
+// instrument bucket, so this test uses a Keys + Violin player instead), the ✓ Items card merges them, but a
 // remove in the editor reached ONE bucket — so the line stayed on the card and reappeared in the
 // other section. "Save someone's preferences and things hold over." Also: the auto-added vocal mic
 // and boom stand were stored a second time as a customItem in 7 buckets, and 7 legacy buckets
@@ -16,18 +17,19 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 const{window,window:{document:doc}}=dom;const ev=c=>window.eval(c);
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
 
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('toast=function(){};');
- // A Keys player who is also the MD. Both buckets carry "Laptop stand" — the shared line.
+ // A Keys player who also plays Violin. Both buckets carry "Music stand" — the shared line.
  const seedKeysMD=()=>ev(`
    state._firstRun=false; state.config.setupCatalog=null; state.setupItems={};
    state.vocalists=[]; state.assignments=new Array(8).fill(null); state.shadows=[];
-   state.instruments=[{id:'i_keys',label:'Keys',assignedTo:'Pat Player',pack:'Keys',tag:'Keys'}];
-   state.musicDirectorId='i_keys';
-   const kk=stableSetupKey('Pat Player','band','keys'), mk=stableSetupKey('Pat Player','md','md');
-   state.setupItems[kk]={selections:{source:'k_user_kbd',soundsfrom:'k_dante',inputs:'k_in2',cabling:[],extras:['k_laptop']},customItems:[],seeded:true,items:[]};
-   state.setupItems[mk]={selections:{rig:['md_tracks','md_dante','md_stand']},customItems:[],seeded:true,items:[]};
-   rebuildPersonItems(kk,'keys'); rebuildPersonItems(mk,'md');
+   state.instruments=[{id:'i_keys',label:'Keys',assignedTo:'Pat Player',pack:'Keys',tag:'Keys'},{id:'i_vln',label:'Violin',assignedTo:'Pat Player',tag:'Violin'}];
+   state.musicDirectorId=null;
+   const kk=stableSetupKey('Pat Player','band','keys'), mk=stableSetupKey('Pat Player','band','strings');
+   state.setupItems[kk]={selections:{source:'k_user_kbd',soundsfrom:'k_dante',inputs:'k_in2',cabling:[],extras:['k_music']},customItems:[],seeded:true,items:[]};
+   state.setupItems[mk]={selections:{pickup:'s_house',conn:'s_xlr',extras:['s_music']},customItems:[],seeded:true,items:[]};
+   rebuildPersonItems(kk,'keys'); rebuildPersonItems(mk,'strings');
    window.__kk=kk; window.__mk=mk;
  `);
  const linesOf=k=>JSON.parse(ev(`JSON.stringify((state.setupItems[${JSON.stringify(k)}].items||[]).map(i=>i.text))`));
@@ -40,38 +42,38 @@ window.addEventListener('load',()=>setTimeout(()=>{
  check('precondition: the shared line is in both buckets and once on the card', ()=>{
    seedKeysMD();
    const a=linesOf(ev('__kk')), b=linesOf(ev('__mk'));
-   if(a.indexOf('Laptop stand')===-1||b.indexOf('Laptop stand')===-1) throw new Error('seed did not put the line in both: '+JSON.stringify([a,b]));
+   if(a.indexOf('Music stand')===-1||b.indexOf('Music stand')===-1) throw new Error('seed did not put the line in both: '+JSON.stringify([a,b]));
    const chips=cardChips(); if(!chips) throw new Error('no card');
-   if(chips.filter(t=>t==='Laptop stand').length!==1) throw new Error('card should show it once: '+JSON.stringify(chips));
+   if(chips.filter(t=>t==='Music stand').length!==1) throw new Error('card should show it once: '+JSON.stringify(chips));
  });
 
- check('removing it from the Keys bucket removes it from the MD bucket too', ()=>{
+ check('removing it from the Keys bucket removes it from the Violin bucket too', ()=>{
    seedKeysMD();
-   ev(`removeSetupLine(__kk,'keys','Laptop stand')`);
+   ev(`removeSetupLine(__kk,'keys','Music stand')`);
    const a=linesOf(ev('__kk')), b=linesOf(ev('__mk'));
-   if(a.indexOf('Laptop stand')!==-1) throw new Error('still in the bucket it was removed from');
-   if(b.indexOf('Laptop stand')!==-1) throw new Error('HOLDOVER: still in the other bucket — this is the bug Dillon reported');
+   if(a.indexOf('Music stand')!==-1) throw new Error('still in the bucket it was removed from');
+   if(b.indexOf('Music stand')!==-1) throw new Error('HOLDOVER: still in the other bucket — this is the bug Dillon reported');
  });
 
  check('...and it is gone from the ✓ Items card', ()=>{
-   seedKeysMD(); ev(`removeSetupLine(__kk,'keys','Laptop stand')`);
+   seedKeysMD(); ev(`removeSetupLine(__kk,'keys','Music stand')`);
    const chips=cardChips(); if(!chips) throw new Error('no card');
-   if(chips.indexOf('Laptop stand')!==-1) throw new Error('card still shows the removed line: '+JSON.stringify(chips));
+   if(chips.indexOf('Music stand')!==-1) throw new Error('card still shows the removed line: '+JSON.stringify(chips));
  });
 
  check('restoring it brings it back to BOTH buckets', ()=>{
-   seedKeysMD(); ev(`removeSetupLine(__kk,'keys','Laptop stand'); restoreSetupLine(__kk,'keys','Laptop stand')`);
+   seedKeysMD(); ev(`removeSetupLine(__kk,'keys','Music stand'); restoreSetupLine(__kk,'keys','Music stand')`);
    const a=linesOf(ev('__kk')), b=linesOf(ev('__mk'));
-   if(a.indexOf('Laptop stand')===-1||b.indexOf('Laptop stand')===-1) throw new Error('restore left one bucket suppressed: '+JSON.stringify([a,b]));
+   if(a.indexOf('Music stand')===-1||b.indexOf('Music stand')===-1) throw new Error('restore left one bucket suppressed: '+JSON.stringify([a,b]));
  });
 
  check('a remove never leaks to a DIFFERENT person who has the same line', ()=>{
    seedKeysMD();
    ev(`const ok=stableSetupKey('Other Person','band','keys');
        state.instruments.push({id:'i_k2',label:'Keys 2',assignedTo:'Other Person',pack:'Keys',tag:'Keys'});
-       state.setupItems[ok]={selections:{extras:['k_laptop']},customItems:[],seeded:true,items:[]}; rebuildPersonItems(ok,'keys'); window.__ok=ok;
-       removeSetupLine(__kk,'keys','Laptop stand');`);
-   if(linesOf(ev('__ok')).indexOf('Laptop stand')===-1) throw new Error('removed it from the wrong person');
+       state.setupItems[ok]={selections:{extras:['k_music']},customItems:[],seeded:true,items:[]}; rebuildPersonItems(ok,'keys'); window.__ok=ok;
+       removeSetupLine(__kk,'keys','Music stand');`);
+   if(linesOf(ev('__ok')).indexOf('Music stand')===-1) throw new Error('removed it from the wrong person');
  });
 
  console.log('--- an auto-added mic/boom is never stored twice ---');

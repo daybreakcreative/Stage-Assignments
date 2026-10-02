@@ -33,23 +33,23 @@ const seed=()=>ev(`
   state.setupItems={};
 `);
 
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  // don't let the check-off renderer or full re-render fire during manager/checklist tests
  ev('renderAll=function(){}; renderStage=function(){}; renderBand=function(){}; renderDisplayView=function(){}; toast=function(){};');
 
- check('enumerateSetupRoles: Cam Lee yields 4 role entries (keys/eg band, vocals, md) w/ specific labels', ()=>{
+ check('enumerateSetupRoles: Cam Lee yields 3 role entries (keys+MD folded, eg, vocals) w/ specific labels', ()=>{
    seed();
    const rows=JSON.parse(ev('JSON.stringify(enumerateSetupRoles())'));
    const cam=rows.filter(r=>r.name==='Cam Lee');
-   if(cam.length!==4) throw new Error('expected 4 Cam Lee entries, got '+cam.length+' -> '+JSON.stringify(cam));
+   if(cam.length!==3) throw new Error('expected 3 Cam Lee entries, got '+cam.length+' -> '+JSON.stringify(cam));
    const keys=cam.find(r=>r.role==='band'&&r.typeKey==='keys');
    const eg=cam.find(r=>r.role==='band'&&r.typeKey==='eg');
    const voc=cam.find(r=>r.role==='vocalist'&&r.typeKey==='vocals');
-   const md=cam.find(r=>r.role==='md'&&r.typeKey==='md');
-   if(!keys||keys.label!=='Keys') throw new Error('keys entry/label wrong: '+JSON.stringify(keys));
+   if(!keys||keys.label!=='Keys'||!keys.mdFolded) throw new Error('keys entry should carry the folded MD: '+JSON.stringify(keys));
    if(!eg||eg.label!=='Electric 2') throw new Error('eg entry/label wrong: '+JSON.stringify(eg));
    if(!voc||voc.label!=='Vocals') throw new Error('vocals entry/label wrong: '+JSON.stringify(voc));
-   if(!md||md.label!=='MD') throw new Error('md entry/label wrong: '+JSON.stringify(md));
+   if(cam.some(r=>r.role==='md')) throw new Error('a separate md row was emitted');
    if(rows.some(r=>/removed instrument/i.test(r.label||''))) throw new Error('a label says Removed instrument');
    // stableKeys must match the helper
    const wantK=ev(`stableSetupKey('Cam Lee','band','keys')`);
@@ -65,7 +65,7 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!riley||riley.onPlan!==true) throw new Error('Riley Q not flagged onPlan');
  });
 
- check('renderSetupManager: Cam Lee shown once with 4 role sub-entries, no "Removed instrument"', ()=>{
+ check('renderSetupManager: Cam Lee shown once with 3 role sub-entries (Keys · MD), no "Removed instrument"', ()=>{
    seed();
    // give each bucket at least one item so buckets are non-empty and persist
    ev(`enumerateSetupRoles().forEach(r=>{ seedPersonSetup(r.stableKey,r.typeKey); var b=state.setupItems[r.stableKey]; if(!b.items.length) b.items.push({id:'x'+Math.random(),text:'Seed line',doneThisService:false,scopeOneTime:false}); });`);
@@ -83,21 +83,21 @@ window.addEventListener('load',()=>setTimeout(()=>{
    ['Keys','Electric 2','Vocals','MD'].forEach(l=>{ if(!scopes.some(s=>s.indexOf(l)!==-1)) throw new Error('missing scope label '+l+' -> '+JSON.stringify(scopes)); });
  });
 
- check('renderSetupManager: MD sub-entry uses the md catalog (an md option text appears)', ()=>{
+ check('renderSetupManager: the Keys · MD sub-entry resolves the md catalog (an md option text appears)', ()=>{
    seed();
    ev(`enumerateSetupRoles().forEach(r=>{ seedPersonSetup(r.stableKey,r.typeKey); reconstructSetupBucket(r.stableKey,r.typeKey); });`);
-   // put an md-catalog selection on the MD bucket so a distinctive md line resolves
-   const mdKey=ev(`stableSetupKey('Cam Lee','md','md')`);
-   ev(`(function(){var b=state.setupItems[${JSON.stringify(mdKey)}]; b.selections={rig:['md_tracks']}; rebuildPersonItems(${JSON.stringify(mdKey)},'md');})()`);
+   // put an md-catalog pick on the FOLDED keys bucket so a distinctive md line resolves
+   const keysKey=ev(`stableSetupKey('Cam Lee','band','keys')`);
+   ev(`(function(){var b=state.setupItems[${JSON.stringify(keysKey)}]; b.selections.md={rig:['md_tracks']}; rebuildPersonItems(${JSON.stringify(keysKey)},'keys');})()`);
    ev('renderSetupManager()');
-   // The MD bucket's resolved md-catalog line renders as an editable <input value>,
-   // so read the input value (not textContent, which excludes input values).
-   const inp=doc.querySelector(`#setupMgrList .setup-item-input[data-key="${mdKey}"]`);
-   if(!inp) throw new Error('no md bucket input rendered');
-   if(!/House tracks computer/i.test(inp.value)) throw new Error('md catalog line not shown for MD entry: '+inp.value);
-   // and the sub-entry is labeled MD
-   const mdBucket=inp.closest('.setup-bucket');
-   if(!/MD/.test(mdBucket.querySelector('.setup-bucket-scope').textContent)) throw new Error('md bucket not labeled MD');
+   // Resolved lines render as editable <input value>, so read values (textContent excludes them).
+   const inps=[...doc.querySelectorAll(`#setupMgrList .setup-item-input[data-key="${keysKey}"]`)];
+   if(!inps.length) throw new Error('no keys bucket inputs rendered');
+   if(!inps.some(i=>/House tracks computer/i.test(i.value))) throw new Error('md catalog line not shown on the keys entry: '+JSON.stringify(inps.map(i=>i.value)));
+   const bucketEl=inps[0].closest('.setup-bucket');
+   const scope=bucketEl.querySelector('.setup-bucket-scope').textContent;
+   if(!/Keys/.test(scope)||!/MD/.test(scope)) throw new Error('bucket not labeled Keys · MD: '+scope);
+   if(doc.querySelector(`#setupMgrList .setup-item-input[data-key="${ev(`stableSetupKey('Cam Lee','md','md')`)}"]`)) throw new Error('a separate MD sub-entry still renders');
  });
 
  check('renderSetupChecklist: NOT "No setup items configured" when buckets have items', ()=>{

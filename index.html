@@ -1186,6 +1186,8 @@ body.setup-items-mode .container{display:none}
 .sp-group{border:1px solid var(--border);border-radius:6px;padding:6px 10px 8px;margin:0;min-width:150px}
 .sp-group-name{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:0 4px}
 .sp-opt{display:flex;align-items:center;gap:6px;font-size:13px;padding:2px 0;cursor:pointer}
+.sp-md-block{margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
+.sp-md-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
 .sp-customs{margin-top:8px;display:flex;flex-direction:column;gap:4px}
 .sp-custom-row{display:flex;align-items:center;gap:8px;font-size:13px}
 .sp-line-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0}
@@ -2731,16 +2733,21 @@ function churchSetupDefaults(key) {
 function defaultSelectionsFor(key) { return JSON.parse(JSON.stringify(churchSetupDefaults(key).selections || {})); }
 
 // Pure: (key, selections, customItems[]) -> [{text}] resolved checklist lines, catalog order.
-function resolveSetupItems(key, selections, customItems) {
+// `opts.md` — this bucket is the MD's instrument bucket this week (see isMdFolded): the MD catalog
+// resolves from `selections.md` into the SAME list, and customItems tagged `md:true` (the church's
+// MD customs) print. Without it those stay dormant, so an ex-MD's instrument list drops the MD
+// lines while keeping their picks for the next time they run the role.
+function resolveSetupItems(key, selections, customItems, opts) {
   const cat = setupCatalogFor(key);
   const out = [];
+  const withMd = !!(opts && opts.md);
   // FIX #6: a catalog line the user reworded inline is recorded as a customItems entry carrying
   // `replaces` = the original catalog text. Skip those originals so the edit isn't duplicated.
   const replaced = new Set((customItems || []).map(ci => ci.replaces).filter(Boolean));
-  const push = t => { if (t && !replaced.has(t)) out.push({ text: t }); };
-  if (cat) {
-    cat.groups.forEach(g => {
-      const sel = selections ? selections[g.id] : undefined;
+  const seen = new Set();
+  const push = t => { if (t && !replaced.has(t) && !seen.has(t)) { seen.add(t); out.push({ text: t }); } };
+  const walk = (c, sels) => c.groups.forEach(g => {
+      const sel = sels ? sels[g.id] : undefined;
       const chosenIds = g.type === 'radio' ? (sel ? [sel] : []) : (Array.isArray(sel) ? sel : []);
       g.options.forEach(o => {
         if (chosenIds.indexOf(o.id) === -1) return;
@@ -2752,10 +2759,71 @@ function resolveSetupItems(key, selections, customItems) {
         (o.addItems || []).forEach(push);
       });
     });
+  if (cat) walk(cat, selections);
+  if (withMd && selections && selections.md && key !== 'md') {
+    const mdCat = setupCatalogFor('md');
+    if (mdCat) walk(mdCat, selections.md);
   }
   // Custom items (including reworded-preset overrides) always render, by their text.
-  (customItems || []).forEach(ci => { if (ci.text) out.push({ text: ci.text }); });
+  (customItems || []).forEach(ci => { if (ci && ci.md && !withMd) return; if (ci.text) out.push({ text: ci.text }); });
   return out;
+}
+
+// ONE checklist per person for every position the MD is assigned to (Dillon, 2026-10-01). The MD's
+// instrument bucket (`name|band|keys`) is the fold target; a separate `name|md|md` exists only for
+// a solo MD (tracks, no instrument) or an instrument with no preset type. A Tracks/MD-type
+// instrument already resolves the md catalog on its own bucket and needs no fold.
+function mdFoldKey() {
+  if (!state.musicDirectorId) return null;
+  const inst = instById(state.musicDirectorId);
+  const name = inst ? (inst.assignedTo || '').trim() : '';
+  if (!name) return null;
+  const tk = detectPresetKey(inst);
+  if (!tk || tk === 'md') return null;
+  return stableSetupKey(name, 'band', tk);
+}
+function isMdFolded(stableKey) { return !!stableKey && stableKey === mdFoldKey(); }
+// Give the fold target its MD half: absorb any legacy `name|md|md` bucket (picks, customs,
+// removals, done ticks — then delete it), otherwise seed the church's MD defaults once.
+function ensureMdFold(stableKey) {
+  const b = state.setupItems[stableKey];
+  if (!b) return;
+  b.selections = b.selections || {};
+  b.customItems = b.customItems || [];
+  b.items = b.items || [];
+  const typeKey = (stableKey || '').split('|')[2] || null;
+  const legacyKey = (stableKey || '').split('|')[0] + '|md|md';
+  const legacy = state.setupItems[legacyKey];
+  let changed = false;   // rebuild ONLY on a real change: a rebuild drops auto-added lines (boom mic)
+  if (legacy) {
+    changed = true;
+    reconstructSetupBucket(legacyKey, 'md');   // items-only legacy shapes → selections + customs
+    const lsel = legacy.selections || {};
+    if (Object.keys(lsel).length || !b.mdSeeded) b.selections.md = lsel;
+    (legacy.customItems || []).forEach(ci => {
+      if (!ci) return;
+      const dup = b.customItems.some(x => x && (x.text || '') === (ci.text || '') && (x.replaces || '') === (ci.replaces || ''));
+      if (dup) return;
+      const copy = Object.assign({}, ci);
+      if (copy.text && !copy.replaces) copy.md = true;   // a real MD custom follows the role
+      b.customItems.push(copy);
+    });
+    // A done tick survives rebuildPersonItems by text, so park the ticked lines on the target first.
+    (legacy.items || []).forEach(it => {
+      if (it && it.doneThisService && it.text && !b.items.some(x => x && x.text === it.text)) b.items.push(it);
+    });
+    delete state.setupItems[legacyKey];
+    b.mdSeeded = true;
+  }
+  if (!b.mdSeeded) {
+    changed = true;
+    b.selections.md = defaultSelectionsFor('md');
+    (churchSetupDefaults('md').customOptions || []).forEach(o => {
+      if (o && o.text && !b.customItems.some(ci => ci && ci.text === o.text)) b.customItems.push({ id: newSetupItem('').id, text: o.text, md: true });
+    });
+    b.mdSeeded = true;
+  }
+  if (changed) rebuildPersonItems(stableKey, typeKey);
 }
 
 // Persist an inline text edit to the SOURCE OF TRUTH so it survives rebuildPersonItems (FIX #6).
@@ -2817,7 +2885,7 @@ function removeSetupLine(stableKey, typeKey, text) {
     } else {
       // Only suppress where the line actually appears, so we don't litter untouched buckets.
       const present = (bucket.items || []).some(it => it && it.text === t)
-        || resolveSetupItems(tKey, bucket.selections, bucket.customItems).some(it => it.text === t);
+        || resolveSetupItems(tKey, bucket.selections, bucket.customItems, { md: isMdFolded(k) }).some(it => it.text === t);
       if (!present) return;
       if (bucket.customItems.some(ci => ci && ci.replaces === t && !ci.text)) return; // already gone here
       bucket.customItems.push({ id: newSetupItem('').id, text: '', replaces: t });
@@ -8229,6 +8297,8 @@ function renderBulkPreadd() {
       if (r.open && r.name) {
         const ed = chip.querySelector('.bulk-editor');
         if (ed) {
+          // Pre-add has no plan yet, so the MD picks start in md|md; ensureMdFold absorbs that bucket
+          // into their instrument bucket the first week they are the MD on it.
           if (r.role === 'md') renderPersonSetupEditor(ed, stableSetupKey(r.name, 'md', 'md'), 'md');
           else { const { key, typeKey } = bulkRowSetupKey(r); renderPersonSetupEditor(ed, key, typeKey); }
         }
@@ -8387,7 +8457,7 @@ function renderSetupManager() {
     if (sep === -1) return;
     const nn = key.slice(0, sep);
     const en = enumByKey[key];
-    const scopeLabel = en ? en.label : setupKeyRoleLabel(key);
+    const scopeLabel = en ? (en.label + (en.mdFolded ? ' · MD' : '')) : setupKeyRoleLabel(key);
     const typeKey = (en && en.typeKey) || (key.split('|')[2] || 'none');
     if (!byPerson[nn]) byPerson[nn] = [];
     byPerson[nn].push({ key, scopeLabel, typeKey, items: bucket.items, present: !!en });
@@ -11413,7 +11483,7 @@ function seedPersonSetup(stableKey, typeKey) {
   }
   bucket.seeded = true;
   if (!('needsReview' in bucket)) bucket.needsReview = false;
-  bucket.items = resolveSetupItems(typeKey, selections, bucket.customItems).map(l => newSetupItem(l.text, false));
+  bucket.items = resolveSetupItems(typeKey, selections, bucket.customItems, { md: isMdFolded(stableKey) }).map(l => newSetupItem(l.text, false));
   state.setupItems[stableKey] = bucket;
   return bucket;
 }
@@ -11422,7 +11492,7 @@ function rebuildPersonItems(stableKey, typeKey) {
   if (!b) return;
   const doneByText = {};
   (b.items || []).forEach(it => { if (it.doneThisService) doneByText[it.text] = true; });
-  b.items = resolveSetupItems(typeKey, b.selections || {}, b.customItems || []).map(l => {
+  b.items = resolveSetupItems(typeKey, b.selections || {}, b.customItems || [], { md: isMdFolded(stableKey) }).map(l => {
     const it = newSetupItem(l.text, false);
     if (doneByText[l.text]) it.doneThisService = true;
     return it;
@@ -11437,6 +11507,8 @@ function rebuildBucketsForType(typeKey) {
   Object.keys(state.setupItems || {}).forEach(k => {
     if (String(k).split('|')[2] === typeKey) rebuildPersonItems(k, typeKey);
   });
+  // The MD catalog also lives folded inside the MD's instrument bucket.
+  if (typeKey === 'md') { const fk = mdFoldKey(); if (fk && state.setupItems[fk]) rebuildPersonItems(fk, fk.split('|')[2]); }
 }
 // Reconstruct selections for a migrated/legacy bucket that has items but no
 // selections. Maps each item's text back to a catalog option (radio → set
@@ -11512,7 +11584,11 @@ function reconstructSetupBucket(stableKey, typeKey) {
 //   tag    -> `${name}|tag:<tag>`
 function migrateLegacySetupBuckets() {
   const store = state.setupItems || {};
-  const ROLES = { band:1, vocalist:1, shadow:1 };
+  // `md` is a stable role too. It was missing here, so every `name|md|md` bucket was treated as an
+  // old instrument-id key: re-keyed to `name|band|none` on each boot (the "three recurring" |none
+  // buckets in Dillon's export were the MDs' own), and since db690fb deleted outright. Either way
+  // an MD's picks never survived a reload. Found 2026-10-01 with a direct probe.
+  const ROLES = { band:1, vocalist:1, shadow:1, md:1 };
   Object.keys(store).forEach(key => {
     const parts = key.split('|');
     if (parts.length < 2) return;
@@ -11711,7 +11787,14 @@ function enumerateSetupRoles() {
   if (state.musicDirectorId) {
     const mdInst = instById(state.musicDirectorId);
     const mdName = mdInst ? (mdInst.assignedTo||'').trim() : '';
-    if (mdName && detectPresetKey(mdInst) !== 'md') push(mdName, 'md', 'md', 'MD');
+    if (mdName && detectPresetKey(mdInst) !== 'md') {
+      // ONE row per person: the MD role folds into their instrument row (2026-10-01). Only an
+      // instrument with no preset type (nowhere to fold) still gets the separate md|md row.
+      const fk = mdFoldKey();
+      const row = fk ? rows.find(r => r.stableKey === fk) : null;
+      if (row) { row.mdFolded = true; ensureMdFold(fk); }
+      else push(mdName, 'md', 'md', 'MD');
+    }
   }
   // Solo MD (runs tracks, plays no instrument) — emit a name-keyed md bucket if not already covered.
   if (state.mdSoloName && !rows.some(r => r.role === 'md' && normFullName(r.name) === normFullName(state.mdSoloName))) {
@@ -11848,7 +11931,11 @@ function getStageAreas() {
   if (state.musicDirectorId) {
     const mdInst = instById(state.musicDirectorId);
     const mdName = mdInst ? (mdInst.assignedTo || '').trim() : '';
-    if (mdName && detectPresetKey(mdInst) !== 'md') {
+    const fk = mdFoldKey();
+    let folded = null;
+    if (fk) areas.forEach(a => a.people.forEach(p => { if (p.key === fk) folded = p; }));
+    if (folded) { folded.mdFolded = true; ensureMdFold(fk); }   // one entry per person (2026-10-01)
+    else if (mdName && detectPresetKey(mdInst) !== 'md') {
       areas.push({
         id: 'area_md',
         name: 'MD',
@@ -12127,12 +12214,36 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   groupsWrap.className = 'sp-groups';
   container.appendChild(groupsWrap);
   const onGroupsChange = next => {
+    if (bucket.selections && bucket.selections.md) next.md = bucket.selections.md;   // the MD half rides along
     bucket.selections = next;
     rebuildPersonItems(stableKey, typeKey);
     saveState();
+    renderCustoms();
     if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
   };
   renderSetupGroups(groupsWrap, typeKey, bucket.selections, onGroupsChange);
+  // The MD's instrument bucket carries the MD questions too — same editor, same line list, same
+  // add row, same removals. One section set per person (2026-10-01).
+  if (isMdFolded(stableKey)) {
+    ensureMdFold(stableKey);
+    const mdBlock = document.createElement('div');
+    mdBlock.className = 'sp-md-block';
+    const mdLabel = document.createElement('div');
+    mdLabel.className = 'sp-md-label';
+    mdLabel.textContent = 'As Music Director';
+    const mdGroups = document.createElement('div');
+    mdGroups.className = 'sp-groups';
+    mdBlock.appendChild(mdLabel);
+    mdBlock.appendChild(mdGroups);
+    container.appendChild(mdBlock);
+    renderSetupGroups(mdGroups, 'md', bucket.selections.md || {}, next => {
+      bucket.selections.md = next;
+      rebuildPersonItems(stableKey, typeKey);
+      saveState();
+      renderCustoms();
+      if (typeof refreshSetupItemsUI === 'function') refreshSetupItemsUI();
+    });
+  }
 
   // Every resolved line on this person's list, each removable — not just the custom ones.
   // An implied `addItems` line (e.g. "Amp & mic setup (stereo)" from the stereo rig) previously
@@ -12142,7 +12253,7 @@ function renderPersonSetupEditor(container, stableKey, typeKey) {
   customWrap.className = 'sp-customs';
   const renderCustoms = () => {
     customWrap.innerHTML = '';
-    const lines = resolveSetupItems(typeKey, bucket.selections, bucket.customItems);
+    const lines = resolveSetupItems(typeKey, bucket.selections, bucket.customItems, { md: isMdFolded(stableKey) });
     // Auto-added lines live directly on bucket.items rather than coming from the catalog, so they
     // would otherwise never appear here and could not be removed at all (e.g. the MD's boom mic).
     // The assigned vocal mic is deliberately excluded — the MIC dropdown above is its control.
@@ -12429,6 +12540,7 @@ function collectChecklistItems() {
     if (!p) { p = { name: en.name, isVoc: false, roles: [], items: [], seen: new Set(), buckets: [] }; byPerson.set(nn, p); order.push(nn); }
     if (en.role === 'vocalist') p.isVoc = true;
     if (en.label && p.roles.indexOf(en.label) === -1) p.roles.push(en.label);
+    if (en.mdFolded && p.roles.indexOf('MD') === -1) p.roles.push('MD');   // "Keys · MD", one bucket
     {
       const bLabel = en.label || (en.role === 'vocalist' ? 'Vocals' : (en.role === 'md' ? 'MD' : (en.typeKey || 'Setup')));
       if (!p.buckets.some(b => b.stableKey === en.stableKey)) {
@@ -13587,12 +13699,17 @@ function renderPostPullStep() {
       tag = `New on ${esc(step.instLabel)}`;
       sub = `First time seeing ${esc(firstName(step.personName))} on ${esc(step.instLabel)}. Select their setup — your defaults are pre-checked. Tick what they need (e.g. brings their own rig, needs the house rig) and add anything custom. These become checklist items on the ✓ Items page.`;
     }
-    const instSection = showInstrument ? `
+    // The MD role folds into the instrument bucket when the instrument has a preset type, so the
+    // instrument editor already carries the MD questions — one section set, not two (2026-10-01).
+    const stepTypeKey = detectPresetKey(instById(step.instId)) || null;
+    const stepBandKey = stepTypeKey ? stableSetupKey(step.personName, 'band', stepTypeKey) : null;
+    const mdInline = showMD && !!stepBandKey && isMdFolded(stepBandKey);
+    const instSection = (showInstrument || mdInline) ? `
       <div class="pp-row">
-        <div class="pp-row-label">Setup for ${esc(step.instLabel)}</div>
+        <div class="pp-row-label">Setup for ${esc(step.instLabel)}${mdInline ? ' · as Music Director' : ''}</div>
         <div id="pp_setup_editor"></div>
       </div>` : '';
-    const mdSection = showMD ? `
+    const mdSection = (showMD && !mdInline) ? `
       <div class="pp-row">
         <div class="pp-row-label">Setup as Music Director</div>
         <div id="pp_md_setup_editor"></div>
@@ -13609,16 +13726,13 @@ function renderPostPullStep() {
       ${mdSection}
     `;
     // Grouped per-instrument setup, seeded from the church's wizard defaults.
-    if (showInstrument) {
+    if (showInstrument || mdInline) {
       const spEd = content.querySelector('#pp_setup_editor');
-      if (spEd) {
-        const typeKey = detectPresetKey(instById(step.instId)) || null;
-        renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'band', typeKey), typeKey);
-      }
+      if (spEd) renderPersonSetupEditor(spEd, stableSetupKey(step.personName, 'band', stepTypeKey), stepTypeKey);
     }
     // The MD role's own setup bucket, shown as a second section on the same card. Bound to the
     // SAME key the items layer uses (stableSetupKey(name,'md','md')) so edits round-trip to ✓ Items.
-    if (showMD) {
+    if (showMD && !mdInline) {   // nowhere to fold (no preset type): the separate md bucket
       const mdEd = content.querySelector('#pp_md_setup_editor');
       if (mdEd) renderPersonSetupEditor(mdEd, stableSetupKey(step.personName, 'md', 'md'), 'md');
     }

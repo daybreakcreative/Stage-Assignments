@@ -9,6 +9,7 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 }});
 const{window}=dom;const ev=c=>window.eval(c);
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('renderAll=function(){}; renderStage=function(){}; renderBand=function(){}; renderDisplayView=function(){}; toast=function(){};');
 
@@ -84,14 +85,14 @@ window.addEventListener('load',()=>setTimeout(()=>{
    state.config.setupDefaults.md={selections:{rig:['md_tracks','md_talk']},customOptions:[]};
  `);
 
- check('scheduled MD who plays Keys gets an MD role row with md items', ()=>{
+ check('scheduled MD who plays Keys gets ONE row (keys, MD folded in) whose checklist carries the md items', ()=>{
    ev(`state.setupItems={}; state.checklistState={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[]; state.config.stageFeatures=[];`);
    seedMdDefault();
    ev(`state.instruments=[{id:'inst_k',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}]; state.musicDirectorId='inst_k';`);
-   const rows=JSON.parse(ev(`JSON.stringify(enumerateSetupRoles().map(r=>({name:r.name,role:r.role,typeKey:r.typeKey,label:r.label})))`));
-   const md=rows.find(r=>r.name==='Pat Reed' && r.typeKey==='md' && r.role==='md');
-   if(!md) throw new Error('no MD role row: '+JSON.stringify(rows));
-   if(md.label!=='MD') throw new Error('MD row label not MD: '+md.label);
+   const rows=JSON.parse(ev(`JSON.stringify(enumerateSetupRoles().map(r=>({name:r.name,role:r.role,typeKey:r.typeKey,label:r.label,mdFolded:!!r.mdFolded})))`));
+   const mine=rows.filter(r=>r.name==='Pat Reed');
+   if(mine.length!==1) throw new Error('expected ONE row for the MD keys player: '+JSON.stringify(mine));
+   if(mine[0].typeKey!=='keys'||!mine[0].mdFolded) throw new Error('keys row should carry the folded MD role: '+JSON.stringify(mine[0]));
    const secs=JSON.parse(ev(`JSON.stringify(collectChecklistItems())`));
    const band=secs.find(s=>s.key==='band');
    if(!band) throw new Error('no band section');

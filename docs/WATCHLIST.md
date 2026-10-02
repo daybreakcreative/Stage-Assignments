@@ -631,3 +631,24 @@ Behaviors that must keep working. **The executable version of this list is `test
         anyone opening an editor.
       Verified on his export, clean bare reload: `|none` 7 → 0 live AND saved; Keys·MD card 7 → 6
       chips with zero radio texts; Bass 5 → 3. → `setupsimplify`, `setupwhole`
+
+74. **One checklist per person for every MD-assigned position** (2026-10-01, Dillon: "yes & do the
+    same for every position if MD is assigned to it"). The MD role FOLDS into the MD's instrument
+    bucket: `selections.md` holds the MD catalog picks (namespaced — MD groups `rig`/`extras` collide
+    with instrument groups), church MD customs are tagged `md:true`, and both print only while that
+    bucket IS the fold target (`isMdFolded(key)` → `mdFoldKey()` = this week's MD instrument bucket,
+    unless the instrument has no preset type or already IS the md type). An ex-MD's list drops the MD
+    lines but keeps the picks dormant. One row (`mdFolded`), one card ("Keys · MD"), one editor
+    (instrument groups + an "As Music Director" block + ONE line list / add row / restore list), one
+    setup-manager sub-entry ("Keys · MD"), one wizard editor. `ensureMdFold()` absorbs a legacy
+    `name|md|md` (picks, customs, removals, done ticks) and deletes it; a solo MD and a no-type
+    instrument keep `md|md`. ⚠ `ensureMdFold` rebuilds `items` ONLY on a real change — a rebuild drops
+    auto-added lines (boom mic), which broke `keysremove` until gated.
+    • ⚠ **Found by probe: `md` was missing from `migrateLegacySetupBuckets`' stable-role list**, so
+      every `name|md|md` bucket was treated as an old instrument-id key — re-keyed to `|band|none` on
+      every boot before db690fb (the "three recurring" |none buckets WERE the MDs' own picks), and
+      deleted outright by db690fb. An MD's picks never survived a reload. `md:1` added; pinned.
+    Verified on his export: this week's MD → one row, one card (6 chips, 0 radio texts), one bucket
+    with `selections.md` {rig, extras} folded from the real `md|md`, 3 removals carried;
+    `md|md` 3 → 2 (two past MDs, dormant, now survive boot); `|none` 0. → `setupmdfold`
+

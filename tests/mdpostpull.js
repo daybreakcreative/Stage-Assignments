@@ -27,6 +27,7 @@ function bandStep(instLabel, mdOn, prefs){
  return steps.find(s=>s.kind==='pref-band'&&s.personName==='Sophia Martinez')||null;
 }
 
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('toast=function(){};renderAll=function(){};saveState=function(){};refreshSetupItemsUI=function(){};');
 
@@ -73,43 +74,50 @@ window.addEventListener('load',()=>setTimeout(()=>{
  // Render a pref-band step directly by seeding postPullState, then inspect #postPullContent.
  function renderBandStep(step){
    ev(`toast=function(){};renderAll=function(){};saveState=function(){};refreshSetupItemsUI=function(){};`);
-   ev(`state.instruments=[{id:'inst_x',label:'Bass',assignedTo:'Sophia Martinez'}];`);
+   ev(`state.setupItems={}; state.instruments=[{id:'inst_x',label:'Bass',assignedTo:'Sophia Martinez'}]; state.musicDirectorId=${step.isMD?"'inst_x'":'null'};`);
    ev(`postPullState={steps:[${JSON.stringify(step)}],idx:0,onClose:null};`);
    ev(`renderPostPullStep();`);
  }
 
- check('render: MD + new instrument shows BOTH editors', ()=>{
+ check('render: MD + new instrument shows ONE editor that carries the MD block (no second editor)', ()=>{
    renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:true,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'});
-   if(!doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor missing');
-   const md=doc.querySelector('#pp_md_setup_editor');
-   if(!md) throw new Error('MD editor container missing');
-   if(md.children.length===0) throw new Error('MD editor not populated');
+   const ed=doc.querySelector('#pp_setup_editor');
+   if(!ed) throw new Error('instrument editor missing');
+   if(doc.querySelector('#pp_md_setup_editor')) throw new Error('a second MD editor still renders');
+   if(!ed.querySelector('.sp-md-block')) throw new Error('the one editor has no MD block');
+   if(!ed.querySelector('input[value="md_tracks"]')) throw new Error('MD options not in the editor');
+   if(!/Music Director/.test(ed.closest('.pp-row').querySelector('.pp-row-label').textContent)) throw new Error('row label does not say the MD role is included');
  });
 
  check('render: non-MD player shows NO MD editor', ()=>{
    renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:true,isMD:false,showMD:false,mdPrefKey:'sophia martinez|md'});
    if(!doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor missing');
    if(doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor should NOT be present');
+   if(doc.querySelector('#pp_setup_editor .sp-md-block')) throw new Error('MD block on a non-MD');
  });
 
- check('render: MD-only card shows MD editor, no instrument editor', ()=>{
+ check('render: newly-MD card (instrument already known) shows the folded editor with the MD block', ()=>{
    renderBandStep({kind:'pref-band',personName:'Sophia Martinez',instLabel:'Bass',instId:'inst_x',prefKey:'sophia martinez|bass',showInstrument:false,isMD:true,showMD:true,mdPrefKey:'sophia martinez|md'});
-   if(doc.querySelector('#pp_setup_editor')) throw new Error('instrument editor should NOT be present');
-   if(!doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor missing');
+   const ed=doc.querySelector('#pp_setup_editor');
+   if(!ed) throw new Error('folded editor missing');
+   if(doc.querySelector('#pp_md_setup_editor')) throw new Error('separate MD editor should NOT be present');
+   if(!ed.querySelector('.sp-md-block')) throw new Error('MD block missing');
  });
 
- check('bucket consistency: popup MD editor seeds the same md bucket as the items layer', ()=>{
+ check('bucket consistency: the popup editor and the items layer share the ONE folded keys bucket', ()=>{
    ev(`state.setupItems={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[];`);
    ev(`state.instruments=[{id:'inst_k',label:'Keys',assignedTo:'Sky Fox'}];`);
    ev(`state.musicDirectorId='inst_k';`);
-   const mdKey = ev(`stableSetupKey('Sky Fox','md','md')`);
-   const areaKey = ev(`(getStageAreas().find(a=>a.id==='area_md')||{people:[{}]}).people[0].key`);
-   if(areaKey!==mdKey) throw new Error('items-layer md key '+areaKey+' != '+mdKey);
+   const keysKey = ev(`stableSetupKey('Sky Fox','band','keys')`);
+   const entry = ev(`getStageAreas().reduce((f,a)=>f||a.people.find(p=>p.mdFolded)||null,null)`);
+   if(!entry||entry.key!==keysKey) throw new Error('items layer has no folded keys entry: '+JSON.stringify(entry));
+   if(ev(`getStageAreas().some(a=>a.id==='area_md')`)) throw new Error('separate MD area still emitted');
    ev(`state.setupItems={};`); // clear so we can prove the popup seeds the SHARED bucket
    ev(`postPullState={steps:[{kind:'pref-band',personName:'Sky Fox',instLabel:'Keys',instId:'inst_k',prefKey:'sky fox|keys',showInstrument:true,isMD:true,showMD:true,mdPrefKey:'sky fox|md'}],idx:0,onClose:null};`);
    ev(`renderPostPullStep();`);
-   if(!doc.querySelector('#pp_md_setup_editor')) throw new Error('MD editor missing');
-   if(!ev(`!!state.setupItems[${JSON.stringify(mdKey)}]`)) throw new Error('popup did not seed the shared md bucket '+mdKey);
+   if(!doc.querySelector('#pp_setup_editor .sp-md-block')) throw new Error('MD block missing from the popup editor');
+   if(!ev(`!!(state.setupItems[${JSON.stringify(keysKey)}]&&state.setupItems[${JSON.stringify(keysKey)}].selections.md)`)) throw new Error('popup did not seed the MD half onto '+keysKey);
+   if(ev(`!!state.setupItems[stableSetupKey('Sky Fox','md','md')]`)) throw new Error('popup minted a separate md|md bucket');
  });
 
  console.log('--- save: advancing marks both prefs asked so neither re-prompts ---');

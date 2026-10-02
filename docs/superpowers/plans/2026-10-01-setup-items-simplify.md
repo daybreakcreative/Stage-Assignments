@@ -15,26 +15,27 @@ Already live (6bb060f): whole-person remove/restore, doubled auto-mic repair, |n
       choice with no addItems emits nothing; existing per-person `replaces` removals still apply.
 - [x] Existing removal records for radio texts become dead weight (harmless) — leave them.
 
-## 3. One checklist per person, every MD-assigned position  — "yes & do the same for every position"
+## 3. One checklist per person, every MD-assigned position  — ✅ shipped (see WATCHLIST #74)
+Deviations: migration lives in `ensureMdFold()` (called from enumerate/areas/editor), not repairSetupBuckets — it must run whenever the MD changes, not only at boot. Manager + wizard reroute done by folding, not by rewriting the md|md key. Bulk pre-add keeps md|md (no plan yet); it is absorbed the first week they are MD.
 Collision: MD groups = rig, extras. Every instrument has `extras`; bass/ag/eg/strings have `rig`.
 → MD selections live NAMESPACED in the instrument bucket: `selections.md = {rig:[…], extras:[…]}`.
-- [ ] enumerateSetupRoles(): when the MD has an instrument, push ONE row (the instrument's),
+- [x] enumerateSetupRoles(): when the MD has an instrument, push ONE row (the instrument's),
       flagged `mdFolded:true`; do NOT push a separate md|md row. mdSoloName keeps its md|md row.
-- [ ] resolveSetupItems(typeKey, selections, customItems): if `selections.md`, also resolve the
+- [x] resolveSetupItems(typeKey, selections, customItems): if `selections.md`, also resolve the
       MD catalog against `selections.md` and append (same customItems/replaces apply to both).
-- [ ] rebuildPersonItems(): unchanged if resolve handles it.
-- [ ] renderPersonSetupEditor(): when bucket is MD-folded, render the MD catalog's groups as an
+- [x] rebuildPersonItems(): unchanged if resolve handles it.
+- [x] renderPersonSetupEditor(): when bucket is MD-folded, render the MD catalog's groups as an
       "MD" block UNDER the instrument's groups, writing to `selections.md`. One editor, one bucket.
-- [ ] Card label stays "Keys · MD" (already does via roles[]).
-- [ ] Migration (in repairSetupBuckets): for each `<name>|md|md` where `<name>|band|<type>` exists
+- [x] Card label stays "Keys · MD" (already does via roles[]).
+- [x] Migration (in repairSetupBuckets): for each `<name>|md|md` where `<name>|band|<type>` exists
       for this week's MD instrument → move md selections to `band.selections.md`, union customItems,
       drop the md|md bucket. Guard: only when the person IS the MD on an instrument.
-- [ ] Reroute callers that build stableSetupKey(name,'md','md') when the MD has an instrument:
+- [x] Reroute callers that build stableSetupKey(name,'md','md') when the MD has an instrument:
       line ~8199 (setup manager), ~13536 (wizard). Route to the instrument bucket.
-- [ ] Boom mic: ensureBoom already targets the MD's instrument bucket. Check it doesn't double.
-- [ ] Tests: one row per MD-with-instrument; items include both catalogs; one remove kills a shared
+- [x] Boom mic: ensureBoom already targets the MD's instrument bucket. Check it doesn't double.
+- [x] Tests: one row per MD-with-instrument; items include both catalogs; one remove kills a shared
       line everywhere; editor renders one section set; migration folds and drops; solo MD untouched.
-- [ ] Verify on Dillon's export in the scratchpad sandbox: Keys·MD card lines, one editor, remove
+- [x] Verify on Dillon's export in the scratchpad sandbox: Keys·MD card lines, one editor, remove
       → gone, reload → stays gone.
 
 ## Ship order

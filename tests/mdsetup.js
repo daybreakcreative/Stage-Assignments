@@ -9,6 +9,7 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'h
 }});
 const{window,window:{document}}=dom;const ev=c=>window.eval(c);
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('toast=function(){};renderAll=function(){};saveState=function(){};');
 
@@ -16,27 +17,22 @@ window.addEventListener('load',()=>setTimeout(()=>{
  const areaPeople = () => ev(`getStageAreas().reduce((acc,a)=>{a.people.forEach(p=>acc.push({name:p.name,key:p.key,typeKey:p.typeKey,role:p.role,instLabel:p.instLabel||null})); return acc;},[])`);
  const enumRoles = () => ev(`enumerateSetupRoles().map(r=>({name:r.name,role:r.role,typeKey:r.typeKey,stableKey:r.stableKey,label:r.label}))`);
 
- console.log('--- MD who plays Keys: MD entry AND Keys entry both present ---');
- check('getStageAreas has both a Keys band entry and an MD entry for the MD keys player', ()=>{
+ console.log('--- MD who plays Keys: ONE Keys entry carrying the MD role ---');
+ check('getStageAreas has ONE Keys entry (mdFolded) and no separate MD entry for the MD keys player', ()=>{
    ev(`state.setupItems={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[];`);
    ev(`state.instruments=[{id:'inst_keys_a',label:'Keys',tag:'Keys',assignedTo:'Pat Reed'}];`);
    ev(`state.musicDirectorId='inst_keys_a';`);
-   const people = areaPeople();
+   const people = ev(`getStageAreas().reduce((acc,a)=>{a.people.forEach(p=>acc.push({key:p.key,typeKey:p.typeKey,mdFolded:!!p.mdFolded})); return acc;},[])`);
    const mine = people.filter(p=>/pat reed/.test(p.key));
-   const keysEntry = mine.find(p=>p.typeKey==='keys');
-   const mdEntry = mine.find(p=>p.typeKey==='md');
-   if (!keysEntry) throw new Error('no keys entry: '+JSON.stringify(mine));
-   if (!mdEntry) throw new Error('no md entry: '+JSON.stringify(mine));
-   if (!/\|md\|md$/.test(mdEntry.key)) throw new Error('md key not name|md|md: '+mdEntry.key);
-   if (mdEntry.instLabel !== 'MD') throw new Error('md entry instLabel not MD: '+JSON.stringify(mdEntry));
+   if (mine.length !== 1) throw new Error('expected one entry: '+JSON.stringify(mine));
+   if (mine[0].typeKey !== 'keys' || !mine[0].mdFolded) throw new Error('keys entry should carry the MD fold: '+JSON.stringify(mine[0]));
+   if (ev(`getStageAreas().some(a=>a.id==='area_md')`)) throw new Error('separate MD area still emitted');
  });
- check('enumerateSetupRoles has both keys and md entries for MD keys player', ()=>{
-   const rows = enumRoles();
+ check('enumerateSetupRoles has ONE row for the MD keys player, flagged mdFolded', ()=>{
+   const rows = ev(`enumerateSetupRoles().map(r=>({stableKey:r.stableKey,typeKey:r.typeKey,role:r.role,mdFolded:!!r.mdFolded}))`);
    const mine = rows.filter(r=>/pat reed/.test(r.stableKey));
-   if (!mine.some(r=>r.typeKey==='keys')) throw new Error('no keys role: '+JSON.stringify(mine));
-   const md = mine.find(r=>r.typeKey==='md' && r.role==='md');
-   if (!md) throw new Error('no md role: '+JSON.stringify(mine));
-   if (md.label !== 'MD') throw new Error('md label not MD');
+   if (mine.length !== 1) throw new Error('expected one row: '+JSON.stringify(mine));
+   if (mine[0].typeKey !== 'keys' || mine[0].role !== 'band' || !mine[0].mdFolded) throw new Error(JSON.stringify(mine[0]));
  });
 
  console.log('--- MD who runs Tracks: exactly ONE md bucket, no separate |md|md ---');
@@ -60,16 +56,17 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if (mine.some(r=>/\|md\|md$/.test(r.stableKey))) throw new Error('unexpected separate |md|md bucket: '+JSON.stringify(mine));
  });
 
- console.log('--- MD md bucket seeds from church md defaults & catalog resolves ---');
- check('MD keys player md bucket has items seeded and md catalog option text present', ()=>{
+ console.log('--- the MD half seeds from church md defaults into the instrument bucket ---');
+ check('MD keys player: selections.md seeded on the keys bucket, md catalog resolvable', ()=>{
    ev(`state.setupItems={}; state.vocalists=[]; state.assignments=new Array(MAX_VOCALISTS).fill(null); state.shadows=[]; state.config.enableShadows=false; state.config.stageAreas=[];`);
    ev(`state.instruments=[{id:'inst_keys_b',label:'Keys',tag:'Keys',assignedTo:'Sky Fox'}];`);
    ev(`state.musicDirectorId='inst_keys_b';`);
    areaPeople(); // triggers seeding of buckets
-   const mdKey = ev(`stableSetupKey('Sky Fox','md','md')`);
-   const bucket = ev(`state.setupItems[${JSON.stringify(mdKey)}]`);
-   if (!bucket) throw new Error('md bucket not seeded');
-   if (!bucket.seeded) throw new Error('md bucket not marked seeded');
+   const keysKey = ev(`stableSetupKey('Sky Fox','band','keys')`);
+   const bucket = ev(`state.setupItems[${JSON.stringify(keysKey)}]`);
+   if (!bucket) throw new Error('keys bucket not seeded');
+   if (!bucket.seeded || !bucket.mdSeeded || !bucket.selections || !bucket.selections.md) throw new Error('MD half not seeded onto the keys bucket: '+JSON.stringify(bucket));
+   if (ev(`!!state.setupItems[stableSetupKey('Sky Fox','md','md')]`)) throw new Error('a separate md|md bucket was minted');
    // an md catalog option text should be resolvable
    const cat = ev(`JSON.stringify((setupCatalogFor('md').groups||[]).flatMap(g=>g.options.map(o=>o.text)))`);
    if (!/House tracks computer|Talkback mic/.test(cat)) throw new Error('md catalog missing expected options: '+cat);

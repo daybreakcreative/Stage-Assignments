@@ -13,8 +13,9 @@ const{window,window:{document}}=dom;const ev=c=>window.eval(c);
 function check(l,f){try{f();console.log('  OK  ',l);}catch(e){console.log('  FAIL',l,'->',e.message);errs.push(l);}}
 const mkTM = arr => JSON.stringify({data: arr.map((a,i)=>({id:'tm'+(i+1), attributes:{name:a.name, team_position_name:a.pos, status:'C'}}))});
 const pull = tmJson => ev(`applyPCOPlanData({attributes:{}}, ${tmJson}, {data:[],included:[]})`);
-const mdRolesFor = name => ev(`enumerateSetupRoles().filter(r=>r.role==='md' && normFullName(r.name)===normFullName(${JSON.stringify(name)})).length`);
+const mdRolesFor = name => ev(`enumerateSetupRoles().filter(r=>(r.role==='md'||r.mdFolded) && normFullName(r.name)===normFullName(${JSON.stringify(name)})).length`);
 
+// 2026-10-01 (Dillon: one checklist per person for every MD-assigned position): the MD role now FOLDS into the instrument bucket (selections.md); a separate md|md exists only for a solo MD or an instrument with no preset type.
 window.addEventListener('load',()=>setTimeout(()=>{
  ev('toast=function(){};renderAll=function(){};saveState=function(){};');
  ev(`state.config.setupDefaults={ md:{selections:{rig:['md_tracks']},customOptions:[]}, keys:{selections:{source:'k_house'},customOptions:[]} };`);
