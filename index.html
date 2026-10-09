@@ -350,7 +350,10 @@ body.stage-editing .stage-edit-toolbar{margin-bottom:12px}
 @supports not (aspect-ratio: 1) {
   .stage-svg-wrap > svg.stage-svg{width:100%;height:100%}
 }
-#stagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none}
+/* The people layer is the cqw container for its cards (fitStagePeopleLayer sizes it to the DRAWN
+   plot), so a card is the same fraction of the stage whatever shape the wrap is. z-index keeps the
+   cards above #stageFeatures now that containment makes the layer its own stacking context. */
+#stagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none;z-index:2;container-type:inline-size}
 #stagePeople > .sp{pointer-events:auto}
 .wiz-stage-people{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none}
 .wiz-stage-people > .sp{pointer-events:auto}
@@ -366,7 +369,7 @@ background-size:5% 10%}
    (Dillon, 2026-09-30). The clamp coefficients below are .dv-sp's, unchanged, so the ratio matches
    by construction rather than by being tuned to match. max-width is gone: a card sizes to its name
    like the display's does, and the resolver shortens it when there genuinely isn't room. */
-.sp{position:absolute;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:calc(clamp(2px,0.63cqw,5px)) calc(clamp(4px,1.14cqw,9px));min-width:clamp(44px,9.1cqw,72px);width:max-content;max-width:none;cursor:grab;transition:border-color .2s,opacity .2s;z-index:2;text-align:center}
+.sp{position:absolute;transform:translate(-50%,-50%);background:var(--surface);border:solid var(--border);border-width:max(1px,0.24cqw);border-radius:6px;padding:max(2px,0.63cqw) max(4px,1.14cqw);min-width:9.1cqw;width:max-content;max-width:none;cursor:grab;transition:border-color .2s,opacity .2s;z-index:2;text-align:center}
 .sp:active{cursor:grabbing}
 /* Edge anchoring, the same rule the display uses: a card in the outer bands grows INWARD so a long
    name can't spill off the plot. placeStageCards sets data-anchor; without these the edit view
@@ -386,12 +389,16 @@ background-size:5% 10%}
 .sp.empty:hover{transform:translate(-50%,-50%)}
 /* Compact tier — placeStageCards adds this when names still collide at full size. Same rule the
    display uses: the role line is about half a card's height. */
-#stagePeople.is-compact .sp,#semPeople.is-compact .sp{padding:1px 5px;min-width:0}
+#stagePeople.is-compact .sp,#semPeople.is-compact .sp{padding:max(1px,0.24cqw) max(2px,0.73cqw);min-width:0}
 #stagePeople.is-compact .sp-role,#semPeople.is-compact .sp-role{display:none}
-.sp-role{font-family:var(--ff-mono);font-size:clamp(6px,1.412cqw,20px);color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:1px}
+/* Every card dimension below is cqw of the people layer with at most a px FLOOR — never a px cap
+   and never a bare px — and is declared identically on .dv-sp*. The de-overlap resolver measures
+   the cards, so a card that is a different fraction of the plot in one view arranges people
+   differently there; `stageparity` pins the two sets of declarations to each other. */
+.sp-role{font-family:var(--ff-mono);font-size:max(6px,1.412cqw);color:var(--text-faint);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:0.12cqw}
 .sp.occupied .sp-role{color:var(--accent)}
 .sp.is-wl .sp-role{color:var(--wl)}
-.sp-name{font-family:var(--ff-display);font-size:clamp(8px,2.159cqw,30px);font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
+.sp-name{font-family:var(--ff-display);font-size:max(8px,2.159cqw);font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
 .sp.empty .sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
 .sp-mic{font-family:var(--ff-mono);font-size:clamp(6px,1.578cqw,22px);color:var(--text-muted);margin-top:1px}
 .sp-x{position:absolute;top:-7px;right:-7px;background:var(--bg);color:var(--text-faint);border:1px solid var(--border);width:16px;height:16px;border-radius:50%;font-size:9px;line-height:1;cursor:pointer;opacity:0;transition:all .15s;z-index:4;display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--ff-mono)}
@@ -1020,7 +1027,7 @@ background-size:5% 10%}
 .s-stage-frame > svg.dv-stage-svg{position:absolute;inset:0;width:100%;height:100%}
 .s-stage-frame > #s_stageFeatures,.s-stage-frame > #s_stagePeople{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .s-stage-frame .dv-sp{background:#26200f;border:1.5px solid #26200f;color:#fff;min-width:52px;max-width:130px;padding:3px 7px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-.s-stage-frame .dv-sp-role{color:#c9b58e;font-size:7px}
+.s-stage-frame .dv-sp-role{color:#c9b58e;font-size:7px;margin-bottom:1px}
 .s-stage-frame .dv-sp-name{color:#fff;font-size:10px}
 /* Compact tier for the PRINTED stage, mirroring the display's. Added only when names still collide
    after the measured re-resolve — the role line is roughly half a card's height, and a readable
@@ -1433,7 +1440,8 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
   .dv-stage-svg-wrap > svg.dv-stage-svg{width:100%;height:100%}
 }
 /* People layer is sized to match the SVG's letterboxed rectangle */
-#dvStagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none}
+/* cqw container for the cards + stacking context above #dvStageFeatures — see #stagePeople. */
+#dvStagePeople{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%;aspect-ratio:800/380;width:100%;height:auto;pointer-events:none;z-index:2;container-type:inline-size}
 #dvStagePeople > .dv-sp{pointer-events:auto}
 .dv-stage-svg{display:block}
 /* Front-of-stage edge highlight (where vocalists line up) — accent stroke + caption. */
@@ -1448,7 +1456,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    this needs no measurement and is correct at every pane width. */
 .dv-sp[data-anchor="left"]{transform:translate(0,-50%)}
 .dv-sp[data-anchor="right"]{transform:translate(-100%,-50%)}
-.dv-sp{position:absolute;transform:translate(-50%,-50%);transform-origin:center center;background:var(--surface);border:2px solid var(--border-2);border-radius:8px;padding:5px 9px;min-width:72px;width:max-content;max-width:none;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
+.dv-sp{position:absolute;transform:translate(-50%,-50%);transform-origin:center center;background:var(--surface);border:solid var(--border-2);border-width:max(1px,0.24cqw);border-radius:8px;padding:max(2px,0.63cqw) max(4px,1.14cqw);min-width:9.1cqw;width:max-content;max-width:none;text-align:center;z-index:2;box-shadow:0 3px 10px rgba(0,0,0,0.12)}
 .dv-sp.is-wl{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
 .dv-sp.leader{background:linear-gradient(180deg,var(--accent-dim),var(--surface));border-color:var(--accent-2);opacity:.95}
 .dv-sp.empty{opacity:.4;background:transparent;border-style:dashed;box-shadow:none}
@@ -1461,11 +1469,11 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
    and the stage is too small for them. Dropping the role line and the min-width roughly halves a
    card, which is what lets eight people fit a 1280x720 stage. Full names are kept: a readable full
    name on a smaller card beats a truncated one that still collides. */
-#dvStagePeople.is-compact .dv-sp{padding:2px 6px;min-width:0}
+#dvStagePeople.is-compact .dv-sp{padding:max(1px,0.24cqw) max(2px,0.73cqw);min-width:0}
 #dvStagePeople.is-compact .dv-sp-role{display:none}
-.dv-sp-role{font-family:var(--ff-mono);font-size:calc(clamp(6px, 1.412cqw, 20px) * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:1px}
+.dv-sp-role{font-family:var(--ff-mono);font-size:calc(max(6px,1.412cqw) * var(--dv-stage-text-scale, 1));color:var(--text-muted);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:0.12cqw}
 .dv-sp.is-wl .dv-sp-role{color:var(--accent)}
-.dv-sp-name{font-family:var(--ff-display);font-size:calc(clamp(8px, 2.159cqw, 30px) * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
+.dv-sp-name{font-family:var(--ff-display);font-size:calc(max(8px,2.159cqw) * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
 .dv-sp.empty .dv-sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
 .dv-sp-mic{font-family:var(--ff-mono);font-size:calc(clamp(6px, 1.578cqw, 22px) * var(--dv-stage-text-scale, 1));color:var(--text-muted);margin-top:2px;font-weight:500}
 .dv-side-block{background:linear-gradient(180deg,var(--surface),var(--bg-elev));border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex:1 1 auto;display:flex;flex-direction:column;min-height:0;overflow:hidden;container-type:size;container-name:dvside}
@@ -6798,6 +6806,41 @@ function renderModalStage() {
   }
 }
 
+// ── Keeping the EDIT view's plot honest ───────────────────────────────────────────────────────
+// renderStage fits its people layer onto the drawn plot ONCE (inside placeStageCards), and until
+// 2026-10-08 the only thing that ever re-ran it was a window resize. But the wrap changes size
+// without one: at boot the left column settles AFTER the first render (measured: the layer was
+// fitted to a 486px-wide wrap that was 442px by the time the page was readable), and the roster
+// lists around the stage grow and shrink. Every card then sat 10% off its spot — Bass drawn below
+// the back wall — and the compact tier engaged for overlaps that did not exist: the set-up page,
+// Edit Layout and the TV were three different pictures (bug_6a0219ce). This is the same guarded,
+// debounced observer the display has had since cf30a0a. Echo-safe: a refit only moves cards INSIDE
+// the wrap, so it cannot resize the wrap, and a same-size notification is ignored.
+let _editRefitTimer = null, _editStageObserver = null, _editStageObservedSize = '';
+function observeEditStage() {
+  if (typeof ResizeObserver !== 'function') return;
+  const wrap = document.getElementById('stageWrap');
+  if (!wrap || _editStageObserver) return;
+  const sizeOf = () => { const r = wrap.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); };
+  _editStageObservedSize = sizeOf();
+  _editStageObserver = new ResizeObserver(() => {
+    const size = sizeOf();
+    if (size === _editStageObservedSize) return;
+    _editStageObservedSize = size;
+    scheduleEditRefit();
+  });
+  _editStageObserver.observe(wrap);
+}
+function scheduleEditRefit() {
+  clearTimeout(_editRefitTimer);
+  _editRefitTimer = setTimeout(() => {
+    _editRefitTimer = null;
+    // Never rebuild the slots under a live drag — the pointer capture (or the HTML5 swap-drag)
+    // would die with them. Try again once the drop has landed.
+    if (document.body.classList.contains('dragging-slot') || document.querySelector('#stagePeople .sp.dragging')) { scheduleEditRefit(); return; }
+    renderStage();
+  }, 120);
+}
 function renderStage() {
   const wrap = document.getElementById('stagePeople');
   if (!wrap) return;
@@ -6895,6 +6938,8 @@ function renderStage() {
     wrapSel: '.stage-svg-wrap', cardSel: '.sp', nameSel: '.sp-name',
     metrics: stageLabelMetrics(), maxDy: DV_LABEL_MAX_DY, compact: true
   });
+  // Watch the wrap from the first render on: the column it sits in settles after this call.
+  observeEditStage();
 
   // IMPROVEMENT 2 — Stage empty hint
   const stageWrapEl = document.getElementById('stageWrap');

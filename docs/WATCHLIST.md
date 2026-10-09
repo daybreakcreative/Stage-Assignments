@@ -667,3 +667,32 @@ Behaviors that must keep working. **The executable version of this list is `test
     while the operator's per-device scale is at its default, and reverts to full size + scroll if the
     floor still cannot fit (readable beats squeezed). `data-dv-autofit` marks it. → `dvrefit`
 
+
+76. **The edit view refits its people layer whenever its wrap changes size** (2026-10-08,
+    bug_6a0219ce: "stage layout display views are different from set up page to preview to display
+    page"). `renderStage` fits `#stagePeople` onto the drawn plot once, inside `placeStageCards`, and
+    only a window resize ever re-ran it. At boot the left column settles AFTER the first render —
+    measured at 1440×900: the layer was fitted to a 486px-wide wrap that was 442px by the time the
+    page was readable — so every card sat 10% off its spot (Bass drawn below the back wall) and the
+    compact tier engaged for overlaps that did not exist. `observeEditStage()` is the display's
+    guarded, debounced ResizeObserver (#75) for the edit wrap; a refit waits out a live slot drag
+    (`dragging-slot` / `.sp.dragging`) rather than rebuilding the slot under the pointer. → `editrefit`
+    ⚠ Verifying this in the in-app browser pane: the tab reports `document.hidden`, so no frame
+    renders and NO ResizeObserver callback is delivered (not even a new observer's initial one) until
+    something forces a frame — a screenshot does. Measure AFTER a screenshot, or the refit looks broken.
+
+77. **A stage card is the same fraction of the PLOT in every view, so the de-overlap resolver
+    arranges people the same way everywhere** (2026-10-08, same report). Even on one pipeline the
+    three screen surfaces still disagreed: card heights measured 26 / 43 / 57 viewBox units in edit /
+    Edit Layout / display, and the resolver — which MEASURES the cards — lifted Drums and Keys in
+    Edit Layout but Bass and EG1 on the TV (a 72-unit jump, 19% of the stage). Two causes: `.dv-sp`
+    had px padding, border and min-width while `.sp` had cqw; and cqw was the WRAP's width, which
+    exceeds the plot whenever height limits the stage. Now `#stagePeople` / `#dvStagePeople` are
+    `container-type:inline-size` (cqw = plot width; they also carry `z-index:2`, because containment
+    makes the layer its own stacking context and the fixtures layer would otherwise paint over the
+    cards), and padding, border-width, min-width, both font sizes, letter-spacing and margins are
+    declared identically on `.sp*` and `.dv-sp*` with px FLOORS only. The 30px/20px font caps are
+    gone — Edit Layout fullscreen on the booth machine hit them while the TV did not, which alone
+    made the two arrange differently at 1920. ⚠ Never put a bare px or a px cap on a card
+    dimension; `stageparity` pins every declaration pair and the container-type. The printed stage
+    keeps its fixed paper sizes on purpose (`.s-stage-frame` overrides). → `stageparity`

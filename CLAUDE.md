@@ -93,7 +93,11 @@ this release** — single venue only.
 - **Stage SVG**: `viewBox 0 0 800 380`, **audience at TOP**. `getStageShape()` uses
   `state.config.customStagePoints` if present, else slider-derived shape
   (`seedPolygonPoints`). `rectangleStagePoints()` = the true-rectangle reset.
-  `clampStagePosition()` keeps people inside the outline.
+  `clampStagePosition()` keeps people inside the outline. Stage cards are sized in `cqw` of the
+  PEOPLE LAYER (`#stagePeople` / `#dvStagePeople`, which `fitStagePeopleLayer` sizes to the drawn
+  plot) with px floors only — never a bare px or a px cap, or the views arrange people differently
+  (`stageparity`). Both the edit wrap and the display wrap have a guarded ResizeObserver that refits
+  after any size change (`editrefit`, `dvrefit`).
 - **Edit Layout** (consolidated): one `#stageEditBtn` ("Edit Layout") → inline edit
   mode (`body.stage-editing`), NOT a modal. Toolbar `#stageEditToolbar` has Outline
   (`openPolygonStageEditor`), Features (`openStageFeaturesEditor`), Reset to Auto,

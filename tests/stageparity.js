@@ -112,6 +112,55 @@ check('both card types have the anchor transforms', ()=>{
   });
 });
 
+console.log('--- a card is the same SIZE in stage units in every view, whatever the viewport ---');
+// 2026-10-08 (bug_6a0219ce): at 1440x900 one service gave Edit Layout and the TV different pictures —
+// Edit Layout lifted Drums and Keys, the TV lifted Bass and EG1 — because the de-overlap resolver
+// measures the cards, and the cards were a different FRACTION of the plot in each view: .dv-sp had
+// 5px/9px padding, a 2px border and a 72px min-width; .sp had the same things in cqw; and cqw was the
+// WRAP's width, which is wider than the drawn plot whenever the wrap is height-limited. Card heights
+// measured 26 / 43 / 57 viewBox units across the three views. Everything that sets a card's size is
+// now a function of the PLOT width alone, and declared identically for both card types.
+function rules(){ const out=[]; const src=css.replace(/\/\*[\s\S]*?\*\//g,''); const re=/([^{}]+)\{([^}]*)\}/g; let m; while((m=re.exec(src))){ m[1].split(',').map(s=>s.trim()).forEach(s=>out.push({sel:s,body:m[2]})); } return out; }
+const RULES=rules();
+function prop(sel,name){
+  const hits=RULES.filter(r=>r.sel===sel);
+  if(!hits.length) throw new Error('no rule '+sel);
+  let val=null;
+  hits.forEach(r=>{ r.body.split(';').forEach(d=>{ const i=d.indexOf(':'); if(i<0) return; if(d.slice(0,i).trim()===name) val=d.slice(i+1).trim(); }); });
+  if(val==null) throw new Error(sel+' does not declare '+name);
+  return val.replace(/\s+/g,'');
+}
+// The display multiplies its text by the operator's per-device scale; strip that factor so the
+// underlying size expression can be compared with the edit view's.
+const unscale=v=>v.replace(/^calc\((.*)\*var\(--dv-stage-text-scale,1\)\)$/,'$1');
+check('both people layers are inline-size containers — cqw is the PLOT width, not the wrap', ()=>{
+  ['#stagePeople','#dvStagePeople'].forEach(s=>{ if(prop(s,'container-type')!=='inline-size') throw new Error(s+' is not an inline-size container; its cards scale with the wrap, which is wider than the plot whenever height limits the stage'); });
+});
+['padding','min-width','border-width'].forEach(p=>{
+  check('.sp and .dv-sp agree on '+p, ()=>{ const a=prop('.sp',p), b=prop('.dv-sp',p); if(a!==b) throw new Error('.sp '+a+' vs .dv-sp '+b); });
+});
+['font-size','letter-spacing','margin-bottom','font-weight'].forEach(p=>{
+  check('.sp-role and .dv-sp-role agree on '+p, ()=>{ const a=unscale(prop('.sp-role',p)), b=unscale(prop('.dv-sp-role',p)); if(a!==b) throw new Error('.sp-role '+a+' vs .dv-sp-role '+b); });
+});
+['font-size','line-height'].forEach(p=>{
+  check('.sp-name and .dv-sp-name agree on '+p, ()=>{ const a=unscale(prop('.sp-name',p)), b=unscale(prop('.dv-sp-name',p)); if(a!==b) throw new Error('.sp-name '+a+' vs .dv-sp-name '+b); });
+});
+check('the compact tier is the same fraction too', ()=>{
+  ['padding','min-width'].forEach(p=>{ const a=prop('#stagePeople.is-compact .sp',p), b=prop('#dvStagePeople.is-compact .dv-sp',p); if(a!==b) throw new Error(p+': '+a+' vs '+b); });
+});
+check('no card dimension is a fixed pixel size or capped in pixels', ()=>{
+  // A px FLOOR is fine (it only bites on a plot too small to use anyway). A px CAP or a bare px
+  // value makes the card a different fraction of a big plot than of a small one — Edit Layout goes
+  // fullscreen on the booth machine and its 1850px plot hit the old 30px cap while the TV did not.
+  const bad=[];
+  [['.sp','padding'],['.sp','min-width'],['.sp','border-width'],['.sp-role','font-size'],['.sp-name','font-size'],['.sp-role','margin-bottom']].forEach(([s,p])=>{
+    const v=unscale(prop(s,p));
+    if(/clamp\(/.test(v)) bad.push(s+' '+p+' uses clamp() — a px ceiling');
+    else if(!/cqw/.test(v)) bad.push(s+' '+p+' has no cqw term: '+v);
+  });
+  if(bad.length) throw new Error(bad.join('; '));
+});
 console.log('\n=== RESULT:', errs.length?(errs.length+' ISSUE(S)'):'ALL CHECKS PASSED','===');
+
 if(errs.length) console.log(errs.join('\n'));
 process.exit(errs.length?1:0);
