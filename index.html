@@ -392,13 +392,16 @@ background-size:5% 10%}
 #stagePeople.is-compact .sp,#semPeople.is-compact .sp{padding:max(1px,0.24cqw) max(2px,0.73cqw);min-width:0}
 #stagePeople.is-compact .sp-role,#semPeople.is-compact .sp-role{display:none}
 /* Every card dimension below is cqw of the people layer with at most a px FLOOR — never a px cap
-   and never a bare px — and is declared identically on .dv-sp*. The de-overlap resolver measures
+   and never a bare px — and is declared identically on .dv-sp*. The per-device stage text scale
+   (the TV's slider, --dv-stage-text-scale on :root) multiplies BOTH card types: on the booth machine
+   the set-up page, Edit Layout and the TV are one browser, and a size the operator picks for the TV
+   must move the cards here the same way or the three stop being one picture. The de-overlap resolver measures
    the cards, so a card that is a different fraction of the plot in one view arranges people
    differently there; `stageparity` pins the two sets of declarations to each other. */
-.sp-role{font-family:var(--ff-mono);font-size:max(6px,1.412cqw);color:var(--text-faint);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:0.12cqw}
+.sp-role{font-family:var(--ff-mono);font-size:calc(max(6px,1.412cqw) * var(--dv-stage-text-scale, 1));color:var(--text-faint);text-transform:uppercase;letter-spacing:.16em;font-weight:600;margin-bottom:0.12cqw}
 .sp.occupied .sp-role{color:var(--accent)}
 .sp.is-wl .sp-role{color:var(--wl)}
-.sp-name{font-family:var(--ff-display);font-size:max(8px,2.159cqw);font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
+.sp-name{font-family:var(--ff-display);font-size:calc(max(8px,2.159cqw) * var(--dv-stage-text-scale, 1));font-weight:600;line-height:1.1;color:var(--text);white-space:nowrap}
 .sp.empty .sp-name{font-style:italic;color:var(--text-faint);font-weight:400}
 .sp-mic{font-family:var(--ff-mono);font-size:clamp(6px,1.578cqw,22px);color:var(--text-muted);margin-top:1px}
 .sp-x{position:absolute;top:-7px;right:-7px;background:var(--bg);color:var(--text-faint);border:1px solid var(--border);width:16px;height:16px;border-radius:50%;font-size:9px;line-height:1;cursor:pointer;opacity:0;transition:all .15s;z-index:4;display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--ff-mono)}
@@ -5238,13 +5241,18 @@ function resolveStageLabelLayout(marks, opts) {
     return [it.labelX - it.w / 2, it.labelX + it.w / 2];
   }
   // Two boxes overlap if their x-ranges and y-ranges both intersect (with the gap padding on y).
+  // Touching counts as CLEAR. The push/climb steps below park a box exactly at the gap boundary
+  // (p.labelY - h - gap), and measured sizes carry px->unit residue in the 1e-13 range that differs
+  // with the plot's pixel width. Without the epsilon the same arrangement took one extra lineH/2
+  // step in Edit Layout and not on the TV — Drums 14 units apart from identical inputs (2026-10-08).
+  const EPS = 1e-6;
   function overlaps(a, b) {
     const [ax0, ax1] = xRange(a);
     const [bx0, bx1] = xRange(b);
-    if (ax1 <= bx0 || bx1 <= ax0) return false;
+    if (ax1 <= bx0 + EPS || bx1 <= ax0 + EPS) return false;
     const ay0 = a.labelY, ay1 = a.labelY + a.h;
     const by0 = b.labelY, by1 = b.labelY + b.h;
-    return !(ay1 + gap <= by0 || by1 + gap <= ay0);
+    return !(ay1 + gap <= by0 + EPS || by1 + gap <= ay0 + EPS);
   }
 
   // Process top-to-bottom, left-to-right so earlier (higher) labels anchor the packing.
@@ -5349,10 +5357,10 @@ function stageLayoutOverlapCount(layout) {
   for (let i = 0; i < layout.length; i++) {
     for (let j = i + 1; j < layout.length; j++) {
       const [ax0, ax1] = xr(layout[i]), [bx0, bx1] = xr(layout[j]);
-      if (ax1 <= bx0 || bx1 <= ax0) continue;
+      if (ax1 <= bx0 + 1e-6 || bx1 <= ax0 + 1e-6) continue;   // touching is clear (see resolver EPS)
       const ay0 = layout[i].labelY, ay1 = ay0 + layout[i].h;
       const by0 = layout[j].labelY, by1 = by0 + layout[j].h;
-      if (ay1 <= by0 || by1 <= ay0) continue;
+      if (ay1 <= by0 + 1e-6 || by1 <= ay0 + 1e-6) continue;
       n++;
     }
   }
@@ -7881,6 +7889,9 @@ function setDisplaySectionScale(section, value) {
   s[section] = v;
   saveDisplaySectionScales(s);
   document.documentElement.style.setProperty(DV_SCALE_VARS[section], String(v));
+  // The stage cards are PLACED by measuring themselves, so a new text size needs a new placement or
+  // the TV keeps the nudges computed for the old size. Debounced, display-mode only (no-op elsewhere).
+  if (section === 'stageText' && typeof scheduleDisplayRefit === 'function') scheduleDisplayRefit();
   return v;
 }
 function getDisplaySectionScale(section) {

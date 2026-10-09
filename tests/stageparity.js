@@ -145,7 +145,15 @@ check('both people layers are inline-size containers — cqw is the PLOT width, 
 ['font-size','line-height'].forEach(p=>{
   check('.sp-name and .dv-sp-name agree on '+p, ()=>{ const a=unscale(prop('.sp-name',p)), b=unscale(prop('.dv-sp-name',p)); if(a!==b) throw new Error('.sp-name '+a+' vs .dv-sp-name '+b); });
 });
+check('both card types scale with the per-device stage text scale', ()=>{
+  // The TV's text slider sets --dv-stage-text-scale on :root. If only .dv-sp* multiplied by it, a
+  // booth operator who sized the TV text would split the TV from the set-up page on the same machine.
+  ['.sp-role','.dv-sp-role','.sp-name','.dv-sp-name'].forEach(s=>{
+    if(!/var\(--dv-stage-text-scale,1\)/.test(prop(s,'font-size'))) throw new Error(s+' font-size does not multiply by var(--dv-stage-text-scale, 1)');
+  });
+});
 check('the compact tier is the same fraction too', ()=>{
+
   ['padding','min-width'].forEach(p=>{ const a=prop('#stagePeople.is-compact .sp',p), b=prop('#dvStagePeople.is-compact .dv-sp',p); if(a!==b) throw new Error(p+': '+a+' vs '+b); });
 });
 check('no card dimension is a fixed pixel size or capped in pixels', ()=>{

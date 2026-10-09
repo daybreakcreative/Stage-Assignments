@@ -696,3 +696,19 @@ Behaviors that must keep working. **The executable version of this list is `test
     made the two arrange differently at 1920. ⚠ Never put a bare px or a px cap on a card
     dimension; `stageparity` pins every declaration pair and the container-type. The printed stage
     keeps its fixed paper sizes on purpose (`.s-stage-frame` overrides). → `stageparity`
+
+78. **The de-overlap resolver treats touching-at-the-gap as clear, so the same arrangement resolves
+    the same way on every plot size** (2026-10-09, bug_6a0219ce follow-up from Dillon's screenshots).
+    Its push/climb steps park a card EXACTLY at the gap boundary (`p.labelY - h - gap`) and then
+    tested `ay1 + gap <= by0` on floats. Measured sizes carry px→unit residue (~1e-13) that differs
+    with the plot's pixel width, so on his real plan Drums took one extra lineH/2 step in Edit Layout
+    and not on the TV — 14 units apart from inputs identical to one decimal. Both the resolver and
+    `stageLayoutOverlapCount` now use a 1e-6 epsilon. ⚠ Never compare resolved box edges with a bare
+    `<=`; the residue is real and view-dependent. → `resolvereps`
+    • Same commit: the TV's per-device stage text scale (`--dv-stage-text-scale`, set on `:root`)
+    now multiplies `.sp-role`/`.sp-name` too. On the booth the set-up page, Edit Layout and the TV
+    are one browser, so a size the operator picks for the TV moves the edit cards identically and
+    the three stay one picture; default 1.0 changes nothing. `stageparity` pins the factor on both.
+    • ⚠ Dillon's 2026-10-08 TV screenshot shows the old 30px name cap biting on his booth (stage cards
+    were ~0.77 of proportional). With the caps gone his TV cards are ~30% larger; the slider above is
+    the knob (75% restores the old TV size and keeps all three views in step).

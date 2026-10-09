@@ -49,6 +49,11 @@ caller does (`c.customStagePoints = pts; saveState()`), so the save→reload ass
 could never pass. A permanently-red line trains you to skim the summary, which is
 how a real failure hides — if one appears here again, fix the test or the code, don't
 add it to an allowlist.
+- **`NO RESULT LINE` is a timing artifact until proven otherwise.** On a busy Mac a file that takes
+  a second alone can be cut off by the runner's 60s timeout (11 files on 2026-09-30, 1–3 random files
+  per run on 2026-10-09). The runner re-runs such a file once, alone, with 120s; only a second empty
+  result is reported as `NO RESULT LINE (twice)`, and THAT is real. Never run `npm test` alongside
+  heavy browser work, and never pipe it through `head`.
 - General jsdom quirk: `document.getElementById(...)` can return `null` for an
   element that is still in the DOM *after* `appendChild`/`insertBefore` moves
   (jsdom id-cache bug). This is why `renderDisplayView` guards element access. It is
@@ -96,8 +101,10 @@ this release** — single venue only.
   `clampStagePosition()` keeps people inside the outline. Stage cards are sized in `cqw` of the
   PEOPLE LAYER (`#stagePeople` / `#dvStagePeople`, which `fitStagePeopleLayer` sizes to the drawn
   plot) with px floors only — never a bare px or a px cap, or the views arrange people differently
-  (`stageparity`). Both the edit wrap and the display wrap have a guarded ResizeObserver that refits
-  after any size change (`editrefit`, `dvrefit`).
+  (`stageparity`). The TV's per-device text scale (`--dv-stage-text-scale`) multiplies both card
+  types, so a booth operator sizing the TV keeps the three views in step. Both the edit wrap and the
+  display wrap have a guarded ResizeObserver that refits after any size change (`editrefit`,
+  `dvrefit`). The resolver compares box edges with a 1e-6 epsilon — never a bare `<=` (`resolvereps`).
 - **Edit Layout** (consolidated): one `#stageEditBtn` ("Edit Layout") → inline edit
   mode (`body.stage-editing`), NOT a modal. Toolbar `#stageEditToolbar` has Outline
   (`openPolygonStageEditor`), Features (`openStageFeaturesEditor`), Reset to Auto,

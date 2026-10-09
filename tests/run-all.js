@@ -30,15 +30,28 @@ let realFailures = 0;
 let knownFailures = 0;
 const rows = [];
 
-for (const f of files) {
+function runOne(f, timeoutMs) {
   let out = '';
   try {
-    out = execFileSync('node', [path.join(dir, f)], { encoding: 'utf8', timeout: 60000 });
+    out = execFileSync('node', [path.join(dir, f)], { encoding: 'utf8', timeout: timeoutMs });
   } catch (e) {
     out = (e.stdout || '') + (e.stderr || '');
   }
   const m = out.match(/=== RESULT:\s*(.+?)\s*===/);
-  const result = m ? m[1] : 'NO RESULT LINE';
+  return m ? m[1] : 'NO RESULT LINE';
+}
+const results = files.map(f => ({ f, result: runOne(f, 60000) }));
+// A file with NO RESULT LINE either crashed before printing or was cut off by the timeout. The
+// second happens in batches on a busy Mac — 11 files on 2026-09-30, and 1–3 different files on each
+// of three runs on 2026-10-09, every one of them passing alone in about a second — and a timing
+// artifact must never read as a regression. Re-run those once, alone and with more headroom, after
+// the sweep. A file that comes back empty twice is real and stays red.
+results.forEach(r => {
+  if (r.result !== 'NO RESULT LINE') return;
+  const again = runOne(r.f, 120000);
+  r.result = again === 'NO RESULT LINE' ? 'NO RESULT LINE (twice)' : again + ' (on retry)';
+});
+for (const { f, result } of results) {
   const issuesMatch = result.match(/(\d+)\s+ISSUE/);
   const issues = result.includes('ALL CHECKS PASSED') ? 0 : (issuesMatch ? parseInt(issuesMatch[1], 10) : -1);
 
