@@ -712,3 +712,14 @@ Behaviors that must keep working. **The executable version of this list is `test
     • ⚠ Dillon's 2026-10-08 TV screenshot shows the old 30px name cap biting on his booth (stage cards
     were ~0.77 of proportional). With the caps gone his TV cards are ~30% larger; the slider above is
     the knob (75% restores the old TV size and keeps all three views in step).
+
+79. **Hovering an edge-anchored card in Edit Layout keeps it under the pointer** (2026-10-13, Dillon:
+    "when you hover over a name it glitches out and moves on you"). An anchored card rests at
+    `translate(0,-50%)` / `translate(-100%,-50%)`; `body.stage-editing .sp:hover` re-stated the
+    centred `translate(-50%,-50%)` and, at (0,3,1), outranked the anchored hover rules at (0,2,1), so
+    the card snapped half its width sideways on hover (measured: Vocal 4 left 300.9 → 160.6px), the
+    pointer was no longer over it, it snapped back, and it flickered. Four of the eight cards on his
+    plan are anchored. Now every hover rule that sets a transform has left/right twins, and the Edit
+    Layout ones pivot the scale on the anchored edge. ⚠ Any new `:hover`/state rule that sets
+    `transform` on `.sp` needs the same two twins — `hoveranchor` scans the stylesheet for it.
+    → `hoveranchor`

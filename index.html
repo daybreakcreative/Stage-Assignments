@@ -316,6 +316,12 @@ body.stage-editing .stage-edit-btn{display:none}
 /* In edit mode, slots show different cursor + outline */
 body.stage-editing .sp{cursor:grab;outline:1.5px dashed rgba(212,161,71,.4);outline-offset:2px;touch-action:none}
 body.stage-editing .sp:hover{transform:translate(-50%,-50%) scale(1.05);outline-color:var(--accent);box-shadow:0 4px 16px var(--accent-dim)}
+/* An edge-anchored card rests at translate(0,-50%) / translate(-100%,-50%) (see .sp[data-anchor]).
+   This rule outranks those, so without these twins hovering an anchored card in Edit Layout snapped
+   it half a card sideways, out from under the pointer, and it flickered (2026-10-13). The scale
+   pivots on the anchored edge so the card grows inward and stays under the mouse. */
+body.stage-editing .sp[data-anchor="left"]:hover{transform:translate(0,-50%) scale(1.05);transform-origin:left center}
+body.stage-editing .sp[data-anchor="right"]:hover{transform:translate(-100%,-50%) scale(1.05);transform-origin:right center}
 body.stage-editing .sp.is-dragging{cursor:grabbing;outline:2px solid var(--accent);z-index:10;opacity:.92;box-shadow:0 8px 24px rgba(212,161,71,.45)}
 body.stage-editing.dragging-slot{user-select:none}
 body.stage-editing.dragging-slot .sp:not(.is-dragging){opacity:.5}
