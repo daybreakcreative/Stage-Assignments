@@ -9438,7 +9438,9 @@ function classifyPosition(name) {
   if (n.includes('music director') || n === 'md') return { kind:'md_flag' };
 
   // SPEAKING — pastor (not baptizing — already handled above), preacher, speaker
-  if (n.includes('speaker') || n.includes('speaking') || n.includes('preacher') || n.includes('teaching pastor') || n.includes('pastor')) return { kind:'host', host:'speaker' };
+  // "Message" is how the 68 team schedules whoever is preaching (found 2026-11-25: unrecognised,
+  // so the speaker got no mic and a welcome host was put on the Pastor channel instead).
+  if (n.includes('speaker') || n.includes('speaking') || n.includes('preacher') || n.includes('teaching pastor') || n.includes('pastor') || n === 'message' || n.includes('sermon')) return { kind:'host', host:'speaker' };
 
   // WELCOME HOSTS — fill HH1/HH2 first.
   // Note: "Announcement" alone is a welcome-style host (someone makes announcements live on stage).
@@ -9509,6 +9511,21 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     const title = a.series_title || a.title || a.plan_title || '';
     if (title) state.service.name = title;
   }
+  // The MD flag lives on an instrument SLOT, and it used to survive the pull untouched — so a plan
+  // that names no Music Director kept last week's flag on whoever sat in that slot this week
+  // (Meadowlark Nov 29: the bass player shown as "Bass · MD" with the MD's setup items). Remember
+  // WHO held it; it is re-granted below only to the plan's MD, or to that same person.
+  const prevMd = (() => {
+    const i = state.musicDirectorId ? instById(state.musicDirectorId) : null;
+    if (!i) return null;
+    const nm = i.vocalistPlayer ? (((state.vocalists || []).find(v => v.id === i.vocalistPlayer) || {}).name || '') : (i.assignedTo || '');
+    return nm.trim() ? { id: i.id, name: normFullName(nm) } : null;
+  })();
+  state.musicDirectorId = null;
+  // Notices describe the roster they were raised against; a fresh pull replaces that roster.
+  pcoMergeNotices = { needs: [], fyi: [] };
+  // People the plan puts on stage whom this pull could not seat. Reported, never dropped in silence.
+  const unplaced = [];
   state.vocalists = [];
   state.assignments = new Array(MAX_VOCALISTS).fill(null);
   // Reset all instrument assignments and vocalist-coverage on a fresh PCO pull
@@ -9532,10 +9549,11 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       acousticPlayers.add(normFullName(applyNameAlias(a.name || '')));
     }
   });
-  // Buckets we'll fill at the end (since order in PCO is arbitrary)
-  const welcomeNames = [];
-  let speakerName = null;
-  let baptismalName = null;
+  // Buckets we'll fill at the end (since order in PCO is arbitrary). Each entry { name, pos },
+  // one per person per role.
+  const welcome = [], speakers = [], baptizers = [];
+  const addHost = (list, name, pos) => { if (!list.some(p => normFullName(p.name) === normFullName(name))) list.push({ name, pos }); };
+  const bandPosName = {};   // `${position}|${normFullName}` -> the PCO position label, for notices
 
   console.group('[Stage·Assign] PCO team member classification');
   teamMembers.forEach(tm => {
@@ -9550,14 +9568,15 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     if (cls.kind === 'ignore') return;
     if (cls.kind === 'shadow') {
       // Shadows are always processed (no enable toggle).
-      if (state.shadows.length < MAX_SHADOWS && !state.shadows.some(s => normFullName(s.name) === normFullName(name))) {
+      if (state.shadows.some(s => normFullName(s.name) === normFullName(name))) return;
+      if (state.shadows.length < MAX_SHADOWS) {
         state.shadows.push({
           id: 'sh_'+Math.random().toString(36).slice(2,8),
           name,
           position: positionName,
           pack: state.config.shadowPack || 'Misc 2'
         });
-      }
+      } else unplaced.push({ name, pos: positionName, why: 'the shadow list is full' });
       return;
     }
     if (cls.kind === 'vocalist') {
@@ -9578,48 +9597,58 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     } else if (cls.kind === 'band') {
       // Collect into the right bucket; dedupe by full name
       const bucket = bandBuckets[cls.position];
-      if (bucket && !bucket.some(n => normFullName(n) === normFullName(name))) bucket.push(name);
+      if (bucket && !bucket.some(n => normFullName(n) === normFullName(name))) { bucket.push(name); bandPosName[cls.position + '|' + normFullName(name)] = positionName; }
     } else if (cls.kind === 'md_flag') {
       mdNameCandidate = name;
     } else if (cls.kind === 'host') {
-      if (cls.host === 'speaker') { if (!speakerName) speakerName = name; }
-      else if (cls.host === 'baptismal') { if (!baptismalName) baptismalName = name; }
-      else if (cls.host === 'welcome') { welcomeNames.push(name); }
+      if (cls.host === 'speaker') addHost(speakers, name, positionName);
+      else if (cls.host === 'baptismal') addHost(baptizers, name, positionName);
+      else if (cls.host === 'welcome') addHost(welcome, name, positionName);
     }
   });
   console.groupEnd();
 
-  // Fill host channels by POSITION: channel[0] = speaker/pastor, then welcome hosts fill the
-  // remaining channels in order. Daybreak rule: whoever is baptizing always takes HH 3 (the
-  // channel labelled "HH 3", else the 3rd channel) — it's reserved, so welcome hosts skip past
-  // it. There is no baptism flag or UI; it is purely a placement rule. Extra people beyond the
-  // configured channel count are dropped. Labels/count are user config; ordering is the mapping.
+  // Fill host channels by POSITION. The first speaker takes the channel labelled "Pastor" (else the
+  // first channel). Daybreak rule: whoever is baptizing always takes HH 3 (the channel labelled
+  // "HH 3", else the last non-pastor channel) — it is the baptism mic, so it is theirs even when
+  // they also host. There is no baptism flag or UI; it is purely a placement rule. Welcome hosts
+  // then fill the open channels in order, followed by any further speakers and baptizers.
+  //   • A channel LABELLED "Pastor" is the pastor's mic (often a headset). It is never handed to a
+  //     host: with no recognised speaker it stays empty (68 Nov 29 put a welcome host on it).
+  //   • Nobody is dropped in silence: whoever is left without a channel lands in `unplaced`.
+  // Labels/count are user config; ordering is the mapping.
   {
     const chs = hostChannels();
     const norm = s => (s || '').replace(/\s+/g, '').toLowerCase();
-    // Pastor/speaker → a channel labelled "Pastor" (else the first channel).
-    const pastorCh = speakerName ? (chs.find(ch => norm(ch.label).includes('pastor')) || chs[0] || null) : null;
+    const pastorLabelled = chs.find(ch => norm(ch.label).includes('pastor')) || null;
+    const speaker = speakers[0] || null;
+    const baptizer = baptizers[0] || null;
+    const pastorCh = speaker ? (pastorLabelled || chs[0] || null) : null;
     // Baptizing pastor → a channel labelled "HH 3" (else the LAST channel, never the pastor channel).
     let baptismCh = null;
-    if (baptismalName) {
+    if (baptizer) {
       baptismCh = chs.find(ch => norm(ch.label) === 'hh3')
-        || [...chs].reverse().find(ch => !pastorCh || ch.id !== pastorCh.id)
+        || [...chs].reverse().find(ch => (!pastorCh || ch.id !== pastorCh.id) && (!pastorLabelled || ch.id !== pastorLabelled.id))
         || null;
       if (pastorCh && baptismCh && baptismCh.id === pastorCh.id) baptismCh = null; // collision guard
     }
     state.hosts = {};
-    if (pastorCh && speakerName) state.hosts[pastorCh.id] = speakerName;
-    if (baptismCh && baptismalName) state.hosts[baptismCh.id] = baptismalName;
-    // Live/welcome hosts fill the remaining channels in order; then any un-placed speaker/baptismal.
-    const taken = new Set([pastorCh && pastorCh.id, baptismCh && baptismCh.id].filter(Boolean));
-    const queue = welcomeNames.slice();
-    if (speakerName && !pastorCh) queue.push(speakerName);
-    if (baptismalName && !baptismCh) queue.push(baptismalName);
+    if (pastorCh) state.hosts[pastorCh.id] = speaker.name;
+    if (baptismCh) state.hosts[baptismCh.id] = baptizer.name;
+    const taken = new Set([pastorCh && pastorCh.id, baptismCh && baptismCh.id, pastorLabelled && pastorLabelled.id].filter(Boolean));
+    const onAChannel = name => Object.keys(state.hosts).some(k => normFullName(state.hosts[k]) === normFullName(name));
+    const queue = [];
+    const enqueue = p => { if (!queue.some(q => normFullName(q.name) === normFullName(p.name))) queue.push(p); };
+    welcome.forEach(enqueue);
+    // Further speakers / baptizers only if they hold no channel yet — one mic is enough for them.
+    speakers.slice(pastorCh ? 1 : 0).forEach(p => { if (!onAChannel(p.name)) enqueue(p); });
+    baptizers.slice(baptismCh ? 1 : 0).forEach(p => { if (!onAChannel(p.name)) enqueue(p); });
     let qi = 0;
     chs.forEach(ch => {
       if (taken.has(ch.id)) return;
-      if (qi < queue.length) state.hosts[ch.id] = queue[qi++];
+      if (qi < queue.length) state.hosts[ch.id] = queue[qi++].name;
     });
+    queue.slice(qi).forEach(p => unplaced.push({ name: p.name, pos: p.pos, why: 'every handheld is taken' }));
   }
 
   // ----- DISTRIBUTE BAND BUCKETS INTO INSTRUMENT SLOTS -----
@@ -9629,8 +9658,11 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   function distributeBucket(positionShort, names) {
     if (!names || names.length === 0) return;
     // Sort: MD candidate (if matched) first, others in original PCO order
+    // FULL names throughout this function. It compared first names only, so on a team with two
+    // Nicks the acoustic player became the vocalist who shares his first name, and the MD flag went
+    // to whichever Nick sat in the earlier slot.
     if (mdNameCandidate) {
-      const mdIdx = names.findIndex(n => normName(n) === normName(mdNameCandidate));
+      const mdIdx = names.findIndex(n => normFullName(n) === normFullName(mdNameCandidate));
       if (mdIdx > 0) {
         const [md] = names.splice(mdIdx, 1);
         names.unshift(md);
@@ -9651,7 +9683,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       const name = names[idx++];
       // For AG: if this name is a vocalist, link by vocalistPlayer instead
       if (positionShort === 'ag') {
-        const v = state.vocalists.find(x => normName(x.name) === normName(name));
+        const v = state.vocalists.find(x => normFullName(x.name) === normFullName(name));
         if (v) { inst.vocalistPlayer = v.id; inst.assignedTo = ''; continue; }
       }
       inst.assignedTo = name;
@@ -9679,7 +9711,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
         // Link if vocalist (AG case)
         const name = names[idx++];
         if (positionShort === 'ag') {
-          const v = state.vocalists.find(x => normName(x.name) === normName(name));
+          const v = state.vocalists.find(x => normFullName(x.name) === normFullName(name));
           if (v) newInst.vocalistPlayer = v.id;
           else newInst.assignedTo = name;
         } else {
@@ -9701,6 +9733,10 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
           e0.label = `${baseTemplate.baseLabel} 1`;
         }
       }
+    }
+    // Whoever is left has no slot (a second drummer with one kit, a fourth guitarist…).
+    for (; idx < names.length; idx++) {
+      unplaced.push({ name: names[idx], pos: bandPosName[positionShort + '|' + normFullName(names[idx])] || positionShort, why: 'no free slot for it' });
     }
   }
   // Helper: figure out which short position-type an instrument represents (drums/bass/keys/eg/ag/null)
@@ -9736,7 +9772,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
       const playerName = inst.vocalistPlayer
         ? (state.vocalists.find(v => v.id === inst.vocalistPlayer)?.name || '')
         : (inst.assignedTo || '');
-      if (playerName && normName(playerName) === normName(mdNameCandidate)) {
+      if (playerName && normFullName(playerName) === normFullName(mdNameCandidate)) {
         state.musicDirectorId = inst.id; matched = true; break;
       }
     }
@@ -9745,6 +9781,13 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
     state.mdSoloName = matched ? null : mdNameCandidate;
   } else {
     state.mdSoloName = null;
+    // The plan names no MD. A flag the operator set by hand stays only if the SAME PERSON is back
+    // in the same slot (a re-pull of this week's plan); it is never inherited by someone else.
+    if (prevMd) {
+      const i = instById(prevMd.id);
+      const nm = i ? (i.vocalistPlayer ? (((state.vocalists || []).find(v => v.id === i.vocalistPlayer) || {}).name || '') : (i.assignedTo || '')) : '';
+      if (i && nm && normFullName(nm) === prevMd.name) state.musicDirectorId = i.id;
+    }
   }
   ensureSoloMdPack(); // solo MD (if any) gets a spare IEM pack; cleared otherwise
 
@@ -9822,7 +9865,11 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   state.pcoBaseline = derivePcoModel(planData, tmRes, itemsRes);
   state.pcoBaseline.planId = state.pcoConfig.selectedPlanId || '';
   saveState();
+  unplaced.forEach(u => {
+    pcoMergeNotices.needs.push({ id: 'up_' + normFullName(u.name) + '|' + u.pos, text: `⚠ ${u.name} (${u.pos}) is on the plan but wasn't placed — ${u.why}` });
+  });
   renderAll();
+  if (typeof renderPcoMergeBanner === 'function') renderPcoMergeBanner();
 }
 
 // ===== PCO MERGE REFRESH (auto-refresh that preserves manual edits) =====
