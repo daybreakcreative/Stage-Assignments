@@ -126,6 +126,13 @@ this release** — single venue only.
   vocalists + the service-order rail (`#dvRunSheetBlock`/`#dvRunSheetList`), gated by
   `d.showServiceOrder && serviceOrder.length && runSheetPosition!=='hidden'`. Element
   accesses are null-guarded so one missing node can't abort the whole render.
+- **PCO pull rules (2026-11-25, WATCHLIST 80–83)**: names are compared by FULL name (`normFullName`);
+  `normName` is first-name-only and must not decide identity. The MD flag follows the person, not
+  the slot. An inline name edit is an alias only if `looksLikeSamePerson` — otherwise a swap for
+  that service. The auto-refresh never merges without a baseline for the selected plan. Anyone the
+  plan puts on stage but the pull cannot seat is named in a ⚠ notice. To test against real plan
+  shapes use `tests/fixtures/realplans-2026-11-25.js` (codes, never names) — add a plan there
+  rather than pasting a roster anywhere.
 - **PCO**: in-app OAuth + Planning Center pull (header `#pcoBtn`, red when not
   connected). Not via MCP.
 - **First-run wizard**: `WIZARD_STEPS` incl. stage / stage-layout / setup-intro /

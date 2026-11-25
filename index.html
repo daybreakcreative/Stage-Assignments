@@ -9172,12 +9172,12 @@ function renderPrefEditor() {
   const people = [];
   state.vocalists.forEach(v => {
     const n = (v.name || '').trim(); if (!n) return;
-    const k = normName(n); if (seen.has(k)) return; seen.add(k);
+    const k = normFullName(n); if (seen.has(k)) return; seen.add(k);   // FULL name: two Nicks are two people
     people.push({ name: n, current: true });
   });
   Object.keys(micPrefsStore().people).forEach(n => {
     const nm = (n || '').trim(); if (!nm) return;
-    const k = normName(nm); if (seen.has(k)) return; seen.add(k);
+    const k = normFullName(nm); if (seen.has(k)) return; seen.add(k);
     people.push({ name: nm, current: false });
   });
 
@@ -9535,7 +9535,10 @@ function populatePlanSelect() {
     // Format date nicely if present
     let label;
     if (p.sortDate) {
-      const dt = new Date(p.sortDate);
+      // sort_date is a LOCAL wall clock wearing a "Z". Read the digits; converting it as UTC labelled
+      // every plan that starts before 8am Pacific with the day before (a 6:45am Dec 6 plan read "Dec 5").
+      const ymd = /^(\d{4})-(\d{2})-(\d{2})/.exec(p.sortDate);
+      const dt = ymd ? new Date(+ymd[1], +ymd[2] - 1, +ymd[3]) : new Date(p.sortDate);
       const datePart = isNaN(dt.getTime()) ? (p.dates || '') :
         dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       label = datePart + (p.name && p.name !== p.dates && p.name !== datePart ? ` — ${p.name}` : '');

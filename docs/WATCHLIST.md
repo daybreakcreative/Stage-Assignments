@@ -723,3 +723,47 @@ Behaviors that must keep working. **The executable version of this list is `test
     Layout ones pivot the scale on the anchored edge. ⚠ Any new `:hover`/state rule that sets
     `transform` on `.sp` needs the same two twins — `hoveranchor` scans the stylesheet for it.
     → `hoveranchor`
+
+80. **A pull seats exactly who the plan says, and says so when it cannot** (2026-11-25, reported
+    secondhand as "pulling random people for positions, putting wrong people in wrong positions").
+    Diagnosed by replaying the SHAPE of six real plans (`tests/fixtures/realplans-2026-11-25.js` —
+    positions/statuses/order real, every person a code) through `applyPCOPlanData` back to back.
+    • The MD flag is cleared on every pull and re-granted to the plan's MD, or to the SAME person the
+      operator flagged by hand. It used to survive on the slot, so a plan naming no MD (Meadowlark)
+      showed last week's flag on a different player.
+    • Acoustic link, MD match and MD-first ordering use FULL names. ⚠ `normName` is first-name-only;
+      the only legitimate uses left are the two "full name first, first name only if unambiguous"
+      helpers (`findVocalistByLeaderName`, `vocalistByName`). The mic-preferences list deduped by
+      first name too and hid the second Nick.
+    • A channel LABELLED "Pastor" is the speaker's or empty — hosts never take it. "Message" (68's
+      name for the preacher) and "sermon" are the speaker.
+    • Nobody is dropped in silence: an extra speaker/baptizer/host, second drummer/bassist, fourth
+      guitarist or seventh shadow raises "⚠ … is on the plan but wasn't placed — <why>". A fresh
+      pull clears the previous plan's notices.
+    • ⚠ DELIBERATELY unchanged: whoever baptizes still takes HH 3 even when they also host (open
+      question with Dillon); "Prayer Host" is still a welcome host; "Ministry Moment" is unrecognised.
+    → `pcorealplans`
+81. **Typing a substitute over a name is a swap for this service, not a permanent alias**
+    (2026-11-25). Since 2026-07-01 every inline name edit was recorded as a go-by alias, so a
+    substitute typed over a scheduled person re-pointed that person on every later pull — her slot,
+    headshot, setup items and mic preference — with no list and no undo. `isNameSwap()` /
+    `looksLikeSamePerson()` decide: alias only when the new name plausibly is the same person
+    (shorter/contained/near-identical first name + matching surname or initial; a bare first name
+    that belongs to another known person is that person). ⚠ The failure direction is deliberate — a
+    missed nickname is simply not remembered. The post-pull "goes by" field is explicit and marked
+    `nameAliasMeta.confirmed`. `bootRepairNameAliases()` SETS ASIDE (never deletes) swap-shaped
+    aliases on load; Advanced Settings → Planning Center lists every remembered name with
+    Remove / Restore. `derivePcoModel` records `rawName` and `diffPcoModel` detects a rename from raw
+    names, so changing the go-by table never rewrites the roster already on screen. → `namesub`
+82. **The auto-refresh merges CHANGES to the plan on screen and nothing else** (2026-11-25).
+    `pcoPullPlan` selects the plan only after it has been fetched (a failed or interrupted pull used
+    to leave last week's roster with this week's plan selected); `pcoMergeRefresh` with no baseline
+    for the selected plan merges nothing, fetches nothing and says "Press Pull Plan to load this
+    plan" (it used to treat everyone as "added" and pour a second plan on top). `pcoAddBand` /
+    `pcoAddHost` treat an already-seated person as placed (no "Keys 2" for a hand-typed substitute
+    once Planning Center catches up). `pcoFetchAll` follows `links.next` for team members and items.
+    → `pcomergesafe`, `pcopaging`
+83. **The plan picker labels a plan with its own date** (2026-11-25). `sort_date` is a local wall
+    clock wearing a "Z"; converting it as UTC labelled any plan starting before 8am Pacific with the
+    day before. The label reads the digits. → `pcoplandate`
+

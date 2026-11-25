@@ -126,6 +126,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
    if(!eg1||eg1.name!=='Nico Beta'||!eg1.md) throw new Error(JSON.stringify(s.band));
  });
 
+ check('the mic-preferences list shows BOTH people who share a first name (it deduped by first name and hid one)', ()=>{
+   freshRoom(); pull(mk([['Nico Alpha','Vocals'],['Nico Beta','Vocals'],['Dee Drum','Drums']]));
+   ev(`state.config.micPrefs.people['Nico Gamma']={remembered:'SM58'}; renderPrefEditor();`);
+   const names=[...window.document.querySelectorAll('#prefEdit .pp-name')].map(td=>td.textContent.replace('in service','').trim());
+   ['Nico Alpha','Nico Beta','Nico Gamma'].forEach(n=>{ if(names.indexOf(n)===-1) throw new Error(n+' missing from '+JSON.stringify(names)); });
+ });
+
  console.log('--- nothing is dropped in silence, and old notices do not linger ---');
  check('a second drummer (no second kit) is reported, not silently lost', ()=>{
    freshRoom(); pull(mk([['Ann One','Drums'],['Bob Two','Drums']])); const s=snap();
