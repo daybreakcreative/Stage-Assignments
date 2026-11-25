@@ -1,3 +1,4 @@
+// 2026-11-25: rename detection reads PCO's raw name (rawName), which derivePcoModel now emits — the hand-built models carry it too. A baseline WITHOUT rawName reports no rename (tests/namesub.js).
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const html = fs.readFileSync((process.env.SA_HTML||require('path').join(__dirname,'..','index.html')),'utf8');
@@ -23,19 +24,19 @@ window.addEventListener('load', ()=>setTimeout(()=>{
 
   console.log('--- diffPcoModel ---');
   const base = JSON.stringify({ meta:{title:'A',date:'2026-07-05'}, serviceOrder:[{id:'i1',title:'S1'}], people:[
-    {pcoId:'tm1',name:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
-    {pcoId:'tm2',name:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
-    {pcoId:'tm3',name:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
-    {pcoId:'tm4',name:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
+    {pcoId:'tm1',name:'Jake',rawName:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
+    {pcoId:'tm2',name:'Sophia',rawName:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
+    {pcoId:'tm3',name:'Sam',rawName:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
+    {pcoId:'tm4',name:'Carl',rawName:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
   ]});
 
   check('add / decline / hardRemove / roleChange / rename / serviceOrder all detected', ()=>{
     const next = JSON.stringify({ meta:{title:'A',date:'2026-07-05'}, serviceOrder:[{id:'i1',title:'S1 NEW'}], people:[
-      {pcoId:'tm1',name:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
-      {pcoId:'tm2',name:'Sophia R',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm3',name:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'D'},
-      {pcoId:'tm4',name:'Carl',kind:'band',position:'keys',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm5',name:'Mia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'}
+      {pcoId:'tm1',name:'Jake',rawName:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
+      {pcoId:'tm2',name:'Sophia R',rawName:'Sophia R',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm3',name:'Sam',rawName:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'D'},
+      {pcoId:'tm4',name:'Carl',rawName:'Carl',kind:'band',position:'keys',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm5',name:'Mia',rawName:'Mia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'}
     ]});
     const d = ev(`diffPcoModel(${base}, ${next})`);
     if (d.added.map(p=>p.pcoId).join(',')!=='tm5') throw new Error('added: '+JSON.stringify(d.added));
@@ -47,9 +48,9 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   });
   check('hardRemove detected when member absent from next', ()=>{
     const next = JSON.stringify({ meta:{title:'A',date:'2026-07-05'}, serviceOrder:[{id:'i1',title:'S1'}], people:[
-      {pcoId:'tm1',name:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
-      {pcoId:'tm2',name:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm4',name:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
+      {pcoId:'tm1',name:'Jake',rawName:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
+      {pcoId:'tm2',name:'Sophia',rawName:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm4',name:'Carl',rawName:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
     ]});
     const d = ev(`diffPcoModel(${base}, ${next})`);
     if (d.hardRemoved.map(p=>p.pcoId).join(',')!=='tm3') throw new Error('hardRemoved: '+JSON.stringify(d.hardRemoved));
@@ -57,17 +58,17 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   });
   check('no baseline => everything is an add, no churn flags', ()=>{
     const next = JSON.stringify({ meta:{title:'A',date:'2026-07-05'}, serviceOrder:[], people:[
-      {pcoId:'tm1',name:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'}
+      {pcoId:'tm1',name:'Jake',rawName:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'}
     ]});
     const d = ev(`diffPcoModel(null, ${next})`);
     if (d.added.length!==1 || d.hardRemoved.length || d.declined.length) throw new Error('null-baseline diff wrong');
   });
   check('metaChanged flag fires on a title/date change', ()=>{
     const next = JSON.stringify({ meta:{title:'B',date:'2026-07-12'}, serviceOrder:[{id:'i1',title:'S1'}], people:[
-      {pcoId:'tm1',name:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
-      {pcoId:'tm2',name:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm3',name:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm4',name:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
+      {pcoId:'tm1',name:'Jake',rawName:'Jake',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
+      {pcoId:'tm2',name:'Sophia',rawName:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm3',name:'Sam',rawName:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm4',name:'Carl',rawName:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
     ]});
     const d = ev(`diffPcoModel(${base}, ${next})`);
     if (!d.metaChanged) throw new Error('metaChanged not set');
@@ -75,10 +76,10 @@ window.addEventListener('load', ()=>setTimeout(()=>{
   });
   check('a case-only name difference is NOT a rename (normFullName normalizes)', ()=>{
     const next = JSON.stringify({ meta:{title:'A',date:'2026-07-05'}, serviceOrder:[{id:'i1',title:'S1'}], people:[
-      {pcoId:'tm1',name:'JAKE',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
-      {pcoId:'tm2',name:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm3',name:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
-      {pcoId:'tm4',name:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
+      {pcoId:'tm1',name:'JAKE',rawName:'JAKE',kind:'vocalist',position:'',host:'',isWL:true,leadsSongs:true,status:'C'},
+      {pcoId:'tm2',name:'Sophia',rawName:'Sophia',kind:'vocalist',position:'',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm3',name:'Sam',rawName:'Sam',kind:'band',position:'drums',host:'',isWL:false,leadsSongs:false,status:'C'},
+      {pcoId:'tm4',name:'Carl',rawName:'Carl',kind:'band',position:'eg',host:'',isWL:false,leadsSongs:false,status:'C'}
     ]});
     const d = ev(`diffPcoModel(${base}, ${next})`);
     if (d.renamed.length) throw new Error('case-only diff wrongly flagged as rename: '+JSON.stringify(d.renamed));

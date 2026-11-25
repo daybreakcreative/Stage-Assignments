@@ -112,6 +112,14 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .st-fav-list{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px}
 .st-fav-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
 .st-fav-row:hover{background:var(--bg-inset)}
+.na-list{border:1px solid var(--border);border-radius:8px;padding:6px;max-height:240px;overflow-y:auto}
+.na-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
+.na-row:hover{background:var(--bg-inset)}
+.na-official{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.na-arrow{flex:0 0 auto;font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+.na-goesby{flex:1 1 auto;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.na-row.na-aside .na-goesby{font-weight:400;color:var(--text-muted)}
+.na-btn{flex:0 0 auto;font-size:11px;padding:3px 9px}
 .st-fav-name{flex:1}
 .st-fav-folder{font-size:10.5px;color:var(--text-faint);font-family:var(--ff-mono)}
 /* --- Mobile / tablet: the top bar wraps into rows instead of overflowing.
@@ -2450,6 +2458,10 @@ const DEFAULT_STATE = {
   // Preferred / "goes by" display names. Keyed by normFullName(officialPcoName) → preferred display string.
   // Applied at every PCO name-entry choke point so future pulls auto-rename (e.g. 'catherine smith' → 'Cat').
   nameAliases: {},
+  // Bookkeeping for the alias table. `confirmed[officialKey]` = the operator said so explicitly (the
+  // post-pull "goes by" field, or a Restore) — never second-guessed. `setAside[officialKey]` = an
+  // alias that pointed one person at another, taken out of use on load but kept for Restore.
+  nameAliasMeta: { confirmed: {}, setAside: {} },
   // Per-shadow preferences: keyed by normFullName → last selected option
   // value = { role: 'vocalist'|'band', choice: 'on-stage-mic'|'on-stage-iem'|'off-stage-iem'|'off-stage'|'observer', mic?:..., updatedAt: ISO }
   shadowPreferences: {},
@@ -3129,6 +3141,7 @@ function loadState() {
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
         peoplePhotos: (p.peoplePhotos && typeof p.peoplePhotos === 'object') ? p.peoplePhotos : {},
         nameAliases: (p.nameAliases && typeof p.nameAliases === 'object') ? p.nameAliases : {},
+        nameAliasMeta: (p.nameAliasMeta && typeof p.nameAliasMeta === 'object') ? p.nameAliasMeta : { confirmed: {}, setAside: {} },
         shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
         checklistState: (p.checklistState && typeof p.checklistState === 'object') ? p.checklistState : {},
         savedStages: Array.isArray(p.savedStages) ? p.savedStages : []
@@ -3414,11 +3427,134 @@ function applyNameAlias(name) {
   const a = state.nameAliases && state.nameAliases[normFullName(name)];
   return a || name;
 }
+// ── Same person, or someone filling in? ───────────────────────────────────────────────────────
+// From 2026-07-01 every inline name edit was recorded as a "goes by" alias. Operators also use the
+// name field to SWAP a person (the scheduled singer is out, type the substitute over her), and that
+// swap became permanent: every later pull that scheduled her showed the substitute, in her slot,
+// with her headshot and her setup items — and nothing listed the alias or let you remove it
+// (reported 2026-11-25 as "pulling random people for positions"). An inline edit is now an alias
+// only when the new name plausibly belongs to the same person. The cheap failure is deliberate: a
+// nickname this misses simply is not remembered, where a swap it wrongly accepted puts the wrong
+// person on stage every week.
+function nameAliasMeta() {
+  if (!state.nameAliasMeta || typeof state.nameAliasMeta !== 'object') state.nameAliasMeta = {};
+  const m = state.nameAliasMeta;
+  if (!m.confirmed || typeof m.confirmed !== 'object') m.confirmed = {};
+  if (!m.setAside || typeof m.setAside !== 'object') m.setAside = {};
+  return m;
+}
+function nameTokens(n) { return normFullName(n).replace(/[.,'’]/g, '').split(' ').filter(Boolean); }
+function nameEditDistanceLe1(a, b) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+// A nickname relation between two FIRST names: Santi/Santiago, Ben/Benjamin, Liz/Elizabeth, Hana/Hanna.
+function firstNameLike(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (short.length >= 2 && long.startsWith(short)) return true;
+  if (short.length >= 3 && long.includes(short)) return true;
+  return short.length >= 4 && nameEditDistanceLe1(a, b);
+}
+// Everyone the app has a record of, by normalised display name.
+function knownPeopleNames() {
+  const out = new Set();
+  const add = n => { const k = normFullName(n); if (k) out.add(k); };
+  Object.keys(state.setupItems || {}).forEach(k => add(k.split('|')[0]));
+  Object.keys(state.musicianPreferences || {}).forEach(k => add(k.split('|')[0]));
+  Object.keys((state.config && state.config.micPrefs && state.config.micPrefs.people) || {}).forEach(add);
+  Object.keys(state.peoplePhotos || {}).forEach(add);
+  ((state.pcoBaseline && state.pcoBaseline.people) || []).forEach(p => { add(p.name); add(p.rawName); });
+  (state.vocalists || []).forEach(v => add(v.name));
+  (state.instruments || []).forEach(i => add(i.assignedTo));
+  return out;
+}
+function looksLikeSamePerson(official, preferred) {
+  const A = nameTokens(official), B = nameTokens(preferred);
+  if (!A.length || !B.length) return false;
+  if (A.join(' ') === B.join(' ')) return true;
+  if (A.length === 1 || B.length === 1) {
+    if (!firstNameLike(A[0], B[0])) return false;
+    if (B.length === 1 && A.length > 1) {
+      // "Chris" for Christina Lee — unless a different Chris is somebody we already know.
+      const aLast = A[A.length - 1];
+      for (const k of knownPeopleNames()) {
+        const t = k.split(' ');
+        if (t.length >= 2 && t[0] === B[0] && k !== A.join(' ') && t[t.length - 1] !== aLast) return false;
+      }
+    }
+    return true;
+  }
+  // Both carry a surname: the first names must be alike AND so must the surnames. Family members
+  // ("Sal Sandez" for "Mel Sandez") and same-first-name teammates ("Nick P" for "Nick M") are not.
+  let shared = 0; while (shared < A[0].length && shared < B[0].length && A[0][shared] === B[0][shared]) shared++;
+  const firstAlike = firstNameLike(A[0], B[0]) || shared >= 3;
+  const bLast = B[B.length - 1];
+  const initials = A.slice(1).map(t => t[0]).join('');
+  const lastAlike = A.slice(1).some(t => t === bLast || t.startsWith(bLast) || (t.length >= 4 && bLast.length >= 4 && nameEditDistanceLe1(t, bLast))) || initials === bLast;
+  return firstAlike && lastAlike;
+}
+// The official (PCO) key behind a displayed name: the name itself, unless it is an alias's value.
+function officialNameKeyFor(displayName) {
+  const cur = normFullName(displayName);
+  for (const k in (state.nameAliases || {})) { if (normFullName(state.nameAliases[k]) === cur) return k; }
+  return cur;
+}
+// True when an inline edit from `currentName` to `newName` names a DIFFERENT person.
+function isNameSwap(currentName, newName) {
+  const cur = (currentName || '').trim(), nxt = (newName || '').trim();
+  if (!cur || !nxt) return false;
+  return !(looksLikeSamePerson(officialNameKeyFor(cur), nxt) || looksLikeSamePerson(cur, nxt));
+}
+function removeNameAlias(officialKey) {
+  const m = nameAliasMeta();
+  if (state.nameAliases) delete state.nameAliases[officialKey];
+  delete m.confirmed[officialKey]; delete m.setAside[officialKey];
+  saveState();
+}
+function restoreNameAlias(officialKey) {
+  const m = nameAliasMeta();
+  const v = m.setAside[officialKey]; if (!v) return;
+  if (!state.nameAliases) state.nameAliases = {};
+  state.nameAliases[officialKey] = v;
+  m.confirmed[officialKey] = true;       // an explicit answer — never set aside again
+  delete m.setAside[officialKey];
+  saveState();
+}
+// On load: take out of use every alias that points one person at another. Set aside, not deleted,
+// so Advanced Settings → Planning Center can restore one that was real. The roster already on
+// screen is left exactly as it is; the next pull simply shows the scheduled person's own name.
+function bootRepairNameAliases() {
+  const m = nameAliasMeta();
+  const al = state.nameAliases || (state.nameAliases = {});
+  let n = 0;
+  Object.keys(al).forEach(k => {
+    if (m.confirmed[k]) return;
+    if (looksLikeSamePerson(k, al[k])) return;
+    m.setAside[k] = al[k]; delete al[k]; n++;
+  });
+  if (n) {
+    saveState();
+    try {
+      pcoMergeNotices.fyi.push({ id: 'alias_setaside', text: `ℹ ${n} remembered name${n === 1 ? '' : 's'} pointed one person at another and ${n === 1 ? 'was' : 'were'} set aside — review in Advanced Settings → Planning Center` });
+      renderPcoMergeBanner();
+    } catch (e) { /* banner not ready — the settings list still shows them */ }
+  }
+  return n;
+}
 // Record a preferred display name for a person and rename them everywhere live.
 // currentName may itself be a prior preferred value — we reverse-lookup the official
 // key so re-edits keep updating the SAME alias. Setting preferred back to the official
 // name clears the alias (a revert).
-function setPreferredName(currentName, preferred) {
+function setPreferredName(currentName, preferred, opts) {
   currentName = (currentName || '').trim();
   preferred = (preferred || '').trim();
   if (!currentName || !preferred) return;
@@ -3432,8 +3568,10 @@ function setPreferredName(currentName, preferred) {
     if (normFullName(state.nameAliases[k]) === curN) { officialKey = k; break; }
   }
   // Record or clear the alias (clear if preferred matches the official name — a revert).
-  if (officialKey === prefN) delete state.nameAliases[officialKey];
-  else state.nameAliases[officialKey] = preferred;
+  { const m = nameAliasMeta();
+    delete m.setAside[officialKey];
+    if (officialKey === prefN) { delete state.nameAliases[officialKey]; delete m.confirmed[officialKey]; }
+    else { state.nameAliases[officialKey] = preferred; if (opts && opts.confirmed) m.confirmed[officialKey] = true; } }
   if (curN === prefN) { saveState(); return; } // display unchanged (e.g. only case)
   // Rename every live entity that matches the current name.
   (state.vocalists||[]).forEach(v => { if (normFullName(v.name) === curN) v.name = preferred; });
@@ -3981,10 +4119,12 @@ function finalizeVocName(id, prevName) {
     const oldName = (prevName || '').trim();
     if (oldName && oldName !== newName) {
       remapChecklistKeys(checklistPairsForVocalRename(vRen, oldName, newName));
-      // Record a preferred-name alias + re-key setup/mic/musician stores so this rename
-      // is remembered and re-applied on future PCO pulls. (The live entity is already
-      // renamed by updateVocName, so setPreferredName's entity loops are no-ops here.)
-      setPreferredName(oldName, newName);
+      // The SAME person under a go-by name → record the alias + re-key setup/mic/musician stores so
+      // it is re-applied on future pulls. A DIFFERENT person → a swap for this service: no alias,
+      // and the scheduled person keeps her own setup items and mic preference. (The live entity is
+      // already renamed by updateVocName, so setPreferredName's entity loops are no-ops here.)
+      if (newName && isNameSwap(oldName, newName)) toast(`${newName} is in for ${oldName} — this service only.`, 'info');
+      else setPreferredName(oldName, newName);
     }
   }
   // Auto-link any band slots whose typed name matches this vocalist
@@ -4630,9 +4770,10 @@ function renderBand() {
       const newName = (inst.assignedTo || '').trim();
       if (prevName && prevName !== newName) {
         remapChecklistKeys(checklistPairsForBandRename(inst, prevName, newName));
-        // Record a preferred-name alias + re-key setup/mic/musician stores so future PCO
-        // pulls re-apply this go-by name. (inst.assignedTo is already the new value.)
-        setPreferredName(prevName, newName);
+        // Same person under a go-by name → alias + re-key (future pulls re-apply it). A different
+        // person → a swap for this service only. (inst.assignedTo is already the new value.)
+        if (newName && isNameSwap(prevName, newName)) toast(`${newName} is in for ${prevName} — this service only.`, 'info');
+        else setPreferredName(prevName, newName);
       }
       const changed = autoLinkBandToVocalists();
       saveState();
@@ -9892,6 +10033,7 @@ function derivePcoModel(planData, tmRes, itemsRes) {
     people.push({
       pcoId: tm.id,
       name,
+      rawName: a.name || '',                             // PCO's own name, before any go-by alias
       kind: cls.kind === 'md_flag' ? 'md' : cls.kind,   // vocalist|band|host|shadow|md
       position: cls.position || '',
       positionName: a.team_position_name || '',          // raw PCO position label (e.g. "EG Shadow")
@@ -9952,7 +10094,13 @@ function diffPcoModel(baseline, next) {
       if (np.kind !== bp.kind || np.position !== bp.position || np.host !== bp.host) {
         out.roleChanged.push({ from:bp, to:np });
       }
-      if (normFullName(np.name) !== normFullName(bp.name)) {
+      // A rename is PCO changing the person's name — compare PCO's raw names. Comparing displayed
+      // names made every change to the go-by table look like a rename and rewrote the roster on the
+      // next auto-refresh. A baseline from before rawName existed cannot tell the two apart, so it
+      // reports nothing; it is replaced by `next` (which carries rawName) at the end of this refresh.
+      const bRaw = (typeof bp.rawName === 'string' && bp.rawName) ? bp.rawName : null;
+      const nRaw = (typeof np.rawName === 'string' && np.rawName) ? np.rawName : null;
+      if (bRaw && nRaw && normFullName(nRaw) !== normFullName(bRaw)) {
         out.renamed.push({ from:bp, to:np });
       }
     } else { // np declined
@@ -10404,6 +10552,27 @@ function pcoLoadDemo() {
   setPCOStatus('Demo data loaded','ok');
 }
 
+// Every remembered "goes by" name, visible and removable. Until 2026-11-25 nothing showed these.
+function renderNameAliasBox() {
+  const box = document.getElementById('nameAliasBox'); if (!box) return;
+  const al = state.nameAliases || {}; const m = nameAliasMeta();
+  const title = k => k.replace(/\b\w/g, c => c.toUpperCase());
+  const active = Object.keys(al).sort(), aside = Object.keys(m.setAside).sort();
+  const row = (k, v, kind) => `<div class="na-row${kind === 'aside' ? ' na-aside' : ''}">
+      <span class="na-official">${esc(title(k))}</span><span class="na-arrow">${kind === 'aside' ? 'was shown as' : 'shows as'}</span><span class="na-goesby">${esc(v)}</span>
+      ${kind === 'aside'
+        ? `<button type="button" class="btn ghost na-btn" data-alias-restore="${esc(k)}">Restore</button><button type="button" class="btn ghost na-btn" data-alias-remove="${esc(k)}">Remove</button>`
+        : `<button type="button" class="btn ghost na-btn" data-alias-remove="${esc(k)}">Remove</button>`}
+    </div>`;
+  box.innerHTML = `<div class="section-label">Names people go by</div>
+    <p class="subtitle" style="font-size:12px;">When Planning Center schedules the name on the left, Stage·Assign shows the name on the right. Edit someone's name to a shorter form of it (Santiago → Santi) and it is remembered here. Typing a <em>different</em> person over a name is a swap for that service only.</p>
+    ${active.length ? `<div class="na-list">${active.map(k => row(k, al[k], 'active')).join('')}</div>` : `<p class="subtitle" style="font-size:12px;color:var(--text-faint);">No remembered names.</p>`}
+    ${aside.length ? `<div class="section-label" style="margin-top:14px;">Set aside</div>
+      <p class="subtitle" style="font-size:12px;">These pointed one person at another, so they are no longer applied. Restore one only if it really is the same person.</p>
+      <div class="na-list">${aside.map(k => row(k, m.setAside[k], 'aside')).join('')}</div>` : ''}`;
+  box.querySelectorAll('[data-alias-remove]').forEach(b => b.addEventListener('click', () => { removeNameAlias(b.dataset.aliasRemove); renderNameAliasBox(); }));
+  box.querySelectorAll('[data-alias-restore]').forEach(b => b.addEventListener('click', () => { restoreNameAlias(b.dataset.aliasRestore); renderNameAliasBox(); }));
+}
 function renderPCOSettings() {
   const el = document.getElementById('pcoSettingsContent');
   const isConnected = !!pcoTokens;
@@ -10462,8 +10631,10 @@ function renderPCOSettings() {
         • <span style="color:var(--text);">"Vocals", "Vocal Lead", "BGV"</span> → vocalist (lead flag if "lead" in name)<br>
         • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
-        • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher"</span> → host channel 1<br>
-        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → next open host channels, in order<br>
+        • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher", "Message"</span> → the channel labelled "Pastor" (else channel 1)<br>
+        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → next open host channels, in order — never the Pastor channel<br>
+        • <span style="color:var(--text);">"Pastor Baptizing"</span> → HH 3<br>
+        • Anyone the plan puts on stage with no free slot or mic is named in a ⚠ notice, not dropped<br>
         • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)<br>
         <br>
         <span style="color:var(--text-faint);">Ignored (no mic, never assigned):</span><br>
@@ -10505,6 +10676,7 @@ function renderPCOSettings() {
       <div class="st-fav-list" id="stFavList">${rows}</div>`;
   }
   el.appendChild(favWrap);
+  { const naBox = document.createElement('div'); naBox.id = 'nameAliasBox'; naBox.className = 'pco-fav-section'; el.appendChild(naBox); renderNameAliasBox(); }
   favWrap.querySelectorAll('.st-fav-cb').forEach(cb => cb.addEventListener('change', e => {
     const id = e.target.value; let arr = state.pcoConfig.favoriteServiceTypeIds || (state.pcoConfig.favoriteServiceTypeIds = []);
     if (e.target.checked) { if (arr.indexOf(id) === -1) arr.push(id); } else { state.pcoConfig.favoriteServiceTypeIds = arr.filter(x => x !== id); }
@@ -14000,7 +14172,7 @@ function savePostPullStep() {
     const nameInp = content.querySelector('#pp_name');
     const newName = nameInp ? (nameInp.value || '').trim() : '';
     if (newName && newName !== step.personName) {
-      setPreferredName(step.personName, newName);
+      setPreferredName(step.personName, newName, { confirmed: true });   // the "goes by" field is an explicit answer
       step.personName = newName;
       step.prefKey = normFullName(newName) + '|' + step.prefKey.split('|').slice(1).join('|');
     }
@@ -15817,6 +15989,7 @@ function init() {
   })();
   ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
   bootRepairSetupItems();      // migrate legacy keys → repair → rebuild this week's caches → save
+  bootRepairNameAliases();     // set aside go-by names that point one person at another
   ensureVenueInstrumentSlots(state); // backfill per-venue band slots (phase 4)
   renderVenueSwitcher();
   applyDisplaySectionScales();
