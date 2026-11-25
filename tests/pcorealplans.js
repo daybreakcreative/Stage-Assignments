@@ -76,11 +76,17 @@ window.addEventListener('load',()=>setTimeout(()=>{
  });
 
  console.log('--- the specific placements ---');
- check('68: the "Message" position is the speaker and takes the Pastor channel; both hosts take HH 1 and HH 2', ()=>{
+ // 2026-11-25, Dillon's rulings the same afternoon: "Ministry Moment" gets a handheld; "Prayer Host" does not.
+ check('68: "Message" is the speaker on the Pastor channel; the two hosts AND the Ministry Moment person each get a handheld, in plan order', ()=>{
    freshRoom(); pull(F.tm('sixeight_nov29')); const s=snap();
    const h=Object.fromEntries(s.hosts.map(x=>[x.label,x.name]));
    if(h['Pastor']!==F.nameOf('a45')) throw new Error('Pastor='+h['Pastor']);
-   if(h['HH 1']!==F.nameOf('a81')||h['HH 2']!==F.nameOf('a84')) throw new Error(JSON.stringify(h));
+   if(h['HH 1']!==F.nameOf('a81')||h['HH 2']!==F.nameOf('a82')||h['HH 3']!==F.nameOf('a84')) throw new Error(JSON.stringify(h));
+ });
+ check('"Prayer Host" is not on a mic: classified as not-on-stage, like Pre Service Prayer', ()=>{
+   if(J(`classifyPosition('Prayer Host')`).kind!=='ignore') throw new Error(JSON.stringify(J(`classifyPosition('Prayer Host')`)));
+   const mm=J(`classifyPosition('Ministry Moment')`); if(mm.kind!=='host'||mm.host!=='welcome') throw new Error(JSON.stringify(mm));
+   const wh=J(`classifyPosition('Welcome Host')`); if(wh.kind!=='host'||wh.host!=='welcome') throw new Error('Welcome Host broke: '+JSON.stringify(wh));
  });
  check('Thanksgiving: first pastor on Pastor, baptizer on HH 3, both hosts on HH 1-2, and the second pastor is REPORTED (the Pastor mic is taken)', ()=>{
    freshRoom(); pull(F.tm('thanksgiving_now')); const s=snap();
@@ -95,11 +101,13 @@ window.addEventListener('load',()=>setTimeout(()=>{
    const h=Object.fromEntries(s.hosts.map(x=>[x.label,x.name]));
    if(h['HH 1']!=='Hal Host'||h['HH 2']!=='Ida Other') throw new Error(JSON.stringify(h));
  });
- check('Sunday Nov 29: speaker on Pastor, first baptizer on HH 3, hosts on HH 1-2, and the second baptizer is REPORTED', ()=>{
+ check('Sunday Nov 29: speaker on Pastor, Welcome Host on HH 1, first baptizer on HH 3, second baptizer on HH 2 — the Prayer Host holds nothing and nobody is unplaced', ()=>{
    freshRoom(); pull(F.tm('sunday_nov29')); const s=snap();
    const h=Object.fromEntries(s.hosts.map(x=>[x.label,x.name]));
-   if(h['Pastor']!==F.nameOf('a23')||h['HH 3']!==F.nameOf('a18')) throw new Error(JSON.stringify(h));
-   if(!s.notices.some(n=>n.indexOf(F.nameOf('a19'))!==-1)) throw new Error('no notice for the second baptizer: '+JSON.stringify(s.notices));
+   const want={'Pastor':F.nameOf('a23'),'HH 1':F.nameOf('a24'),'HH 2':F.nameOf('a19'),'HH 3':F.nameOf('a18')};
+   Object.keys(want).forEach(k=>{ if(h[k]!==want[k]) throw new Error(k+' should be '+want[k]+': '+JSON.stringify(h)); });
+   if(Object.values(h).indexOf(F.nameOf('a20'))!==-1) throw new Error('Prayer Host is on a handheld');
+   if(s.notices.length) throw new Error('unexpected notices: '+JSON.stringify(s.notices));
  });
 
  console.log('--- first names are not identities ---');

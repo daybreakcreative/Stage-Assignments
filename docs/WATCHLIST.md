@@ -740,8 +740,9 @@ Behaviors that must keep working. **The executable version of this list is `test
     • Nobody is dropped in silence: an extra speaker/baptizer/host, second drummer/bassist, fourth
       guitarist or seventh shadow raises "⚠ … is on the plan but wasn't placed — <why>". A fresh
       pull clears the previous plan's notices.
-    • ⚠ DELIBERATELY unchanged: whoever baptizes still takes HH 3 even when they also host (open
-      question with Dillon); "Prayer Host" is still a welcome host; "Ministry Moment" is unrecognised.
+    • Dillon's rulings, 2026-11-25: whoever baptizes KEEPS HH 3 even when they also host (two
+      handhelds for one person is intended); "Prayer Host" is NOT on a mic (ignored — it used to take
+      HH 1 ahead of the Welcome Host); "Ministry Moment" gets a handheld like a host.
     → `pcorealplans`
 81. **Typing a substitute over a name is a swap for this service, not a permanent alias**
     (2026-11-25). Since 2026-07-01 every inline name edit was recorded as a go-by alias, so a

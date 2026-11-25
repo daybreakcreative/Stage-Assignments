@@ -9583,6 +9583,9 @@ function classifyPosition(name) {
   if (n.includes('team lead') || n.includes('creative') || n.includes('communion') || n.includes('facility') || n.includes('facilities')) return { kind:'ignore' };
   if (n.includes('participant') || n.includes('assistant') || n.includes('coordinator')) return { kind:'ignore' };
   if (n.includes('pre service prayer') || n.includes('pre-service prayer')) return { kind:'ignore' };
+  // "Prayer Host" hosts the prayer time, not the stage — no handheld (Dillon, 2026-11-25). It used
+  // to match the generic "host" rule below and take HH 1 ahead of the Welcome Host.
+  if (n.includes('prayer host')) return { kind:'ignore' };
 
   // VOCALISTS
   if (n.includes('worship leader') || /^wl\b/.test(n) || n === 'wl') return { kind:'vocalist', isWL:true, leadsSongs:true };
@@ -9607,7 +9610,8 @@ function classifyPosition(name) {
   // WELCOME HOSTS — fill HH1/HH2 first.
   // Note: "Announcement" alone is a welcome-style host (someone makes announcements live on stage).
   // The "Announcement Video Host" case is already caught by the 'video' check above.
-  if (n.includes('welcome') || n.includes('host') || n.includes('emcee') || n.includes('announcement')) return { kind:'host', host:'welcome' };
+  // "Ministry Moment" (68) is someone speaking from the stage — a handheld, like a host (Dillon, 2026-11-25).
+  if (n.includes('welcome') || n.includes('host') || n.includes('emcee') || n.includes('announcement') || n.includes('ministry moment')) return { kind:'host', host:'welcome' };
 
   return { kind:'unknown' };
 }
@@ -10665,7 +10669,7 @@ function renderPCOSettings() {
         • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2)<br>
         • <span style="color:var(--text);">"Drums", "Bass", "Keys", "Acoustic", "Electric Guitar"</span> → band positions<br>
         • <span style="color:var(--accent);">"Speaker", "Pastor", "Preacher", "Message"</span> → the channel labelled "Pastor" (else channel 1)<br>
-        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee"</span> → next open host channels, in order — never the Pastor channel<br>
+        • <span style="color:var(--text);">"Welcome Host", "Host", "Emcee", "Ministry Moment"</span> → next open host channels, in order — never the Pastor channel<br>
         • <span style="color:var(--text);">"Pastor Baptizing"</span> → HH 3<br>
         • Anyone the plan puts on stage with no free slot or mic is named in a ⚠ notice, not dropped<br>
         • <span style="color:var(--wl);">"Music Director"</span> → MD flag (matched to instrument)<br>
@@ -10676,7 +10680,7 @@ function renderPCOSettings() {
         • Door Assistant, Greeter, Usher, Parking<br>
         • Photo, Camera, Audio, Lighting, Production, Tech<br>
         • Team Lead, Creative, Communion, Facility roles<br>
-        • Pre-Service Prayer (and other prep roles)
+        • Pre-Service Prayer, Prayer Host (and other prep roles)
       </div>
     </div>
   `;
