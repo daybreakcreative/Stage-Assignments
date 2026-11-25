@@ -778,4 +778,18 @@ Behaviors that must keep working. **The executable version of this list is `test
     the Planning Center auto-refresh tick, throttled to one check per 10 minutes — the test scans the
     source for a timer in that block. ⚠ A fixed pill was tried first and covered the stage plot's
     corner; the strip sits in the page flow instead. → `buildcheck`
+85. **The team owns the position map** (2026-11-25, branch `position-map`). `state.config.positionMap`
+    ({ lowercased PCO position → role id from `POSITION_ROLES` }) is consulted before the built-in
+    rules; Advanced Settings → Planning Center lists every position seen on a pull or refresh
+    (`state.positionsSeen` — position NAMES only, capped at 120) with what it does now and a select.
+    ⚠ `classifyPosition` (override-aware) is for PCO POSITIONS; instrument slot LABELS must use
+    `classifyPositionBuiltin`, or mapping the "Keys" position to something else un-finds every Keys
+    slot (pinned). The map is sanitised on load; an override for a position no longer seen stays
+    listed so it can be undone. The old static rules text is collapsed under "The automatic rules".
+    → `positionmap`
+86. **Anyone on screen whom the plan does not put on stage is named, once** (2026-11-25, same
+    branch). After every refresh `noteOffPlan()` raises ONE dismissable ℹ notice ("On screen but not
+    on this plan: … — fine if they are filling in."). Dismissed → gone for that exact set of people
+    this session; a different set raises it again; it clears itself when Planning Center catches up.
+    Go-by names are not off-plan. → `pcooffplan`
 

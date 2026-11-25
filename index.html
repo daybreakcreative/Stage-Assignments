@@ -112,6 +112,20 @@ body{background:radial-gradient(ellipse at 15% 0%,rgba(212,161,71,.05) 0%,transp
 .st-fav-list{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px}
 .st-fav-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
 .st-fav-row:hover{background:var(--bg-inset)}
+.pm-list{border:1px solid var(--border);border-radius:8px;padding:6px;max-height:320px;overflow-y:auto}
+.pm-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(150px,210px);align-items:center;gap:10px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
+.pm-row:hover{background:var(--bg-inset)}
+.pm-pos{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pm-now{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)}
+.pm-row.pm-custom .pm-now{color:var(--accent);font-weight:600}
+.pm-select{min-width:0;width:100%;font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+@media (max-width:560px){
+  .pm-row{grid-template-columns:minmax(0,1fr);gap:4px;padding:8px}
+  .pm-pos{white-space:normal;font-weight:600}
+  .pm-now{display:none}
+  .na-row{flex-wrap:wrap}
+  .na-official,.na-goesby{white-space:normal;overflow:visible}
+}
 .na-list{border:1px solid var(--border);border-radius:8px;padding:6px;max-height:240px;overflow-y:auto}
 .na-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
 .na-row:hover{background:var(--bg-inset)}
@@ -2406,6 +2420,7 @@ const DEFAULT_STATE = {
     shadowPack: 'Misc 2',
     setupCatalog: null,            // overlay of edited/custom setup catalogs (null = all factory)
     setupTypeRules: [],            // [{id,keyword,key}] — keyword→setup-type auto-map (Phase 2)
+    positionMap: {},               // '<lowercased PCO position>' -> role id (see POSITION_ROLES); absent = automatic
     enableShadows: true, // shadows are always processed; retained as a harmless legacy field
     // Setup Items: lock display until setup done (on by default for new installs)
     blockDisplayUntilSetup: true,
@@ -2460,6 +2475,7 @@ const DEFAULT_STATE = {
   // value = { askedAt: ISO, mic?: 'KMS105', setupNotes?: '...', wireless?: bool }
   musicianPreferences: {},
   peoplePhotos: {},             // normFullName -> PCO photo URL (URL only, never image bytes)
+  positionsSeen: {},            // lowercased PCO position -> { name, last } — position NAMES only
   // "Grayson is always VOCAL 3." normFullName -> 0-based slot. Keyed by NAME, not vocalist id:
   // ids are minted per service, so an id-keyed pin would evaporate on the next Planning Center
   // pull -- which is the exact case this exists for.
@@ -3091,6 +3107,7 @@ function loadState() {
           iemPackPresets: (loadedConfig.iemPackPresets || [...DEFAULT_IEM_PACK_PRESETS]).map(stripPackName),
           shadowPack: stripPackName(loadedConfig.shadowPack || 'Misc 2'),
           setupCatalog: coerceSetupCatalogOverlay(loadedConfig.setupCatalog),
+          positionMap: sanitizePositionMap(loadedConfig.positionMap),
           setupTypeRules: Array.isArray(loadedConfig.setupTypeRules)
             ? loadedConfig.setupTypeRules.filter(r=>r && r.keyword && r.key).map(r=>({ id:r.id||('rule_'+Math.random().toString(36).slice(2,8)), keyword:String(r.keyword), key:String(r.key) }))
             : [],
@@ -3149,6 +3166,7 @@ function loadState() {
           : { lastServiceDate: null, lastCompletionByKey: {} },
         musicianPreferences: (p.musicianPreferences && typeof p.musicianPreferences === 'object') ? p.musicianPreferences : {},
         peoplePhotos: (p.peoplePhotos && typeof p.peoplePhotos === 'object') ? p.peoplePhotos : {},
+        positionsSeen: (p.positionsSeen && typeof p.positionsSeen === 'object') ? p.positionsSeen : {},
         nameAliases: (p.nameAliases && typeof p.nameAliases === 'object') ? p.nameAliases : {},
         nameAliasMeta: (p.nameAliasMeta && typeof p.nameAliasMeta === 'object') ? p.nameAliasMeta : { confirmed: {}, setAside: {} },
         shadowPreferences: (p.shadowPreferences && typeof p.shadowPreferences === 'object') ? p.shadowPreferences : {},
@@ -4679,7 +4697,7 @@ function renderBand() {
   const hiddenOptional = [];
   // Helper: detect position type from any instrument (drums/bass/keys/eg/ag/null)
   const getInstPosType = (inst) => {
-    const cls = classifyPosition(inst.label || '');
+    const cls = classifyPositionBuiltin(inst.label || '');   // a slot LABEL, not a PCO position
     if (cls.kind === 'band') return cls.position;
     if (inst.id === 'inst_drums') return 'drums';
     if (inst.id === 'inst_bass') return 'bass';
@@ -9562,7 +9580,78 @@ function populatePlanSelect() {
   if (state.pcoConfig.selectedPlanId) sel.value = state.pcoConfig.selectedPlanId;
 }
 
+// ── The team's own position map ───────────────────────────────────────────────────────────────
+// Three times on 2026-11-25 the fix for a wrong placement was "teach the app a position name"
+// (Message, Prayer Host, Ministry Moment). Planning Center positions are the team's data, so the
+// mapping is theirs: state.config.positionMap = { '<lowercased position>': '<role>' } is consulted
+// first, the built-in rules second. Editable in Advanced Settings → Planning Center.
+// ⚠ Overrides apply to PCO POSITIONS only. Instrument slot LABELS go through classifyPositionBuiltin,
+// or mapping the "Keys" position to something else would un-find every Keys slot.
+const POSITION_ROLES = [
+  { id:'vocalist',  label:'Vocalist',              cls:{ kind:'vocalist', isWL:false, leadsSongs:false } },
+  { id:'wl',        label:'Worship Leader',        cls:{ kind:'vocalist', isWL:true,  leadsSongs:true } },
+  { id:'drums',     label:'Drums',                 cls:{ kind:'band', position:'drums' } },
+  { id:'bass',      label:'Bass',                  cls:{ kind:'band', position:'bass' } },
+  { id:'keys',      label:'Keys',                  cls:{ kind:'band', position:'keys' } },
+  { id:'eg',        label:'Electric guitar',       cls:{ kind:'band', position:'eg' } },
+  { id:'ag',        label:'Acoustic guitar',       cls:{ kind:'band', position:'ag' } },
+  { id:'md',        label:'Music Director',        cls:{ kind:'md_flag' } },
+  { id:'speaker',   label:'Speaker (Pastor mic)',  cls:{ kind:'host', host:'speaker' } },
+  { id:'welcome',   label:'Host (handheld)',       cls:{ kind:'host', host:'welcome' } },
+  { id:'baptismal', label:'Baptizing (HH 3)',      cls:{ kind:'host', host:'baptismal' } },
+  { id:'shadow',    label:'Shadow',                cls:{ kind:'shadow' } },
+  { id:'ignore',    label:'Not on stage',          cls:{ kind:'ignore' } }
+];
+function positionKey(name) { return (name || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+function positionRoleDef(id) { return POSITION_ROLES.find(r => r.id === id) || null; }
+function sanitizePositionMap(m) {
+  const out = {};
+  if (!m || typeof m !== 'object') return out;
+  Object.keys(m).forEach(k => { const key = positionKey(k); if (key && typeof m[k] === 'string' && positionRoleDef(m[k])) out[key] = m[k]; });
+  return out;
+}
+// Set (or with an empty role, clear) what a PCO position does. Unknown roles are refused.
+function setPositionRole(positionName, role) {
+  const key = positionKey(positionName); if (!key) return false;
+  if (!state.config.positionMap || typeof state.config.positionMap !== 'object') state.config.positionMap = {};
+  if (!role) delete state.config.positionMap[key];
+  else if (positionRoleDef(role)) state.config.positionMap[key] = role;
+  else return false;
+  saveState();
+  return true;
+}
+// Which role a classification amounts to — for showing "what it does now". 'unknown' when none.
+function positionRoleOfCls(cls) {
+  if (!cls) return 'unknown';
+  if (cls.kind === 'vocalist') return cls.isWL ? 'wl' : 'vocalist';
+  if (cls.kind === 'band') return cls.position;
+  if (cls.kind === 'md_flag') return 'md';
+  if (cls.kind === 'host') return cls.host;
+  if (cls.kind === 'shadow' || cls.kind === 'ignore') return cls.kind;
+  return 'unknown';
+}
+// Remember which positions Planning Center has sent (their NAMES only — never who held them), so
+// the settings table can list them. Capped at 120, oldest dropped.
+function recordPositionsSeen(tmRes) {
+  if (!state.positionsSeen || typeof state.positionsSeen !== 'object') state.positionsSeen = {};
+  const seen = state.positionsSeen, now = new Date().toISOString();
+  ((tmRes && tmRes.data) || []).forEach(tm => {
+    const raw = ((tm && tm.attributes && tm.attributes.team_position_name) || '').trim();
+    const key = positionKey(raw); if (!key) return;
+    seen[key] = { name: raw, last: now };
+  });
+  const keys = Object.keys(seen);
+  if (keys.length > 120) {
+    keys.sort((a, b) => String(seen[a].last || '').localeCompare(String(seen[b].last || '')));
+    keys.slice(0, keys.length - 120).forEach(k => delete seen[k]);
+  }
+}
 function classifyPosition(name) {
+  const role = state.config && state.config.positionMap && state.config.positionMap[positionKey(name)];
+  const def = role ? positionRoleDef(role) : null;
+  return def ? { ...def.cls } : classifyPositionBuiltin(name);
+}
+function classifyPositionBuiltin(name) {
   const original = (name||'').trim();
   const n = original.toLowerCase().trim();
   if (!n) return { kind:'unknown' };
@@ -9680,6 +9769,7 @@ async function pcoPullPlan(planId) {
 
 function applyPCOPlanData(planData, tmRes, itemsRes) {
   const teamMembers = tmRes.data || [];
+  recordPositionsSeen(tmRes);
   if (planData && planData.attributes && planData.attributes.sort_date) {
     state.service.date = planData.attributes.sort_date.slice(0,10);
   }
@@ -9919,7 +10009,7 @@ function applyPCOPlanData(planData, tmRes, itemsRes) {
   // Helper: figure out which short position-type an instrument represents (drums/bass/keys/eg/ag/null)
   function instPositionType(inst) {
     // First try to classify by the instrument's label
-    const cls = classifyPosition(inst.label || '');
+    const cls = classifyPositionBuiltin(inst.label || '');   // a slot LABEL, not a PCO position
     if (cls.kind === 'band') return cls.position;
     // Fallback: legacy ID-based detection
     if (inst.id === 'inst_drums') return 'drums';
@@ -10183,7 +10273,7 @@ function pcoFreeMic() {
 
 // position-type for an instrument (label-based, with legacy id fallback) — local copy for merge use
 function instPositionTypeForMerge(inst) {
-  const cls = classifyPosition(inst.label || '');
+  const cls = classifyPositionBuiltin(inst.label || '');   // a slot LABEL, not a PCO position
   if (cls.kind === 'band') return cls.position;
   if (inst.id === 'inst_drums') return 'drums';
   if (inst.id === 'inst_bass') return 'bass';
@@ -10464,6 +10554,7 @@ async function pcoMergeRefresh() {
     let itemsRes = { data:[], included:[] };
     try { itemsRes = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`); } catch(e){ console.warn('items fetch failed', e); }
 
+    recordPositionsSeen(tmRes);
     const next = derivePcoModel(planRes.data, tmRes, itemsRes);
     next.planId = planId;
     const changeList = diffPcoModel(baseline, next);
@@ -10480,6 +10571,7 @@ async function pcoMergeRefresh() {
       const entries = (mergeResult && mergeResult.setupReviewEntries) || [];
       if (entries.length) openSetupReviewDialog(entries);
     }
+    noteOffPlan(next);
     setPCOStatus('Synced ✓','ok');
   } catch (e) {
     console.warn('merge refresh failed', e);
@@ -10523,6 +10615,41 @@ function pcoMergeNotify(changeList, failedIds) {
   renderPcoMergeBanner();
 }
 
+// ── On screen, but not on this plan ───────────────────────────────────────────────────────────
+// After every refresh, anyone seated on screen whom the selected plan does not put on stage is
+// named in ONE dismissable ℹ notice. Usually that is a substitute typed in by hand (so it reads as
+// a confirmation); it is also what a roster left over from another plan looks like, which until
+// 2026-11-25 could sit there unremarked. Dismissed → stays gone for that exact set of people this
+// session; a different set raises it again.
+let pcoDismissedNoticeIds = new Set();
+function offPlanNames(model) {
+  const on = new Set();
+  ((model && model.people) || []).forEach(p => {
+    if (!p || p.status === 'D') return;
+    on.add(normFullName(p.name));
+    if (p.rawName) { on.add(normFullName(p.rawName)); on.add(normFullName(applyNameAlias(p.rawName))); }
+  });
+  const out = [], seen = new Set();
+  const consider = n => { const nm = (n || '').trim(); const k = normFullName(nm); if (!k || on.has(k) || seen.has(k)) return; seen.add(k); out.push(nm); };
+  (state.vocalists || []).forEach(v => consider(v && v.name));
+  (state.instruments || []).forEach(i => consider(i && i.assignedTo));
+  hostChannels().forEach(ch => consider(state.hosts && state.hosts[ch.id]));
+  (state.shadows || []).forEach(sh => consider(sh && sh.name));
+  return out;
+}
+function noteOffPlan(model) {
+  pcoMergeNotices.fyi = pcoMergeNotices.fyi.filter(n => !/^offplan_/.test(n.id));
+  const names = offPlanNames(model);
+  if (names.length) {
+    const sig = names.map(normFullName).sort().join('|');
+    let h = 5381; for (let i = 0; i < sig.length; i++) h = ((h << 5) + h + sig.charCodeAt(i)) >>> 0;
+    const id = 'offplan_' + h.toString(36);
+    if (!pcoDismissedNoticeIds.has(id)) {
+      pcoMergeNotices.fyi.push({ id, text: `ℹ On screen but not on this plan: ${names.join(', ')} — fine if they are filling in.` });
+    }
+  }
+  renderPcoMergeBanner();
+}
 function renderPcoMergeBanner() {
   const el = document.getElementById('pcoMergeBanner');
   if (!el) return;
@@ -10532,9 +10659,10 @@ function renderPcoMergeBanner() {
   ];
   if (!all.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = 'flex';
-  el.innerHTML = all.map(n => `<span class="pmn-item ${n.cls}"><span>${esc(n.text)}</span><button class="pmn-x" data-notice="${n.id}" title="Dismiss">×</button></span>`).join('');
+  el.innerHTML = all.map(n => `<span class="pmn-item ${n.cls}"><span>${esc(n.text)}</span><button class="pmn-x" data-notice="${esc(n.id)}" title="Dismiss">×</button></span>`).join('');
   el.querySelectorAll('.pmn-x').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.notice;
+    if (/^offplan_/.test(id)) pcoDismissedNoticeIds.add(id);
     pcoMergeNotices.needs = pcoMergeNotices.needs.filter(n => n.id !== id);
     pcoMergeNotices.fyi = pcoMergeNotices.fyi.filter(n => n.id !== id);
     renderPcoMergeBanner();
@@ -10598,6 +10726,42 @@ function pcoLoadDemo() {
   setPCOStatus('Demo data loaded','ok');
 }
 
+// Every position Planning Center has sent, what the app does with it, and a select to change that.
+function renderPositionMapBox() {
+  const box = document.getElementById('positionMapBox'); if (!box) return;
+  const seen = (state.positionsSeen && typeof state.positionsSeen === 'object') ? state.positionsSeen : {};
+  const map = (state.config && state.config.positionMap) || {};
+  const title = k => k.replace(/\b\w/g, c => c.toUpperCase());
+  const keys = Array.from(new Set([...Object.keys(seen), ...Object.keys(map)]));
+  const rows = keys.map(k => {
+    const name = (seen[k] && seen[k].name) || title(k);
+    const autoRole = positionRoleOfCls(classifyPositionBuiltin(name));
+    const role = map[k] || '';
+    const eff = role || autoRole;
+    const def = positionRoleDef(eff);
+    const rank = eff === 'unknown' ? 2 : (eff === 'ignore' ? 1 : 0);
+    return { k, name, autoRole, role, now: def ? def.label : 'Not recognised — not on stage', rank };
+  }).sort((a, b) => (a.rank - b.rank) || a.name.localeCompare(b.name));
+  const autoLabel = r => { const d = positionRoleDef(r.autoRole); return 'Automatic — ' + (d ? d.label : 'not recognised'); };
+  box.innerHTML = `<div class="section-label">Planning Center positions</div>
+    <p class="subtitle" style="font-size:12px;">Every position Stage·Assign has seen on a pull, and what it does with the person scheduled there. Change one here and it applies on the next pull — no update needed.</p>
+    ${rows.length ? `<div class="pm-list">${rows.map(r => `<div class="pm-row${r.role ? ' pm-custom' : ''}" data-pos="${esc(r.k)}">
+        <span class="pm-pos">${esc(r.name)}</span>
+        <span class="pm-now">${esc(r.now)}</span>
+        <select class="pm-select" aria-label="What ${esc(r.name)} does">
+          <option value="">${esc(autoLabel(r))}</option>
+          ${POSITION_ROLES.map(o => `<option value="${o.id}"${r.role === o.id ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
+        </select>
+      </div>`).join('')}</div>` : `<p class="subtitle" style="font-size:12px;color:var(--text-faint);">Pull a plan and its positions will be listed here.</p>`}`;
+  box.querySelectorAll('.pm-row').forEach(row => {
+    const sel = row.querySelector('select');
+    sel.addEventListener('change', () => {
+      setPositionRole(row.dataset.pos, sel.value);
+      renderPositionMapBox();
+      toast('Saved — applies on the next pull.', 'success');
+    });
+  });
+}
 // Every remembered "goes by" name, visible and removable. Until 2026-11-25 nothing showed these.
 function renderNameAliasBox() {
   const box = document.getElementById('nameAliasBox'); if (!box) return;
@@ -10671,8 +10835,9 @@ function renderPCOSettings() {
       <button class="btn" id="pcoDemoBtn">▶ Try Demo Mode</button>
     </div>
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
-      <div style="font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--text-faint);margin-bottom:10px;">How position names map</div>
-      <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);line-height:1.7;">
+      <details class="pm-rules">
+      <summary style="font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--text-faint);cursor:pointer;">The automatic rules</summary>
+      <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);line-height:1.7;margin-top:10px;">
         • <span style="color:var(--wl);">"Worship Leader"</span> → WL vocalist<br>
         • <span style="color:var(--text);">"Vocals", "Vocal Lead", "BGV"</span> → vocalist (lead flag if "lead" in name)<br>
         • <span style="color:var(--text);">"Vocal Shadow"</span> → Shadows list (no mic, default Misc 2)<br>
@@ -10689,8 +10854,11 @@ function renderPCOSettings() {
         • Door Assistant, Greeter, Usher, Parking<br>
         • Photo, Camera, Audio, Lighting, Production, Tech<br>
         • Team Lead, Creative, Communion, Facility roles<br>
-        • Pre-Service Prayer, Prayer Host (and other prep roles)
+        • Pre-Service Prayer, Prayer Host (and other prep roles)<br>
+        <br>
+        Any of these can be changed per position in "Planning Center positions" below.
       </div>
+      </details>
     </div>
   `;
   document.getElementById('pcoClientIdInput').addEventListener('input', e => { state.pcoConfig.clientId = e.target.value.trim(); saveState(); });
@@ -10722,6 +10890,7 @@ function renderPCOSettings() {
       <div class="st-fav-list" id="stFavList">${rows}</div>`;
   }
   el.appendChild(favWrap);
+  { const pmBox = document.createElement('div'); pmBox.id = 'positionMapBox'; pmBox.className = 'pco-fav-section'; el.appendChild(pmBox); renderPositionMapBox(); }
   { const naBox = document.createElement('div'); naBox.id = 'nameAliasBox'; naBox.className = 'pco-fav-section'; el.appendChild(naBox); renderNameAliasBox(); }
   favWrap.querySelectorAll('.st-fav-cb').forEach(cb => cb.addEventListener('change', e => {
     const id = e.target.value; let arr = state.pcoConfig.favoriteServiceTypeIds || (state.pcoConfig.favoriteServiceTypeIds = []);

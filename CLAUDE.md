@@ -130,7 +130,9 @@ this release** — single venue only.
   `normName` is first-name-only and must not decide identity. The MD flag follows the person, not
   the slot. An inline name edit is an alias only if `looksLikeSamePerson` — otherwise a swap for
   that service. The auto-refresh never merges without a baseline for the selected plan. Anyone the
-  plan puts on stage but the pull cannot seat is named in a ⚠ notice. To test against real plan
+  plan puts on stage but the pull cannot seat is named in a ⚠ notice. A PCO position's meaning is
+  `classifyPosition` (team-editable `config.positionMap` first, built-in rules second); an instrument
+  slot LABEL is always `classifyPositionBuiltin`. No standing timers at boot (they hang the jsdom suite). To test against real plan
   shapes use `tests/fixtures/realplans-2026-11-25.js` (codes, never names) — add a plan there
   rather than pasting a roster anywhere.
 - **PCO**: in-app OAuth + Planning Center pull (header `#pcoBtn`, red when not
