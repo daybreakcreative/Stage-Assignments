@@ -8593,7 +8593,7 @@ async function fetchPcoRegulars() {
     for (let i = 0; i < planIds.length; i++) {
       setLabel(`Scanning plan ${i + 1} of ${planIds.length}…`);
       try {
-        const tm = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planIds[i]}/team_members?per_page=100`);
+        const tm = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planIds[i]}/team_members?per_page=100`);
         (tm.data || []).forEach(d => {
           const a = d.attributes || {};
           if ((a.status || '') === 'D') return; // declined
@@ -9385,6 +9385,24 @@ async function pcoFetch(path) {
   return res.json();
 }
 
+// Follow Planning Center's `links.next` until a list is complete (20-page guard). team_members was
+// read with per_page=100 and never paged: a plan with a 101st team member would silently lose
+// whoever sorted last, and the auto-refresh would then see them "removed" and take them off stage.
+async function pcoFetchAll(path) {
+  let res = await pcoFetch(path);
+  if (!res || !Array.isArray(res.data)) return res;
+  const out = { ...res, data: res.data.slice(), included: (res.included || []).slice() };
+  let next = res.links && res.links.next, guard = 0;
+  while (next && guard++ < 20) {
+    res = await pcoFetch(next);
+    if (!res || !Array.isArray(res.data)) break;
+    out.data.push(...res.data);
+    if (Array.isArray(res.included)) out.included.push(...res.included);
+    next = res.links && res.links.next;
+  }
+  return out;
+}
+
 function pcoDisconnect() {
   if (!confirm('Disconnect from Planning Center? Your access token will be removed.')) return;
   savePCOTokens(null);
@@ -9601,21 +9619,23 @@ async function pcoPullPlan(planId) {
       switchVenueAndRefresh(ownerVenue.id);
     }
   }
-  state.pcoConfig.selectedPlanId = planId;
-  state.pcoConfig.selectedPlanName = (pcoPlans.find(p => p.id === planId) || {}).name || '';
-  saveState();
+  // The plan becomes "the selected plan" only once it has actually been fetched (below). Storing it
+  // first meant a failed pull — or a page reloaded mid-pull — left LAST week's roster on screen with
+  // THIS week's plan selected, and the next auto-refresh merged this week's people on top of it.
   setPCOStatus('Pulling plan data…');
   document.getElementById('pcoPullBtn').innerHTML = '<span class="spinning">↻</span> Pulling…';
   document.getElementById('pcoPullBtn').disabled = true;
   try {
     const stId = state.pcoConfig.selectedServiceTypeId;
-    const tmRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
+    const tmRes = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
     const planRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}`);
     // Plan items (songs + headers + notes in order). Include "song" to pull title & "item_notes" for leader info.
     let itemsRes = { data: [], included: [] };
     try {
-      itemsRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`);
+      itemsRes = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`);
     } catch (e) { console.warn('Items fetch failed:', e); }
+    state.pcoConfig.selectedPlanId = planId;
+    state.pcoConfig.selectedPlanName = (pcoPlans.find(p => p.id === planId) || {}).name || '';
     applyPCOPlanData(planRes.data, tmRes, itemsRes);
     setPCOStatus('Plan loaded ✓','ok');
     document.getElementById('pcoPullBtn').innerHTML = 'Pull Plan';
@@ -10168,6 +10188,11 @@ function pcoAddVocalist(p) {
 }
 
 function pcoAddBand(p) {
+  // Already seated in a slot of this type (typed in by hand before Planning Center caught up)?
+  // Then there is nothing to add — a second slot for the same person is the bug, not the fix.
+  const same = n => normFullName(n) === normFullName(p.name);
+  if (state.instruments.some(i => instPositionTypeForMerge(i) === p.position
+      && (same(i.assignedTo) || (i.vocalistPlayer && same(((state.vocalists || []).find(v => v.id === i.vocalistPlayer) || {}).name))))) return true;
   const empty = state.instruments.find(i => instPositionTypeForMerge(i) === p.position && !i.assignedTo && !i.vocalistPlayer);
   if (empty) { empty.assignedTo = p.name; return true; }
   const ALLOW = { keys:['Keys','Keys Pack','Keys'], eg:['Electric','EG Pack','EG'], ag:['Acoustic','Acoustic Pack','AG'] };
@@ -10184,6 +10209,7 @@ function pcoAddHost(p) {
   const channels = hostChannels();
   const norm = s => (s || '').replace(/\s+/g, '').toLowerCase();
   const isFree = id => !((state.hosts[id] || '').trim());
+  if (channels.some(ch => normFullName(state.hosts[ch.id]) === normFullName(p.name))) return;   // already holds a handheld
   // Speaker/pastor prefers the channel labelled "Pastor" (else channel 0); otherwise first free.
   if (p.host === 'speaker') {
     const pastorCh = channels.find(ch => norm(ch.label).includes('pastor')) || channels[0];
@@ -10411,15 +10437,19 @@ async function pcoMergeRefresh() {
   try {
     const stId = state.pcoConfig.selectedServiceTypeId;
     const planId = state.pcoConfig.selectedPlanId;
-    const tmRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
+    // A refresh merges the CHANGES to the plan that is on screen. With no baseline for this plan the
+    // roster on screen is some other plan's (or nobody's), and "everything is an add" would pour a
+    // second plan's people on top of it — random people in positions, reported 2026-11-25. There is
+    // nothing safe to merge: say so and wait for a real pull.
+    const baseline = (state.pcoBaseline && state.pcoBaseline.planId === planId) ? state.pcoBaseline : null;
+    if (!baseline) { setPCOStatus('Press Pull Plan to load this plan', 'err'); return; }
+    const tmRes = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planId}/team_members?per_page=100`);
     const planRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}`);
     let itemsRes = { data:[], included:[] };
-    try { itemsRes = await pcoFetch(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`); } catch(e){ console.warn('items fetch failed', e); }
+    try { itemsRes = await pcoFetchAll(`/services/v2/service_types/${stId}/plans/${planId}/items?include=song,item_notes&per_page=100`); } catch(e){ console.warn('items fetch failed', e); }
 
     const next = derivePcoModel(planRes.data, tmRes, itemsRes);
     next.planId = planId;
-    // If the stored baseline is for a different plan, treat as no baseline (everything is "add").
-    const baseline = (state.pcoBaseline && state.pcoBaseline.planId === planId) ? state.pcoBaseline : null;
     const changeList = diffPcoModel(baseline, next);
 
     let mergeResult = null;
