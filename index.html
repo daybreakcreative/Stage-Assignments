@@ -1299,6 +1299,13 @@ body.display-mode{overflow:hidden}
 .display-cog:hover{background:var(--surface);border-color:var(--accent);color:var(--accent);transform:rotate(45deg)}
 /* Build stamp: lets the booth confirm it's on the latest deploy (rule out stale browser cache). Bump on each deploy. */
 #buildStamp{position:fixed;left:6px;bottom:5px;z-index:300;font-family:var(--ff-mono);font-size:10px;color:var(--text-faint);opacity:.5;pointer-events:none;user-select:none}
+/* "A newer version is ready" — a strip in the page flow under the top bar (same family as the
+   Planning Center notices), so it pushes the page down instead of covering the stage plot. Set-up
+   view only, never the TV. */
+#updateNotice{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:8px 20px;background:var(--bg-elev);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text-muted)}
+#updateNotice button{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+#updateNotice button:hover{background:var(--accent-dim)}
+body.display-mode #updateNotice{display:none !important}
 /* Display view layout — sizes driven by CSS variables so dividers can adjust them */
 .dv-layout{display:grid;grid-template-columns:1fr;flex:1;min-height:0;overflow:hidden}
 .dv-layout.has-rail{grid-template-columns:var(--dv-main-frac, 1fr) 8px var(--dv-rail-frac, minmax(300px, 24%))}
@@ -1591,6 +1598,7 @@ body.dv-dragging.dv-dragging-h{cursor:row-resize}
 [data-look="aurora"][data-theme="light"] .dv-section-label{background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--text-muted);color:var(--text-muted)}
 
 @media print{
+  #updateNotice{display:none !important}
 @page{size:letter;margin:.5in}
 html,body{background:white!important;overflow:visible;height:auto}
 /* Print target = the OPEN summary sheet only, shown via the `.show` class. (Earlier the print
@@ -1872,6 +1880,7 @@ body>*:not(.summary-overlay){display:none!important}
   <span class="pco-status" id="pcoStatusText"></span>
 </div>
 <div class="pco-merge-banner" id="pcoMergeBanner" style="display:none;"></div>
+<div id="updateNotice" style="display:none" role="status"><span>A newer version of Stage·Assign is ready.</span><button type="button" id="updateReloadBtn">Reload</button></div>
 
 <div class="workspace" id="workspace">
   <section class="hero">
@@ -10536,7 +10545,7 @@ const AUTO_REFRESH_MS = 180000;   // 3 minutes
 let pcoAutoRefreshTimer = null;
 function startPcoAutoRefresh() {
   if (pcoAutoRefreshTimer) return;
-  pcoAutoRefreshTimer = setInterval(() => { pcoMergeRefresh(); }, AUTO_REFRESH_MS);
+  pcoAutoRefreshTimer = setInterval(() => { pcoMergeRefresh(); maybeCheckForNewBuild(); }, AUTO_REFRESH_MS);
 }
 
 function pcoLoadDemo() {
@@ -16012,6 +16021,55 @@ function wireHoverSlider(tabId, popupId, sliderId, valueId, getValue, setValue, 
   });
 }
 
+/* ===================== A NEWER BUILD IS LIVE ===================== */
+// The app is one static page: a tab left open keeps running the build it loaded, so a fix reaches a
+// room only when someone reloads (on 09-30 the booth was still on 09-15; on 11-25 five fixes waited
+// on a refresh). At load, when the tab comes back into view, when someone touches the page and on
+// the Planning Center auto-refresh tick — at most once every 10 minutes — ask the server for the
+// page's Last-Modified and compare it with the copy that is running. Newer → a quiet pill with a
+// Reload button. It never reloads by itself (not mid-service), never shows in display mode, and
+// says nothing when the check cannot be made.
+// ⚠ No setInterval/setTimeout of its own, on purpose: a standing timer at boot keeps every jsdom
+// test process alive (the first version hung the suite). It rides on events that already happen.
+const BUILD_CHECK_MS = 10 * 60 * 1000;
+let _buildCheckedAt = 0, _buildCheckWired = false;
+function loadedBuildTime() { const d = new Date(document.lastModified); return isNaN(d.getTime()) ? null : d.getTime(); }
+function buildCheckAllowed() { return location.protocol === 'http:' || location.protocol === 'https:'; }
+function reloadForUpdate() { location.reload(); }
+async function checkForNewBuild() {
+  if (!buildCheckAllowed() || typeof fetch !== 'function') return false;
+  const mine = loadedBuildTime();
+  if (!mine) return false;
+  try {
+    const res = await fetch(location.pathname + '?buildcheck=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    const lm = res && res.headers && res.headers.get('Last-Modified');
+    const theirs = lm ? new Date(lm).getTime() : NaN;
+    if (!isFinite(theirs)) return false;
+    const newer = theirs - mine > 60000;   // a minute of slack for clock rounding
+    const el = document.getElementById('updateNotice');
+    if (el) el.style.display = newer ? '' : 'none';
+    return newer;
+  } catch (e) { return false; }   // offline / blocked — keep whatever is showing
+}
+// Throttled entry point for every trigger. `force` skips the 10-minute gap (load).
+function maybeCheckForNewBuild(force) {
+  const now = Date.now();
+  if (!force && now - _buildCheckedAt < BUILD_CHECK_MS) return false;
+  _buildCheckedAt = now;
+  checkForNewBuild();
+  return true;
+}
+function startBuildCheck() {
+  if (_buildCheckWired) return;
+  _buildCheckWired = true;
+  const btn = document.getElementById('updateReloadBtn');
+  if (btn) btn.addEventListener('click', () => reloadForUpdate());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) maybeCheckForNewBuild(); });
+  window.addEventListener('focus', () => maybeCheckForNewBuild());
+  document.addEventListener('pointerdown', () => maybeCheckForNewBuild(), true);
+  maybeCheckForNewBuild(true);
+}
+
 /* ===================== INIT ===================== */
 function init() {
   // Build stamp = the served file's real last-modified date (self-maintaining; no manual bump).
@@ -16024,6 +16082,7 @@ function init() {
     const p = n => String(n).padStart(2, '0');
     el.textContent = `build ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   })();
+  startBuildCheck();
   ensureVenues(state); // wrap a single-config (legacy) state into a Main Campus venue, if needed
   bootRepairSetupItems();      // migrate legacy keys → repair → rebuild this week's caches → save
   bootRepairNameAliases();     // set aside go-by names that point one person at another

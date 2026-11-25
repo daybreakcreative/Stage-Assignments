@@ -767,4 +767,15 @@ Behaviors that must keep working. **The executable version of this list is `test
 83. **The plan picker labels a plan with its own date** (2026-11-25). `sort_date` is a local wall
     clock wearing a "Z"; converting it as UTC labelled any plan starting before 8am Pacific with the
     day before. The label reads the digits. → `pcoplandate`
+84. **The page notices when a newer build is live and offers a Reload** (2026-11-25). One static
+    page: a tab left open keeps the build it loaded, so on 11-25 five fixes waited on someone
+    reloading every room. `checkForNewBuild()` does a HEAD (no-store, cache-busting query) and
+    compares `Last-Modified` with `document.lastModified`; newer by more than a minute shows the
+    `#updateNotice` strip under the top bar with a Reload button. It never reloads by itself, is
+    hidden in display mode and print, and says nothing when the check cannot be made.
+    ⚠ It owns NO timer: a standing `setInterval`/`setTimeout` at boot keeps every jsdom test process
+    alive (the first version hung the suite). It rides on load, visibility, focus, pointerdown and
+    the Planning Center auto-refresh tick, throttled to one check per 10 minutes — the test scans the
+    source for a timer in that block. ⚠ A fixed pill was tried first and covered the stage plot's
+    corner; the strip sits in the page flow instead. → `buildcheck`
 
